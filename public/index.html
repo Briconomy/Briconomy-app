@@ -82,7 +82,9 @@
         </div>
     </div>
     
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+        import('./src/main.tsx').catch(console.error);
+    </script>
     
     <script>
         if ('serviceWorker' in navigator) {
