@@ -82,8 +82,32 @@
         </div>
     </div>
     
+    <script>
+        console.log('Basic script executing...');
+        document.getElementById('root').innerHTML = '<div style="padding: 20px;">JavaScript is working! Checking modules...</div>';
+    </script>
+    
     <script type="module">
-        import('./src/main.tsx').catch(console.error);
+        console.log('Module script starting...');
+        
+        async function loadApp() {
+            try {
+                console.log('Attempting to load module...');
+                const module = await import('./src/main.tsx');
+                console.log('Module loaded successfully:', module);
+            } catch (error) {
+                console.error('Module load failed:', error);
+                document.getElementById('root').innerHTML = 
+                    '<div style="padding: 20px; color: red; font-family: monospace; background: white;">' +
+                    '<h3>Module Load Error:</h3>' +
+                    '<p><strong>Message:</strong> ' + error.message + '</p>' +
+                    '<p><strong>Stack:</strong></p>' +
+                    '<pre>' + error.stack + '</pre>' +
+                    '</div>';
+            }
+        }
+        
+        loadApp();
     </script>
     
     <script>
