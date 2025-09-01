@@ -7,15 +7,30 @@ async function handler(request: Request): Promise<Response> {
   const pathname = new URL(request.url).pathname;
   
   if (pathname.startsWith("/src/")) {
-    return serveDir(request, {
+    const response = await serveDir(request, {
       fsRoot: ".",
     });
+    
+    if (pathname.endsWith(".tsx") || pathname.endsWith(".ts")) {
+      return new Response(response.body, {
+        status: response.status,
+        headers: {
+          ...Object.fromEntries(response.headers),
+          "content-type": "application/javascript",
+        },
+      });
+    }
+    return response;
   }
   
   if (pathname.startsWith("/public/")) {
     return serveDir(request, {
       fsRoot: ".",
     });
+  }
+  
+  if (pathname === "/favicon.ico" || pathname === "/apple-touch-icon.png") {
+    return new Response("", { status: 204 });
   }
   
   if (pathname === "/" || (!pathname.includes(".") && !pathname.startsWith("/api"))) {
