@@ -1,27 +1,12 @@
 import React from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-function LoginPage() {
-  const [searchParams] = useSearchParams();
+function CreateAccountPage() {
   const navigate = useNavigate();
-  const userType = searchParams.get('type') || 'admin';
   
-  const titles = {
-    admin: 'Admin Portal',
-    manager: 'Property Manager Portal', 
-    tenant: 'Tenant Portal',
-    caretaker: 'Caretaker Portal'
-  };
-  
-  const handleLogin = () => {
-    const dashboards = {
-      admin: '/admin',
-      manager: '/manager',
-      tenant: '/tenant',
-      caretaker: '/caretaker'
-    };
-    navigate(dashboards[userType as keyof typeof dashboards]);
+  const handleCreateAccount = () => {
+    navigate('/login');
   };
 
   return (
@@ -108,8 +93,39 @@ function LoginPage() {
             color: '#2c3e50', 
             fontSize: '20px' 
           }}>
-            Sign In
+            Create Account
           </h2>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <label 
+              htmlFor="fullName" 
+              style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontWeight: '600', 
+                color: '#2c3e50', 
+                fontSize: '14px' 
+              }}
+            >
+              Full Name
+            </label>
+            <input 
+              type="text" 
+              id="fullName"
+              placeholder="Enter your full name"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '2px solid #e9ecef',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#f8f9fa',
+                color: '#2c3e50',
+                transition: 'all 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
           
           <div style={{ marginBottom: '16px' }}>
             <label 
@@ -144,6 +160,71 @@ function LoginPage() {
           
           <div style={{ marginBottom: '16px' }}>
             <label 
+              htmlFor="phone" 
+              style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontWeight: '600', 
+                color: '#2c3e50', 
+                fontSize: '14px' 
+              }}
+            >
+              Phone Number
+            </label>
+            <input 
+              type="tel" 
+              id="phone"
+              placeholder="Enter your phone number"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '2px solid #e9ecef',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#f8f9fa',
+                color: '#2c3e50',
+                transition: 'all 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <label 
+              htmlFor="userType" 
+              style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontWeight: '600', 
+                color: '#2c3e50', 
+                fontSize: '14px' 
+              }}
+            >
+              Account Type
+            </label>
+            <select 
+              id="userType"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '2px solid #e9ecef',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#f8f9fa',
+                color: '#2c3e50',
+                transition: 'all 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="">Select account type</option>
+              <option value="tenant">Tenant</option>
+              <option value="manager">Property Manager</option>
+              <option value="caretaker">Caretaker</option>
+            </select>
+          </div>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <label 
               htmlFor="password" 
               style={{ 
                 display: 'block', 
@@ -173,8 +254,39 @@ function LoginPage() {
             />
           </div>
           
+          <div style={{ marginBottom: '16px' }}>
+            <label 
+              htmlFor="confirmPassword" 
+              style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontWeight: '600', 
+                color: '#2c3e50', 
+                fontSize: '14px' 
+              }}
+            >
+              Confirm Password
+            </label>
+            <input 
+              type="password" 
+              id="confirmPassword"
+              placeholder="Confirm your password"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '2px solid #e9ecef',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#f8f9fa',
+                color: '#2c3e50',
+                transition: 'all 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          
           <button 
-            onClick={handleLogin}
+            onClick={handleCreateAccount}
             style={{
               width: '100%',
               padding: '12px',
@@ -191,7 +303,7 @@ function LoginPage() {
               textAlign: 'center'
             }}
           >
-            Sign In
+            Create Account
           </button>
           
           <button style={{
@@ -209,30 +321,31 @@ function LoginPage() {
             display: 'inline-block',
             textAlign: 'center'
           }}>
-            Continue with Google SSO
+            Sign Up with Google
           </button>
           
-          <button style={{
-            width: '100%',
-            padding: '12px',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginBottom: '10px',
-            background: '#6c757d',
-            color: 'white',
-            textDecoration: 'none',
-            display: 'inline-block',
-            textAlign: 'center'
+          <div style={{
+            textAlign: 'center',
+            marginTop: '20px',
+            fontSize: '14px',
+            color: '#6c757d'
           }}>
-            Biometric Login
-          </button>
+            Already have an account?{' '}
+            <Link 
+              to="/login" 
+              style={{
+                color: '#162F1B',
+                textDecoration: 'none',
+                fontWeight: '600'
+              }}
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-export default LoginPage;
+export default CreateAccountPage;
