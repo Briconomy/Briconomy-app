@@ -31,6 +31,8 @@ async function handler(request: Request): Promise<Response> {
   const pathname = new URL(request.url).pathname;
   const method = request.method;
   
+  console.log(`[${new Date().toISOString()}] [${method}] ${pathname}`);
+  
   if (pathname.startsWith("/api/")) {
     const headers = {
       "Content-Type": "application/json",
