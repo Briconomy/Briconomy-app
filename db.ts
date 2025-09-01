@@ -42,3 +42,118 @@ export interface User {
   password: string;
   createdAt: Date;
 }
+
+export interface Property {
+  _id?: string;
+  name: string;
+  address: string;
+  type: 'apartment' | 'complex' | 'house';
+  totalUnits: number;
+  occupiedUnits: number;
+  managerId: string;
+  amenities: string[];
+  createdAt: Date;
+}
+
+export interface Unit {
+  _id?: string;
+  unitNumber: string;
+  propertyId: string;
+  rent: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  status: 'occupied' | 'vacant' | 'maintenance';
+  tenantId?: string;
+  createdAt: Date;
+}
+
+export interface Lease {
+  _id?: string;
+  tenantId: string;
+  unitId: string;
+  propertyId: string;
+  startDate: Date;
+  endDate: Date;
+  monthlyRent: number;
+  deposit: number;
+  status: 'active' | 'expired' | 'terminated';
+  createdAt: Date;
+}
+
+export interface Payment {
+  _id?: string;
+  tenantId: string;
+  leaseId: string;
+  amount: number;
+  paymentDate?: Date;
+  dueDate: Date;
+  status: 'pending' | 'paid' | 'overdue' | 'failed';
+  type: 'rent' | 'deposit' | 'utilities' | 'fees';
+  method?: 'bank_transfer' | 'cash' | 'card' | 'eft';
+  createdAt: Date;
+}
+
+export interface MaintenanceRequest {
+  _id?: string;
+  tenantId: string;
+  unitId: string;
+  propertyId: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+  assignedTo?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CaretakerTask {
+  _id?: string;
+  caretakerId: string;
+  propertyId: string;
+  title: string;
+  description: string;
+  dueDate: Date;
+  status: 'pending' | 'in_progress' | 'completed' | 'overdue';
+  priority: 'low' | 'medium' | 'high';
+  createdAt: Date;
+}
+
+export interface Report {
+  _id?: string;
+  type: 'financial' | 'maintenance' | 'occupancy' | 'performance';
+  period: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  propertyId?: string;
+  data: Record<string, any>;
+  generatedBy: string;
+  createdAt: Date;
+}
+
+export interface Notification {
+  _id?: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'payment_reminder' | 'maintenance_update' | 'lease_renewal' | 'system';
+  read: boolean;
+  createdAt: Date;
+}
+
+export interface Setting {
+  _id?: string;
+  key: string;
+  value: string;
+  description: string;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+export interface AuditLog {
+  _id?: string;
+  userId: string;
+  action: string;
+  resource: string;
+  details: Record<string, any>;
+  timestamp: Date;
+}
