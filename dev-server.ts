@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 import { serveDir } from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as esbuild from "https://deno.land/x/esbuild@v0.19.8/mod.js";
+import { registerUser, loginUser } from "./api.ts";
 
 const PORT = 5173;
 
@@ -28,6 +29,57 @@ async function transpileTypeScript(code: string, filename: string): Promise<stri
 
 async function handler(request: Request): Promise<Response> {
   const pathname = new URL(request.url).pathname;
+  const method = request.method;
+  
+  if (pathname.startsWith("/api/")) {
+    const headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    };
+    
+    if (method === "OPTIONS") {
+      return new Response(null, { status: 200, headers });
+    }
+    
+    if (pathname === "/api/register" && method === "POST") {
+      try {
+        const body = await request.json();
+        const result = await registerUser(body);
+        return new Response(JSON.stringify(result), { 
+          status: result.success ? 200 : 400, 
+          headers 
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          message: "Invalid request data" 
+        }), { status: 400, headers });
+      }
+    }
+    
+    if (pathname === "/api/login" && method === "POST") {
+      try {
+        const body = await request.json();
+        const result = await loginUser(body.email, body.password);
+        return new Response(JSON.stringify(result), { 
+          status: result.success ? 200 : 401, 
+          headers 
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          message: "Invalid request data" 
+        }), { status: 400, headers });
+      }
+    }
+    
+    return new Response(JSON.stringify({ message: "API endpoint not found" }), { 
+      status: 404, 
+      headers 
+    });
+  }
   
   if (pathname.startsWith("/src/") && (pathname.endsWith(".tsx") || pathname.endsWith(".ts"))) {
     try {
