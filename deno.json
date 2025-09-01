@@ -2,7 +2,8 @@
   "tasks": {
     "dev": "deno run -A --watch dev-server.ts",
     "build": "deno run -A build.ts",
-    "preview": "deno run -A server.ts"
+    "preview": "deno run -A server.ts",
+    "init-db": "mongosh briconomy scripts/init-db.js"
   },
   "imports": {
     "react": "https://esm.sh/react@18.2.0",
