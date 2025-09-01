@@ -1,12 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 function CreateAccountPage() {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    userType: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
-  const handleCreateAccount = () => {
-    navigate('/login');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value
+    });
+  };
+  
+  const handleCreateAccount = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.fullName || !formData.email || !formData.phone || !formData.userType || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          userType: formData.userType,
+          password: formData.password
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setSuccess('Account created successfully! Redirecting to login...');
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError(result.message || 'Registration failed');
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -96,6 +157,34 @@ function CreateAccountPage() {
             Create Account
           </h2>
           
+          {error && (
+            <div style={{
+              background: '#fee',
+              color: '#c00',
+              padding: '12px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              {error}
+            </div>
+          )}
+          
+          {success && (
+            <div style={{
+              background: '#efe',
+              color: '#060',
+              padding: '12px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              {success}
+            </div>
+          )}
+          
           <div style={{ marginBottom: '16px' }}>
             <label 
               htmlFor="fullName" 
@@ -112,6 +201,8 @@ function CreateAccountPage() {
             <input 
               type="text" 
               id="fullName"
+              value={formData.fullName}
+              onChange={handleInputChange}
               placeholder="Enter your full name"
               style={{
                 width: '100%',
@@ -143,6 +234,8 @@ function CreateAccountPage() {
             <input 
               type="email" 
               id="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="Enter your email"
               style={{
                 width: '100%',
@@ -174,6 +267,8 @@ function CreateAccountPage() {
             <input 
               type="tel" 
               id="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
               placeholder="Enter your phone number"
               style={{
                 width: '100%',
@@ -204,6 +299,8 @@ function CreateAccountPage() {
             </label>
             <select 
               id="userType"
+              value={formData.userType}
+              onChange={handleInputChange}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -239,6 +336,8 @@ function CreateAccountPage() {
             <input 
               type="password" 
               id="password"
+              value={formData.password}
+              onChange={handleInputChange}
               placeholder="Enter your password"
               style={{
                 width: '100%',
@@ -270,6 +369,8 @@ function CreateAccountPage() {
             <input 
               type="password" 
               id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
               placeholder="Confirm your password"
               style={{
                 width: '100%',
@@ -287,6 +388,7 @@ function CreateAccountPage() {
           
           <button 
             onClick={handleCreateAccount}
+            disabled={loading}
             style={{
               width: '100%',
               padding: '12px',
@@ -294,16 +396,17 @@ function CreateAccountPage() {
               borderRadius: '8px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '10px',
-              background: '#162F1B',
+              background: loading ? '#ccc' : '#162F1B',
               color: 'white',
               textDecoration: 'none',
               display: 'inline-block',
-              textAlign: 'center'
+              textAlign: 'center',
+              opacity: loading ? 0.7 : 1
             }}
           >
-            Create Account
+            {loading ? 'Creating Account...' : 'Create Account'}
           </button>
           
           <button style={{

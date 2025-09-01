@@ -1,27 +1,64 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 function LoginPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const userType = searchParams.get('type') || 'admin';
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
-  const titles = {
-    admin: 'Admin Portal',
-    manager: 'Property Manager Portal', 
-    tenant: 'Tenant Portal',
-    caretaker: 'Caretaker Portal'
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value
+    });
   };
   
-  const handleLogin = () => {
-    const dashboards = {
-      admin: '/admin',
-      manager: '/manager',
-      tenant: '/tenant',
-      caretaker: '/caretaker'
-    };
-    navigate(dashboards[userType as keyof typeof dashboards]);
+  const handleLogin = async () => {
+    setLoading(true);
+    setError('');
+    
+    if (!formData.email || !formData.password) {
+      setError('Please fill in both email and password');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const dashboards = {
+          admin: '/admin',
+          manager: '/manager',
+          tenant: '/tenant',
+          caretaker: '/caretaker'
+        };
+        navigate(dashboards[result.user.userType as keyof typeof dashboards] || '/tenant');
+      } else {
+        setError(result.message || 'Login failed');
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -111,6 +148,20 @@ function LoginPage() {
             Sign In
           </h2>
           
+          {error && (
+            <div style={{
+              background: '#fee',
+              color: '#c00',
+              padding: '12px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              {error}
+            </div>
+          )}
+          
           <div style={{ marginBottom: '16px' }}>
             <label 
               htmlFor="email" 
@@ -127,6 +178,8 @@ function LoginPage() {
             <input 
               type="email" 
               id="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="Enter your email"
               style={{
                 width: '100%',
@@ -158,6 +211,8 @@ function LoginPage() {
             <input 
               type="password" 
               id="password"
+              value={formData.password}
+              onChange={handleInputChange}
               placeholder="Enter your password"
               style={{
                 width: '100%',
@@ -175,6 +230,7 @@ function LoginPage() {
           
           <button 
             onClick={handleLogin}
+            disabled={loading}
             style={{
               width: '100%',
               padding: '12px',
@@ -182,16 +238,17 @@ function LoginPage() {
               borderRadius: '8px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '10px',
-              background: '#162F1B',
+              background: loading ? '#ccc' : '#162F1B',
               color: 'white',
               textDecoration: 'none',
               display: 'inline-block',
-              textAlign: 'center'
+              textAlign: 'center',
+              opacity: loading ? 0.7 : 1
             }}
           >
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
           
           <button style={{
