@@ -17,8 +17,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react", 
-    "lib": ["dom", "dom.iterable", "es2020"],
+    "lib": ["dom", "dom.iterable", "es2020", "deno.ns"],
     "strict": false,
     "noEmit": true
-  }
+}
 }
