@@ -2,23 +2,47 @@ import { MongoClient, Db, Collection } from "https://deno.land/x/mongo@v0.32.0/m
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
+let connectPromise: Promise<Db> | null = null;
 
 export async function connectToMongoDB(): Promise<Db> {
   if (db) return db;
-  
+  if (connectPromise) return connectPromise;
+
+  connectPromise = (async () => {
+    const uri = "mongodb://127.0.0.1:27017";
+    const maxAttempts = 8;
+    let attempt = 0;
+    let lastError: unknown = null;
+
+    while (attempt < maxAttempts) {
+      try {
+        client = new MongoClient();
+        await client.connect(uri);
+  const candidateDb = client.database("briconomy");
+  await candidateDb.listCollectionNames();
+        db = candidateDb;
+        console.log("✅ Connected to MongoDB");
+        return db;
+      } catch (error) {
+        lastError = error;
+        const delay = Math.min(2000, 200 + attempt * 200);
+        await new Promise((r) => setTimeout(r, delay));
+        attempt++;
+      }
+    }
+
+    console.error("❌ MongoDB connection error:", lastError);
+    throw lastError instanceof Error ? lastError : new Error("Mongo connection failed");
+  })();
+
   try {
-    client = new MongoClient();
-    await client.connect("mongodb://127.0.0.1:27017");
-    db = client.database("briconomy");
-    console.log("✅ Connected to MongoDB");
-    return db;
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error);
-    throw error;
+    return await connectPromise;
+  } finally {
+    connectPromise = null;
   }
 }
 
-export function getCollection<T = any>(name: string): Collection<T> {
+export function getCollection<T = unknown>(name: string): Collection<T> {
   if (!db) {
     throw new Error("Database not connected");
   }
@@ -125,7 +149,7 @@ export interface Report {
   type: 'financial' | 'maintenance' | 'occupancy' | 'performance';
   period: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
   propertyId?: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   generatedBy: string;
   createdAt: Date;
 }
@@ -154,6 +178,6 @@ export interface AuditLog {
   userId: string;
   action: string;
   resource: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   timestamp: Date;
 }
