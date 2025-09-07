@@ -22,7 +22,8 @@ async function transpileTypeScript(code: string, filename: string): Promise<stri
     .replace(/from\s+["']react-dom\/client["']/g, 'from "https://esm.sh/react-dom@18.2.0/client?dev"')
     .replace(/from\s+["']react-router-dom["']/g, 'from "https://esm.sh/react-router-dom@6.8.1?deps=react@18.2.0,react-dom@18.2.0&dev"')
     .replace(/from\s+["']chart\.js["']/g, 'from "https://esm.sh/chart.js@4.2.1"')
-    .replace(/from\s+["']react-chartjs-2["']/g, 'from "https://esm.sh/react-chartjs-2@5.2.0?deps=react@18.2.0,chart.js@4.2.1&dev"');
+    .replace(/from\s+["']react-chartjs-2["']/g, 'from "https://esm.sh/react-chartjs-2@5.2.0?deps=react@18.2.0,chart.js@4.2.1&dev"')
+    .replace(/import\s+['"](\.\/.*\.css)['"];?/g, '// CSS import removed: $1');
     
   return transpiledCode;
 }

@@ -6,7 +6,7 @@ db.users.insertMany([
     email: 'admin@briconomy.com',
     phone: '+27123456789',
     userType: 'admin',
-    password: '$2b$10$hash_placeholder',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     createdAt: new Date()
   },
   {
@@ -14,7 +14,7 @@ db.users.insertMany([
     email: 'manager@briconomy.com',
     phone: '+27123456790',
     userType: 'manager',
-    password: '$2b$10$hash_placeholder',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     createdAt: new Date()
   },
   {
@@ -22,7 +22,7 @@ db.users.insertMany([
     email: 'caretaker@briconomy.com',
     phone: '+27123456791',
     userType: 'caretaker',
-    password: '$2b$10$hash_placeholder',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     createdAt: new Date()
   },
   {
@@ -30,7 +30,31 @@ db.users.insertMany([
     email: 'tenant@briconomy.com',
     phone: '+27123456792',
     userType: 'tenant',
-    password: '$2b$10$hash_placeholder',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    createdAt: new Date()
+  },
+  {
+    fullName: 'Test User',
+    email: 'test@test.com',
+    phone: '+27123456799',
+    userType: 'tenant',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    createdAt: new Date()
+  },
+  {
+    fullName: 'Demo User',
+    email: 'demo@demo.com',
+    phone: '+27123456800',
+    userType: 'manager',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    createdAt: new Date()
+  },
+  {
+    fullName: 'Sample User',
+    email: 'user@sample.com',
+    phone: '+27123456801',
+    userType: 'admin',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     createdAt: new Date()
   }
 ]);
