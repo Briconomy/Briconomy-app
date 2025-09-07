@@ -202,7 +202,7 @@ function ApiTestPage() {
                     </button>
                     {results[testGroup.id]?.[test.name] && (
                       <div className={`test-result ${results[testGroup.id][test.name].success ? 'success' : 'error'}`}>
-                        {results[testGroup.id][test.name].success ? '✓' : '✗'}
+                        {results[testGroup.id][test.name].success ? 'PASS' : 'FAIL'}
                       </div>
                     )}
                   </div>

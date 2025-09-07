@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
-// Generic API request function
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -28,7 +27,6 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   }
 }
 
-// Properties API
 export const propertiesApi = {
   getAll: () => apiRequest('/properties'),
   getById: (id: string) => apiRequest(`/properties/${id}`),
@@ -42,7 +40,6 @@ export const propertiesApi = {
   }),
 };
 
-// Units API
 export const unitsApi = {
   getAll: (propertyId?: string) => {
     const endpoint = propertyId ? `/units?propertyId=${propertyId}` : '/units';
@@ -54,7 +51,6 @@ export const unitsApi = {
   }),
 };
 
-// Leases API
 export const leasesApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
@@ -67,7 +63,6 @@ export const leasesApi = {
   }),
 };
 
-// Payments API
 export const paymentsApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
@@ -84,7 +79,6 @@ export const paymentsApi = {
   }),
 };
 
-// Maintenance API
 export const maintenanceApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
@@ -101,7 +95,6 @@ export const maintenanceApi = {
   }),
 };
 
-// Tasks API
 export const tasksApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
@@ -118,7 +111,6 @@ export const tasksApi = {
   }),
 };
 
-// Reports API
 export const reportsApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
@@ -131,12 +123,10 @@ export const reportsApi = {
   }),
 };
 
-// Dashboard API
 export const dashboardApi = {
   getStats: () => apiRequest('/dashboard/stats'),
 };
 
-// Auth API
 export const authApi = {
   login: (email: string, password: string) => apiRequest('/auth/login', {
     method: 'POST',
@@ -151,7 +141,6 @@ export const authApi = {
   }),
 };
 
-// Notifications API
 export const notificationsApi = {
   getAll: (userId: string) => apiRequest(`/notifications/${userId}`),
   create: (data: any) => apiRequest('/notifications', {
@@ -160,7 +149,6 @@ export const notificationsApi = {
   }),
 };
 
-// Data loading hooks (React compatible)
 export function useApi<T>(apiCall: () => Promise<T>, dependencies: any[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,7 +186,6 @@ export function useApi<T>(apiCall: () => Promise<T>, dependencies: any[] = []) {
   return { data, loading, error, refetch: () => fetchData() };
 }
 
-// Utility functions
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-ZA', {
     style: 'currency',
@@ -215,7 +202,6 @@ export function formatDateTime(dateString: string): string {
   return new Date(dateString).toLocaleString('en-ZA');
 }
 
-// Error handling wrapper
 export async function withErrorHandling<T>(
   apiCall: () => Promise<T>,
   errorMessage: string = 'Operation failed'

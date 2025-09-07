@@ -282,7 +282,7 @@ function DocumentManagementPage() {
                   style={{ display: 'none' }}
                 />
                 <label htmlFor="file-upload" className="upload-label">
-                  <div className="upload-icon">📄</div>
+                  <div className="upload-icon">DOC</div>
                   <p>Click to upload or drag and drop</p>
                   <p className="upload-subtitle">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
                 </label>

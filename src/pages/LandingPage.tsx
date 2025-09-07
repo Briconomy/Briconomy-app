@@ -62,11 +62,11 @@ function LandingPage() {
               fontSize: '14px',
               opacity: '0.9'
             }}>
-              <li style={{ marginBottom: '8px' }}>📊 Real-time Analytics</li>
-              <li style={{ marginBottom: '8px' }}>🏠 Property Management</li>
-              <li style={{ marginBottom: '8px' }}>💰 Payment Tracking</li>
-              <li style={{ marginBottom: '8px' }}>🔧 Maintenance Tasks</li>
-              <li style={{ marginBottom: '8px' }}>📱 Mobile Optimized</li>
+              <li style={{ marginBottom: '8px' }}>Real-time Analytics</li>
+              <li style={{ marginBottom: '8px' }}>Property Management</li>
+              <li style={{ marginBottom: '8px' }}>Payment Tracking</li>
+              <li style={{ marginBottom: '8px' }}>Maintenance Tasks</li>
+              <li style={{ marginBottom: '8px' }}>Mobile Optimized</li>
             </ul>
           </div>
         </div>
