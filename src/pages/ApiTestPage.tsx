@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import TopNav from '../components/TopNav.tsx';
-import BottomNav from '../components/BottomNav.tsx';
+import TopNav from '../components/TopNav';
+import BottomNav from '../components/BottomNav';
 import {
   propertiesApi,
   unitsApi,

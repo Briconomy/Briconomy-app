@@ -1,5 +1,5 @@
 import React from 'react';
-import TopNav from '../components/TopNav.tsx';
+import TopNav from '../components/TopNav';
 
 function PropertiesPage() {
   return (

@@ -1,9 +1,9 @@
 import React from 'react';
-import TopNav from '../components/TopNav.tsx';
-import BottomNav from '../components/BottomNav.tsx';
-import StatCard from '../components/StatCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
-import TaskChart from '../components/TaskChart.tsx';
+import TopNav from '../components/TopNav';
+import BottomNav from '../components/BottomNav';
+import StatCard from '../components/StatCard';
+import ChartCard from '../components/ChartCard';
+import TaskChart from '../components/TaskChart';
 
 function CaretakerDashboard() {
   const navItems = [

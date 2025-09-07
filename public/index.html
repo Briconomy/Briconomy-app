@@ -94,7 +94,7 @@
         async function loadApp() {
             try {
                 console.log('Attempting to load module...');
-                const module = await import('./src/main.tsx');
+                const module = await import('/src/main.tsx');
                 console.log('Module loaded successfully:', module);
             } catch (error) {
                 console.error('Module load failed:', error);

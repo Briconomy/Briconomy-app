@@ -104,6 +104,37 @@ async function handler(request: Request): Promise<Response> {
       });
     }
   }
+
+  if (pathname.startsWith("/src/") && !pathname.includes(".") ) {
+    const tsxPath = `.${pathname}.tsx`;
+    const tsPath = `.${pathname}.ts`;
+    try {
+      const code = await Deno.readTextFile(tsxPath);
+      const transpiledCode = await transpileTypeScript(code, tsxPath);
+      return new Response(transpiledCode, {
+        headers: {
+          "content-type": "application/javascript",
+          "cache-control": "no-cache",
+        },
+      });
+    } catch (_) {
+      try {
+        const code = await Deno.readTextFile(tsPath);
+        const transpiledCode = await transpileTypeScript(code, tsPath);
+        return new Response(transpiledCode, {
+          headers: {
+            "content-type": "application/javascript",
+            "cache-control": "no-cache",
+          },
+        });
+      } catch (__) {
+        return new Response("console.error('Module not found')", {
+          status: 404,
+          headers: { "content-type": "application/javascript" },
+        });
+      }
+    }
+  }
   
   if (pathname.startsWith("/src/") && pathname.endsWith(".css")) {
     try {
@@ -137,12 +168,25 @@ async function handler(request: Request): Promise<Response> {
     });
   }
   
-  if (pathname === "/favicon.ico" || pathname === "/apple-touch-icon.png" || 
-      pathname.startsWith("/icon-") || pathname === "/manifest.json") {
+  if (pathname === "/favicon.ico" || pathname.startsWith("/icon-") || pathname === "/manifest.json") {
     try {
       return await serveDir(request, { fsRoot: "./public" });
     } catch {
       return new Response(null, { status: 404 });
+    }
+  }
+
+  if (pathname === "/apple-touch-icon.png") {
+    try {
+      const file = await Deno.readFile("./public/apple-touch-icon.png");
+      return new Response(file, { headers: { "content-type": "image/png" } });
+    } catch {
+      try {
+        const fallback = await Deno.readFile("./public/icon-192x192.png");
+        return new Response(fallback, { headers: { "content-type": "image/png" } });
+      } catch {
+        return new Response(null, { status: 404 });
+      }
     }
   }
   

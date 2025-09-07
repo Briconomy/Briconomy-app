@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import TopNav from '../components/TopNav.tsx';
-import BottomNav from '../components/BottomNav.tsx';
-import StatCard from '../components/StatCard.tsx';
-import ActionCard from '../components/ActionCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
-import PaymentChart from '../components/PaymentChart.tsx';
+import TopNav from '../components/TopNav';
+import BottomNav from '../components/BottomNav';
+import StatCard from '../components/StatCard';
+import ActionCard from '../components/ActionCard';
+import ChartCard from '../components/ChartCard';
+import PaymentChart from '../components/PaymentChart';
 
 function ReportingDashboardPage() {
   const [reports, setReports] = useState([
