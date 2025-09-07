@@ -78,7 +78,6 @@ function PropertyManagementPage() {
       setShowPropertyForm(false);
       setFormData({ name: '', address: '', type: 'apartment', totalUnits: '', amenities: [] });
       
-      // Refresh data
       fetchData();
     } catch (error) {
       console.error('Error creating property:', error);
@@ -126,96 +125,98 @@ function PropertyManagementPage() {
               <StatCard value={`R${(totalRevenue / 1000).toFixed(0)}k`} label="Monthly Revenue" />
             </div>
 
-        <div className="data-table">
-          <div className="table-header">
-            <div className="table-title">Property Portfolio</div>
-            <button 
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowPropertyForm(true)}
-            >
-              Add Property
-            </button>
-          </div>
-          
-          {properties.map((property) => (
-            <div key={property.id} className="list-item">
-              <div className="item-info">
-                <h4>{property.name}</h4>
-                <p className="text-sm text-gray-600">{property.address}</p>
-                <div className="property-meta">
-                  <span className="text-xs text-gray-500">
-                    {property.type} • {property.occupiedUnits}/{property.totalUnits} units
-                  </span>
-                  <span className="text-xs text-green-600">
-                    R{(property.monthlyRevenue / 1000).toFixed(0)}k/month
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {Math.round((property.occupiedUnits / property.totalUnits) * 100)}% occupied
-                  </span>
+            <div className="data-table">
+              <div className="table-header">
+                <div className="table-title">Property Portfolio</div>
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowPropertyForm(true)}
+                >
+                  Add Property
+                </button>
+              </div>
+              
+              {properties.map((property) => (
+                <div key={property.id} className="list-item">
+                  <div className="item-info">
+                    <h4>{property.name}</h4>
+                    <p className="text-sm text-gray-600">{property.address}</p>
+                    <div className="property-meta">
+                      <span className="text-xs text-gray-500">
+                        {property.type} • {property.occupiedUnits}/{property.totalUnits} units
+                      </span>
+                      <span className="text-xs text-green-600">
+                        R{(property.monthlyRevenue / 1000).toFixed(0)}k/month
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {Math.round((property.occupiedUnits / property.totalUnits) * 100)}% occupied
+                      </span>
+                    </div>
+                    <div className="amenities">
+                      {property.amenities.slice(0, 3).map(amenity => (
+                        <span key={amenity} className="amenity-tag">
+                          {amenity.replace('_', ' ')}
+                        </span>
+                      ))}
+                      {property.amenities.length > 3 && (
+                        <span className="amenity-tag">+{property.amenities.length - 3} more</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="item-actions">
+                    <span className="status-badge status-paid">Active</span>
+                    <div className="property-actions">
+                      <button className="btn btn-sm btn-secondary">View</button>
+                      <button className="btn btn-sm btn-secondary">Edit</button>
+                    </div>
+                  </div>
                 </div>
-                <div className="amenities">
-                  {property.amenities.slice(0, 3).map(amenity => (
-                    <span key={amenity} className="amenity-tag">
-                      {amenity.replace('_', ' ')}
-                    </span>
-                  ))}
-                  {property.amenities.length > 3 && (
-                    <span className="amenity-tag">+{property.amenities.length - 3} more</span>
-                  )}
+              ))}
+            </div>
+
+            <ChartCard title="Portfolio Overview">
+              <div className="portfolio-stats">
+                <div className="stat-item">
+                  <div className="stat-value">{totalProperties}</div>
+                  <div className="stat-label">Properties</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-value">{totalUnits}</div>
+                  <div className="stat-label">Total Units</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-value">{occupiedUnits}</div>
+                  <div className="stat-label">Occupied</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-value">{totalUnits - occupiedUnits}</div>
+                  <div className="stat-label">Vacant</div>
                 </div>
               </div>
-              <div className="item-actions">
-                <span className="status-badge status-paid">Active</span>
-                <div className="property-actions">
-                  <button className="btn btn-sm btn-secondary">View</button>
-                  <button className="btn btn-sm btn-secondary">Edit</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            </ChartCard>
 
-        <ChartCard title="Portfolio Overview">
-          <div className="portfolio-stats">
-            <div className="stat-item">
-              <div className="stat-value">{totalProperties}</div>
-              <div className="stat-label">Properties</div>
+            <div className="quick-actions">
+              <ActionCard
+                onClick={() => {}}
+                icon="U"
+                title="Unit Management"
+                description="Manage individual units"
+              />
+              <ActionCard
+                onClick={() => {}}
+                icon="T"
+                title="Property Analytics"
+                description="View performance metrics"
+              />
+              <ActionCard
+                onClick={() => {}}
+                icon="M"
+                title="Maintenance Overview"
+                description="Track property maintenance"
+              />
             </div>
-            <div className="stat-item">
-              <div className="stat-value">{totalUnits}</div>
-              <div className="stat-label">Total Units</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">{occupiedUnits}</div>
-              <div className="stat-label">Occupied</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">{totalUnits - occupiedUnits}</div>
-              <div className="stat-label">Vacant</div>
-            </div>
-          </div>
-        </ChartCard>
-
-        <div className="quick-actions">
-          <ActionCard
-            onClick={() => {}}
-            icon="U"
-            title="Unit Management"
-            description="Manage individual units"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon="T"
-            title="Property Analytics"
-            description="View performance metrics"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon="M"
-            title="Maintenance Overview"
-            description="Track property maintenance"
-          />
-        </div>
+          </>
+        )}
       </div>
       
       {showPropertyForm && (
@@ -304,8 +305,6 @@ function PropertyManagementPage() {
               </form>
             </div>
           </div>
-            </>
-          )}
         </div>
       )}
       
