@@ -27,27 +27,18 @@ if %errorlevel% neq 0 (
     echo MongoDB is already running
 )
 
-REM Initialize database if needed
+REM Initialize database if needed (removed duplicate)
 echo Checking database initialization...
-deno task init-db
+call deno task init-db
 
-REM Start the full development environment
+REM Start the development server
 echo Starting development servers...
 echo Frontend will be available at: http://localhost:5173
 echo API server will be available at: http://localhost:8000
 echo.
-echo Press Ctrl+C to stop all servers
-echo.
 
-REM Start both servers in background and wait for them
-start "Briconomy Dev Server" deno task dev-full
+REM Start the development server (changed command)
+call deno task dev
 
-REM Wait for user input to keep the script running
-echo All servers started. Close this window to keep servers running in background.
-echo Or press any key to stop all servers...
-pause >nul
-
-REM Clean up when script is stopped
-echo Stopping servers...
-taskkill /f /im "deno.exe" >nul 2>&1
-echo Servers stopped.
+REM Wait for user input
+pause
