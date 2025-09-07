@@ -104,7 +104,27 @@ async function handler(request: Request): Promise<Response> {
     }
   }
   
-  if (pathname.startsWith("/src/")) {
+  if (pathname.startsWith("/src/") && pathname.endsWith(".css")) {
+    try {
+      const filePath = `.${pathname}`;
+      const css = await Deno.readTextFile(filePath);
+      
+      return new Response(css, {
+        headers: { 
+          "content-type": "text/css",
+          "cache-control": "no-cache"
+        },
+      });
+    } catch (error) {
+      console.error(`Error loading CSS ${pathname}:`, error);
+      return new Response(`/* Failed to load CSS */`, {
+        status: 500,
+        headers: { "content-type": "text/css" },
+      });
+    }
+  }
+  
+  if (pathname.startsWith("/src/") && !pathname.endsWith(".tsx") && !pathname.endsWith(".ts") && !pathname.endsWith(".css")) {
     return serveDir(request, {
       fsRoot: ".",
     });
