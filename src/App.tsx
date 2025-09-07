@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import CreateAccountPage from './pages/CreateAccountPage';
@@ -43,6 +43,7 @@ function App() {
           <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />
           <Route path="/tenant/profile" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
           <Route path="/admin/api-test" element={<AdminRoute><ApiTestPage /></AdminRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </div>
