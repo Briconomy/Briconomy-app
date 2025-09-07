@@ -2,60 +2,114 @@ db = db.getSiblingDB('briconomy');
 db.users.drop();
 db.users.insertMany([
   {
-    fullName: 'System Administrator',
+    fullName: 'Sarah Johnson',
     email: 'admin@briconomy.com',
-    phone: '+27123456789',
+    phone: '+27821234567',
     userType: 'admin',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+    profile: {"department":"System Administration","employeeId":"ADMIN001","joinDate":"2023-01-15T00:00:00.000Z"},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
-    fullName: 'Property Manager',
-    email: 'manager@briconomy.com',
-    phone: '+27123456790',
+    fullName: 'Michael Chen',
+    email: 'manager1@briconomy.com',
+    phone: '+27823456789',
     userType: 'manager',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    password: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5',
+    profile: {"department":"Property Management","employeeId":"MGR001","joinDate":"2023-02-20T00:00:00.000Z","managedProperties":[]},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
-    fullName: 'Site Caretaker',
-    email: 'caretaker@briconomy.com',
-    phone: '+27123456791',
+    fullName: 'Patricia Williams',
+    email: 'manager2@briconomy.com',
+    phone: '+27825678901',
+    userType: 'manager',
+    password: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5',
+    profile: {"department":"Property Management","employeeId":"MGR002","joinDate":"2023-03-10T00:00:00.000Z","managedProperties":[]},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    fullName: 'David Mokoena',
+    email: 'caretaker1@briconomy.com',
+    phone: '+27827890123',
     userType: 'caretaker',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    password: '4cddfbc939614427ff8b719e4f7699528e2481c37d734086b6b7786c5d9ed1aa',
+    profile: {"department":"Maintenance","employeeId":"CARE001","joinDate":"2023-04-05T00:00:00.000Z","skills":["plumbing","electrical","general"],"assignedProperty":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
-    fullName: 'John Tenant',
-    email: 'tenant@briconomy.com',
-    phone: '+27123456792',
+    fullName: 'Thabo Ndlovu',
+    email: 'caretaker2@briconomy.com',
+    phone: '+27829012345',
+    userType: 'caretaker',
+    password: '4cddfbc939614427ff8b719e4f7699528e2481c37d734086b6b7786c5d9ed1aa',
+    profile: {"department":"Maintenance","employeeId":"CARE002","joinDate":"2023-05-12T00:00:00.000Z","skills":["carpentry","painting","landscaping"],"assignedProperty":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    fullName: 'Emma Thompson',
+    email: 'tenant1@briconomy.com',
+    phone: '+27821234568',
     userType: 'tenant',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
+    profile: {"emergencyContact":"+27821234569","occupation":"Software Developer","moveInDate":"2023-06-01T00:00:00.000Z","leaseId":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
-    fullName: 'Test User',
-    email: 'test@test.com',
-    phone: '+27123456799',
+    fullName: 'James Smith',
+    email: 'tenant2@briconomy.com',
+    phone: '+27823456790',
     userType: 'tenant',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
+    profile: {"emergencyContact":"+27823456791","occupation":"Teacher","moveInDate":"2023-07-15T00:00:00.000Z","leaseId":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
-    fullName: 'Demo User',
-    email: 'demo@demo.com',
-    phone: '+27123456800',
-    userType: 'manager',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    fullName: 'Lisa Anderson',
+    email: 'tenant3@briconomy.com',
+    phone: '+27825678902',
+    userType: 'tenant',
+    password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
+    profile: {"emergencyContact":"+27825678903","occupation":"Nurse","moveInDate":"2023-08-20T00:00:00.000Z","leaseId":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
-    fullName: 'Sample User',
-    email: 'user@sample.com',
-    phone: '+27123456801',
-    userType: 'admin',
-    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    createdAt: new Date()
+    fullName: 'Robert Brown',
+    email: 'tenant4@briconomy.com',
+    phone: '+27827890124',
+    userType: 'tenant',
+    password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
+    profile: {"emergencyContact":"+27827890125","occupation":"Engineer","moveInDate":"2023-09-10T00:00:00.000Z","leaseId":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    fullName: 'Maria Garcia',
+    email: 'tenant5@briconomy.com',
+    phone: '+27829012346',
+    userType: 'tenant',
+    password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
+    profile: {"emergencyContact":"+27829012347","occupation":"Designer","moveInDate":"2023-10-05T00:00:00.000Z","leaseId":null},
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ]);
 db.properties.drop();
