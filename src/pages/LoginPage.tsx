@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function LoginPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { login, loading } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [authError, setAuthError] = useState('');
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -20,28 +20,15 @@ function LoginPage() {
   };
   
   const handleLogin = async () => {
-    setLoading(true);
-    setError('');
+    setAuthError('');
     
     if (!formData.email || !formData.password) {
-      setError('Please fill in both email and password');
-      setLoading(false);
+      setAuthError('Please fill in both email and password');
       return;
     }
     
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        }),
-      });
-      
-      const result = await response.json();
+      const result = await login(formData.email, formData.password);
       
       if (result.success) {
         const dashboards = {
@@ -50,15 +37,13 @@ function LoginPage() {
           tenant: '/tenant',
           caretaker: '/caretaker'
         };
-        navigate(dashboards[result.user.userType as keyof typeof dashboards] || '/tenant');
+        navigate(dashboards[result.user?.userType as keyof typeof dashboards] || '/tenant');
       } else {
-        setError(result.message || 'Login failed');
+        setAuthError(result.message);
       }
     } catch (error) {
-      setError('Network error. Please try again.');
+      setAuthError('Login failed. Please try again.');
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -148,7 +133,7 @@ function LoginPage() {
             Sign In
           </h2>
           
-          {error && (
+          {authError && (
             <div style={{
               background: '#fee',
               color: '#c00',
@@ -158,7 +143,7 @@ function LoginPage() {
               fontSize: '14px',
               textAlign: 'center'
             }}>
-              {error}
+              {authError}
             </div>
           )}
           
