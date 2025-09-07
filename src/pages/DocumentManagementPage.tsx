@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import TopNav from '../components/TopNav.tsx';
-import BottomNav from '../components/BottomNav.tsx';
-import StatCard from '../components/StatCard.tsx';
-import ActionCard from '../components/ActionCard.tsx';
-import DataTable from '../components/DataTable.tsx';
-import SearchFilter from '../components/SearchFilter.tsx';
+import TopNav from '../components/TopNav';
+import BottomNav from '../components/BottomNav';
+import StatCard from '../components/StatCard';
+import ActionCard from '../components/ActionCard';
+import DataTable from '../components/DataTable';
+import SearchFilter from '../components/SearchFilter';
 
 function DocumentManagementPage() {
   const [documents, setDocuments] = useState([
