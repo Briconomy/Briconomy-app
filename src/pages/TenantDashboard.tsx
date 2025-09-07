@@ -96,18 +96,17 @@ function TenantDashboard() {
   const requestsData = requests || (useMockData ? mockData.requests : []);
   const notificationsData = notifications.length > 0 ? notifications : (useMockData ? mockData.notifications : []);
 
+  const isLoading = loading || paymentsLoading || leaseLoading || requestsLoading || statsLoading;
+  const hasError = paymentsError || leaseError || requestsError || statsError;
   const upcomingPayment = hasError ? null : getUpcomingPayment();
   const currentLease = hasError ? null : leaseData?.[0];
   const pendingRequests = hasError ? [] : requestsData?.filter(r => r.status === 'pending') || [];
   const unreadNotifications = hasError ? 0 : notificationsData.length;
 
-  const isLoading = loading || paymentsLoading || leaseLoading || requestsLoading || statsLoading;
-  const hasError = paymentsError || leaseError || requestsError || statsError;
-
   if (isLoading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+  <TopNav showLogout />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -121,7 +120,7 @@ function TenantDashboard() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+  <TopNav showLogout />
       
       <div className="main-content">
         <div className="page-header">
@@ -185,25 +184,25 @@ function TenantDashboard() {
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => window.location.href = '/tenant/payments'}
+            onClick={() => globalThis.location.href = '/tenant/payments'}
             icon="P"
             title="Pay Rent"
             description="Make a payment"
           />
           <ActionCard
-            onClick={() => window.location.href = '/tenant/requests'}
+            onClick={() => globalThis.location.href = '/tenant/requests'}
             icon="M"
             title="Maintenance"
             description="Report an issue"
           />
           <ActionCard
-            onClick={() => window.location.href = '/tenant/messages'}
+            onClick={() => globalThis.location.href = '/tenant/messages'}
             icon="C"
             title="Contact"
             description="Message management"
           />
           <ActionCard
-            onClick={() => window.location.href = '/tenant/profile'}
+            onClick={() => globalThis.location.href = '/tenant/profile'}
             icon="U"
             title="Profile"
             description="Update information"

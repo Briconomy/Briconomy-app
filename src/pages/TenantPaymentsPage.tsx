@@ -217,7 +217,7 @@ function TenantPaymentsPage() {
             description="Pay your rent online"
           />
           <ActionCard
-            onClick={() => window.location.href = '/tenant/profile'}
+            onClick={() => globalThis.location.href = '/tenant/profile'}
             icon="M"
             title="Payment Methods"
             description="Manage payment options"
