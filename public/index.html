@@ -10,92 +10,15 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
-    
-    <style>
-        #root {
-            width: 100%;
-            height: 100vh;
-        }
-        
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: #162F1B;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .loading-logo {
-            width: 60px;
-            height: 60px;
-            background: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #162F1B;
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        
-        .loading-text {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .loading-subtitle {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        
-        .loading-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-top: 20px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
     <link rel="stylesheet" href="/src/styles/global.css">
 </head>
 <body>
-    <div id="root">
-        <div class="loading">
-            <div class="loading-logo">B</div>
-            <div class="loading-text">Briconomy</div>
-            <div class="loading-subtitle">Loading Property Management System...</div>
-            <div class="loading-spinner"></div>
-        </div>
-    </div>
-    
-    <script>
-        console.log('Basic script executing...');
-        document.getElementById('root').innerHTML = '<div style="padding: 20px;">JavaScript is working! Checking modules...</div>';
-    </script>
+    <div id="root"></div>
     
     <script type="module">
-        console.log('Module script starting...');
-        
         async function loadApp() {
             try {
-                console.log('Attempting to load module...');
                 const module = await import('/src/main.tsx');
-                console.log('Module loaded successfully:', module);
             } catch (error) {
                 console.error('Module load failed:', error);
                 document.getElementById('root').innerHTML = 

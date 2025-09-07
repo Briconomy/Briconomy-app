@@ -1,4 +1,4 @@
-const CACHE_NAME = 'briconomy-v1';
+const CACHE_NAME = 'briconomy-v2';
 const STATIC_CACHE = [
   '/',
   '/src/main.tsx',
@@ -16,27 +16,35 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+  const url = new URL(event.request.url);
+  const isDoc = event.request.destination === 'document' || event.request.mode === 'navigate';
+  const isModule = event.request.destination === 'script' || url.pathname.startsWith('/src/');
+
+  if (isDoc || isModule) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           }
-          
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          
           return response;
-        });
-      })
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      });
+    })
   );
 });
