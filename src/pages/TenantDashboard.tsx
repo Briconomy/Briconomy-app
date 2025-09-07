@@ -28,8 +28,7 @@ function TenantDashboard() {
       setLoading(true);
       setError(null);
       
-      // Mock tenant ID - in real app this would come from authentication
-      const tenantId = '507f1f77bcf86cd799439012';
+                    const tenantId = '507f1f77bcf86cd799439012';
       
       const [paymentsData, statsData] = await Promise.all([
         paymentsApi.getAll({ tenantId }),

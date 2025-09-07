@@ -88,11 +88,11 @@ function ReportingDashboardPage() {
   const completedReports = reports.filter(r => r.status === 'completed').length;
 
   const reportTypes = [
-    { value: 'financial', label: 'Financial Report', icon: '💰' },
-    { value: 'occupancy', label: 'Occupancy Report', icon: '🏠' },
-    { value: 'maintenance', label: 'Maintenance Report', icon: '🔧' },
-    { value: 'tenant', label: 'Tenant Report', icon: '👥' },
-    { value: 'performance', label: 'Performance Report', icon: '📊' }
+    { value: 'financial', label: 'Financial Report', icon: 'F' },
+    { value: 'occupancy', label: 'Occupancy Report', icon: 'O' },
+    { value: 'maintenance', label: 'Maintenance Report', icon: 'M' },
+    { value: 'tenant', label: 'Tenant Report', icon: 'T' },
+    { value: 'performance', label: 'Performance Report', icon: 'P' }
   ];
 
   const handleGenerateReport = (type) => {

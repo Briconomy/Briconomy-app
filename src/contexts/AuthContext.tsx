@@ -35,24 +35,33 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for existing session on app load
-    const savedUser = localStorage.getItem('briconomy_user');
-    const token = localStorage.getItem('briconomy_token');
-    
-    if (savedUser && token) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('briconomy_user');
-        localStorage.removeItem('briconomy_token');
+    try {
+      const savedUser = localStorage.getItem('briconomy_user');
+      const token = localStorage.getItem('briconomy_token');
+      
+      if (savedUser && token) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          console.error('Error parsing saved user:', error);
+          localStorage.removeItem('briconomy_user');
+          localStorage.removeItem('briconomy_token');
+        }
       }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      setError('Auth initialization failed');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   }, []);
+
+  if (error) {
+    console.warn('AuthProvider error:', error);
+  }
 
   const login = async (email: string, password: string) => {
     try {

@@ -30,7 +30,6 @@ export function ProtectedRoute({
   }
 
   if (requiredRole && user?.userType !== requiredRole) {
-    // Redirect to appropriate dashboard based on user role
     const roleBasedRedirect = `/${user?.userType}`;
     return <Navigate to={roleBasedRedirect} replace />;
   }
@@ -38,7 +37,6 @@ export function ProtectedRoute({
   return <>{children}</>;
 }
 
-// Role-based protected routes
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute requiredRole="admin">{children}</ProtectedRoute>;
 }
