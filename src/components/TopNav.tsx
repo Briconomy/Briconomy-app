@@ -1,4 +1,4 @@
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface TopNavProps {
   showBackButton?: boolean;
@@ -29,22 +29,22 @@ function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: 
   const homeLink = getHomeLink();
 
   const navigateTo = (url: string) => {
-    window.location.href = url;
+  globalThis.location.href = url;
   };
 
   return (
     <div className="top-nav">
       <div className="nav-left">
         {showBackButton && (
-          <button onClick={() => navigateTo(backLink)} className="back-btn">←</button>
+          <button type="button" onClick={() => navigateTo(backLink)} className="back-btn">←</button>
         )}
-        <button onClick={() => navigateTo(homeLink)} className="logo">
+        <button type="button" onClick={() => navigateTo(homeLink)} className="logo">
           <div className="logo-icon">B</div>
           <span>Briconomy</span>
         </button>
       </div>
       {showLogout && (
-        <button onClick={() => navigateTo('/')} className="logout-btn">Logout</button>
+        <button type="button" onClick={() => navigateTo('/')} className="logout-btn">Logout</button>
       )}
     </div>
   );
