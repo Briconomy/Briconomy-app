@@ -1,25 +1,24 @@
-import React from 'react';
+import _React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import CreateAccountPage from './pages/CreateAccountPage';
-import AdminDashboard from './pages/AdminDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import CaretakerDashboard from './pages/CaretakerDashboard';
-import TenantDashboard from './pages/TenantDashboard';
-import PropertiesPage from './pages/PropertiesPage';
-import TenantPaymentsPage from './pages/TenantPaymentsPage';
-import MaintenanceRequestsPage from './pages/MaintenanceRequestsPage';
-import CaretakerTasksPage from './pages/CaretakerTasksPage';
-import PropertyManagementPage from './pages/PropertyManagementPage';
-import LeaseManagementPage from './pages/LeaseManagementPage';
-import CommunicationPage from './pages/CommunicationPage';
-import DocumentManagementPage from './pages/DocumentManagementPage';
-import ReportingDashboardPage from './pages/ReportingDashboardPage';
-import UserProfilePage from './pages/UserProfilePage';
-import ApiTestPage from './pages/ApiTestPage';
-import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute, AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute';
+import LandingPage from './pages/LandingPage.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import CreateAccountPage from './pages/CreateAccountPage.tsx';
+import AdminDashboard from './pages/AdminDashboard.tsx';
+import ManagerDashboard from './pages/ManagerDashboard.tsx';
+import CaretakerDashboard from './pages/CaretakerDashboard.tsx';
+import TenantDashboard from './pages/TenantDashboard.tsx';
+import TenantPaymentsPage from './pages/TenantPaymentsPage.tsx';
+import MaintenanceRequestsPage from './pages/MaintenanceRequestsPage.tsx';
+import CaretakerTasksPage from './pages/CaretakerTasksPage.tsx';
+import PropertyManagementPage from './pages/PropertyManagementPage.tsx';
+import LeaseManagementPage from './pages/LeaseManagementPage.tsx';
+import CommunicationPage from './pages/CommunicationPage.tsx';
+import DocumentManagementPage from './pages/DocumentManagementPage.tsx';
+import ReportingDashboardPage from './pages/ReportingDashboardPage.tsx';
+import UserProfilePage from './pages/UserProfilePage.tsx';
+import ApiTestPage from './pages/ApiTestPage.tsx';
+import { AuthProvider } from './contexts/AuthContext.tsx';
+import { ProtectedRoute, AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
 
 function App() {
   return (

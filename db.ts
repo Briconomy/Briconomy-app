@@ -42,7 +42,7 @@ export async function connectToMongoDB(): Promise<Db> {
   }
 }
 
-export function getCollection<T = unknown>(name: string): Collection<T> {
+export function getCollection<T = Record<string, unknown>>(name: string): Collection<T> {
   if (!db) {
     throw new Error("Database not connected");
   }

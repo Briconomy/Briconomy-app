@@ -93,4 +93,4 @@ console.log(`📱 Mobile-optimized property management system`);
 console.log(`⚡ Low bandwidth optimization enabled`);
 console.log(`🔧 Chart.js data visualization ready`);
 
-await serve(handler, { port: PORT });
+await serve(handler, { port: PORT, hostname: "0.0.0.0" });

@@ -6,9 +6,8 @@ export const useLowBandwidthMode = () => {
 
   useEffect(() => {
     const checkConnection = () => {
-      const connection = (navigator as any).connection || 
-                        (navigator as any).mozConnection || 
-                        (navigator as any).webkitConnection;
+      const nav = navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; addEventListener?: (t: string, fn: () => void) => void; removeEventListener?: (t: string, fn: () => void) => void } };
+      const connection = nav.connection;
       
       if (connection) {
         setConnectionType(connection.effectiveType || 'unknown');
@@ -24,20 +23,21 @@ export const useLowBandwidthMode = () => {
 
     checkConnection();
     
-    const connection = (navigator as any).connection;
+  const nav = navigator as Navigator & { connection?: { addEventListener?: (t: string, fn: () => void) => void; removeEventListener?: (t: string, fn: () => void) => void } };
+  const connection = nav.connection;
     if (connection) {
       connection.addEventListener('change', checkConnection);
     }
 
-    window.addEventListener('online', checkConnection);
-    window.addEventListener('offline', checkConnection);
+  globalThis.addEventListener('online', checkConnection);
+  globalThis.addEventListener('offline', checkConnection);
 
     return () => {
       if (connection) {
         connection.removeEventListener('change', checkConnection);
       }
-      window.removeEventListener('online', checkConnection);
-      window.removeEventListener('offline', checkConnection);
+  globalThis.removeEventListener('online', checkConnection);
+  globalThis.removeEventListener('offline', checkConnection);
     };
   }, []);
 
@@ -72,10 +72,10 @@ export const useImageOptimization = () => {
   };
 };
 
-export const useDataCaching = (cacheKey: string, fetchData: () => Promise<any>, cacheTime: number = 300000) => {
-  const [data, setData] = useState(null);
+export const useDataCaching = <T,>(cacheKey: string, fetchData: () => Promise<T>, cacheTime: number = 300000) => {
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -95,13 +95,13 @@ export const useDataCaching = (cacheKey: string, fetchData: () => Promise<any>, 
           }
         }
 
-        const freshData = await fetchData();
+  const freshData: T = await fetchData();
         setData(freshData);
         
         localStorage.setItem(`cache_${cacheKey}`, JSON.stringify(freshData));
         localStorage.setItem(`cache_${cacheKey}_time`, Date.now().toString());
       } catch (err) {
-        setError(err);
+  setError(err);
         const cached = localStorage.getItem(`cache_${cacheKey}`);
         if (cached) {
           setData(JSON.parse(cached));
@@ -122,25 +122,25 @@ export const useDataCaching = (cacheKey: string, fetchData: () => Promise<any>, 
   return { data, loading, error, clearCache };
 };
 
-export const debounce = (func: Function, wait: number) => {
-  let timeout: NodeJS.Timeout;
-  return function executedFunction(...args: any[]) {
+export const debounce = <A extends unknown[]>(func: (...args: A) => void, wait: number) => {
+  let timeout: number | undefined;
+  return (...args: A) => {
     const later = () => {
-      clearTimeout(timeout);
+      if (timeout !== undefined) clearTimeout(timeout);
       func(...args);
     };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+    if (timeout !== undefined) clearTimeout(timeout);
+    timeout = setTimeout(later, wait) as unknown as number;
   };
 };
 
-export const throttle = (func: Function, limit: number) => {
-  let inThrottle: boolean;
-  return function executedFunction(...args: any[]) {
+export const throttle = <A extends unknown[]>(func: (...args: A) => void, limit: number) => {
+  let inThrottle = false;
+  return (...args: A) => {
     if (!inThrottle) {
-      func.apply(this, args);
+      func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => { inThrottle = false; }, limit);
     }
   };
 };

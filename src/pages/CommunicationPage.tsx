@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
+import _React, { useState, useEffect } from 'react';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
 import { notificationsApi, leasesApi, maintenanceApi, formatDateTime, useApi } from '../services/api.ts';
 
 function CommunicationPage() {
@@ -39,9 +39,9 @@ function CommunicationPage() {
     loadUserData();
   }, []);
 
-  const loadUserData = async () => {
+  const loadUserData = () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
@@ -129,28 +129,24 @@ function CommunicationPage() {
     setShowNewMessage(false);
   };
 
-  const handleContactSupport = (type) => {
+  const _handleContactSupport = (type: string) => {
     const contact = contacts.find(c => c.type === type);
-    if (contact) {
-      setActiveConversation(contact);
-    }
+    if (contact) setActiveConversation(contact);
   };
 
-  const getInitials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
+  const _getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   if (notificationsLoading || leasesLoading || requestsLoading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+  <TopNav showLogout />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>Loading messages...</p>
           </div>
         </div>
-        <BottomNav items={navItems} responsive={false} />
+  <BottomNav items={navItems} responsive={false} />
       </div>
     );
   }
@@ -160,7 +156,7 @@ function CommunicationPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+  <TopNav showLogout />
       
       <div className="main-content">
         <div className="page-header">
@@ -192,6 +188,7 @@ function CommunicationPage() {
               <div className="table-header">
                 <div className="table-title">Quick Contacts</div>
                 <button 
+                  type="button"
                   className="btn btn-primary btn-sm"
                   onClick={() => setShowNewMessage(true)}
                 >
@@ -259,36 +256,17 @@ function CommunicationPage() {
             )}
 
             <div className="quick-actions">
-              <ActionCard
-                onClick={() => handleContactSupport('manager')}
-                icon="M"
-                title="Contact Manager"
-                description="Property management"
-              />
-              <ActionCard
-                onClick={() => handleContactSupport('caretaker')}
-                icon="T"
-                title="Maintenance"
-                description="Repair requests"
-              />
-              <ActionCard
-                onClick={() => handleContactSupport('emergency')}
-                icon="E"
-                title="Emergency"
-                description="Urgent assistance"
-              />
-              <ActionCard
-                onClick={() => window.location.href = '/tenant/requests'}
-                icon="R"
-                title="Request Help"
-                description="Submit maintenance"
-              />
+              <ActionCard onClick={() => setActiveConversation(contacts[0])} icon="M" title="Contact Manager" description="Property management" />
+              <ActionCard onClick={() => setActiveConversation(contacts[1])} icon="T" title="Maintenance" description="Repair requests" />
+              <ActionCard onClick={() => setActiveConversation(contacts[2])} icon="E" title="Emergency" description="Urgent assistance" />
+              <ActionCard to="/tenant/requests" icon="R" title="Request Help" description="Submit maintenance" />
             </div>
           </>
         ) : (
           <div className="conversation-view">
             <div className="conversation-header">
               <button 
+                type="button"
                 className="back-btn"
                 onClick={() => setActiveConversation(null)}
               >
@@ -339,6 +317,7 @@ function CommunicationPage() {
                 disabled={sending}
               />
               <button 
+                type="button"
                 className="btn btn-primary"
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
@@ -355,7 +334,7 @@ function CommunicationPage() {
           <div className="modal-content">
             <div className="modal-header">
               <h3>New Message</h3>
-              <button className="close-btn" onClick={() => setShowNewMessage(false)}>×</button>
+              <button type="button" className="close-btn" onClick={() => setShowNewMessage(false)}>×</button>
             </div>
             <div className="modal-body">
               <div className="recipient-list">
