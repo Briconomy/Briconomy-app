@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
-import ChartCard from '../components/ChartCard';
-import DataTable from '../components/DataTable';
-import SearchFilter from '../components/SearchFilter';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
+import ChartCard from '../components/ChartCard.tsx';
+import DataTable from '../components/DataTable.tsx';
+import SearchFilter from '../components/SearchFilter.tsx';
 
 function LeaseManagementPage() {
   const [leases, setLeases] = useState([
@@ -81,7 +81,7 @@ function LeaseManagementPage() {
     .filter(l => l.status === 'active')
     .reduce((sum, l) => sum + l.monthlyRent, 0);
   const upcomingExpirations = leases.filter(l => {
-    const daysUntilExpiry = (new Date(l.endDate) - new Date()) / (1000 * 60 * 60 * 24);
+    const daysUntilExpiry = (new Date(l.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
 
@@ -182,14 +182,7 @@ function LeaseManagementPage() {
           title="Lease Portfolio"
           data={filteredLeases}
           columns={leaseColumns}
-          actions={
-            <button 
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowLeaseForm(true)}
-            >
-              New Lease
-            </button>
-          }
+          actions={null}
           onRowClick={(lease) => {}}
         />
 
@@ -216,104 +209,31 @@ function LeaseManagementPage() {
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => {}}
+            to="/manager/create-lease"
+            icon="C"
+            title="Create Lease"
+            description="New lease agreement"
+          />
+          <ActionCard
+            to="/manager/renewals"
             icon="R"
             title="Renewals"
             description="Manage lease renewals"
           />
           <ActionCard
-            onClick={() => {}}
+            to="/manager/terminations"
             icon="T"
             title="Terminations"
             description="Handle lease terminations"
           />
           <ActionCard
-            onClick={() => {}}
+            to="/manager/documents"
             icon="D"
             title="Documents"
             description="Lease agreements"
           />
         </div>
       </div>
-      
-      {showLeaseForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Create New Lease</h3>
-              <button className="close-btn" onClick={() => setShowLeaseForm(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <form>
-                <div className="form-group">
-                  <label>Tenant</label>
-                  <select required>
-                    <option value="">Select Tenant</option>
-                    <option value="1">John Tenant</option>
-                    <option value="2">Jane Smith</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Property</label>
-                  <select required>
-                    <option value="">Select Property</option>
-                    <option value="1">Blue Hills Apartments</option>
-                    <option value="2">Green Valley Complex</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label>Unit</label>
-                  <select required>
-                    <option value="">Select Unit</option>
-                    <option value="2A">Unit 2A</option>
-                    <option value="1B">Unit 1B</option>
-                  </select>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Start Date</label>
-                    <input type="date" required />
-                  </div>
-                  <div className="form-group">
-                    <label>End Date</label>
-                    <input type="date" required />
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Monthly Rent (R)</label>
-                    <input type="number" required />
-                  </div>
-                  <div className="form-group">
-                    <label>Deposit (R)</label>
-                    <input type="number" required />
-                  </div>
-                </div>
-                
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowLeaseForm(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    className="btn btn-primary"
-                  >
-                    Create Lease
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
       
       <BottomNav items={navItems} responsive={false} />
     </div>
