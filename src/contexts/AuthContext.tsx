@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi } from '../services/api';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { authApi } from '../services/api.ts';
 
 interface User {
   id: string;
@@ -7,14 +7,14 @@ interface User {
   email: string;
   phone: string;
   userType: 'admin' | 'manager' | 'caretaker' | 'tenant';
-  profile?: any;
+  profile?: Record<string, unknown>;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
-  register: (userData: any) => Promise<{ success: boolean; message: string }>;
+  register: (userData: Record<string, unknown>) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -67,14 +67,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string) => {
     try {
-      const result = await authApi.login(email, password);
+      const result: { success: boolean; message: string; user?: Record<string, unknown>; token?: string } = await authApi.login(email, password);
       
       if (result.success && result.user) {
-        // Convert MongoDB _id to id field for frontend consistency
-        const userWithId = {
-          ...result.user,
-          id: result.user._id || result.user.id
-        };
+        const raw = result.user as Record<string, unknown>;
+        const id = String((raw as { _id?: unknown; id?: unknown }).id ?? (raw as { _id?: unknown })._id ?? '');
+        const { _id: _ignored, ...rest } = raw as Record<string, unknown> & { _id?: unknown };
+        const userWithId = { id, ...(rest as Record<string, unknown>) } as unknown as User;
         
         setUser(userWithId);
         localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
@@ -89,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const register = async (userData: any) => {
+  const register = async (userData: Record<string, unknown>) => {
     try {
       const result = await authApi.register(userData);
       

@@ -202,11 +202,11 @@ async function handler(request: Request): Promise<Response> {
   });
 }
 
-console.log(`🚀 Briconomy Development Server running on http://localhost:${PORT}/`);
-console.log(`📱 Mobile-optimized property management system`);
-console.log(`⚡ TypeScript transpilation enabled`);
-console.log(`🔧 Chart.js data visualization ready`);
+console.log(`Briconomy Development Server running on http://localhost:${PORT}/`);
+console.log(`Mobile-optimized property management system`);
+console.log(`TypeScript transpilation enabled`);
+console.log(`Chart.js data visualization ready`);
 
-await serve(handler, { port: PORT });
+await serve(handler, { port: PORT, hostname: "0.0.0.0" });
 
 esbuild.stop();

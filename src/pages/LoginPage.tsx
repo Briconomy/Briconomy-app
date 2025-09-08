@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, loading } = useAuth();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [authError, setAuthError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -21,9 +21,11 @@ function LoginPage() {
   
   const handleLogin = async () => {
     setAuthError('');
+    setSubmitting(true);
     
     if (!formData.email || !formData.password) {
       setAuthError('Please fill in both email and password');
+      setSubmitting(false);
       return;
     }
     
@@ -41,8 +43,10 @@ function LoginPage() {
       } else {
         setAuthError(result.message);
       }
-    } catch (error) {
+  } catch (_error) {
       setAuthError('Login failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -72,8 +76,8 @@ function LoginPage() {
           alignItems: 'center',
           gap: '10px'
         }}>
-          <Link 
-            to="/" 
+          <a 
+            href="/" 
             style={{
               background: '#f8f9fa',
               border: '1px solid #e9ecef',
@@ -90,7 +94,7 @@ function LoginPage() {
             }}
           >
             ←
-          </Link>
+          </a>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -214,8 +218,9 @@ function LoginPage() {
           </div>
           
           <button 
+            type="button"
             onClick={handleLogin}
-            disabled={loading}
+            disabled={submitting}
             style={{
               width: '100%',
               padding: '12px',
@@ -223,20 +228,20 @@ function LoginPage() {
               borderRadius: '8px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: submitting ? 'not-allowed' : 'pointer',
               marginBottom: '10px',
-              background: loading ? '#ccc' : '#162F1B',
+              background: submitting ? '#ccc' : '#162F1B',
               color: 'white',
               textDecoration: 'none',
               display: 'inline-block',
               textAlign: 'center',
-              opacity: loading ? 0.7 : 1
+              opacity: submitting ? 0.7 : 1
             }}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {submitting ? 'Signing In...' : 'Sign In'}
           </button>
           
-          <button style={{
+          <button type="button" style={{
             width: '100%',
             padding: '12px',
             border: 'none',
@@ -254,7 +259,7 @@ function LoginPage() {
             Continue with Google SSO
           </button>
           
-          <button style={{
+          <button type="button" style={{
             width: '100%',
             padding: '12px',
             border: 'none',

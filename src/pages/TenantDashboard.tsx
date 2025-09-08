@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
-import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api';
+import _React, { useState, useEffect } from 'react';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
+import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
 function TenantDashboard() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, _setLoading] = useState(true);
+  const [_error, _setError] = useState<unknown>(null);
   const [notifications, setNotifications] = useState([]);
   
   const navItems = [
@@ -18,7 +18,7 @@ function TenantDashboard() {
     { path: '/tenant/profile', label: 'Profile' }
   ];
 
-  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = useApi(
+  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(
     () => paymentsApi.getAll({ tenantId: user?.id || '68bde3529b1d854514fa336a' }),
     [user?.id]
   );
@@ -33,7 +33,7 @@ function TenantDashboard() {
     [user?.id]
   );
 
-  const { data: stats, loading: statsLoading, error: statsError } = useApi(
+  const { data: _stats, loading: statsLoading, error: statsError } = useApi(
     () => dashboardApi.getStats(),
     []
   );
@@ -43,9 +43,9 @@ function TenantDashboard() {
     loadNotifications();
   }, []);
 
-  const loadUserData = async () => {
+  const loadUserData = () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
@@ -73,17 +73,17 @@ function TenantDashboard() {
   };
 
   const getUpcomingPayment = () => {
-    const paymentsData = payments || (paymentsError ? getMockData().payments : []);
-    if (!paymentsData) return null;
-    return paymentsData
+  const list = payments || (paymentsError ? getMockData().payments : []);
+  if (!list) return null;
+  return list
       .filter(p => p.status === 'pending')
-      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
   };
 
-  const getDaysUntilDue = (dueDate) => {
+  const getDaysUntilDue = (dueDate: string | Date) => {
     const today = new Date();
     const due = new Date(dueDate);
-    const diffTime = due - today;
+    const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -91,7 +91,7 @@ function TenantDashboard() {
   const useMockData = paymentsError || leaseError || requestsError || statsError;
   const mockData = getMockData();
   
-  const paymentsData = payments || (useMockData ? mockData.payments : []);
+  const _paymentsData = payments || (useMockData ? mockData.payments : []);
   const leaseData = lease || (useMockData ? mockData.lease : []);
   const requestsData = requests || (useMockData ? mockData.requests : []);
   const notificationsData = notifications.length > 0 ? notifications : (useMockData ? mockData.notifications : []);

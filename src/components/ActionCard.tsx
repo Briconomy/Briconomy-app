@@ -1,20 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
-interface ActionCardProps {
-  to: string;
+export interface ActionCardProps {
+  to?: string;
   icon: string;
   title: string;
   description: string;
+  onClick?: () => void;
 }
 
-function ActionCard({ to, icon, title, description }: ActionCardProps) {
+function ActionCard({ to = '#', icon, title, description, onClick }: ActionCardProps) {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
   return (
-    <Link to={to} className="action-card">
+    <a href={to} className="action-card" onClick={handleClick}>
       <div className="action-icon">{icon}</div>
       <div className="action-title">{title}</div>
       <div className="action-desc">{description}</div>
-    </Link>
+    </a>
   );
 }
 

@@ -1,6 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+function resolveApiBase(): string {
+  try {
+    const loc = globalThis.location;
+    const protocol = loc.protocol || 'http:';
+  const hostname = loc.hostname || 'localhost';
+  const port = loc.port || '';
+  if (port === '5173') return `${protocol}//${hostname}:8000/api`;
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
+  } catch (_) {
+    return 'http://localhost:8000/api';
+  }
+}
+
+const API_BASE_URL = resolveApiBase();
 
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -12,6 +25,9 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   };
 
   const config = { ...defaultOptions, ...options };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  (config as unknown as { signal?: AbortSignal }).signal = controller.signal;
 
   try {
     const response = await fetch(url, config);
@@ -24,17 +40,19 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 export const propertiesApi = {
   getAll: () => apiRequest('/properties'),
   getById: (id: string) => apiRequest(`/properties/${id}`),
-  create: (data: any) => apiRequest('/properties', {
+  create: (data: Record<string, unknown>) => apiRequest('/properties', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  update: (id: string, data: any) => apiRequest(`/properties/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/properties/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -45,7 +63,7 @@ export const unitsApi = {
     const endpoint = propertyId ? `/units?propertyId=${propertyId}` : '/units';
     return apiRequest(endpoint);
   },
-  create: (data: any) => apiRequest('/units', {
+  create: (data: Record<string, unknown>) => apiRequest('/units', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -57,7 +75,7 @@ export const leasesApi = {
     const endpoint = params ? `/leases?${params}` : '/leases';
     return apiRequest(endpoint);
   },
-  create: (data: any) => apiRequest('/leases', {
+  create: (data: Record<string, unknown>) => apiRequest('/leases', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -69,7 +87,7 @@ export const paymentsApi = {
     const endpoint = params ? `/payments?${params}` : '/payments';
     return apiRequest(endpoint);
   },
-  create: (data: any) => apiRequest('/payments', {
+  create: (data: Record<string, unknown>) => apiRequest('/payments', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -85,11 +103,11 @@ export const maintenanceApi = {
     const endpoint = params ? `/maintenance?${params}` : '/maintenance';
     return apiRequest(endpoint);
   },
-  create: (data: any) => apiRequest('/maintenance', {
+  create: (data: Record<string, unknown>) => apiRequest('/maintenance', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  update: (id: string, data: any) => apiRequest(`/maintenance/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/maintenance/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -101,11 +119,11 @@ export const tasksApi = {
     const endpoint = params ? `/tasks?${params}` : '/tasks';
     return apiRequest(endpoint);
   },
-  create: (data: any) => apiRequest('/tasks', {
+  create: (data: Record<string, unknown>) => apiRequest('/tasks', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  update: (id: string, data: any) => apiRequest(`/tasks/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/tasks/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -117,7 +135,7 @@ export const reportsApi = {
     const endpoint = params ? `/reports?${params}` : '/reports';
     return apiRequest(endpoint);
   },
-  create: (data: any) => apiRequest('/reports', {
+  create: (data: Record<string, unknown>) => apiRequest('/reports', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -132,7 +150,7 @@ export const authApi = {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   }),
-  register: (userData: any) => apiRequest('/auth/register', {
+  register: (userData: Record<string, unknown>) => apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
@@ -143,47 +161,35 @@ export const authApi = {
 
 export const notificationsApi = {
   getAll: (userId: string) => apiRequest(`/notifications/${userId}`),
-  create: (data: any) => apiRequest('/notifications', {
+  create: (data: Record<string, unknown>) => apiRequest('/notifications', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
 };
 
-export function useApi<T>(apiCall: () => Promise<T>, dependencies: any[] = []) {
+export function useApi<T>(apiCall: () => Promise<T>, dependencies: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await apiCall();
-        if (isMounted) {
-          setData(result);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Unknown error');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await apiCall();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
   }, dependencies);
 
-  return { data, loading, error, refetch: () => fetchData() };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
 }
 
 export function formatCurrency(amount: number): string {

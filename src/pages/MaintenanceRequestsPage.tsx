@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
-import ChartCard from '../components/ChartCard';
-import { maintenanceApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
+import _React, { useState, useEffect } from 'react';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
+import ChartCard from '../components/ChartCard.tsx';
+import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 
 function MaintenanceRequestsPage() {
   const [user, setUser] = useState(null);
@@ -38,9 +38,9 @@ function MaintenanceRequestsPage() {
     loadUserData();
   }, []);
 
-  const loadUserData = async () => {
+  const loadUserData = () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
@@ -104,11 +104,11 @@ function MaintenanceRequestsPage() {
 
   const getPriorityIcon = (priority) => {
     switch (priority) {
-      case 'urgent': return '🔴';
-      case 'high': return '🟠';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
+      case 'urgent': return '!';
+      case 'high': return '!!';
+      case 'medium': return '•';
+      case 'low': return '·';
+      default: return '-';
     }
   };
 
@@ -119,7 +119,7 @@ function MaintenanceRequestsPage() {
   if (requestsLoading || leasesLoading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+  <TopNav showLogout />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -135,7 +135,7 @@ function MaintenanceRequestsPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+  <TopNav showLogout />
       
       <div className="main-content">
         <div className="page-header">
@@ -165,6 +165,7 @@ function MaintenanceRequestsPage() {
           <div className="table-header">
             <div className="table-title">Your Requests</div>
             <button 
+              type="button"
               className="btn btn-primary btn-sm"
               onClick={() => setShowRequestForm(true)}
             >
@@ -176,6 +177,7 @@ function MaintenanceRequestsPage() {
             <div className="empty-state">
               <p>No maintenance requests found</p>
               <button 
+                type="button"
                 className="btn btn-primary"
                 onClick={() => setShowRequestForm(true)}
               >
@@ -234,13 +236,13 @@ function MaintenanceRequestsPage() {
             description="Create new request"
           />
           <ActionCard
-            onClick={() => window.location.href = '/tenant/messages'}
+            to="/tenant/messages"
             icon="C"
             title="Contact Caretaker"
             description="Direct communication"
           />
           <ActionCard
-            onClick={() => window.location.href = '/tenant/profile'}
+            to="/tenant/profile"
             icon="E"
             title="Emergency Info"
             description="Emergency contacts"
@@ -265,12 +267,12 @@ function MaintenanceRequestsPage() {
         </ChartCard>
       </div>
       
-      {showRequestForm && (
+  {showRequestForm && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
               <h3>New Maintenance Request</h3>
-              <button className="close-btn" onClick={() => setShowRequestForm(false)}>×</button>
+      <button type="button" className="close-btn" onClick={() => setShowRequestForm(false)}>×</button>
             </div>
             <div className="modal-body">
               <form onSubmit={handleSubmitRequest}>
