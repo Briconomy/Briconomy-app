@@ -1,0 +1,194 @@
+/* Prospective Tenant Mode Styles */
+
+.prospective-tenant-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(22, 47, 27, 0.1) 0%, rgba(45, 90, 49, 0.1) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(45, 90, 49, 0.2);
+}
+
+.indicator-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(45, 90, 49, 0.8);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.indicator-text {
+  font-size: 11px;
+  color: rgba(45, 90, 49, 0.8);
+  font-weight: 500;
+}
+
+/* Improved search and filter styles */
+.search-filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.filter-select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.price-range-filter label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.price-inputs span {
+  color: #666;
+  font-weight: 500;
+}
+
+/* Session activity indicator */
+.session-activity {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(45, 90, 49, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.session-activity.active {
+  background: rgba(76, 175, 80, 0.9);
+}
+
+.session-activity.inactive {
+  background: rgba(158, 158, 158, 0.9);
+}
+
+/* Improved property card animations */
+.property-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.property-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .prospective-tenant-indicator {
+    margin-top: 8px;
+    padding: 8px;
+  }
+  
+  .indicator-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+  
+  .indicator-text {
+    font-size: 10px;
+  }
+  
+  .filter-controls {
+    gap: 12px;
+  }
+  
+  .price-inputs {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .price-inputs span {
+    display: none;
+  }
+}
+
+/* Loading and error states improvements */
+.loading-state, .error-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2D5A31;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Results info improvements */
+.results-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+.low-bandwidth-indicator {
+  background: #ff9800;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}

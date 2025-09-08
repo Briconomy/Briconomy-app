@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
-import { propertiesApi, formatCurrency } from '../services/api.ts';
+import { propertiesApi, authApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function RentalApplicationPage() {
   const { propertyId } = useParams();
@@ -69,6 +70,21 @@ function RentalApplicationPage() {
   const totalSteps = 5;
 
   const { lowBandwidthMode } = useLowBandwidthMode();
+  const { user, login } = useAuth();
+
+  // Account creation states
+  const [showAccountCreation, setShowAccountCreation] = useState(false);
+  const [signUpForm, setSignUpForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    userType: 'tenant'
+  });
+  const [signUpLoading, setSignUpLoading] = useState(false);
+  const [signUpError, setSignUpError] = useState(null);
 
   const navItems = [
     { path: '/', label: 'Home', active: false },
@@ -76,11 +92,32 @@ function RentalApplicationPage() {
     { path: '/login', label: 'Login', active: false }
   ];
 
+  // Check if user is authenticated and validate propertyId
   useEffect(() => {
-    if (propertyId) {
-      fetchPropertyDetails();
+    // Validate propertyId - redirect to create account if undefined or invalid
+    if (!propertyId || propertyId === 'undefined' || propertyId.trim() === '') {
+      navigate('/create-account', { 
+        state: { 
+          error: 'No property specified. Please select a property first.',
+          from: '/properties'
+        } 
+      });
+      return;
     }
-  }, [propertyId]);
+
+    fetchPropertyDetails();
+  }, [user, loading, submitted]);
+
+  // Check if user should see account creation
+  useEffect(() => {
+    if (!user && !loading && !showAccountCreation && property) {
+      // Show a welcome message for prospective tenants
+      const timer = setTimeout(() => {
+        // Auto-show account creation after a brief delay for users to read
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, loading, showAccountCreation, property]);
 
   const fetchPropertyDetails = async () => {
     try {
@@ -182,6 +219,209 @@ function RentalApplicationPage() {
       setSubmitting(false);
     }
   };
+
+  // Account creation handlers
+  const handleSignUpChange = (field, value) => {
+    setSignUpForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSignUpSubmit = async (e) => {
+    e.preventDefault();
+    setSignUpError(null);
+
+    // Validate sign-up form
+    if (!signUpForm.firstName || !signUpForm.lastName || !signUpForm.email || 
+        !signUpForm.phone || !signUpForm.password) {
+      setSignUpError('Please fill in all required fields.');
+      return;
+    }
+
+    if (signUpForm.password !== signUpForm.confirmPassword) {
+      setSignUpError('Passwords do not match.');
+      return;
+    }
+
+    if (signUpForm.password.length < 6) {
+      setSignUpError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setSignUpLoading(true);
+
+    try {
+      // Create account
+      const userData = {
+        firstName: signUpForm.firstName,
+        lastName: signUpForm.lastName,
+        email: signUpForm.email,
+        phone: signUpForm.phone,
+        password: signUpForm.password,
+        userType: signUpForm.userType
+      };
+
+      // Simulate API call - in real implementation, this would call authApi.register()
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Auto-login after successful registration
+      const loginData = {
+        email: signUpForm.email,
+        password: signUpForm.password
+      };
+
+      // Simulate login API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create user object for login
+      const user = {
+        _id: `user_${Date.now()}`,
+        ...userData,
+        createdAt: new Date().toISOString()
+      };
+
+      // Login the user
+      await login('mock_jwt_token_' + Date.now(), null);
+      
+      // Pre-fill rental application form with account information
+      setFormData(prev => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          firstName: signUpForm.firstName,
+          lastName: signUpForm.lastName,
+          email: signUpForm.email,
+          phone: signUpForm.phone
+        }
+      }));
+
+      setShowAccountCreation(false);
+    } catch (err) {
+      setSignUpError('Failed to create account. Please try again.');
+      console.error('Error creating account:', err);
+    } finally {
+      setSignUpLoading(false);
+    }
+  };
+
+  const renderAccountCreation = () => (
+    <div className="account-creation-form">
+      <div className="page-header">
+        <div className="page-title">Create Account</div>
+        <div className="page-subtitle">Create an account to submit your rental application</div>
+      </div>
+
+      {signUpError && (
+        <div className="error-message">
+          {signUpError}
+        </div>
+      )}
+
+      <form onSubmit={handleSignUpSubmit} className="signup-form">
+        <div className="form-section">
+          <h3>Personal Information</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>First Name *</label>
+              <input
+                type="text"
+                value={signUpForm.firstName}
+                onChange={(e) => handleSignUpChange('firstName', e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Last Name *</label>
+              <input
+                type="text"
+                value={signUpForm.lastName}
+                onChange={(e) => handleSignUpChange('lastName', e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Email Address *</label>
+              <input
+                type="email"
+                value={signUpForm.email}
+                onChange={(e) => handleSignUpChange('email', e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Phone Number *</label>
+              <input
+                type="tel"
+                value={signUpForm.phone}
+                onChange={(e) => handleSignUpChange('phone', e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3>Account Security</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Password *</label>
+              <input
+                type="password"
+                value={signUpForm.password}
+                onChange={(e) => handleSignUpChange('password', e.target.value)}
+                required
+              />
+              <small>Must be at least 6 characters long</small>
+            </div>
+            <div className="form-group">
+              <label>Confirm Password *</label>
+              <input
+                type="password"
+                value={signUpForm.confirmPassword}
+                onChange={(e) => handleSignUpChange('confirmPassword', e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3>Account Type</h3>
+          <div className="form-group">
+            <select
+              value={signUpForm.userType}
+              onChange={(e) => handleSignUpChange('userType', e.target.value)}
+            >
+              <option value="tenant">Tenant</option>
+              <option value="manager">Property Manager</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button 
+            type="button" 
+            onClick={() => navigate(`/property/${propertyId}`)}
+            className="btn btn-secondary"
+          >
+            Back to Property
+          </button>
+          <button 
+            type="submit" 
+            className="btn btn-primary"
+            disabled={signUpLoading}
+          >
+            {signUpLoading ? 'Creating Account...' : 'Create Account & Continue'}
+          </button>
+        </div>
+      </form>
+
+      <div className="login-prompt">
+        <p>Already have an account? <button onClick={() => navigate('/login')} className="link-button">Sign In</button></p>
+      </div>
+    </div>
+  );
 
   const renderStepIndicator = () => {
     return (
@@ -678,59 +918,65 @@ function RentalApplicationPage() {
       <TopNav showBackButton={true} backLink={`/property/${propertyId}`} />
       
       <div className="main-content">
-        {property && (
-          <div className="application-header">
-            <h2>Rental Application</h2>
-            <div className="property-summary">
-              <h3>{property.name}</h3>
-              <p>{property.address}</p>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="rental-application-form">
-          {renderStepIndicator()}
-
-          <div className="form-content">
-            {step === 1 && renderPersonalInfo()}
-            {step === 2 && renderEmploymentInfo()}
-            {step === 3 && renderRentalHistory()}
-            {step === 4 && renderReferences()}
-            {step === 5 && (
-              <>
-                {renderAdditionalInfo()}
-                {renderDocuments()}
-              </>
+        {showAccountCreation ? (
+          renderAccountCreation()
+        ) : (
+          <>
+            {property && (
+              <div className="application-header">
+                <h2>Rental Application</h2>
+                <div className="property-summary">
+                  <h3>{property.name}</h3>
+                  <p>{property.address}</p>
+                </div>
+              </div>
             )}
-          </div>
 
-          <div className="form-navigation">
-            {step > 1 && (
-              <button type="button" onClick={prevStep} className="btn btn-secondary">
-                Previous
-              </button>
-            )}
-            
-            {step < totalSteps ? (
-              <button type="button" onClick={nextStep} className="btn btn-primary">
-                Next
-              </button>
-            ) : (
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-                disabled={submitting}
-              >
-                {submitting ? 'Submitting...' : 'Submit Application'}
-              </button>
-            )}
-          </div>
-        </form>
+            <form onSubmit={handleSubmit} className="rental-application-form">
+              {renderStepIndicator()}
 
-        {lowBandwidthMode && (
-          <div className="low-bandwidth-notice">
-            Low bandwidth mode enabled. Large files may take longer to upload.
-          </div>
+              <div className="form-content">
+                {step === 1 && renderPersonalInfo()}
+                {step === 2 && renderEmploymentInfo()}
+                {step === 3 && renderRentalHistory()}
+                {step === 4 && renderReferences()}
+                {step === 5 && (
+                  <>
+                    {renderAdditionalInfo()}
+                    {renderDocuments()}
+                  </>
+                )}
+              </div>
+
+              <div className="form-navigation">
+                {step > 1 && (
+                  <button type="button" onClick={prevStep} className="btn btn-secondary">
+                    Previous
+                  </button>
+                )}
+                
+                {step < totalSteps ? (
+                  <button type="button" onClick={nextStep} className="btn btn-primary">
+                    Next
+                  </button>
+                ) : (
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Application'}
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {lowBandwidthMode && (
+              <div className="low-bandwidth-notice">
+                Low bandwidth mode enabled. Large files may take longer to upload.
+              </div>
+            )}
+          </>
         )}
       </div>
       
