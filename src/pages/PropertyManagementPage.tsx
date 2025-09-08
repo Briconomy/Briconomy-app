@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
-import ChartCard from '../components/ChartCard';
+import { useNavigate } from 'react-router-dom';
+import TopNav from '../components/TopNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
+import ChartCard from '../components/ChartCard.tsx';
 import { propertiesApi, dashboardApi, formatCurrency } from '../services/api.ts';
 
 function PropertyManagementPage() {
@@ -197,19 +197,19 @@ function PropertyManagementPage() {
 
             <div className="quick-actions">
               <ActionCard
-                onClick={() => {}}
+                to="#"
                 icon="U"
                 title="Unit Management"
                 description="Manage individual units"
               />
               <ActionCard
-                onClick={() => {}}
+                to="#"
                 icon="T"
                 title="Property Analytics"
                 description="View performance metrics"
               />
               <ActionCard
-                onClick={() => {}}
+                to="#"
                 icon="M"
                 title="Maintenance Overview"
                 description="Track property maintenance"
@@ -308,7 +308,27 @@ function PropertyManagementPage() {
         </div>
       )}
       
-      <BottomNav items={navItems} responsive={false} />
+      {/* Navigation Buttons */}
+      <div className="navigation-buttons">
+        <button 
+          onClick={() => window.location.href = '/manager'}
+          className="btn btn-primary nav-btn"
+        >
+          Dashboard
+        </button>
+        <button 
+          onClick={() => window.location.href = '/manager/leases'}
+          className="btn btn-secondary nav-btn"
+        >
+          Leases
+        </button>
+        <button 
+          onClick={() => window.location.href = '/manager/payments'}
+          className="btn btn-secondary nav-btn"
+        >
+          Payments
+        </button>
+      </div>
     </div>
   );
 }
