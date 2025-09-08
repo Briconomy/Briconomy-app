@@ -10,11 +10,9 @@ interface TopNavProps {
 function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: TopNavProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
-  const homeLink = '/';
 
-  const navigateTo = (url: string) => {
-    navigate(url);
+  const handleBack = () => {
+    navigate(-1); 
   };
 
   const handleLogout = async () => {
@@ -30,12 +28,12 @@ function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: 
     <div className="top-nav">
       <div className="nav-left">
         {showBackButton && (
-          <button type="button" onClick={() => navigateTo(backLink)} className="back-btn">←</button>
+          <button type="button" onClick={handleBack} className="back-btn">←</button>
         )}
-        <button type="button" onClick={() => navigateTo(homeLink)} className="logo">
+        <div className="logo">
           <div className="logo-icon">B</div>
           <span>Briconomy</span>
-        </button>
+        </div>
       </div>
       {showLogout && (
         <button type="button" onClick={handleLogout} className="logout-btn">Logout</button>
