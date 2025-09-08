@@ -3,7 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function PropertiesPage() {
   const [properties, setProperties] = useState([]);
@@ -101,17 +101,17 @@ function PropertiesPage() {
   };
 
   const handleViewDetails = (propertyId) => {
-    window.location.href = `/property/${propertyId}`;
+  globalThis.location.href = `/property/${propertyId}`;
   };
 
   const handleApplyNow = (propertyId) => {
-    window.location.href = `/apply/${propertyId}`;
+  globalThis.location.href = `/apply/${propertyId}`;
   };
 
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/" />
+  <TopNav showBackButton backLink="/" />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -125,11 +125,11 @@ function PropertiesPage() {
   if (error) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/" />
+  <TopNav showBackButton backLink="/" />
         <div className="main-content">
           <div className="error-state">
             <p>Error loading properties: {error}</p>
-            <button onClick={fetchProperties} className="btn btn-primary">Retry</button>
+            <button type="button" onClick={fetchProperties} className="btn btn-primary">Retry</button>
           </div>
         </div>
       </div>
@@ -138,7 +138,7 @@ function PropertiesPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} backLink="/" />
+  <TopNav showBackButton backLink="/" />
       
       <div className="main-content">
         <div className="page-header">
@@ -260,13 +260,13 @@ function PropertiesPage() {
                   </div>
 
                   <div className="property-actions">
-                    <button 
+                    <button type="button"
                       onClick={() => handleViewDetails(property._id)}
                       className="btn btn-secondary btn-sm"
                     >
                       View Details
                     </button>
-                    <button 
+                    <button type="button"
                       onClick={() => handleApplyNow(property._id)}
                       className="btn btn-primary btn-sm"
                       disabled={availability.available === 0}
@@ -285,7 +285,7 @@ function PropertiesPage() {
             <div className="no-results-icon">🏠</div>
             <h3>No properties found</h3>
             <p>Try adjusting your search criteria or filters.</p>
-            <button 
+            <button type="button"
               onClick={() => {
                 setSearchTerm('');
                 setSelectedType('all');
