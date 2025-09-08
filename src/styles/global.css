@@ -602,3 +602,331 @@ body {
         width: 100%;
     }
 }
+
+/* Search and Filter Section */
+.search-filter-section {
+    margin-bottom: 24px;
+}
+
+.search-bar {
+    margin-bottom: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #f8f9fa;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #162F1B;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(22, 47, 27, 0.1);
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #f8f9fa;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #162F1B;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(22, 47, 27, 0.1);
+}
+
+.price-range-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.price-range-filter label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.price-input {
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #f8f9fa;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #162F1B;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(22, 47, 27, 0.1);
+}
+
+.price-inputs span {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+/* Results Info */
+.results-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.low-bandwidth-indicator {
+    background: #FF894D;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Enhanced Property Card */
+.property-image-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.property-image {
+    width: 100%;
+    height: 100%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.property-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.availability-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.availability-badge.available {
+    background: #162F1B;
+}
+
+.availability-badge.unavailable {
+    background: #6c757d;
+}
+
+.property-info {
+    padding: 20px;
+}
+
+.property-price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #FF894D;
+    margin-bottom: 8px;
+}
+
+.property-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.property-location {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.property-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px 0;
+    border-top: 1px solid #f8f9fa;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.property-type,
+.property-units,
+.occupancy-rate {
+    background: #f8f9fa;
+    color: #495057;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.property-description {
+    margin-bottom: 16px;
+}
+
+.property-description p {
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.property-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.year-built,
+.last-renovation {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.property-amenities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.amenity-tag {
+    background: rgba(22, 47, 27, 0.1);
+    color: #162F1B;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.property-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.btn-sm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary.btn-sm {
+    background: #f8f9fa;
+    color: #495057;
+    border: 2px solid #e9ecef;
+}
+
+.btn-secondary.btn-sm:hover:not(:disabled) {
+    background: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.btn-primary.btn-sm {
+    background: #162F1B;
+    color: white;
+}
+
+.btn-primary.btn-sm:hover:not(:disabled) {
+    background: #0f1f12;
+}
+
+/* No Results State */
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.no-results-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.no-results h3 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.no-results p {
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
