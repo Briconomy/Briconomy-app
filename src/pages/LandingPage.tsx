@@ -84,49 +84,6 @@ function LandingPage() {
             </ul>
           </div>
 
-          <div
-            style={{
-              background: 'rgba(255,255,255,0.1)',
-              padding: '20px',
-              borderRadius: '12px',
-              marginBottom: '20px',
-            }}
-          >
-            <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>
-              For Prospective Tenants
-            </h3>
-            <p
-              style={{
-                fontSize: '14px',
-                opacity: '0.9',
-                marginBottom: '15px',
-              }}
-            >
-              Browse available properties, view detailed information, and apply
-              for your next home - all without creating an account until you're
-              ready to apply!
-            </p>
-
-            <a
-              href="/browse-properties"
-              style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                border: '1px solid rgba(255,255,255,0.3)',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              Browse Properties (No Login Required)
-            </a>
-          </div>
-        </div>
-
         <a
           href="/login"
           style={{
@@ -170,6 +127,49 @@ function LandingPage() {
           Create Account
         </a>
       </div>
+
+      <div
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              padding: '20px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+            }}
+          >
+            <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>
+              For Prospective Tenants
+            </h3>
+            <p
+              style={{
+                fontSize: '14px',
+                opacity: '0.9',
+                marginBottom: '15px',
+              }}
+            >
+              Browse available properties, view detailed information, and apply
+              for your next home - all without creating an account until you're
+              ready to apply!
+            </p>
+
+            <a
+              href="/browse-properties"
+              style={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                border: '1px solid rgba(255,255,255,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Browse Properties (No Login Required)
+            </a>
+          </div>
+        </div>
     </div>
   );
 }
