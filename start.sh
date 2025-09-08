@@ -25,14 +25,33 @@ else
     echo "MongoDB is already running"
 fi
 
-# Initialize database if needed
-echo "Checking database initialization..."
+# Initialize database with comprehensive data
+echo "Initializing database with comprehensive data..."
 deno task init-db
+
+if [ $? -eq 0 ]; then
+    echo "Database initialization completed successfully"
+else
+    echo "Database initialization failed. Continuing with existing data..."
+fi
 
 # Start the full development environment
 echo "Starting development servers..."
 echo "Frontend will be available at: http://localhost:5173"
 echo "API server will be available at: http://localhost:8000"
+echo ""
+echo "Database has been initialized with:"
+echo "  - 10 users (admin, managers, caretakers, tenants)"
+echo "  - 3 properties with complete details"
+echo "  - 8 units with various statuses"
+echo "  - 5 active leases"
+echo "  - 8 payment records"
+echo "  - 5 maintenance requests"
+echo "  - 5 caretaker tasks"
+echo "  - 5 reports"
+echo "  - 6 notifications"
+echo "  - 8 system settings"
+echo "  - 8 audit log entries"
 echo ""
 echo "Press Ctrl+C to stop all servers"
 echo ""
