@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 function ProspectiveTenantPropertiesPage() {
   const [properties, setProperties] = useState([]);
@@ -17,6 +18,7 @@ function ProspectiveTenantPropertiesPage() {
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
   const { session, updateSearchPreferences, addViewedProperty, isActive } = useProspectiveTenant();
+  const navigate = useNavigate();
 
   const navItems = [
     { path: '/', label: 'Home', active: false },
@@ -133,10 +135,13 @@ function ProspectiveTenantPropertiesPage() {
   };
 
   const handleApplyNow = (propertyId) => {
-    if (!propertyId || propertyId === 'undefined' || propertyId.trim() === '') {
-      alert('Unable to apply for this property. Please select a valid property.');
+    // If propertyId is missing or invalid, send the user to create account so they can register
+    if (!propertyId || typeof propertyId !== 'string' || propertyId.trim() === '') {
+      navigate('/create-account');
       return;
     }
+
+    // If we have a valid id, go to the apply page
     globalThis.location.href = `/apply/${propertyId}`;
   };
 
