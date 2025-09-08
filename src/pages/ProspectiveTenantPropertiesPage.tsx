@@ -177,7 +177,7 @@ function ProspectiveTenantPropertiesPage() {
           <div className="page-title">Available Properties</div>
           <div className="page-subtitle">Find your perfect home</div>
           <div className="prospective-tenant-indicator">
-            <span className="indicator-badge">🔍 Prospective Tenant Mode</span>
+            <span className="indicator-badge"> Prospective Tenant Mode</span>
             <span className="indicator-text">Browse freely - No login required</span>
           </div>
         </div>
