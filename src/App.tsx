@@ -16,7 +16,9 @@ import MaintenanceRequestsPage from './pages/MaintenanceRequestsPage.tsx';
 import CaretakerTasksPage from './pages/CaretakerTasksPage.tsx';
 import PropertyManagementPage from './pages/PropertyManagementPage.tsx';
 import LeaseManagementPage from './pages/LeaseManagementPage.tsx';
+import ManagerPaymentsPage from './pages/ManagerPaymentsPage.tsx';
 import CommunicationPage from './pages/CommunicationPage.tsx';
+import CreateLeasePage from './pages/CreateLeasePage.tsx';
 import DocumentManagementPage from './pages/DocumentManagementPage.tsx';
 import ReportingDashboardPage from './pages/ReportingDashboardPage.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
@@ -44,6 +46,9 @@ function App() {
               <Route path="/properties" element={<PropertiesPage />} />
               <Route path="/browse-properties" element={<ProspectiveTenantPropertiesPage />} />
               <Route path="/manager/properties" element={<ManagerRoute><ManagerPropertiesPage /></ManagerRoute>} />
+              <Route path="/manager/leases" element={<ManagerRoute><LeaseManagementPage /></ManagerRoute>} />
+              <Route path="/manager/leases/new" element={<ManagerRoute><CreateLeasePage /></ManagerRoute>} />
+              <Route path="/manager/payments" element={<ManagerRoute><ManagerPaymentsPage /></ManagerRoute>} />
               <Route path="/property/:id" element={<PropertyDetailsPage />} />
               <Route path="/apply/:id" element={<RentalApplicationPage />} />
               <Route path="/property/new" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
@@ -51,8 +56,6 @@ function App() {
               <Route path="/property/:id/units" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id/tenants" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id/maintenance" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
-              <Route path="/manager/properties" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
-              <Route path="/manager/leases" element={<ManagerRoute><LeaseManagementPage /></ManagerRoute>} />
               <Route path="/tenant/messages" element={<TenantRoute><CommunicationPage /></TenantRoute>} />
               <Route path="/manager/documents" element={<ManagerRoute><DocumentManagementPage /></ManagerRoute>} />
               <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />

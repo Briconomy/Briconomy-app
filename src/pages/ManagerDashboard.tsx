@@ -1,14 +1,14 @@
 import React from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
-import ChartCard from '../components/ChartCard';
+import TopNav from "../components/TopNav.tsx";
+import BottomNav from "../components/BottomNav.tsx";
+import StatCard from "../components/StatCard.tsx";
+import ActionCard from "../components/ActionCard.tsx";
+import ChartCard from "../components/ChartCard.tsx";
 
 function ManagerDashboard() {
   const navItems = [
     { path: '/manager', label: 'Dashboard', active: true },
-    { path: '/properties', label: 'Properties' },
+    { path: '/manager/properties', label: 'Properties' },
     { path: '/manager/leases', label: 'Leases' },
     { path: '/manager/payments', label: 'Payments' }
   ];
@@ -36,14 +36,14 @@ function ManagerDashboard() {
 
         <div className="quick-actions">
           <ActionCard
-            to="/properties"
+            to="/manager/properties"
             icon="P"
             title="Properties"
             description="Manage listings"
           />
           <ActionCard
-            to="/manager/leases"
-            icon="L"
+            to="/manager/leases/new"
+            icon="L" 
             title="Leases"
             description="Contracts"
           />
@@ -54,9 +54,9 @@ function ManagerDashboard() {
             description="Rent collection"
           />
           <ActionCard
-            to="/manager/issues"
+            to="/manager/maintenance"
             icon="E"
-            title="Issues"
+            title="Issues" 
             description="Handle escalations"
           />
         </div>

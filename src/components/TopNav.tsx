@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 interface TopNavProps {
   showBackButton?: boolean;
@@ -7,13 +8,22 @@ interface TopNavProps {
 }
 
 function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: TopNavProps) {
-  const { user } = useAuth();
-
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   
   const homeLink = '/';
 
   const navigateTo = (url: string) => {
-    globalThis.location.href = url;
+    navigate(url);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
   };
 
   return (
@@ -28,7 +38,7 @@ function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: 
         </button>
       </div>
       {showLogout && (
-        <button type="button" onClick={() => navigateTo('/')} className="logout-btn">Logout</button>
+        <button type="button" onClick={handleLogout} className="logout-btn">Logout</button>
       )}
     </div>
   );
