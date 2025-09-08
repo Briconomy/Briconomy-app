@@ -7,7 +7,6 @@ import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi,
 
 function TenantDashboard() {
   const [user, setUser] = useState(null);
-  const [loading, _setLoading] = useState(true);
   const [_error, _setError] = useState<unknown>(null);
   const [notifications, setNotifications] = useState([]);
   
@@ -19,17 +18,17 @@ function TenantDashboard() {
   ];
 
   const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(
-    () => paymentsApi.getAll({ tenantId: user?.id || '68bde3529b1d854514fa336a' }),
+    () => paymentsApi.getAll(user?.id ? { tenantId: user.id } : {}),
     [user?.id]
   );
 
   const { data: lease, loading: leaseLoading, error: leaseError } = useApi(
-    () => leasesApi.getAll({ tenantId: user?.id || '68bde3529b1d854514fa336a' }),
+    () => leasesApi.getAll(user?.id ? { tenantId: user.id } : {}),
     [user?.id]
   );
 
   const { data: requests, loading: requestsLoading, error: requestsError } = useApi(
-    () => maintenanceApi.getAll({ tenantId: user?.id || '68bde3529b1d854514fa336a' }),
+    () => maintenanceApi.getAll(user?.id ? { tenantId: user.id } : {}),
     [user?.id]
   );
 
@@ -40,12 +39,18 @@ function TenantDashboard() {
 
   useEffect(() => {
     loadUserData();
-    loadNotifications();
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadNotifications();
+    }
+  }, [user?.id]);
 
   const loadUserData = () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
+      const userRaw = localStorage.getItem('briconomy_user');
+      const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
@@ -72,12 +77,15 @@ function TenantDashboard() {
     };
   };
 
+  type PaymentLite = { status?: string; dueDate?: string | Date; amount?: number };
   const getUpcomingPayment = () => {
-  const list = payments || (paymentsError ? getMockData().payments : []);
-  if (!list) return null;
-  return list
-      .filter(p => p.status === 'pending')
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+    const list: PaymentLite[] = Array.isArray(payments) ? (payments as PaymentLite[]) : [];
+    if (list.length === 0) return null;
+    return (
+      list
+        .filter((p) => p.status === 'pending')
+        .sort((a, b) => new Date(a.dueDate || '').getTime() - new Date(b.dueDate || '').getTime())[0] || null
+    );
   };
 
   const getDaysUntilDue = (dueDate: string | Date) => {
@@ -92,11 +100,11 @@ function TenantDashboard() {
   const mockData = getMockData();
   
   const _paymentsData = payments || (useMockData ? mockData.payments : []);
-  const leaseData = lease || (useMockData ? mockData.lease : []);
-  const requestsData = requests || (useMockData ? mockData.requests : []);
+  const leaseData = Array.isArray(lease) ? lease : [];
+  const requestsData = Array.isArray(requests) ? requests : [];
   const notificationsData = notifications.length > 0 ? notifications : (useMockData ? mockData.notifications : []);
 
-  const isLoading = loading || paymentsLoading || leaseLoading || requestsLoading || statsLoading;
+  const isLoading = paymentsLoading || leaseLoading || requestsLoading || statsLoading;
   const hasError = paymentsError || leaseError || requestsError || statsError;
   const upcomingPayment = hasError ? null : getUpcomingPayment();
   const currentLease = hasError ? null : leaseData?.[0];
@@ -126,7 +134,7 @@ function TenantDashboard() {
         <div className="page-header">
           <div className="page-title">Welcome Back</div>
           <div className="page-subtitle">
-            {currentLease?.unitId?.unitNumber || 'Unit 2A'} - {currentLease?.propertyId?.name || 'Blue Hills'}
+            {currentLease?.unitId?.unitNumber || 'Unit'} - {currentLease?.propertyId?.name || 'Property'}
           </div>
           {hasError && (
             <div className="offline-indicator">
@@ -160,22 +168,22 @@ function TenantDashboard() {
             <div className="lease-details">
               <div className="lease-row">
                 <span>Monthly Rent:</span>
-                <span className="lease-value">{formatCurrency(currentLease.monthlyRent)}</span>
+                <span className="lease-value">{formatCurrency(currentLease?.monthlyRent || 0)}</span>
               </div>
               <div className="lease-row">
                 <span>Lease Period:</span>
                 <span className="lease-value">
-                  {formatDate(currentLease.startDate)} - {formatDate(currentLease.endDate)}
+                  {formatDate(currentLease?.startDate)} - {formatDate(currentLease?.endDate)}
                 </span>
               </div>
               <div className="lease-row">
                 <span>Security Deposit:</span>
-                <span className="lease-value">{formatCurrency(currentLease.deposit)}</span>
+                <span className="lease-value">{formatCurrency(currentLease?.deposit || 0)}</span>
               </div>
               <div className="lease-row">
                 <span>Status:</span>
-                <span className={`lease-status ${currentLease.status === 'active' ? 'status-active' : ''}`}>
-                  {currentLease.status.charAt(0).toUpperCase() + currentLease.status.slice(1)}
+                <span className={`lease-status ${currentLease?.status === 'active' ? 'status-active' : ''}`}>
+                  {(currentLease?.status || 'unknown').charAt(0).toUpperCase() + (currentLease?.status || 'unknown').slice(1)}
                 </span>
               </div>
             </div>
