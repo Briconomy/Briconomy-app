@@ -7,12 +7,13 @@ interface User {
   email: string;
   phone: string;
   userType: 'admin' | 'manager' | 'caretaker' | 'tenant';
+  profile?: any;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
   register: (userData: any) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -44,7 +45,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (savedUser && token) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
         } catch (error) {
           console.error('Error parsing saved user:', error);
           localStorage.removeItem('briconomy_user');
@@ -68,10 +70,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await authApi.login(email, password);
       
       if (result.success && result.user) {
-        setUser(result.user);
-        localStorage.setItem('briconomy_user', JSON.stringify(result.user));
+        // Convert MongoDB _id to id field for frontend consistency
+        const userWithId = {
+          ...result.user,
+          id: result.user._id || result.user.id
+        };
+        
+        setUser(userWithId);
+        localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
         localStorage.setItem('briconomy_token', result.token || 'mock-token');
-        return { success: true, message: result.message, user: result.user };
+        return { success: true, message: result.message, user: userWithId };
       } else {
         return { success: false, message: result.message };
       }
