@@ -4,6 +4,9 @@
     box-sizing: border-box;
 }
 
+/* Import prospective tenant styles */
+@import './prospective-tenant.css';
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f8f9fa;
