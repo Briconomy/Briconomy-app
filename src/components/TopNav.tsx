@@ -9,27 +9,11 @@ interface TopNavProps {
 function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: TopNavProps) {
   const { user } = useAuth();
 
-  const getHomeLink = () => {
-    if (!user) return '/';
-    
-    switch (user.userType) {
-      case 'admin':
-        return '/admin';
-      case 'manager':
-        return '/manager';
-      case 'caretaker':
-        return '/caretaker';
-      case 'tenant':
-        return '/tenant';
-      default:
-        return '/';
-    }
-  };
-
-  const homeLink = getHomeLink();
+  
+  const homeLink = '/';
 
   const navigateTo = (url: string) => {
-  globalThis.location.href = url;
+    globalThis.location.href = url;
   };
 
   return (
