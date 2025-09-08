@@ -27,18 +27,23 @@ if %errorlevel% neq 0 (
     echo MongoDB is already running
 )
 
-REM Initialize database if needed (removed duplicate)
+REM Initialize database if needed
 echo Checking database initialization...
 call deno task init-db
 
-REM Start the development server
+REM Start both development servers
 echo Starting development servers...
 echo Frontend will be available at: http://localhost:5173
 echo API server will be available at: http://localhost:8000
 echo.
 
-REM Start the development server (changed command)
-call deno task dev
+REM Start API server minimized and hidden
+start /min "" cmd /c deno task api >nul 2>&1
 
-REM Wait for user input
+REM Start frontend dev server minimized and hidden
+start /min "" cmd /c deno task dev >nul 2>&1
+
+echo Servers are starting up in background...
+echo Your application should be ready in a few moments.
+echo Press any key to close this window
 pause
