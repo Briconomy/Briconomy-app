@@ -16,11 +16,12 @@ function ManagerPropertiesPage() {
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { user } = useAuth();
 
+  // ✅ Updated navItems format to match LeaseManagementPage
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
+    { path: '/manager', label: 'Dashboard' },
     { path: '/manager/properties', label: 'Properties', active: true },
-    { path: '/manager/leases', label: 'Leases', active: false },
-    { path: '/manager/payments', label: 'Payments', active: false }
+    { path: '/manager/leases', label: 'Leases' },
+    { path: '/manager/payments', label: 'Payments' }
   ];
 
   useEffect(() => {
@@ -35,32 +36,10 @@ function ManagerPropertiesPage() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching properties from API...');
       const data = await propertiesApi.getAll();
-      console.log('Properties data received:', data);
-      setProperties(data);
-      
-      if (!Array.isArray(data)) {
-        console.warn('Properties API did not return an array:', data);
-        setError('Invalid data format received from server');
-        setProperties([]);
-      } else if (data.length === 0) {
-        console.log('No properties found in the database');
-      }
+      setProperties(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error fetching properties:', err);
-      const errorMessage = err.message || 'Failed to fetch properties';
-      
-      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-        setError('Unable to connect to the server. Please check your internet connection.');
-      } else if (errorMessage.includes('404')) {
-        setError('Properties endpoint not found. Please contact support.');
-      } else if (errorMessage.includes('500')) {
-        setError('Server error occurred. Please try again later.');
-      } else {
-        setError(`Error loading properties: ${errorMessage}`);
-      }
-      
+      setError(err.message || 'Failed to fetch properties');
       setProperties([]);
     } finally {
       setLoading(false);
@@ -69,14 +48,12 @@ function ManagerPropertiesPage() {
 
   const filterProperties = () => {
     let filtered = [...properties];
-
     if (searchTerm) {
       filtered = filtered.filter(property =>
         property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         property.address.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     setFilteredProperties(filtered);
   };
 
@@ -100,11 +77,21 @@ function ManagerPropertiesPage() {
     globalThis.location.href = `/property/new`;
   };
 
+  const totalProperties = properties.length;
+  const totalUnits = properties.reduce((sum, property) => sum + property.totalUnits, 0);
+  const occupiedUnits = properties.reduce((sum, property) => sum + property.occupiedUnits, 0);
+  const overallOccupancy = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+  const estimatedMonthlyRevenue = properties.reduce((sum, property) => {
+    const baseRent = property.type === 'apartment' ? 8000 : 
+                     property.type === 'complex' ? 10000 : 12000;
+    return sum + (property.occupiedUnits * baseRent);
+  }, 0);
+
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={false} />
-        <div className="main-content">
+        <TopNav showLogout={true} />
+        <div className="main-content" style={{ padding: 16 }}>
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>Loading properties...</p>
@@ -117,8 +104,8 @@ function ManagerPropertiesPage() {
   if (error) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={false} />
-        <div className="main-content">
+        <TopNav showLogout={true} />
+        <div className="main-content" style={{ padding: 16 }}>
           <div className="error-state">
             <p>Error loading properties: {error}</p>
             <button type="button" onClick={fetchProperties} className="btn btn-primary">Retry</button>
@@ -128,27 +115,18 @@ function ManagerPropertiesPage() {
     );
   }
 
-  const totalProperties = properties.length;
-  const totalUnits = properties.reduce((sum, property) => sum + property.totalUnits, 0);
-  const occupiedUnits = properties.reduce((sum, property) => sum + property.occupiedUnits, 0);
-  const overallOccupancy = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
-  const estimatedMonthlyRevenue = properties.reduce((sum, property) => {
-    const baseRent = property.type === 'apartment' ? 8000 : 
-                     property.type === 'complex' ? 10000 : 12000;
-    return sum + (property.occupiedUnits * baseRent);
-  }, 0);
-
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={false} />
-      
+      {/* ✅ Updated TopNav to be consistent */}
+      <TopNav showLogout={true} />
+
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">Property Management</div>
           <div className="page-subtitle">Manage your property portfolio</div>
         </div>
 
-        <div className="manager-overview-stats">
+        <div className="dashboard-grid">
           <div className="stat-card">
             <div className="stat-value">{totalProperties}</div>
             <div className="stat-label">Total Properties</div>
@@ -165,35 +143,26 @@ function ManagerPropertiesPage() {
             <div className="stat-value">{overallOccupancy}%</div>
             <div className="stat-label">Occupancy Rate</div>
           </div>
-        </div>
-
-        <div className="financial-overview">
-          <div className="financial-card">
-            <div className="financial-value">{formatCurrency(estimatedMonthlyRevenue)}</div>
-            <div className="financial-label">Estimated Monthly Revenue</div>
+          <div className="stat-card">
+            <div className="stat-value">{formatCurrency(estimatedMonthlyRevenue)}</div>
+            <div className="stat-label">Est. Monthly Revenue</div>
           </div>
         </div>
 
         <div className="manager-actions">
-          <button
-            type="button"
-            onClick={handleAddProperty}
-            className="btn btn-primary btn-large"
-          >
-            Add New Property
+          <button type="button" onClick={handleAddProperty} className="btn btn-primary">
+            + Add New Property
           </button>
         </div>
 
-        <div className="manager-search-section">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search your properties..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search your properties..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
         </div>
 
         <div className="results-info">
@@ -219,47 +188,24 @@ function ManagerPropertiesPage() {
 
         {filteredProperties.length === 0 && (
           <div className="no-results">
-            <div className="no-results-icon">🏢</div>
             <h3>No properties found</h3>
-            {properties.length === 0 ? (
-              <>
-                <p>You don't have any properties in your portfolio yet.</p>
-                <p>Get started by adding your first property to the system.</p>
-              </>
-            ) : (
-              <p>Try adjusting your search criteria or add a new property.</p>
-            )}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm('')}
-                  className="btn btn-secondary"
-                >
-                  Clear Search
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={fetchProperties}
-                className="btn btn-primary"
-              >
-                {properties.length === 0 ? 'Refresh Properties' : 'Refresh Search'}
+            <p>
+              {properties.length === 0
+                ? "You don't have any properties yet. Start by adding one."
+                : "Try adjusting your search or add a new property."}
+            </p>
+            <button type="button" onClick={fetchProperties} className="btn btn-primary">
+              Refresh
+            </button>
+            {properties.length === 0 && (
+              <button type="button" onClick={handleAddProperty} className="btn btn-secondary">
+                Add Property
               </button>
-              {properties.length === 0 && (
-                <button
-                  type="button"
-                  onClick={handleAddProperty}
-                  className="btn btn-primary"
-                >
-                  Add Property
-                </button>
-              )}
-            </div>
+            )}
           </div>
         )}
       </div>
-      
+
       <BottomNav items={navItems} responsive={false} />
     </div>
   );
