@@ -42,7 +42,7 @@ function ManagerDashboard() {
             description="Manage listings"
           />
           <ActionCard
-            to="/manager/leases/new"
+            to="/manager/leases"
             icon="L" 
             title="Leases"
             description="Contracts"

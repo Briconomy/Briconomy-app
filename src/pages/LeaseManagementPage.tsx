@@ -209,11 +209,11 @@ function LeaseManagementPage() {
 
         <div className="quick-actions">
           <ActionCard
-            to="/manager/create-lease"
+            to="/manager/leases/new"
             icon="C"
             title="Create Lease"
             description="New lease agreement"
-          />
+          />  
           <ActionCard
             to="/manager/renewals"
             icon="R"
