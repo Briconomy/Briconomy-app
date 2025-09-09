@@ -1,17 +1,135 @@
-import React from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ChartCard from '../components/ChartCard';
-import TaskChart from '../components/TaskChart';
+import React, { useState, useEffect, Suspense } from 'react';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ChartCard from '../components/ChartCard.tsx';
+import { tasksApi, useApi } from '../services/api.ts';
+import '../utils/chart-registration.ts';
+
+// Lazy load TaskChart to prevent import errors from crashing the app
+const TaskChart = React.lazy(() => import('../components/TaskChart.tsx'));
+
+// Simple Error Boundary using functional component pattern
+function SimpleErrorBoundary({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
+  const [hasError, setHasError] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
+
+  React.useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('ErrorBoundary caught an error:', event.error);
+      setHasError(true);
+      setError(event.error);
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return fallback || (
+      <div className="error-fallback">
+        <h3>Something went wrong</h3>
+        <p>The dashboard encountered an error. Please refresh the page.</p>
+        {error && <small>{error.message}</small>}
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 function CaretakerDashboard() {
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
+  const [chartError, setChartError] = useState(null);
+  
   const navItems = [
     { path: '/caretaker', label: 'Tasks', active: true },
     { path: '/caretaker/schedule', label: 'Schedule' },
     { path: '/caretaker/history', label: 'History' },
     { path: '/caretaker/profile', label: 'Profile' }
   ];
+
+  const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
+    () => tasksApi.getAll(user?.id ? { caretakerId: user.id } : {}),
+    [user?.id]
+  );
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  useEffect(() => {
+    try {
+      console.log('CaretakerDashboard mounted');
+    } catch (err) {
+      console.error('Dashboard error:', err);
+      setChartError('Dashboard initialization failed');
+    }
+  }, []);
+
+  const loadUserData = () => {
+    try {
+      const userRaw = localStorage.getItem('briconomy_user');
+      const userData = userRaw ? JSON.parse(userRaw) : null;
+      setUser(userData);
+    } catch (err) {
+      console.error('Error loading user data:', err);
+      setError('Failed to load user data');
+    }
+  };
+
+  const getMockTasks = () => {
+    return [
+      {
+        id: '1',
+        title: 'Plumbing Unit 2A',
+        description: 'Kitchen sink repair',
+        dueDate: new Date().toISOString(),
+        status: 'in_progress',
+        priority: 'high'
+      },
+      {
+        id: '2',
+        title: 'Electrical Unit 5C',
+        description: 'Outlet replacement',
+        dueDate: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+        status: 'pending',
+        priority: 'medium'
+      }
+    ];
+  };
+
+  const useMockData = tasksError || !tasks;
+  const mockTasks = getMockTasks();
+  const tasksData = Array.isArray(tasks) ? tasks : (useMockData ? mockTasks : []);
+  
+  const isLoading = tasksLoading;
+  const hasError = tasksError || error;
+  
+  const assignedTasks = tasksData.length;
+  const todayTasks = tasksData.filter(task => {
+    const taskDate = new Date(task.dueDate).toDateString();
+    const today = new Date().toDateString();
+    return taskDate === today;
+  }).length;
+  const priorityTasks = tasksData.filter(task => task.priority === 'high' || task.priority === 'urgent').length;
+  const completionRate = tasksData.length > 0 ? Math.round((tasksData.filter(task => task.status === 'completed').length / tasksData.length) * 100) : 0;
+
+  if (isLoading) {
+    return (
+      <div className="app-container mobile-only">
+        <TopNav showLogout={true} />
+        <div className="main-content">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading your dashboard...</p>
+          </div>
+        </div>
+        <BottomNav items={navItems} responsive={false} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container mobile-only">
@@ -21,37 +139,64 @@ function CaretakerDashboard() {
         <div className="page-header">
           <div className="page-title">Caretaker Tasks</div>
           <div className="page-subtitle">Maintenance & updates</div>
+          {hasError && (
+            <div className="offline-indicator">
+              <span>Offline - Please check your connection</span>
+            </div>
+          )}
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="12" label="Assigned" />
-          <StatCard value="8" label="Today" />
-          <StatCard value="3" label="Priority" />
-          <StatCard value="95%" label="Rate" />
+          <StatCard value={assignedTasks} label="Assigned" />
+          <StatCard value={todayTasks} label="Today" />
+          <StatCard value={priorityTasks} label="Priority" />
+          <StatCard value={`${completionRate}%`} label="Rate" />
         </div>
 
         <ChartCard title="Task Performance">
-          <TaskChart />
+          {chartError ? (
+            <div className="chart-placeholder">
+              Chart temporarily unavailable
+            </div>
+          ) : (
+            <SimpleErrorBoundary fallback={
+              <div className="chart-placeholder">
+                Chart unavailable
+              </div>
+            }>
+              <Suspense fallback={
+                <div className="chart-placeholder">
+                  Loading chart...
+                </div>
+              }>
+                <TaskChart />
+              </Suspense>
+            </SimpleErrorBoundary>
+          )}
         </ChartCard>
 
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">Today's Tasks</div>
           </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>09:00 - Plumbing Unit 2A</h4>
-              <p>Kitchen sink repair</p>
+          {tasksData.slice(0, 5).map((task) => (
+            <div key={task.id} className="list-item">
+              <div className="item-info">
+                <h4>{new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {task.title}</h4>
+                <p>{task.description}</p>
+              </div>
+              <span className={`status-badge status-${task.status}`}>
+                {task.status === 'in_progress' ? 'Progress' : 
+                 task.status === 'pending' ? 'Scheduled' :
+                 task.status === 'completed' ? 'Completed' : task.status}
+              </span>
             </div>
-            <span className="status-badge status-pending">Progress</span>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>14:00 - Electrical Unit 5C</h4>
-              <p>Outlet replacement</p>
+          ))}
+          {tasksData.length === 0 && (
+            <div className="no-results">
+              <p>No tasks assigned</p>
             </div>
-            <span className="status-badge status-pending">Scheduled</span>
-          </div>
+          )}
         </div>
       </div>
       
