@@ -69,7 +69,7 @@ function LeaseManagementPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
+    { path: '/manager', label: 'Dashboard' },
     { path: '/manager/properties', label: 'Properties' },
     { path: '/manager/leases', label: 'Leases', active: true },
     { path: '/manager/payments', label: 'Payments' }

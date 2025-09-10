@@ -16,7 +16,6 @@ function ManagerPropertiesPage() {
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { user } = useAuth();
 
-  // ✅ Updated navItems format to match LeaseManagementPage
   const navItems = [
     { path: '/manager', label: 'Dashboard' },
     { path: '/manager/properties', label: 'Properties', active: true },
@@ -117,7 +116,6 @@ function ManagerPropertiesPage() {
 
   return (
     <div className="app-container mobile-only">
-      {/* ✅ Updated TopNav to be consistent */}
       <TopNav showLogout={true} />
 
       <div className="main-content">
