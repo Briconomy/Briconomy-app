@@ -48,7 +48,7 @@ function ManagerDashboard() {
             description="Contracts"
           />
           <ActionCard
-            to="/manager/payments"
+            onClick={() => {}}
             icon="M"
             title="Payments"
             description="Rent collection"
