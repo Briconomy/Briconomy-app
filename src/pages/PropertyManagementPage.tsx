@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
@@ -23,8 +24,8 @@ function PropertyManagementPage() {
   });
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties', active: true },
+    { path: '/manager', label: 'Dashboard' },
+    { path: '/manager/properties', label: 'Properties', active: true },
     { path: '/manager/leases', label: 'Leases' },
     { path: '/manager/payments', label: 'Payments' }
   ];
@@ -308,27 +309,7 @@ function PropertyManagementPage() {
         </div>
       )}
       
-      {/* Navigation Buttons */}
-      <div className="navigation-buttons">
-        <button 
-          onClick={() => window.location.href = '/manager'}
-          className="btn btn-primary nav-btn"
-        >
-          Dashboard
-        </button>
-        <button 
-          onClick={() => window.location.href = '/manager/leases'}
-          className="btn btn-secondary nav-btn"
-        >
-          Leases
-        </button>
-        <button 
-          onClick={() => window.location.href = '/manager/payments'}
-          className="btn btn-secondary nav-btn"
-        >
-          Payments
-        </button>
-      </div>
+      <BottomNav items={navItems} responsive={false} />
     </div>
   );
 }

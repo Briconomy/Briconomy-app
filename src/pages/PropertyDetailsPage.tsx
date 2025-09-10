@@ -75,7 +75,12 @@ function PropertyDetailsPage() {
   };
 
   const handleApplyNow = () => {
-    navigate(`/apply/${propertyId}`);
+    if (propertyId) {
+      navigate(`/apply/${propertyId}`);
+    } else {
+      console.error('Property ID is undefined');
+      navigate('/properties');
+    }
   };
 
   const handleBack = () => {
@@ -680,7 +685,14 @@ function PropertyDetailsPage() {
                     
                     {unit.status === 'vacant' && (
                       <button 
-                        onClick={() => navigate(`/apply/${propertyId}?unit=${unit._id || unit.unitNumber}`)}
+                        onClick={() => {
+                          if (propertyId) {
+                            navigate(`/apply/${propertyId}?unit=${unit._id || unit.unitNumber}`);
+                          } else {
+                            console.error('Property ID is undefined');
+                            navigate('/properties');
+                          }
+                        }}
                         className="btn btn-primary btn-sm"
                       >
                         Apply for Unit
