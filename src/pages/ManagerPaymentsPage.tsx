@@ -62,7 +62,7 @@ function ManagerPaymentsPage() {
 
   const navItems = [
     { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties' },
+    { path: '/manager/properties', label: 'Properties' },
     { path: '/manager/leases', label: 'Leases' },
     { path: '/manager/payments', label: 'Payments', active: true }
   ];
