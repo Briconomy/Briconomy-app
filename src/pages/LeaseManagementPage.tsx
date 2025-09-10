@@ -215,13 +215,13 @@ function LeaseManagementPage() {
             description="New lease agreement"
           />  
           <ActionCard
-            to="/manager/renewals"
+            onClick={() => {}}
             icon="R"
             title="Renewals"
             description="Manage lease renewals"
           />
           <ActionCard
-            to="/manager/terminations"
+            onClick={() => {}}
             icon="T"
             title="Terminations"
             description="Handle lease terminations"
