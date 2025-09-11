@@ -9,6 +9,10 @@ import TenantDashboard from './pages/TenantDashboard.tsx';
 import CaretakerSchedulePage from './pages/CaretakerSchedulePage.tsx';
 import CaretakerHistoryPage from './pages/CaretakerHistoryPage.tsx';
 import CaretakerProfilePage from './pages/CaretakerProfilePage.tsx';
+import AdminUsersPage from './pages/AdminUsersPage.tsx';
+import AdminSecurityPage from './pages/AdminSecurityPage.tsx';
+import AdminOperationsPage from './pages/AdminOperationsPage.tsx';
+import AdminReportsPage from './pages/AdminReportsPage.tsx';
 import CaretakerMaintenancePage from './pages/CaretakerMaintenancePage.tsx';
 import CaretakerReportsPage from './pages/CaretakerReportsPage.tsx';
 import PropertiesPage from './pages/PropertiesPage.tsx';
@@ -42,6 +46,10 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/create-account" element={<CreateAccountPage />} />
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+              <Route path="/admin/security" element={<AdminRoute><AdminSecurityPage /></AdminRoute>} />
+              <Route path="/admin/operations" element={<AdminRoute><AdminOperationsPage /></AdminRoute>} />
+              <Route path="/admin/reports" element={<AdminRoute><AdminReportsPage /></AdminRoute>} />
               <Route path="/manager" element={<ManagerRoute><ManagerDashboard /></ManagerRoute>} />
               <Route path="/caretaker" element={<CaretakerRoute><CaretakerDashboard /></CaretakerRoute>} />
               <Route path="/tenant" element={<TenantRoute><TenantDashboard /></TenantRoute>} />
