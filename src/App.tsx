@@ -6,6 +6,11 @@ import AdminDashboard from './pages/AdminDashboard.tsx';
 import ManagerDashboard from './pages/ManagerDashboard.tsx';
 import CaretakerDashboard from './pages/CaretakerDashboard.tsx';
 import TenantDashboard from './pages/TenantDashboard.tsx';
+import CaretakerSchedulePage from './pages/CaretakerSchedulePage.tsx';
+import CaretakerHistoryPage from './pages/CaretakerHistoryPage.tsx';
+import CaretakerProfilePage from './pages/CaretakerProfilePage.tsx';
+import CaretakerMaintenancePage from './pages/CaretakerMaintenancePage.tsx';
+import CaretakerReportsPage from './pages/CaretakerReportsPage.tsx';
 import PropertiesPage from './pages/PropertiesPage.tsx';
 import ManagerPropertiesPage from './pages/ManagerPropertiesPage.tsx';
 import ProspectiveTenantPropertiesPage from './pages/ProspectiveTenantPropertiesPage.tsx';
@@ -51,6 +56,11 @@ function App() {
               <Route path="/manager/payments" element={<ManagerRoute><ManagerPaymentsPage /></ManagerRoute>} />
               <Route path="/property/:id" element={<PropertyDetailsPage />} />
               <Route path="/apply/:id" element={<RentalApplicationPage />} />
+              <Route path="/caretaker/schedule" element={<CaretakerRoute><CaretakerSchedulePage /></CaretakerRoute>} />
+              <Route path="/caretaker/history" element={<CaretakerRoute><CaretakerHistoryPage /></CaretakerRoute>} />
+              <Route path="/caretaker/profile" element={<CaretakerRoute><CaretakerProfilePage /></CaretakerRoute>} />
+              <Route path="/caretaker/maintenance" element={<CaretakerRoute><CaretakerMaintenancePage /></CaretakerRoute>} />
+              <Route path="/caretaker/reports" element={<CaretakerRoute><CaretakerReportsPage /></CaretakerRoute>} />
               <Route path="/property/new" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id/edit" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id/units" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
