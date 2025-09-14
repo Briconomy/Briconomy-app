@@ -3,7 +3,7 @@
     "dev": "deno run -A --watch dev-server.ts",
     "build": "deno run -A build.ts",
     "preview": "deno run -A server.ts",
-    "init-db": "mongosh briconomy scripts/init-users-simple.js && mongosh briconomy scripts/comprehensive-relational-data.js",
+    "init-db": "mongo briconomy scripts/init-users-simple.js && mongo briconomy scripts/comprehensive-relational-data.js",
     "api": "deno run -A api-server.ts",
     "dev-full": "deno run -A dev-server.ts & deno run -A api-server.ts"
   },
