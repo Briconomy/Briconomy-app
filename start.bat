@@ -11,14 +11,19 @@ timeout /t 2 /nobreak >nul
 
 REM Check if MongoDB is running
 echo Checking MongoDB status...
-mongosh --eval "db.adminCommand('ping')" >nul 2>&1
+netstat -an | find ":27017" | find "LISTENING" >nul
 if %errorlevel% neq 0 (
     echo Starting MongoDB...
-    mongod --dbpath ./data --logpath ./data/mongodb.log --install
-    net start MongoDB
+    start /min "MongoDB" mongod --dbpath "%cd%\data" --logpath "%cd%\data\mongodb.log"
     
+    REM Wait for MongoDB to start
+    echo Waiting for MongoDB to start...
+    timeout /t 8 /nobreak >nul
+    
+    REM Check if MongoDB started successfully
+    netstat -an | find ":27017" | find "LISTENING" >nul
     if %errorlevel% neq 0 (
-        echo Failed to start MongoDB. Please ensure MongoDB is installed and running.
+        echo Failed to start MongoDB. Please ensure MongoDB is installed.
         pause
         exit /b 1
     )
@@ -28,8 +33,8 @@ if %errorlevel% neq 0 (
 )
 
 REM Initialize database if needed
-echo Checking database initialization...
-call deno task init-db
+echo Database initialization requires MongoDB shell tools which are not installed
+echo Database will be initialized by the application on first run if needed
 
 REM Start both development servers
 echo Starting development servers...
