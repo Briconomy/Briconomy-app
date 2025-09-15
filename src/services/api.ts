@@ -6,10 +6,10 @@ function resolveApiBase(): string {
     const protocol = loc.protocol || 'http:';
   const hostname = loc.hostname || 'localhost';
   const port = loc.port || '';
-  if (port === '5173') return `${protocol}//${hostname}:8000/api`;
+  if (port === '5173') return `${protocol}//${hostname}:8816/api`;
   return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
   } catch (_) {
-    return 'http://localhost:8000/api';
+    return 'http://localhost:8816/api';
   }
 }
 
