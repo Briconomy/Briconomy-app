@@ -196,8 +196,8 @@ const leases = db.leases.insertMany([
     tenantId: tenant1User._id,
     unitId: units.insertedIds['0'],
     propertyId: properties.insertedIds['0'],
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-12-31'),
+    startDate: new Date('2024-06-01'),
+    endDate: new Date('2025-05-31'),
     monthlyRent: 12500,
     deposit: 25000,
     status: 'active',
@@ -210,8 +210,8 @@ const leases = db.leases.insertMany([
     tenantId: tenant2User._id,
     unitId: units.insertedIds['2'],
     propertyId: properties.insertedIds['0'],
-    startDate: new Date('2024-03-01'),
-    endDate: new Date('2025-02-28'),
+    startDate: new Date('2024-08-01'),
+    endDate: new Date('2025-07-31'),
     monthlyRent: 15000,
     deposit: 30000,
     status: 'active',
@@ -224,8 +224,8 @@ const leases = db.leases.insertMany([
     tenantId: tenant3User._id,
     unitId: units.insertedIds['4'],
     propertyId: properties.insertedIds['1'],
-    startDate: new Date('2024-06-01'),
-    endDate: new Date('2025-05-31'),
+    startDate: new Date('2024-09-01'),
+    endDate: new Date('2025-08-31'),
     monthlyRent: 9500,
     deposit: 19000,
     status: 'active',
@@ -238,8 +238,8 @@ const leases = db.leases.insertMany([
     tenantId: tenant4User._id,
     unitId: units.insertedIds['5'],
     propertyId: properties.insertedIds['1'],
-    startDate: new Date('2024-04-01'),
-    endDate: new Date('2025-03-31'),
+    startDate: new Date('2024-10-01'),
+    endDate: new Date('2025-09-30'),
     monthlyRent: 11500,
     deposit: 23000,
     status: 'active',
@@ -252,8 +252,8 @@ const leases = db.leases.insertMany([
     tenantId: tenant5User._id,
     unitId: units.insertedIds['6'],
     propertyId: properties.insertedIds['2'],
-    startDate: new Date('2024-07-01'),
-    endDate: new Date('2025-06-30'),
+    startDate: new Date('2024-11-01'),
+    endDate: new Date('2025-10-31'),
     monthlyRent: 18000,
     deposit: 36000,
     status: 'active',
@@ -271,12 +271,12 @@ const payments = db.payments.insertMany([
     tenantId: tenant1User._id,
     leaseId: leases.insertedIds['0'],
     amount: 12500,
-    paymentDate: new Date('2024-08-01'),
-    dueDate: new Date('2024-08-01'),
+    paymentDate: new Date('2025-08-01'),
+    dueDate: new Date('2025-08-01'),
     status: 'paid',
     type: 'rent',
     method: 'bank_transfer',
-    reference: 'RENT-2024-08-001',
+    reference: 'RENT-2025-08-001',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -285,11 +285,11 @@ const payments = db.payments.insertMany([
     leaseId: leases.insertedIds['0'],
     amount: 12500,
     paymentDate: null,
-    dueDate: new Date('2024-09-01'),
+    dueDate: new Date('2025-09-01'),
     status: 'pending',
     type: 'rent',
     method: null,
-    reference: 'RENT-2024-09-001',
+    reference: 'RENT-2025-09-001',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -298,12 +298,12 @@ const payments = db.payments.insertMany([
     tenantId: tenant2User._id,
     leaseId: leases.insertedIds['1'],
     amount: 15000,
-    paymentDate: new Date('2024-08-15'),
-    dueDate: new Date('2024-08-01'),
+    paymentDate: new Date('2025-08-15'),
+    dueDate: new Date('2025-08-01'),
     status: 'paid',
     type: 'rent',
     method: 'eft',
-    reference: 'RENT-2024-08-002',
+    reference: 'RENT-2025-08-002',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -312,11 +312,11 @@ const payments = db.payments.insertMany([
     leaseId: leases.insertedIds['1'],
     amount: 15000,
     paymentDate: null,
-    dueDate: new Date('2024-09-01'),
+    dueDate: new Date('2025-09-01'),
     status: 'pending',
     type: 'rent',
     method: null,
-    reference: 'RENT-2024-09-002',
+    reference: 'RENT-2025-09-002',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -325,12 +325,12 @@ const payments = db.payments.insertMany([
     tenantId: tenant3User._id,
     leaseId: leases.insertedIds['2'],
     amount: 9500,
-    paymentDate: new Date('2024-08-05'),
-    dueDate: new Date('2024-08-01'),
+    paymentDate: new Date('2025-08-05'),
+    dueDate: new Date('2025-08-01'),
     status: 'paid',
     type: 'rent',
     method: 'cash',
-    reference: 'RENT-2024-08-003',
+    reference: 'RENT-2025-08-003',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -339,12 +339,12 @@ const payments = db.payments.insertMany([
     tenantId: tenant4User._id,
     leaseId: leases.insertedIds['3'],
     amount: 11500,
-    paymentDate: new Date('2024-08-10'),
-    dueDate: new Date('2024-08-01'),
+    paymentDate: new Date('2025-08-10'),
+    dueDate: new Date('2025-08-01'),
     status: 'paid',
     type: 'rent',
     method: 'bank_transfer',
-    reference: 'RENT-2024-08-004',
+    reference: 'RENT-2025-08-004',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -353,12 +353,12 @@ const payments = db.payments.insertMany([
     tenantId: tenant5User._id,
     leaseId: leases.insertedIds['4'],
     amount: 18000,
-    paymentDate: new Date('2024-08-01'),
-    dueDate: new Date('2024-08-01'),
+    paymentDate: new Date('2025-08-01'),
+    dueDate: new Date('2025-08-01'),
     status: 'paid',
     type: 'rent',
     method: 'bank_transfer',
-    reference: 'RENT-2024-08-005',
+    reference: 'RENT-2025-08-005',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -367,11 +367,11 @@ const payments = db.payments.insertMany([
     leaseId: leases.insertedIds['4'],
     amount: 18000,
     paymentDate: null,
-    dueDate: new Date('2024-09-01'),
+    dueDate: new Date('2025-09-01'),
     status: 'pending',
     type: 'rent',
     method: null,
-    reference: 'RENT-2024-09-005',
+    reference: 'RENT-2025-09-005',
     createdAt: new Date(),
     updatedAt: new Date()
   }
@@ -636,7 +636,7 @@ const notifications = db.notifications.insertMany([
   {
     userId: tenant1User._id,
     title: 'Rent Due Reminder',
-    message: 'Your rent payment for September 2024 is due in 5 days. Please ensure payment is made on time to avoid late fees.',
+    message: 'Your rent payment for September 2025 is due in 5 days. Please ensure payment is made on time to avoid late fees.',
     type: 'payment_reminder',
     read: false,
     priority: 'medium',
@@ -672,7 +672,7 @@ const notifications = db.notifications.insertMany([
   {
     userId: tenant3User._id,
     title: 'Payment Confirmation',
-    message: 'Your rent payment for August 2024 has been successfully processed. Thank you for your payment.',
+    message: 'Your rent payment for August 2025 has been successfully processed. Thank you for your payment.',
     type: 'payment_confirmation',
     read: false,
     priority: 'low',
@@ -920,16 +920,16 @@ db.users.updateOne(
 
 print('Comprehensive relational data initialization completed successfully!');
 print('Collections created:');
-print('   - properties (' + db.properties.countDocuments() + ' documents)');
-print('   - units (' + db.units.countDocuments() + ' documents)');
-print('   - leases (' + db.leases.countDocuments() + ' documents)');
-print('   - payments (' + db.payments.countDocuments() + ' documents)');
-print('   - maintenance_requests (' + db.maintenance_requests.countDocuments() + ' documents)');
-print('   - caretaker_tasks (' + db.caretaker_tasks.countDocuments() + ' documents)');
-print('   - reports (' + db.reports.countDocuments() + ' documents)');
-print('   - notifications (' + db.notifications.countDocuments() + ' documents)');
-print('   - settings (' + db.settings.countDocuments() + ' documents)');
-print('   - audit_logs (' + db.audit_logs.countDocuments() + ' documents)');
+print('   - properties (' + db.properties.find().count() + ' documents)');
+print('   - units (' + db.units.find().count() + ' documents)');
+print('   - leases (' + db.leases.find().count() + ' documents)');
+print('   - payments (' + db.payments.find().count() + ' documents)');
+print('   - maintenance_requests (' + db.maintenance_requests.find().count() + ' documents)');
+print('   - caretaker_tasks (' + db.caretaker_tasks.find().count() + ' documents)');
+print('   - reports (' + db.reports.find().count() + ' documents)');
+print('   - notifications (' + db.notifications.find().count() + ' documents)');
+print('   - settings (' + db.settings.find().count() + ' documents)');
+print('   - audit_logs (' + db.audit_logs.find().count() + ' documents)');
 print('');
 print('Data relationships established:');
 print('   - Each tenant has a lease and assigned unit');

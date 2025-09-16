@@ -88,9 +88,9 @@ async function handler(request: Request): Promise<Response> {
   return response;
 }
 
-console.log(`🚀 Briconomy PWA Server running on http://localhost:${PORT}/`);
-console.log(`📱 Mobile-optimized property management system`);
-console.log(`⚡ Low bandwidth optimization enabled`);
-console.log(`🔧 Chart.js data visualization ready`);
+console.log(`Briconomy PWA Server running on http://localhost:${PORT}/`);
+console.log(`Mobile-optimized property management system`);
+console.log(`Low bandwidth optimization enabled`);
+console.log(`Chart.js data visualization ready`);
 
 await serve(handler, { port: PORT, hostname: "0.0.0.0" });

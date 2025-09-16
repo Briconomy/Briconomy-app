@@ -98,11 +98,11 @@ function PaymentMethodsManager() {
 
   const getMethodIcon = (type: PaymentMethod['type']) => {
     switch (type) {
-      case 'bank_account': return '🏦';
-      case 'credit_card': return '💳';
-      case 'debit_card': return '💳';
-      case 'eft': return '📱';
-      default: return '💰';
+      case 'bank_account': return 'Bank';
+      case 'credit_card': return 'Card';
+      case 'debit_card': return 'Card';
+      case 'eft': return 'Mobile';
+      default: return 'Payment';
     }
   };
 

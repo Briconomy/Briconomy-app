@@ -22,7 +22,7 @@ const result = await build({
   chunkNames: "[name]-[hash]",
 });
 
-console.log("✅ Build completed successfully");
-console.log(`📦 Output: ${result.outputFiles?.length || 0} files generated`);
+console.log("Build completed successfully");
+console.log(`Output: ${result.outputFiles?.length || 0} files generated`);
 
 Deno.exit(0);

@@ -7,7 +7,9 @@ import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerProfilePage() {
   const [user, setUser] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing]                 <div key={task.id} className="activity-item">
+                  <div className="activity-icon">Completed</div>
+                  <div className="activity-content">seState(false);
   const [formData, setFormData] = useState({});
   const [notificationSettings, setNotificationSettings] = useState({
     email: true,
@@ -437,7 +439,7 @@ function CaretakerProfilePage() {
               .slice(0, 3)
               .map((task) => (
                 <div key={task.id} className="activity-item">
-                  <div className="activity-icon">✓</div>
+                  <div className="activity-icon">Done</div>
                   <div className="activity-content">
                     <div className="activity-title">Completed: {task.title}</div>
                     <div className="activity-time">

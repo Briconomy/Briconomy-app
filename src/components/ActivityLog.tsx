@@ -75,13 +75,13 @@ function ActivityLog() {
 
   const getActivityIcon = (type: ActivityItem['type']) => {
     switch (type) {
-      case 'login': return '🔐';
-      case 'payment': return '💳';
-      case 'maintenance_request': return '🔧';
-      case 'profile_update': return '👤';
-      case 'document_upload': return '📄';
-      case 'lease_action': return '📋';
-      default: return '📝';
+      case 'login': return 'Login';
+      case 'payment': return 'Payment';
+      case 'maintenance_request': return 'Maintenance';
+      case 'profile_update': return 'Profile';
+      case 'document_upload': return 'Document';
+      case 'lease_action': return 'Lease';
+      default: return 'Activity';
     }
   };
 

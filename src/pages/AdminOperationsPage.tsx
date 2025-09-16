@@ -101,19 +101,19 @@ function AdminOperationsPage() {
           </div>
           <div className="list-item">
             <div className="item-info">
-              <h4>✓ System backup completed successfully</h4>
+              <h4>System backup completed successfully</h4>
               <p>2 hours ago - All data secured</p>
             </div>
           </div>
           <div className="list-item">
             <div className="item-info">
-              <h4>ℹ High memory usage detected</h4>
+              <h4>High memory usage detected</h4>
               <p>4 hours ago - Currently at 78% utilization</p>
             </div>
           </div>
           <div className="list-item">
             <div className="item-info">
-              <h4>✓ Performance optimization applied</h4>
+              <h4>Performance optimization applied</h4>
               <p>6 hours ago - 15% improvement in response times</p>
             </div>
           </div>

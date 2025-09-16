@@ -347,7 +347,7 @@ function CaretakerReportsPage() {
                 className="report-type-btn"
                 onClick={() => handleGenerateReport('performance')}
               >
-                <div className="report-icon">📊</div>
+                <div className="report-icon">Chart</div>
                 <div className="report-name">Performance</div>
                 <div className="report-desc">Task completion and efficiency</div>
               </button>
@@ -356,7 +356,7 @@ function CaretakerReportsPage() {
                 className="report-type-btn"
                 onClick={() => handleGenerateReport('maintenance')}
               >
-                <div className="report-icon">🔧</div>
+                <div className="report-icon">Tools</div>
                 <div className="report-name">Maintenance</div>
                 <div className="report-desc">Maintenance requests and costs</div>
               </button>
@@ -365,7 +365,7 @@ function CaretakerReportsPage() {
                 className="report-type-btn"
                 onClick={() => handleGenerateReport('financial')}
               >
-                <div className="report-icon">💰</div>
+                <div className="report-icon">Money</div>
                 <div className="report-name">Financial</div>
                 <div className="report-desc">Cost analysis and savings</div>
               </button>
@@ -468,7 +468,7 @@ function CaretakerReportsPage() {
         <ChartCard title="Performance Insights">
           <div className="insights-grid">
             <div className="insight-card">
-              <div className="insight-icon">📈</div>
+              <div className="insight-icon">Trend</div>
               <div className="insight-content">
                 <div className="insight-title">Task Completion</div>
                 <div className="insight-value">{completionRate}%</div>
@@ -480,7 +480,7 @@ function CaretakerReportsPage() {
             </div>
             
             <div className="insight-card">
-              <div className="insight-icon">⚡</div>
+              <div className="insight-icon">Speed</div>
               <div className="insight-content">
                 <div className="insight-title">Efficiency Rating</div>
                 <div className="insight-value">{efficiency}%</div>
@@ -492,7 +492,7 @@ function CaretakerReportsPage() {
             </div>
             
             <div className="insight-card">
-              <div className="insight-icon">💰</div>
+              <div className="insight-icon">Cost</div>
               <div className="insight-content">
                 <div className="insight-title">Cost Management</div>
                 <div className="insight-value">{formatCurrency(totalMaintenanceCost)}</div>
@@ -503,7 +503,7 @@ function CaretakerReportsPage() {
             </div>
             
             <div className="insight-card">
-              <div className="insight-icon">🎯</div>
+              <div className="insight-icon">Target</div>
               <div className="insight-content">
                 <div className="insight-title">Tasks Completed</div>
                 <div className="insight-value">{completedTasks}</div>

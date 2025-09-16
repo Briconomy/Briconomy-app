@@ -391,7 +391,7 @@ function PropertyDetailsPage() {
                 <div className="amenities-grid">
                   {property.amenities.map((amenity, index) => (
                     <div key={index} className="amenity-item">
-                      <span className="amenity-icon">✓</span>
+                      <span className="amenity-icon">Available</span>
                       <span className="amenity-name">{amenity.replace('_', ' ')}</span>
                     </div>
                   ))}
@@ -424,7 +424,7 @@ function PropertyDetailsPage() {
                   <p className="address">{property.address}</p>
                   <div className="map-placeholder">
                     <div className="map-placeholder-content">
-                      <span className="map-icon">📍</span>
+                      <span className="map-icon">Location</span>
                       <p>Interactive map coming soon</p>
                       <p className="map-subtitle">Google Maps integration will be available</p>
                     </div>
@@ -514,7 +514,7 @@ function PropertyDetailsPage() {
               <div className="amenities-grid">
                 {property.amenities.map((amenity, index) => (
                   <div key={index} className="amenity-item">
-                    <span className="amenity-icon">✓</span>
+                    <span className="amenity-icon">Available</span>
                     <span className="amenity-name">{amenity.replace('_', ' ')}</span>
                   </div>
                 ))}
@@ -637,7 +637,7 @@ function PropertyDetailsPage() {
           <div className="amenities-grid">
             {property.amenities.map((amenity, index) => (
               <div key={index} className="amenity-item">
-                <span className="amenity-icon">✓</span>
+                <span className="amenity-icon">Available</span>
                 <span className="amenity-name">{amenity.replace('_', ' ')}</span>
               </div>
             ))}
@@ -711,7 +711,7 @@ function PropertyDetailsPage() {
             <p className="address">{property.address}</p>
             <div className="map-placeholder">
               <div className="map-placeholder-content">
-                <span className="map-icon">📍</span>
+                <span className="map-icon">Location</span>
                 <p>Interactive map coming soon</p>
                 <p className="map-subtitle">Google Maps integration will be available</p>
               </div>

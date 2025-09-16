@@ -894,7 +894,7 @@ function RentalApplicationPage() {
         <TopNav showBackButton={true} backLink="/properties" />
         <div className="main-content">
           <div className="success-state">
-            <div className="success-icon">✓</div>
+            <div className="success-icon">Success</div>
             <h2>Application Submitted Successfully!</h2>
             <p>Thank you for your rental application for {property?.name}.</p>
             <p>Your application reference number is: <strong>APP-{Date.now().toString().slice(-6)}</strong></p>

@@ -21,7 +21,7 @@ export async function connectToMongoDB(): Promise<Db> {
   const candidateDb = client.database("briconomy");
   await candidateDb.listCollectionNames();
         db = candidateDb;
-        console.log("✅ Connected to MongoDB");
+        console.log("Connected to MongoDB");
         return db;
       } catch (error) {
         lastError = error;
@@ -31,7 +31,7 @@ export async function connectToMongoDB(): Promise<Db> {
       }
     }
 
-    console.error("❌ MongoDB connection error:", lastError);
+    console.error("MongoDB connection error:", lastError);
     throw lastError instanceof Error ? lastError : new Error("Mongo connection failed");
   })();
 

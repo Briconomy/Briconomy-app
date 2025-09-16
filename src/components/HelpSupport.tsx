@@ -238,7 +238,7 @@ function HelpSupport() {
             
             <div className="contact-info">
               <div className="contact-card">
-                <h4>📞 Phone Support</h4>
+                <h4>Phone Support</h4>
                 <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
                 <p>Saturday: 9:00 AM - 2:00 PM</p>
                 <p>Sunday: Closed</p>
@@ -246,7 +246,7 @@ function HelpSupport() {
               </div>
 
               <div className="contact-card">
-                <h4>📧 Email Support</h4>
+                <h4>Email Support</h4>
                 <p>For general inquiries:</p>
                 <p><strong>support@briconomy.com</strong></p>
                 <p>For urgent matters:</p>
@@ -254,7 +254,7 @@ function HelpSupport() {
               </div>
 
               <div className="contact-card">
-                <h4>🏢 Office Location</h4>
+                <h4>Office Location</h4>
                 <p>123 Main Street</p>
                 <p>Blue Hills, Johannesburg</p>
                 <p>South Africa, 2090</p>
@@ -311,7 +311,7 @@ function HelpSupport() {
           <div className="emergency-section">
             <h3>Emergency Contacts</h3>
             <div className="emergency-warning">
-              <strong>⚠️ For life-threatening emergencies, call 10177 (Ambulance/Fire) or 10111 (Police) immediately</strong>
+              <strong>WARNING: For life-threatening emergencies, call 10177 (Ambulance/Fire) or 10111 (Police) immediately</strong>
             </div>
 
             <div className="emergency-contacts-grid">
@@ -339,7 +339,7 @@ function HelpSupport() {
               <h4>Emergency Procedures</h4>
               <div className="procedure-list">
                 <div className="procedure-item">
-                  <h5>🔥 Fire Emergency</h5>
+                  <h5>Fire Emergency</h5>
                   <ol>
                     <li>Evacuate immediately using nearest exit</li>
                     <li>Call Fire Department: 10177</li>
@@ -350,7 +350,7 @@ function HelpSupport() {
                 </div>
 
                 <div className="procedure-item">
-                  <h5>🚨 Medical Emergency</h5>
+                  <h5>Medical Emergency</h5>
                   <ol>
                     <li>Call Ambulance: 10177</li>
                     <li>Provide first aid if trained</li>
@@ -361,7 +361,7 @@ function HelpSupport() {
                 </div>
 
                 <div className="procedure-item">
-                  <h5>🚪 Security Emergency</h5>
+                  <h5>Security Emergency</h5>
                   <ol>
                     <li>Call Police: 10111</li>
                     <li>Lock yourself in a safe room</li>

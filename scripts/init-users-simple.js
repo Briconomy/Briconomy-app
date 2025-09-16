@@ -14,7 +14,7 @@ const users = db.users.insertMany([
     profile: {
       department: 'System Administration',
       employeeId: 'ADMIN001',
-      joinDate: new Date('2023-01-15')
+      joinDate: new Date('2024-01-15')
     },
     isActive: true,
     createdAt: new Date(),
@@ -29,7 +29,7 @@ const users = db.users.insertMany([
     profile: {
       department: 'Property Management',
       employeeId: 'MGR001',
-      joinDate: new Date('2023-02-20'),
+      joinDate: new Date('2024-02-20'),
       managedProperties: []
     },
     isActive: true,
@@ -45,7 +45,7 @@ const users = db.users.insertMany([
     profile: {
       department: 'Property Management',
       employeeId: 'MGR002',
-      joinDate: new Date('2023-03-10'),
+      joinDate: new Date('2024-03-10'),
       managedProperties: []
     },
     isActive: true,
@@ -61,7 +61,7 @@ const users = db.users.insertMany([
     profile: {
       department: 'Maintenance',
       employeeId: 'CARE001',
-      joinDate: new Date('2023-04-05'),
+      joinDate: new Date('2024-04-05'),
       skills: ['plumbing', 'electrical', 'general'],
       assignedProperty: null
     },
@@ -78,7 +78,7 @@ const users = db.users.insertMany([
     profile: {
       department: 'Maintenance',
       employeeId: 'CARE002',
-      joinDate: new Date('2023-05-12'),
+      joinDate: new Date('2024-05-12'),
       skills: ['carpentry', 'painting', 'landscaping'],
       assignedProperty: null
     },
@@ -95,7 +95,7 @@ const users = db.users.insertMany([
     profile: {
       emergencyContact: '+27821234569',
       occupation: 'Software Developer',
-      moveInDate: new Date('2023-06-01'),
+      moveInDate: new Date('2024-06-01'),
       leaseId: null
     },
     isActive: true,
@@ -111,7 +111,7 @@ const users = db.users.insertMany([
     profile: {
       emergencyContact: '+27823456791',
       occupation: 'Teacher',
-      moveInDate: new Date('2023-07-15'),
+      moveInDate: new Date('2024-07-15'),
       leaseId: null
     },
     isActive: true,
@@ -127,7 +127,7 @@ const users = db.users.insertMany([
     profile: {
       emergencyContact: '+27825678903',
       occupation: 'Nurse',
-      moveInDate: new Date('2023-08-20'),
+      moveInDate: new Date('2024-08-20'),
       leaseId: null
     },
     isActive: true,
@@ -143,7 +143,7 @@ const users = db.users.insertMany([
     profile: {
       emergencyContact: '+27827890125',
       occupation: 'Engineer',
-      moveInDate: new Date('2023-09-10'),
+      moveInDate: new Date('2024-09-10'),
       leaseId: null
     },
     isActive: true,
@@ -159,7 +159,7 @@ const users = db.users.insertMany([
     profile: {
       emergencyContact: '+27829012347',
       occupation: 'Designer',
-      moveInDate: new Date('2023-10-05'),
+      moveInDate: new Date('2024-10-05'),
       leaseId: null
     },
     isActive: true,
