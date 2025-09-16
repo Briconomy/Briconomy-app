@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { adminApi, useApi, formatCurrency } from '../services/api.ts';
 
 function AdminReportsPage() {
   const navItems = [
@@ -11,6 +12,50 @@ function AdminReportsPage() {
     { path: '/admin/security', label: 'Security' },
     { path: '/admin/reports', label: 'Reports', active: true }
   ];
+
+  const { data: financialStats, loading: statsLoading } = useApi(() => adminApi.getFinancialStats());
+  const { data: availableReports, loading: reportsLoading } = useApi(() => adminApi.getAvailableReports());
+  const { data: reportActivities, loading: activitiesLoading } = useApi(() => adminApi.getReportActivities());
+
+  const getFinancialStatsData = () => {
+    if (statsLoading || !financialStats) {
+      return {
+        monthlyRevenue: 'R840k',
+        occupancyRate: '88%',
+        collectionRate: '95%',
+        activeReports: '24'
+      };
+    }
+    
+    const stats = financialStats[0];
+    return {
+      monthlyRevenue: `R${(stats.monthlyRevenue / 1000).toFixed(0)}k`,
+      occupancyRate: `${stats.occupancyRate}%`,
+      collectionRate: `${stats.collectionRate}%`,
+      activeReports: stats.activeReports?.toString() || '24'
+    };
+  };
+
+  const formatActivityTime = (timestamp: string) => {
+    const now = new Date();
+    const activityTime = new Date(timestamp);
+    const diffMs = now.getTime() - activityTime.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 60) {
+      return `${diffMins} minutes ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    } else if (diffDays === 1) {
+      return '1 day ago';
+    } else {
+      return `${diffDays} days ago`;
+    }
+  };
+
+  const stats = getFinancialStatsData();
 
   return (
     <div className="app-container mobile-only">
@@ -23,10 +68,10 @@ function AdminReportsPage() {
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="R840k" label="Monthly Revenue" />
-          <StatCard value="88%" label="Occupancy Rate" />
-          <StatCard value="95%" label="Collection Rate" />
-          <StatCard value="24" label="Active Reports" />
+          <StatCard value={stats.monthlyRevenue} label="Monthly Revenue" />
+          <StatCard value={stats.occupancyRate} label="Occupancy Rate" />
+          <StatCard value={stats.collectionRate} label="Collection Rate" />
+          <StatCard value={stats.activeReports} label="Active Reports" />
         </div>
 
         <ChartCard title="Financial Overview">
@@ -40,29 +85,23 @@ function AdminReportsPage() {
             <div className="table-title">Available Reports</div>
           </div>
           
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Monthly Financial Report</h4>
-              <p>Revenue, expenses, and profit analysis</p>
+          {reportsLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading available reports...</h4>
+              </div>
             </div>
-            <span className="status-badge status-ready">Ready</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Property Performance Report</h4>
-              <p>Occupancy rates and property metrics</p>
-            </div>
-            <span className="status-badge status-ready">Ready</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Maintenance Summary Report</h4>
-              <p>Maintenance costs and resolution times</p>
-            </div>
-            <span className="status-badge status-processing">Processing</span>
-          </div>
+          ) : (
+            availableReports?.map((report: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{report.title}</h4>
+                  <p>{report.description}</p>
+                </div>
+                <span className={`status-badge status-${report.status}`}>{report.status}</span>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="data-table">
@@ -99,24 +138,22 @@ function AdminReportsPage() {
           <div className="table-header">
             <div className="table-title">Recent Report Activity</div>
           </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Monthly Financial Report generated</h4>
-              <p>2 hours ago - Generated by Sarah Johnson</p>
+          {activitiesLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading report activities...</h4>
+              </div>
             </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Property Performance Report downloaded</h4>
-              <p>5 hours ago - Downloaded by Michael Chen</p>
-            </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Custom Occupancy Report generated</h4>
-              <p>1 day ago - Generated by Patricia Williams</p>
-            </div>
-          </div>
+          ) : (
+            reportActivities?.map((activity: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{activity.action}</h4>
+                  <p>{formatActivityTime(activity.timestamp)} - {activity.details}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
       

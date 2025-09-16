@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { adminApi, useApi } from '../services/api.ts';
 
 function AdminUsersPage() {
   const navItems = [
@@ -11,6 +12,46 @@ function AdminUsersPage() {
     { path: '/admin/security', label: 'Security' },
     { path: '/admin/reports', label: 'Reports' }
   ];
+
+  const { data: userStats, loading: statsLoading } = useApi(() => adminApi.getUserStats());
+  const { data: userActivities, loading: activitiesLoading } = useApi(() => adminApi.getUserActivities());
+
+  const getUserStatsData = () => {
+    if (statsLoading || !userStats) {
+      return {
+        totalUsers: '10',
+        activeUsers: '8',
+        totalRoles: '5',
+        pendingUsers: '2'
+      };
+    }
+    
+    const stats = userStats[0];
+    return {
+      totalUsers: stats?.totalUsers?.toString() || '10',
+      activeUsers: stats?.activeUsers?.toString() || '8',
+      totalRoles: stats?.totalRoles?.toString() || '5',
+      pendingUsers: stats?.pendingUsers?.toString() || '2'
+    };
+  };
+
+  const formatActivityTime = (timestamp: string) => {
+    const now = new Date();
+    const activityTime = new Date(timestamp);
+    const diffMs = now.getTime() - activityTime.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffMins < 60) {
+      return `${diffMins} minutes ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    } else {
+      return activityTime.toLocaleDateString();
+    }
+  };
+
+  const stats = getUserStatsData();
 
   return (
     <div className="app-container mobile-only">
@@ -23,10 +64,10 @@ function AdminUsersPage() {
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="10" label="Total Users" />
-          <StatCard value="8" label="Active" />
-          <StatCard value="5" label="Roles" />
-          <StatCard value="2" label="Pending" />
+          <StatCard value={stats.totalUsers} label="Total Users" />
+          <StatCard value={stats.activeUsers} label="Active" />
+          <StatCard value={stats.totalRoles} label="Roles" />
+          <StatCard value={stats.pendingUsers} label="Pending" />
         </div>
 
         <div className="data-table">
@@ -70,24 +111,22 @@ function AdminUsersPage() {
           <div className="table-header">
             <div className="table-title">Recent Activity</div>
           </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>User login: Sarah Johnson</h4>
-              <p>2 minutes ago</p>
+          {activitiesLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading activities...</h4>
+              </div>
             </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>User created: Maria Garcia</h4>
-              <p>1 hour ago</p>
-            </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Password updated: James Smith</h4>
-              <p>3 hours ago</p>
-            </div>
-          </div>
+          ) : (
+            userActivities?.map((activity: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{activity.action}</h4>
+                  <p>{formatActivityTime(activity.timestamp)}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
       

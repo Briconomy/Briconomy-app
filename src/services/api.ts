@@ -145,6 +145,22 @@ export const dashboardApi = {
   getStats: () => apiRequest('/dashboard/stats'),
 };
 
+export const adminApi = {
+  getSystemStats: () => apiRequest('/admin/system-stats'),
+  getUserStats: () => apiRequest('/admin/user-stats'),
+  getSecurityStats: () => apiRequest('/admin/security-stats'),
+  getFinancialStats: () => apiRequest('/admin/financial-stats'),
+  getUserActivities: () => apiRequest('/admin/user-activities'),
+  getSecurityConfig: () => apiRequest('/admin/security-config'),
+  getSecurityAlerts: () => apiRequest('/admin/security-alerts'),
+  getSecuritySettings: () => apiRequest('/admin/security-settings'),
+  getAvailableReports: () => apiRequest('/admin/available-reports'),
+  getReportActivities: () => apiRequest('/admin/report-activities'),
+  getDatabaseHealth: () => apiRequest('/admin/database-health'),
+  getApiEndpoints: () => apiRequest('/admin/api-endpoints'),
+  getSystemAlerts: () => apiRequest('/admin/system-alerts'),
+};
+
 export const authApi = {
   login: (email: string, password: string) => apiRequest('/auth/login', {
     method: 'POST',

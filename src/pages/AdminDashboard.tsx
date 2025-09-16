@@ -4,6 +4,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { adminApi, useApi } from '../services/api.ts';
 
 function AdminDashboard() {
   const navItems = [
@@ -12,6 +13,29 @@ function AdminDashboard() {
     { path: '/admin/security', label: 'Security' },
     { path: '/admin/reports', label: 'Reports' }
   ];
+
+  const { data: systemStats, loading: statsLoading } = useApi(() => adminApi.getSystemStats());
+
+  const getStatsData = () => {
+    if (statsLoading || !systemStats) {
+      return {
+        totalUsers: '156',
+        totalProperties: '24',
+        uptime: '99.9%',
+        responseTime: '245ms'
+      };
+    }
+    
+    const overviewStats = systemStats.find((stat: any) => stat.category === 'overview');
+    return {
+      totalUsers: overviewStats?.totalUsers?.toString() || '156',
+      totalProperties: overviewStats?.totalProperties?.toString() || '24',
+      uptime: overviewStats?.uptime || '99.9%',
+      responseTime: overviewStats?.responseTime || '245ms'
+    };
+  };
+
+  const stats = getStatsData();
 
   return (
     <div className="app-container mobile-only">
@@ -24,10 +48,10 @@ function AdminDashboard() {
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="156" label="Total Users" />
-          <StatCard value="24" label="Properties" />
-          <StatCard value="99.9%" label="Uptime" />
-          <StatCard value="245ms" label="Response" />
+          <StatCard value={stats.totalUsers} label="Total Users" />
+          <StatCard value={stats.totalProperties} label="Properties" />
+          <StatCard value={stats.uptime} label="Uptime" />
+          <StatCard value={stats.responseTime} label="Response" />
         </div>
 
         <ChartCard title="System Performance">
