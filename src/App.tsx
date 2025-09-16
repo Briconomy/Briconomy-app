@@ -25,6 +25,7 @@ import MaintenanceRequestsPage from './pages/MaintenanceRequestsPage.tsx';
 import CaretakerTasksPage from './pages/CaretakerTasksPage.tsx';
 import PropertyManagementPage from './pages/PropertyManagementPage.tsx';
 import LeaseManagementPage from './pages/LeaseManagementPage.tsx';
+import LeaseTerminationsPage from './pages/LeaseTerminationsPage.tsx';
 import ManagerPaymentsPage from './pages/ManagerPaymentsPage.tsx';
 import CommunicationPage from './pages/CommunicationPage.tsx';
 import CreateLeasePage from './pages/CreateLeasePage.tsx';
@@ -35,6 +36,10 @@ import ApiTestPage from './pages/ApiTestPage.tsx';
 import { ProtectedRoute, AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { ProspectiveTenantProvider } from './contexts/ProspectiveTenantContext.tsx';
+import InitiateTerminationPage from './pages/InitiateTerminationPage.tsx';
+import SettlementCalculatorPage from './pages/SettlementCalculatorPage.tsx';
+import DocumentGeneratorPage from './pages/DocumentGeneratorPage.tsx';
+import TerminationReportPage from './pages/TerminationReportPage.tsx';
 
 function App() {
   return (
@@ -77,6 +82,12 @@ function App() {
               <Route path="/tenant/messages" element={<TenantRoute><CommunicationPage /></TenantRoute>} />
               <Route path="/manager/documents" element={<ManagerRoute><DocumentManagementPage /></ManagerRoute>} />
               <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />
+              <Route path="/manager/terminations" element={<ManagerRoute><LeaseTerminationsPage /></ManagerRoute>} />
+              <Route path="/manager/terminations/initiate" element={<ManagerRoute><InitiateTerminationPage /></ManagerRoute>} />
+              <Route path="/manager/terminations/settlement" element={<ManagerRoute><SettlementCalculatorPage /></ManagerRoute>} />
+              <Route path="/manager/terminations/documents" element={<ManagerRoute><DocumentGeneratorPage /></ManagerRoute>} />
+              <Route path="/manager/terminations/report" element={<ManagerRoute><TerminationReportPage /></ManagerRoute>} />
+
               <Route path="/tenant/profile" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/payment-methods" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/documents" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
