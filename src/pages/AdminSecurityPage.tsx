@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { adminApi, useApi } from '../services/api.ts';
 
 function AdminSecurityPage() {
   const navItems = [
@@ -11,6 +12,48 @@ function AdminSecurityPage() {
     { path: '/admin/security', label: 'Security', active: true },
     { path: '/admin/reports', label: 'Reports' }
   ];
+
+  const { data: securityStats, loading: statsLoading } = useApi(() => adminApi.getSecurityStats());
+  const { data: securityConfig, loading: configLoading } = useApi(() => adminApi.getSecurityConfig());
+  const { data: securityAlerts, loading: alertsLoading } = useApi(() => adminApi.getSecurityAlerts());
+  const { data: securitySettings, loading: settingsLoading } = useApi(() => adminApi.getSecuritySettings());
+
+  const getSecurityStatsData = () => {
+    if (statsLoading || !securityStats) {
+      return {
+        secureStatus: '100%',
+        threats: '0',
+        monitoring: '24/7',
+        twoFactorEnabled: '2FA'
+      };
+    }
+    
+    const stats = securityStats[0];
+    return {
+      secureStatus: stats?.secureStatus || '100%',
+      threats: stats?.threats?.toString() || '0',
+      monitoring: stats?.monitoring || '24/7',
+      twoFactorEnabled: stats?.twoFactorEnabled || '2FA'
+    };
+  };
+
+  const formatAlertTime = (timestamp: string) => {
+    const now = new Date();
+    const alertTime = new Date(timestamp);
+    const diffMs = now.getTime() - alertTime.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffMins < 60) {
+      return `${diffMins} minutes ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    } else {
+      return alertTime.toLocaleDateString();
+    }
+  };
+
+  const stats = getSecurityStatsData();
 
   return (
     <div className="app-container mobile-only">
@@ -23,10 +66,10 @@ function AdminSecurityPage() {
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="100%" label="Secure" />
-          <StatCard value="0" label="Threats" />
-          <StatCard value="24/7" label="Monitoring" />
-          <StatCard value="2FA" label="Enabled" />
+          <StatCard value={stats.secureStatus} label="Secure" />
+          <StatCard value={stats.threats} label="Threats" />
+          <StatCard value={stats.monitoring} label="Monitoring" />
+          <StatCard value={stats.twoFactorEnabled} label="Enabled" />
         </div>
 
         <div className="data-table">
@@ -34,53 +77,45 @@ function AdminSecurityPage() {
             <div className="table-title">Authentication Methods</div>
           </div>
           
-          <div className="list-item">
-            <div className="item-info">
-              <h4>SSO Authentication</h4>
-              <p>Google and institutional login</p>
+          {configLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading authentication methods...</h4>
+              </div>
             </div>
-            <span className="status-badge status-active">Active</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Biometric Login</h4>
-              <p>Fingerprint and facial recognition</p>
-            </div>
-            <span className="status-badge status-active">Active</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Traditional Login</h4>
-              <p>Email and password authentication</p>
-            </div>
-            <span className="status-badge status-active">Active</span>
-          </div>
+          ) : (
+            securityConfig?.map((config: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{config.method}</h4>
+                  <p>{config.description}</p>
+                </div>
+                <span className={`status-badge status-${config.status}`}>{config.status}</span>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">Security Alerts</div>
           </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>System security scan completed</h4>
-              <p>5 minutes ago - No threats detected</p>
+          {alertsLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading security alerts...</h4>
+              </div>
             </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Password policy updated</h4>
-              <p>1 hour ago - Minimum 12 characters required</p>
-            </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>2FA enrollment increased by 15%</h4>
-              <p>3 hours ago - Enhanced security adoption</p>
-            </div>
-          </div>
+          ) : (
+            securityAlerts?.map((alert: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{alert.title}</h4>
+                  <p>{formatAlertTime(alert.timestamp)} - {alert.message}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <ChartCard title="Access Logs">
@@ -93,27 +128,23 @@ function AdminSecurityPage() {
           <div className="table-header">
             <div className="table-title">Security Settings</div>
           </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Session Timeout</h4>
-              <p>30 minutes of inactivity</p>
+          {settingsLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading security settings...</h4>
+              </div>
             </div>
-            <button className="btn-secondary">Configure</button>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Login Attempts</h4>
-              <p>5 failed attempts before lockout</p>
-            </div>
-            <button className="btn-secondary">Configure</button>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>IP Whitelisting</h4>
-              <p>Restricted access from approved IPs</p>
-            </div>
-            <button className="btn-secondary">Configure</button>
-          </div>
+          ) : (
+            securitySettings?.map((setting: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{setting.setting}</h4>
+                  <p>{setting.value}</p>
+                </div>
+                {setting.configurable && <button className="btn-secondary">Configure</button>}
+              </div>
+            ))
+          )}
         </div>
       </div>
       

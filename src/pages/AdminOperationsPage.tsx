@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { adminApi, useApi } from '../services/api.ts';
 
 function AdminOperationsPage() {
   const navItems = [
@@ -11,6 +12,48 @@ function AdminOperationsPage() {
     { path: '/admin/security', label: 'Security' },
     { path: '/admin/reports', label: 'Reports' }
   ];
+
+  const { data: systemStats, loading: statsLoading } = useApi(() => adminApi.getSystemStats());
+  const { data: databaseHealth, loading: healthLoading } = useApi(() => adminApi.getDatabaseHealth());
+  const { data: apiEndpoints, loading: endpointsLoading } = useApi(() => adminApi.getApiEndpoints());
+  const { data: systemAlerts, loading: alertsLoading } = useApi(() => adminApi.getSystemAlerts());
+
+  const getPerformanceStats = () => {
+    if (statsLoading || !systemStats) {
+      return {
+        uptime: '99.9%',
+        responseTime: '245ms',
+        errorRate: '0.1%',
+        health: '98%'
+      };
+    }
+    
+    const performanceStats = systemStats.find((stat: any) => stat.category === 'performance');
+    return {
+      uptime: performanceStats?.uptime || '99.9%',
+      responseTime: performanceStats?.responseTime || '245ms',
+      errorRate: performanceStats?.errorRate || '0.1%',
+      health: performanceStats?.health || '98%'
+    };
+  };
+
+  const formatAlertTime = (timestamp: string) => {
+    const now = new Date();
+    const alertTime = new Date(timestamp);
+    const diffMs = now.getTime() - alertTime.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffMins < 60) {
+      return `${diffMins} minutes ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    } else {
+      return alertTime.toLocaleDateString();
+    }
+  };
+
+  const stats = getPerformanceStats();
 
   return (
     <div className="app-container mobile-only">
@@ -23,10 +66,10 @@ function AdminOperationsPage() {
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="99.9%" label="Uptime" />
-          <StatCard value="245ms" label="Response" />
-          <StatCard value="0.1%" label="Error Rate" />
-          <StatCard value="98%" label="Health" />
+          <StatCard value={stats.uptime} label="Uptime" />
+          <StatCard value={stats.responseTime} label="Response" />
+          <StatCard value={stats.errorRate} label="Error Rate" />
+          <StatCard value={stats.health} label="Health" />
         </div>
 
         <ChartCard title="System Performance">
@@ -40,29 +83,25 @@ function AdminOperationsPage() {
             <div className="table-title">Database Health</div>
           </div>
           
-          <div className="list-item">
-            <div className="item-info">
-              <h4>MongoDB Connection</h4>
-              <p>Response time: 12ms</p>
+          {healthLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading database health...</h4>
+              </div>
             </div>
-            <span className="status-badge status-healthy">Healthy</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Database Size</h4>
-              <p>156 documents across 11 collections</p>
-            </div>
-            <span className="status-badge status-normal">2.4 GB</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Index Performance</h4>
-              <p>All queries using indexes efficiently</p>
-            </div>
-            <span className="status-badge status-optimal">Optimal</span>
-          </div>
+          ) : (
+            databaseHealth?.map((health: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{health.metric}</h4>
+                  <p>{health.value}</p>
+                </div>
+                <span className={`status-badge status-${health.status}`}>
+                  {health.size || health.status}
+                </span>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="data-table">
@@ -70,53 +109,47 @@ function AdminOperationsPage() {
             <div className="table-title">API Endpoints</div>
           </div>
           
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Authentication API</h4>
-              <p>100% success rate</p>
+          {endpointsLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading API endpoints...</h4>
+              </div>
             </div>
-            <span className="status-badge status-good">200ms</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Property Management API</h4>
-              <p>99.8% success rate</p>
-            </div>
-            <span className="status-badge status-good">180ms</span>
-          </div>
-          
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Payment Processing API</h4>
-              <p>98.5% success rate</p>
-            </div>
-            <span className="status-badge status-warning">350ms</span>
-          </div>
+          ) : (
+            apiEndpoints?.map((endpoint: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{endpoint.endpoint}</h4>
+                  <p>{endpoint.successRate}% success rate</p>
+                </div>
+                <span className={`status-badge status-${endpoint.status}`}>
+                  {endpoint.responseTime}
+                </span>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">System Alerts</div>
           </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>System backup completed successfully</h4>
-              <p>2 hours ago - All data secured</p>
+          {alertsLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>Loading system alerts...</h4>
+              </div>
             </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>High memory usage detected</h4>
-              <p>4 hours ago - Currently at 78% utilization</p>
-            </div>
-          </div>
-          <div className="list-item">
-            <div className="item-info">
-              <h4>Performance optimization applied</h4>
-              <p>6 hours ago - 15% improvement in response times</p>
-            </div>
-          </div>
+          ) : (
+            systemAlerts?.map((alert: any, index: number) => (
+              <div key={index} className="list-item">
+                <div className="item-info">
+                  <h4>{alert.title}</h4>
+                  <p>{formatAlertTime(alert.timestamp)} - {alert.message}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
       
