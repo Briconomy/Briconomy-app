@@ -84,7 +84,7 @@ function LandingPage() {
             </ul>
           </div>
 
-        <a
+<a
           href="/login"
           style={{
             display: 'block',
@@ -103,28 +103,6 @@ function LandingPage() {
           }}
         >
           Sign In
-        </a>
-
-        <a
-          href="/create-account"
-          style={{
-            display: 'block',
-            width: '100%',
-            padding: '16px',
-            background: 'rgba(255,255,255,0.1)',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '12px',
-            fontSize: '18px',
-            fontWeight: '600',
-            marginBottom: '12px',
-            border: '2px solid rgba(255,255,255,0.3)',
-            transition: 'all 0.3s ease',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-          }}
-        >
-          Create Account
         </a>
       </div>
 

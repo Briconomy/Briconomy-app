@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
-import CreateAccountPage from './pages/CreateAccountPage.tsx';
+import AdminAddUserPage from './pages/AdminAddUserPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
 import ManagerDashboard from './pages/ManagerDashboard.tsx';
 import CaretakerDashboard from './pages/CaretakerDashboard.tsx';
@@ -49,7 +49,7 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/create-account" element={<CreateAccountPage />} />
+              <Route path="/admin/add-user" element={<AdminRoute><AdminAddUserPage /></AdminRoute>} />
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
               <Route path="/admin/security" element={<AdminRoute><AdminSecurityPage /></AdminRoute>} />
