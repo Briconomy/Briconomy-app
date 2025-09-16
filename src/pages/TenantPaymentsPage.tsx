@@ -94,6 +94,15 @@ function TenantPaymentsPage() {
     return diffDays;
   };
 
+  const getPaymentStatusColor = (status) => {
+    switch (status) {
+      case 'paid': return 'status-paid';
+      case 'pending': return 'status-pending';
+      case 'overdue': return 'status-overdue';
+      default: return 'status-pending';
+    }
+  };
+
   const handleMakePayment = (payment) => {
     setSelectedPayment(payment);
     setShowPaymentForm(true);
@@ -138,7 +147,7 @@ function TenantPaymentsPage() {
 
   if (paymentsLoading || leasesLoading) {
     return (
-      <div className="app-container mobile-only tenant-payments-page">
+      <div className="app-container mobile-only">
         <TopNav showLogout />
         <div className="main-content">
           <div className="loading-state">
@@ -172,7 +181,7 @@ function TenantPaymentsPage() {
   };
 
   return (
-    <div className="app-container mobile-only tenant-payments-page">
+    <div className="app-container mobile-only">
       <TopNav showLogout />
       
       <div className="main-content">
