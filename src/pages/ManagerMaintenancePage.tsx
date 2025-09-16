@@ -283,12 +283,11 @@ function ManagerMaintenancePage() {
           <span className={`text-xs ${getPriorityColor(request.priority)}`}>
             {request.priority.toUpperCase()}
           </span>
-          <span className="text-xs text-gray-500">
-            {request.property} - {request.unit}
-          </span>
+          <br />
           <span className="text-xs text-gray-500">
             Created: {formatDate(request.createdAt)}
           </span>
+          <br />
           {request.assignedTo ? (
             <span className="text-xs text-blue-600">
               Assigned to: {request.assignedTo}
@@ -298,6 +297,7 @@ function ManagerMaintenancePage() {
               Unassigned
             </span>
           )}
+          <br />
           {request.estimatedCost && (
             <span className="text-xs text-blue-600">
               Est: {formatCurrency(request.estimatedCost)}
