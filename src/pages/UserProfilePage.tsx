@@ -5,7 +5,6 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';
 import DocumentViewer from '../components/DocumentViewer.tsx';
-import HelpSupport from '../components/HelpSupport.tsx';
 import ActivityLog from '../components/ActivityLog.tsx';
 
 function UserProfilePage() {
@@ -31,7 +30,7 @@ function UserProfilePage() {
   });
 
   const [showEditForm, setShowEditForm] = useState(false);
-  const [activeSection, setActiveSection] = useState<'overview' | 'payment-methods' | 'documents' | 'help' | 'activity'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'documents' | 'activity'>('overview');
   const [formData, setFormData] = useState({
     fullName: user.fullName,
     email: user.email,
@@ -201,22 +200,10 @@ function UserProfilePage() {
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => setActiveSection('payment-methods')}
-            icon="P"
-            title="Payment Methods"
-            description="Manage payment options"
-          />
-          <ActionCard
             onClick={() => setActiveSection('documents')}
             icon="D"
             title="Documents"
             description="View your documents"
-          />
-          <ActionCard
-            onClick={() => setActiveSection('help')}
-            icon="H"
-            title="Help & Support"
-            description="Get help"
           />
           <ActionCard
             onClick={() => setActiveSection('activity')}
@@ -328,21 +315,6 @@ function UserProfilePage() {
       )}
 
       {/* Dynamic Sections */}
-      {activeSection === 'payment-methods' && (
-        <div className="profile-section">
-          <div className="section-header">
-            <h3>Payment Methods</h3>
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveSection('overview')}
-            >
-              Back to Overview
-            </button>
-          </div>
-          <PaymentMethodsManager />
-        </div>
-      )}
 
       {activeSection === 'documents' && (
         <div className="profile-section">
@@ -360,21 +332,6 @@ function UserProfilePage() {
         </div>
       )}
 
-      {activeSection === 'help' && (
-        <div className="profile-section">
-          <div className="section-header">
-            <h3>Help & Support</h3>
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveSection('overview')}
-            >
-              Back to Overview
-            </button>
-          </div>
-          <HelpSupport />
-        </div>
-      )}
 
       {activeSection === 'activity' && (
         <div className="profile-section">
