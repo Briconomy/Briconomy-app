@@ -163,14 +163,6 @@ function TenantPaymentsPage() {
   const currentLease = leases?.[0];
 
   const renderPaymentChart = () => {
-    if (chartError) {
-      return (
-        <div className="chart-error">
-          <p>Unable to load payment history chart</p>
-        </div>
-      );
-    }
-
     if (!payments || payments.length === 0) {
       return (
         <div className="chart-empty">
@@ -246,72 +238,6 @@ function TenantPaymentsPage() {
         )}
 
         {renderPaymentChart()}
-
-        <div className="payment-schedule">
-          <div className="section-header">
-            <h3>Payment Schedule</h3>
-            <div className="schedule-summary">
-              <span className="summary-item">
-                <strong>Total:</strong> {formatCurrency(payments?.reduce((sum, p) => sum + p.amount, 0) || 0)}
-              </span>
-              <span className="summary-item">
-                <strong>Paid:</strong> {payments?.filter(p => p.status === 'paid').length || 0}
-              </span>
-              <span className="summary-item">
-                <strong>Pending:</strong> {payments?.filter(p => p.status === 'pending').length || 0}
-              </span>
-            </div>
-          </div>
-          
-          <div className="payments-list">
-            {payments?.map((payment) => (
-              <div key={payment.id} className="payment-item">
-                <div className="payment-left">
-                  <div className="payment-type-icon">
-                    {payment.type === 'rent' ? '🏠' : '💰'}
-                  </div>
-                  <div className="payment-details">
-                    <h4>{payment.type === 'rent' ? 'Rent Payment' : payment.type}</h4>
-                    <div className="payment-meta">
-                      <span className="payment-amount">{formatCurrency(payment.amount)}</span>
-                      <span className="payment-due">Due: {formatDate(payment.dueDate)}</span>
-                    </div>
-                    {payment.paymentDate && (
-                      <div className="payment-paid-info">
-                        <span className="paid-date">Paid: {formatDate(payment.paymentDate)}</span>
-                        {payment.method && (
-                          <span className="payment-method">Method: {payment.method.replace('_', ' ')}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="payment-right">
-                  <span className={`status-badge ${getPaymentStatusColor(payment.status)}`}>
-                    {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                  </span>
-                  {payment.status === 'pending' && (
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      type="button"
-                      onClick={() => handleMakePayment(payment)}
-                    >
-                      Pay Now
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {payments?.length === 0 && (
-              <div className="no-payments-state">
-                <div className="no-payments-icon">📋</div>
-                <h4>No Payments Found</h4>
-                <p>No payment schedule is currently available. Please check back later or contact your property manager.</p>
-              </div>
-            )}
-          </div>
-        </div>
 
         <div className="payment-actions-section">
           <h3>Quick Actions</h3>
@@ -435,26 +361,6 @@ function TenantPaymentsPage() {
                   </div>
                 </div>
                 
-                <div className="add-payment-method">
-                  <button 
-                    type="button"
-                    className="btn btn-link"
-                    onClick={() => {
-                      // Navigate to profile page with payment methods section active
-                      window.location.href = '/tenant/profile';
-                      // This would ideally use React Router, but for simplicity using direct navigation
-                      setTimeout(() => {
-                        // This is a workaround - in a real app, you'd use router state
-                        const profileSection = document.querySelector('[data-section="payment-methods"]');
-                        if (profileSection) {
-                          profileSection.scrollIntoView({ behavior: 'smooth' });
-                        }
-                      }, 100);
-                    }}
-                  >
-                    + Add New Payment Method
-                  </button>
-                </div>
               </div>
               
               <div className="form-actions">
