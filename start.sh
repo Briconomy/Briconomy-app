@@ -4,10 +4,20 @@ echo "Starting Briconomy Property Management System..."
 echo "Mobile-optimized PWA application"
 echo ""
 
-# Kill any existing processes on ports 5173 and 8000
+# Kill any existing processes on ports 5173, 8000, and 8816
 echo "Cleaning up existing processes..."
 lsof -ti:5173 | xargs kill -9 2>/dev/null || true
 lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+lsof -ti:8816 | xargs kill -9 2>/dev/null || true
+
+# Kill any remaining Deno processes
+echo "Killing Deno processes..."
+pkill -f "deno" || true
+
+# Kill any remaining Node processes
+echo "Killing Node processes..."
+pkill -f "node" || true
+
 sleep 2
 
 # Check if MongoDB is running

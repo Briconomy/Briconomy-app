@@ -3,10 +3,20 @@ echo Starting Briconomy Property Management System...
 echo Mobile-optimized PWA application
 echo.
 
-REM Kill any existing processes on ports 5173 and 8000
+REM Kill any existing processes on ports 5173, 8000, and 8816
 echo Cleaning up existing processes...
 for /f "tokens=5" %%a in ('netstat -aon ^| find ":5173" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -aon ^| find ":8000" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":8816" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
+
+REM Kill any remaining Deno processes
+echo Killing Deno processes...
+taskkill /f /im deno.exe >nul 2>&1
+
+REM Kill any remaining Node processes
+echo Killing Node processes...
+taskkill /f /im node.exe >nul 2>&1
+
 timeout /t 2 /nobreak >nul
 
 REM Check if MongoDB is running
