@@ -339,10 +339,10 @@ const DocumentGeneratorPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
-        <div className="main-content">
+return (
+     <div className="app-container mobile-only">
+       <TopNav showLogout={true} showBackButton={true} />
+       <div className="main-content">
           <div className="page-header">
             <div className="page-title">Document Generator</div>
             <div className="page-subtitle">Generate and manage termination documents</div>
@@ -354,9 +354,9 @@ const DocumentGeneratorPage: React.FC = () => {
     );
   }
 
-  return (
-    <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+return (
+      <div className="app-container mobile-only">
+        <TopNav showLogout={true} showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

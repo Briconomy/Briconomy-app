@@ -111,10 +111,10 @@ function TenantDashboard() {
   const pendingRequests = hasError ? [] : requestsData?.filter(r => r.status === 'pending') || [];
   const unreadNotifications = hasError ? 0 : notificationsData.length;
 
-  if (isLoading) {
+if (isLoading) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showLogout />
+  <TopNav showLogout showBackButton={true} />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -126,9 +126,9 @@ function TenantDashboard() {
     );
   }
 
-  return (
+return (
     <div className="app-container mobile-only">
-  <TopNav showLogout />
+  <TopNav showLogout showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

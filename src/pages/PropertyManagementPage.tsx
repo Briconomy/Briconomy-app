@@ -97,9 +97,9 @@ function PropertyManagementPage() {
 
   const amenityOptions = ['pool', 'gym', 'parking', 'security', 'garden', 'playground', 'ocean_view', 'laundry'];
 
-  return (
+return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+      <TopNav showLogout={true} showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

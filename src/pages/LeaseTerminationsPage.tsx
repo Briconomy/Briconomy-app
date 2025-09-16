@@ -441,7 +441,7 @@ const LeaseTerminationsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+<TopNav showLogout={true} showBackButton={true} />
         <div className="main-content">
           <div className="page-header">
             <div className="page-title">Lease Terminations</div>
@@ -456,7 +456,7 @@ const LeaseTerminationsPage: React.FC = () => {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+      <TopNav showLogout={true} showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

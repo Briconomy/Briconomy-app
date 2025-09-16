@@ -89,7 +89,7 @@ function ManagerPropertiesPage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+        <TopNav showLogout={true} showBackButton={true} />
         <div className="main-content" style={{ padding: 16 }}>
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -103,7 +103,7 @@ function ManagerPropertiesPage() {
   if (error) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+        <TopNav showLogout={true} showBackButton={true} />
         <div className="main-content" style={{ padding: 16 }}>
           <div className="error-state">
             <p>Error loading properties: {error}</p>
@@ -116,7 +116,7 @@ function ManagerPropertiesPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+      <TopNav showLogout={true} showBackButton={true} />
 
       <div className="main-content">
         <div className="page-header">

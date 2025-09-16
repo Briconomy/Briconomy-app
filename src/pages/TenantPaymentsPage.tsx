@@ -148,7 +148,7 @@ function TenantPaymentsPage() {
   if (paymentsLoading || leasesLoading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout />
+<TopNav showLogout showBackButton={true} />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -180,9 +180,9 @@ function TenantPaymentsPage() {
     );
   };
 
-  return (
+return (
     <div className="app-container mobile-only">
-      <TopNav showLogout />
+      <TopNav showLogout showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

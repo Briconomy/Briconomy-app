@@ -213,7 +213,7 @@ function CaretakerProfilePage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+<TopNav showLogout={true} showBackButton={true} />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -227,7 +227,7 @@ function CaretakerProfilePage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+      <TopNav showLogout={true} showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

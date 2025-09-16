@@ -284,7 +284,7 @@ function CaretakerHistoryPage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} />
+<TopNav showLogout={true} showBackButton={true} />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -298,7 +298,7 @@ function CaretakerHistoryPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+      <TopNav showLogout={true} showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

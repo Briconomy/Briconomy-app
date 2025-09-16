@@ -220,10 +220,10 @@ function MaintenanceRequestsPage() {
   };
 
   if (requestsLoading || leasesLoading) {
-    return (
-      <div className="app-container mobile-only">
-  <TopNav showLogout />
-        <div className="main-content">
+return (
+       <div className="app-container mobile-only">
+  <TopNav showLogout showBackButton={true} />
+         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>Loading maintenance requests...</p>
@@ -236,11 +236,11 @@ function MaintenanceRequestsPage() {
 
   const currentLease = leases?.[0];
 
-  return (
-    <div className="app-container mobile-only">
-  <TopNav showLogout />
-      
-      <div className="main-content">
+return (
+     <div className="app-container mobile-only">
+  <TopNav showLogout showBackButton={true} />
+       
+       <div className="main-content">
         <div className="page-header">
           <div className="page-title">Support Center</div>
           <div className="page-subtitle">Maintenance requests and help support</div>
