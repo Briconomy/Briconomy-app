@@ -176,10 +176,10 @@ function PropertiesPage() {
     globalThis.location.href = `/property/new`;
   };
 
-  if (loading) {
+if (loading) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showBackButton backLink="/" />
+  <TopNav showBackButton={true} backLink="/" />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -190,10 +190,10 @@ function PropertiesPage() {
     );
   }
 
-  if (error) {
+if (error) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showBackButton backLink="/" />
+  <TopNav showBackButton={true} backLink="/" />
         <div className="main-content">
           <div className="error-state">
             <p>Error loading properties: {error}</p>
@@ -204,7 +204,7 @@ function PropertiesPage() {
     );
   }
 
-  // Manager View - Property Management Interface
+// Manager View - Property Management Interface
   if (isManager) {
     const totalProperties = properties.length;
     const totalUnits = properties.reduce((sum, property) => sum + property.totalUnits, 0);
@@ -218,7 +218,7 @@ function PropertiesPage() {
 
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={false} />
+        <TopNav showBackButton={true} />
         
         <div className="main-content">
           <div className="page-header">
@@ -343,11 +343,11 @@ function PropertiesPage() {
     );
   }
 
-  // Tenant View - Current Rental Properties
+// Tenant View - Current Rental Properties
   if (isTenant) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={false} />
+        <TopNav showBackButton={true} />
         
         <div className="main-content">
           <div className="page-header">
@@ -409,7 +409,7 @@ function PropertiesPage() {
   // Public View - Prospective Tenant Property Search
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton backLink="/" />
+<TopNav showBackButton={true} backLink="/" />
       
       <div className="main-content">
         <div className="page-header">

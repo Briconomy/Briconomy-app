@@ -154,7 +154,7 @@ function ManagerPaymentsPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} />
+      <TopNav showLogout={true} showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">

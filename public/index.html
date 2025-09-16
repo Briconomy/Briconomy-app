@@ -18,6 +18,8 @@
     <script type="module">
         async function loadApp() {
             try {
+                // #COMPLETION_DRIVE: Assuming absolute path import works correctly for SPA routing
+                // #SUGGEST_VERIFY: Test import resolution from different nested routes
                 const module = await import('/src/main.tsx');
             } catch (error) {
                 console.error('Module load failed:', error);

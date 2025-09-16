@@ -164,7 +164,7 @@ const handleStartNewMessage = (recipient: Contact) => {
   if (notificationsLoading || leasesLoading || requestsLoading) {
     return (
 <div className="app-container mobile-only">
-        <TopNav showLogout />
+<TopNav showLogout showBackButton={true} />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -180,8 +180,8 @@ const handleStartNewMessage = (recipient: Contact) => {
   const pendingRequests = requests?.filter(r => r.status === 'pending') || [];
 
 return (
-    <div className="app-container mobile-only">
-      <TopNav showLogout />
+      <div className="app-container mobile-only">
+        <TopNav showLogout showBackButton={true} />
       
       <div className="main-content">
         <div className="page-header">
