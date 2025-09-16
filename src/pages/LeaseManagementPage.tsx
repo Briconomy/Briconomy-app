@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -8,6 +9,8 @@ import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 
 function LeaseManagementPage() {
+  const navigate = useNavigate();
+  
   const [leases, setLeases] = useState([
     {
       id: '1',
@@ -221,7 +224,7 @@ function LeaseManagementPage() {
             description="Manage lease renewals"
           />
           <ActionCard
-            onClick={() => {}}
+            onClick={() => navigate('/manager/terminations')}
             icon="T"
             title="Terminations"
             description="Handle lease terminations"
