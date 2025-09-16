@@ -41,7 +41,7 @@ function App() {
     <div className="app">
       <AuthProvider>
         <ProspectiveTenantProvider>
-          <Routes>
+            <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/create-account" element={<CreateAccountPage />} />
@@ -78,6 +78,10 @@ function App() {
               <Route path="/manager/documents" element={<ManagerRoute><DocumentManagementPage /></ManagerRoute>} />
               <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />
               <Route path="/tenant/profile" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
+              <Route path="/tenant/profile/payment-methods" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
+              <Route path="/tenant/profile/documents" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
+              <Route path="/tenant/profile/help" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
+              <Route path="/tenant/profile/activity" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/admin/api-test" element={<AdminRoute><ApiTestPage /></AdminRoute>} />
               <Route path="/apply/undefined" element={<Navigate to="/create-account" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />

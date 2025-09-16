@@ -7,6 +7,14 @@ import ChartCard from '../components/ChartCard.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
 import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
+interface PaymentMethod {
+  id: string;
+  type: 'bank_account' | 'credit_card' | 'debit_card' | 'eft';
+  name: string;
+  details: string;
+  isDefault: boolean;
+}
+
 function TenantPaymentsPage() {
   const [user, setUser] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -14,6 +22,7 @@ function TenantPaymentsPage() {
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [processing, setProcessing] = useState(false);
   const [chartError, setChartError] = useState(false);
+  const [savedPaymentMethods, setSavedPaymentMethods] = useState<PaymentMethod[]>([]);
 
   const navItems = [
     { path: '/tenant', label: 'Home', active: false },
@@ -41,8 +50,30 @@ function TenantPaymentsPage() {
     }
   };
 
+  const loadSavedPaymentMethods = () => {
+    try {
+      const saved = localStorage.getItem('briconomy_payment_methods');
+      if (saved) {
+        setSavedPaymentMethods(JSON.parse(saved));
+      } else {
+        // Default payment method
+        setSavedPaymentMethods([{
+          id: '1',
+          type: 'bank_account',
+          name: 'Primary Bank Account',
+          details: '**** **** **** 1234',
+          isDefault: true
+        }]);
+      }
+    } catch (err) {
+      console.error('Error loading payment methods:', err);
+      setSavedPaymentMethods([]);
+    }
+  };
+
   useEffect(() => {
     loadUserData();
+    loadSavedPaymentMethods();
   }, []);
 
   const totalDue = payments
@@ -192,68 +223,116 @@ function TenantPaymentsPage() {
           <StatCard value={payments?.filter(p => p.status === 'paid').length || 0} label="Payments Made" />
         </div>
 
+        {nextPayment && (
+          <div className="payment-reminder-card">
+            <div className="reminder-content">
+              <div className="reminder-icon">⏰</div>
+              <div className="reminder-text">
+                <h4>Payment Reminder</h4>
+                <p>Your rent payment of {formatCurrency(nextPayment.amount)} is due in {getDaysUntilDue(nextPayment.dueDate)} days</p>
+                <p className="due-date">Due Date: {formatDate(nextPayment.dueDate)}</p>
+              </div>
+              <button 
+                type="button"
+                className="btn btn-primary"
+                onClick={() => handleMakePayment(nextPayment)}
+              >
+                Pay Now
+              </button>
+            </div>
+          </div>
+        )}
+
         {renderPaymentChart()}
 
-        <div className="data-table">
-          <div className="table-header">
-            <div className="table-title">Payment Schedule</div>
+        <div className="payment-schedule">
+          <div className="section-header">
+            <h3>Payment Schedule</h3>
+            <div className="schedule-summary">
+              <span className="summary-item">
+                <strong>Total:</strong> {formatCurrency(payments?.reduce((sum, p) => sum + p.amount, 0) || 0)}
+              </span>
+              <span className="summary-item">
+                <strong>Paid:</strong> {payments?.filter(p => p.status === 'paid').length || 0}
+              </span>
+              <span className="summary-item">
+                <strong>Pending:</strong> {payments?.filter(p => p.status === 'pending').length || 0}
+              </span>
+            </div>
           </div>
           
-          {payments?.map((payment) => (
-            <div key={payment.id} className="list-item">
-              <div className="item-info">
-                <h4>{payment.type === 'rent' ? 'Rent Payment' : payment.type}</h4>
-                <p>Due: {formatDate(payment.dueDate)} - {formatCurrency(payment.amount)}</p>
-                {payment.paymentDate && (
-                  <p className="text-sm text-gray-600">Paid: {formatDate(payment.paymentDate)}</p>
-                )}
-                {payment.method && (
-                  <p className="text-sm text-gray-600">Method: {payment.method.replace('_', ' ')}</p>
-                )}
+          <div className="payments-list">
+            {payments?.map((payment) => (
+              <div key={payment.id} className="payment-item">
+                <div className="payment-left">
+                  <div className="payment-type-icon">
+                    {payment.type === 'rent' ? '🏠' : '💰'}
+                  </div>
+                  <div className="payment-details">
+                    <h4>{payment.type === 'rent' ? 'Rent Payment' : payment.type}</h4>
+                    <div className="payment-meta">
+                      <span className="payment-amount">{formatCurrency(payment.amount)}</span>
+                      <span className="payment-due">Due: {formatDate(payment.dueDate)}</span>
+                    </div>
+                    {payment.paymentDate && (
+                      <div className="payment-paid-info">
+                        <span className="paid-date">Paid: {formatDate(payment.paymentDate)}</span>
+                        {payment.method && (
+                          <span className="payment-method">Method: {payment.method.replace('_', ' ')}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="payment-right">
+                  <span className={`status-badge ${getPaymentStatusColor(payment.status)}`}>
+                    {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                  </span>
+                  {payment.status === 'pending' && (
+                    <button 
+                      className="btn btn-primary btn-sm"
+                      type="button"
+                      onClick={() => handleMakePayment(payment)}
+                    >
+                      Pay Now
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="item-actions">
-                <span className={`status-badge ${getPaymentStatusColor(payment.status)}`}>
-                  {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                </span>
-                {payment.status === 'pending' && (
-                  <button 
-                    className="btn btn-primary btn-sm"
-                    type="button"
-                    onClick={() => handleMakePayment(payment)}
-                  >
-                    Pay Now
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
 
-          {payments?.length === 0 && (
-            <div className="no-data-state">
-              <p>No payments found. Please check back later.</p>
-            </div>
-          )}
+            {payments?.length === 0 && (
+              <div className="no-payments-state">
+                <div className="no-payments-icon">📋</div>
+                <h4>No Payments Found</h4>
+                <p>No payment schedule is currently available. Please check back later or contact your property manager.</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="quick-actions">
-          <ActionCard
-            onClick={_handleDownloadStatement}
-            icon="S"
-            title="Download Statement"
-            description="Get your payment history"
-          />
-          <ActionCard
-            onClick={() => setShowPaymentForm(true)}
-            icon="P"
-            title="Make Payment"
-            description="Pay your rent online"
-          />
-          <ActionCard
-            to="/tenant/profile"
-            icon="M"
-            title="Payment Methods"
-            description="Manage payment options"
-          />
+        <div className="payment-actions-section">
+          <h3>Quick Actions</h3>
+          <div className="quick-actions">
+            <ActionCard
+              onClick={_handleDownloadStatement}
+              icon="S"
+              title="Download Statement"
+              description="Get your payment history"
+            />
+            <ActionCard
+              onClick={() => setShowPaymentForm(true)}
+              icon="P"
+              title="Make Payment"
+              description="Pay your rent online"
+            />
+            <ActionCard
+              to="/tenant/profile"
+              icon="M"
+              title="Payment Methods"
+              description="Manage payment options"
+            />
+          </div>
         </div>
       </div>
       
@@ -273,37 +352,96 @@ function TenantPaymentsPage() {
               
               <div className="payment-methods">
                 <h4>Select Payment Method</h4>
-                <div className="payment-options">
-                  <label className="payment-option">
-                    <input 
-                      type="radio" 
-                      name="paymentMethod" 
-                      value="bank_transfer"
-                      checked={paymentMethod === 'bank_transfer'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    />
-                    <span>Bank Transfer</span>
-                  </label>
-                  <label className="payment-option">
-                    <input 
-                      type="radio" 
-                      name="paymentMethod" 
-                      value="card"
-                      checked={paymentMethod === 'card'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    />
-                    <span>Credit/Debit Card</span>
-                  </label>
-                  <label className="payment-option">
-                    <input 
-                      type="radio" 
-                      name="paymentMethod" 
-                      value="eft"
-                      checked={paymentMethod === 'eft'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    />
-                    <span>EFT</span>
-                  </label>
+                
+                {savedPaymentMethods.length > 0 && (
+                  <div className="saved-payment-methods">
+                    <h5>Saved Payment Methods</h5>
+                    <div className="saved-methods-list">
+                      {savedPaymentMethods.map((method) => (
+                        <label key={method.id} className="saved-method-option">
+                          <input
+                            type="radio"
+                            name="savedPaymentMethod"
+                            value={method.id}
+                            checked={paymentMethod === `saved_${method.id}`}
+                            onChange={(e) => setPaymentMethod(`saved_${method.id}`)}
+                          />
+                          <div className="saved-method-info">
+                            <div className="method-header">
+                              <span className="method-icon">
+                                {method.type === 'bank_account' ? '🏦' : 
+                                 method.type === 'credit_card' || method.type === 'debit_card' ? '💳' : '📱'}
+                              </span>
+                              <div className="method-details">
+                                <span className="method-name">{method.name}</span>
+                                <span className="method-details-text">{method.details}</span>
+                              </div>
+                              {method.isDefault && (
+                                <span className="default-badge">Default</span>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="new-payment-methods">
+                  <h5>New Payment Method</h5>
+                  <div className="payment-options">
+                    <label className="payment-option">
+                      <input 
+                        type="radio" 
+                        name="paymentMethod" 
+                        value="bank_transfer"
+                        checked={paymentMethod === 'bank_transfer'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <span>Bank Transfer</span>
+                    </label>
+                    <label className="payment-option">
+                      <input 
+                        type="radio" 
+                        name="paymentMethod" 
+                        value="card"
+                        checked={paymentMethod === 'card'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <span>Credit/Debit Card</span>
+                    </label>
+                    <label className="payment-option">
+                      <input 
+                        type="radio" 
+                        name="paymentMethod" 
+                        value="eft"
+                        checked={paymentMethod === 'eft'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      />
+                      <span>EFT</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="add-payment-method">
+                  <button 
+                    type="button"
+                    className="btn btn-link"
+                    onClick={() => {
+                      // Navigate to profile page with payment methods section active
+                      window.location.href = '/tenant/profile';
+                      // This would ideally use React Router, but for simplicity using direct navigation
+                      setTimeout(() => {
+                        // This is a workaround - in a real app, you'd use router state
+                        const profileSection = document.querySelector('[data-section="payment-methods"]');
+                        if (profileSection) {
+                          profileSection.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }, 100);
+                    }}
+                  >
+                    + Add New Payment Method
+                  </button>
                 </div>
               </div>
               
@@ -348,7 +486,7 @@ class ErrorBoundary extends React.Component<
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.props.onError?.();
   }
 
