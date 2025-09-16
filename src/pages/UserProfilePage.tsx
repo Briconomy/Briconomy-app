@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
+import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';
+import DocumentViewer from '../components/DocumentViewer.tsx';
+import HelpSupport from '../components/HelpSupport.tsx';
+import ActivityLog from '../components/ActivityLog.tsx';
 
 function UserProfilePage() {
   const [user, setUser] = useState({
@@ -27,6 +31,7 @@ function UserProfilePage() {
   });
 
   const [showEditForm, setShowEditForm] = useState(false);
+  const [activeSection, setActiveSection] = useState<'overview' | 'payment-methods' | 'documents' | 'help' | 'activity'>('overview');
   const [formData, setFormData] = useState({
     fullName: user.fullName,
     email: user.email,
@@ -52,7 +57,7 @@ function UserProfilePage() {
     setShowEditForm(false);
   };
 
-  const leaseDaysRemaining = Math.ceil((new Date(user.leaseEnd) - new Date()) / (1000 * 60 * 60 * 24));
+  const leaseDaysRemaining = Math.ceil((new Date(user.leaseEnd).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="app-container mobile-only">
@@ -196,25 +201,25 @@ function UserProfilePage() {
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => {}}
+            onClick={() => setActiveSection('payment-methods')}
             icon="P"
             title="Payment Methods"
             description="Manage payment options"
           />
           <ActionCard
-            onClick={() => {}}
+            onClick={() => setActiveSection('documents')}
             icon="D"
             title="Documents"
             description="View your documents"
           />
           <ActionCard
-            onClick={() => {}}
+            onClick={() => setActiveSection('help')}
             icon="H"
             title="Help & Support"
             description="Get help"
           />
           <ActionCard
-            onClick={() => {}}
+            onClick={() => setActiveSection('activity')}
             icon="L"
             title="Activity Log"
             description="View recent activity"
@@ -319,6 +324,71 @@ function UserProfilePage() {
               </form>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Dynamic Sections */}
+      {activeSection === 'payment-methods' && (
+        <div className="profile-section">
+          <div className="section-header">
+            <h3>Payment Methods</h3>
+            <button 
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('overview')}
+            >
+              Back to Overview
+            </button>
+          </div>
+          <PaymentMethodsManager />
+        </div>
+      )}
+
+      {activeSection === 'documents' && (
+        <div className="profile-section">
+          <div className="section-header">
+            <h3>Documents</h3>
+            <button 
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('overview')}
+            >
+              Back to Overview
+            </button>
+          </div>
+          <DocumentViewer />
+        </div>
+      )}
+
+      {activeSection === 'help' && (
+        <div className="profile-section">
+          <div className="section-header">
+            <h3>Help & Support</h3>
+            <button 
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('overview')}
+            >
+              Back to Overview
+            </button>
+          </div>
+          <HelpSupport />
+        </div>
+      )}
+
+      {activeSection === 'activity' && (
+        <div className="profile-section">
+          <div className="section-header">
+            <h3>Activity Log</h3>
+            <button 
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('overview')}
+            >
+              Back to Overview
+            </button>
+          </div>
+          <ActivityLog />
         </div>
       )}
       
