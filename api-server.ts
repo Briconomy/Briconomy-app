@@ -246,4 +246,4 @@ serve(async (req) => {
   }
 }, { port: 8816, hostname: "0.0.0.0" });
 
-console.log('🚀 API Server running on http://localhost:8816');
+console.log('API Server running on http://localhost:8816');

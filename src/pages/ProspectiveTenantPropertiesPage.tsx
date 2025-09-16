@@ -323,7 +323,7 @@ function ProspectiveTenantPropertiesPage() {
 
         {filteredProperties.length === 0 && (
           <div className="no-results">
-            <div className="no-results-icon">🏠</div>
+            <div className="no-results-icon">House</div>
             <h3>No properties found</h3>
             {properties.length === 0 ? (
               <>

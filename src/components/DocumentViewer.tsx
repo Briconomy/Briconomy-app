@@ -85,11 +85,11 @@ function DocumentViewer() {
 
   const getDocumentIcon = (type: Document['type']) => {
     switch (type) {
-      case 'lease': return '📄';
-      case 'payment_receipt': return '🧾';
-      case 'maintenance_report': return '🔧';
-      case 'other': return '📎';
-      default: return '📄';
+      case 'lease': return 'Document';
+      case 'payment_receipt': return 'Receipt';
+      case 'maintenance_report': return 'Report';
+      case 'other': return 'File';
+      default: return 'Document';
     }
   };
 
@@ -275,7 +275,7 @@ function DocumentViewer() {
                   <p><strong>Upload Date:</strong> {new Date(selectedDocument.uploadDate).toLocaleDateString()}</p>
                 </div>
                 <div className="document-placeholder">
-                  <div className="placeholder-icon">📄</div>
+                  <div className="placeholder-icon">Document</div>
                   <p>Document preview would appear here</p>
                   <p className="placeholder-text">
                     This is a placeholder for the actual document viewer. 

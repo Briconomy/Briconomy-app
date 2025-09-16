@@ -65,19 +65,19 @@ function AdminSecurityPage() {
           </div>
           <div className="list-item">
             <div className="item-info">
-              <h4>✓ System security scan completed</h4>
+              <h4>System security scan completed</h4>
               <p>5 minutes ago - No threats detected</p>
             </div>
           </div>
           <div className="list-item">
             <div className="item-info">
-              <h4>ℹ Password policy updated</h4>
+              <h4>Password policy updated</h4>
               <p>1 hour ago - Minimum 12 characters required</p>
             </div>
           </div>
           <div className="list-item">
             <div className="item-info">
-              <h4>✓ 2FA enrollment increased by 15%</h4>
+              <h4>2FA enrollment increased by 15%</h4>
               <p>3 hours ago - Enhanced security adoption</p>
             </div>
           </div>

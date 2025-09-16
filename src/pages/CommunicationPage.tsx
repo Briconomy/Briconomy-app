@@ -1,19 +1,51 @@
-import _React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { notificationsApi, leasesApi, maintenanceApi, formatDateTime, useApi } from '../services/api.ts';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
-import { notificationsApi, leasesApi, maintenanceApi, formatDateTime, useApi } from '../services/api.ts';
 
-function CommunicationPage() {
-  const [user, setUser] = useState(null);
-  const [activeConversation, setActiveConversation] = useState(null);
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Contact {
+  id: string;
+  name: string;
+  role: string;
+  lastMessage: string;
+  timestamp: string;
+  unread: number;
+  avatar: string;
+  type: string;
+}
+
+interface Message {
+  id: string;
+  sender: string;
+  content: string;
+  timestamp: string;
+  isMe: boolean;
+}
+
+const CommunicationPage: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [activeConversation, setActiveConversation] = useState<Contact | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [showNewMessage, setShowNewMessage] = useState(false);
-  const [messages, setMessages] = useState({});
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [sending, setSending] = useState(false);
 
-  const navItems = [
+  interface NavItem {
+  path: string;
+  label: string;
+  active?: boolean;
+}
+
+const navItems: NavItem[] = [
     { path: '/tenant', label: 'Home', active: false },
     { path: '/tenant/payments', label: 'Payments' },
     { path: '/tenant/requests', label: 'Requests' },
@@ -41,19 +73,19 @@ function CommunicationPage() {
 
   const loadUserData = () => {
     try {
-  const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
+      const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
     }
   };
 
-  const contacts = [
+const contacts: Contact[] = [
     {
       id: 'manager',
       name: 'Property Manager',
       role: 'manager',
-      lastMessage: 'Available for property-related inquiries',
+      lastMessage: 'Property inquiries',
       timestamp: new Date().toISOString(),
       unread: 0,
       avatar: 'PM',
@@ -63,7 +95,7 @@ function CommunicationPage() {
       id: 'caretaker',
       name: 'Maintenance Team',
       role: 'caretaker',
-      lastMessage: 'For maintenance and repair requests',
+      lastMessage: 'Repair requests',
       timestamp: new Date().toISOString(),
       unread: 0,
       avatar: 'MT',
@@ -73,7 +105,7 @@ function CommunicationPage() {
       id: 'emergency',
       name: 'Emergency Contact',
       role: 'emergency',
-      lastMessage: 'For urgent matters only',
+      lastMessage: 'Urgent matters',
       timestamp: new Date().toISOString(),
       unread: 0,
       avatar: 'EC',
@@ -124,29 +156,22 @@ function CommunicationPage() {
     }
   };
 
-  const handleStartNewMessage = (recipient) => {
+const handleStartNewMessage = (recipient: Contact) => {
     setActiveConversation(recipient);
     setShowNewMessage(false);
   };
 
-  const _handleContactSupport = (type: string) => {
-    const contact = contacts.find(c => c.type === type);
-    if (contact) setActiveConversation(contact);
-  };
-
-  const _getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
-
   if (notificationsLoading || leasesLoading || requestsLoading) {
     return (
-      <div className="app-container mobile-only">
-  <TopNav showLogout />
+<div className="app-container mobile-only">
+        <TopNav showLogout />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>Loading messages...</p>
           </div>
         </div>
-  <BottomNav items={navItems} responsive={false} />
+        <BottomNav items={navItems} responsive={false} />
       </div>
     );
   }
@@ -154,14 +179,13 @@ function CommunicationPage() {
   const currentLease = leases?.[0];
   const pendingRequests = requests?.filter(r => r.status === 'pending') || [];
 
-  return (
+return (
     <div className="app-container mobile-only">
-  <TopNav showLogout />
+      <TopNav showLogout />
       
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">Messages</div>
-          <div className="page-subtitle">Communicate with property management</div>
         </div>
         
         <div className="dashboard-grid">
@@ -171,13 +195,12 @@ function CommunicationPage() {
           <StatCard value={pendingRequests.length} label="Active Requests" />
         </div>
 
-        {currentLease && (
+{currentLease && (
           <div className="property-info-card">
-            <h3>Your Property</h3>
+            <h3>Property</h3>
             <div className="property-details">
               <p><strong>Property:</strong> {currentLease.propertyId?.name || 'N/A'}</p>
               <p><strong>Unit:</strong> {currentLease.unitId?.unitNumber || 'N/A'}</p>
-              <p><strong>Manager:</strong> Available for inquiries</p>
             </div>
           </div>
         )}
@@ -232,10 +255,8 @@ function CommunicationPage() {
             </div>
 
             {notifications && notifications.length > 0 && (
-              <div className="notifications-section">
-                <div className="section-header">
-                  <h3>Recent Notifications</h3>
-                </div>
+<div className="notifications-section">
+                <h3>Recent Notifications</h3>
                 <div className="notifications-list">
                   {notifications.slice(0, 5).map((notification) => (
                     <div key={notification.id} className="notification-item">
@@ -255,11 +276,11 @@ function CommunicationPage() {
               </div>
             )}
 
-            <div className="quick-actions">
-              <ActionCard onClick={() => setActiveConversation(contacts[0])} icon="M" title="Contact Manager" description="Property management" />
-              <ActionCard onClick={() => setActiveConversation(contacts[1])} icon="T" title="Maintenance" description="Repair requests" />
-              <ActionCard onClick={() => setActiveConversation(contacts[2])} icon="E" title="Emergency" description="Urgent assistance" />
-              <ActionCard to="/tenant/requests" icon="R" title="Request Help" description="Submit maintenance" />
+<div className="quick-actions">
+              <ActionCard onClick={() => setActiveConversation(contacts[0])} icon="M" title="Manager" />
+              <ActionCard onClick={() => setActiveConversation(contacts[1])} icon="T" title="Maintenance" />
+              <ActionCard onClick={() => setActiveConversation(contacts[2])} icon="E" title="Emergency" />
+              <ActionCard to="/tenant/requests" icon="R" title="Request Help" />
             </div>
           </>
         ) : (
@@ -284,11 +305,9 @@ function CommunicationPage() {
             </div>
 
             <div className="messages-container">
-              {activeConversation.type === 'emergency' && (
+{activeConversation.type === 'emergency' && (
                 <div className="emergency-notice">
-                  <p>For emergency assistance, please call:</p>
-                  <p className="emergency-number">+27 123 456 789</p>
-                  <p>Or use this message for non-urgent inquiries.</p>
+                  <p>Emergency: +27 123 456 789</p>
                 </div>
               )}
 

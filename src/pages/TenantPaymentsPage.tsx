@@ -220,7 +220,7 @@ function TenantPaymentsPage() {
         {nextPayment && (
           <div className="payment-reminder-card">
             <div className="reminder-content">
-              <div className="reminder-icon">⏰</div>
+              <div className="reminder-icon">Reminder</div>
               <div className="reminder-text">
                 <h4>Payment Reminder</h4>
                 <p>Your rent payment of {formatCurrency(nextPayment.amount)} is due in {getDaysUntilDue(nextPayment.dueDate)} days</p>
@@ -307,8 +307,8 @@ function TenantPaymentsPage() {
                           <div className="saved-method-info">
                             <div className="method-header">
                               <span className="method-icon">
-                                {method.type === 'bank_account' ? '🏦' : 
-                                 method.type === 'credit_card' || method.type === 'debit_card' ? '💳' : '📱'}
+                                {method.type === 'bank_account' ? 'Bank' : 
+                                 method.type === 'credit_card' || method.type === 'debit_card' ? 'Card' : 'Mobile'}
                               </span>
                               <div className="method-details">
                                 <span className="method-name">{method.name}</span>

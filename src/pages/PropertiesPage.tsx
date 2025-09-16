@@ -297,7 +297,7 @@ function PropertiesPage() {
 
           {filteredProperties.length === 0 && (
             <div className="no-results">
-              <div className="no-results-icon">🏢</div>
+              <div className="no-results-icon">Building</div>
               <h3>No properties found</h3>
               {properties.length === 0 ? (
                 <>
@@ -394,7 +394,7 @@ function PropertiesPage() {
 
           {filteredProperties.length === 0 && (
             <div className="no-results">
-              <div className="no-results-icon">🏠</div>
+              <div className="no-results-icon">House</div>
               <h3>No rental properties found</h3>
               <p>You don't have any active rental properties.</p>
             </div>
@@ -416,7 +416,7 @@ function PropertiesPage() {
           <div className="page-title">Available Properties</div>
           <div className="page-subtitle">Find your perfect home</div>
           <div className="prospective-tenant-indicator">
-            <span className="indicator-badge">🔍 Prospective Tenant Mode</span>
+            <span className="indicator-badge">Search - Prospective Tenant Mode</span>
             <span className="indicator-text">Browse freely - No login required</span>
           </div>
         </div>
@@ -557,7 +557,7 @@ function PropertiesPage() {
 
         {filteredProperties.length === 0 && (
           <div className="no-results">
-            <div className="no-results-icon">🏠</div>
+            <div className="no-results-icon">House</div>
             <h3>No properties found</h3>
             {properties.length === 0 ? (
               <>

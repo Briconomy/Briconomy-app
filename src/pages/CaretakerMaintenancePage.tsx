@@ -413,19 +413,19 @@ function CaretakerMaintenancePage() {
         <ChartCard title="Quick Actions">
           <div className="quick-actions-grid">
             <button className="action-btn" onClick={() => {}}>
-              <div className="action-icon">📋</div>
+              <div className="action-icon">List</div>
               <div className="action-text">New Request</div>
             </button>
             <button className="action-btn" onClick={() => {}}>
-              <div className="action-icon">📊</div>
+              <div className="action-icon">Chart</div>
               <div className="action-text">Generate Report</div>
             </button>
             <button className="action-btn" onClick={() => {}}>
-              <div className="action-icon">📱</div>
+              <div className="action-icon">Phone</div>
               <div className="action-text">Contact Tenant</div>
             </button>
             <button className="action-btn" onClick={() => {}}>
-              <div className="action-icon">📸</div>
+              <div className="action-icon">Camera</div>
               <div className="action-text">Upload Photos</div>
             </button>
           </div>

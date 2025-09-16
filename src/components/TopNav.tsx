@@ -1,5 +1,5 @@
-import { useAuth } from '../contexts/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface TopNavProps {
   showBackButton?: boolean;
