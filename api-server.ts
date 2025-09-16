@@ -21,7 +21,21 @@ import {
   createNotification,
   getDashboardStats,
   loginUser,
-  registerUser
+  registerUser,
+  getSystemStats,
+  getUserStats,
+  getSecurityStats,
+  getFinancialStats,
+  getUserActivities,
+  getSecurityConfig,
+  getSecurityAlerts,
+  getSecuritySettings,
+  getAvailableReports,
+  getReportActivities,
+  getDatabaseHealth,
+  getApiEndpoints,
+  getSystemAlerts,
+  createUser
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -226,6 +240,123 @@ serve(async (req) => {
         const body = await req.json();
         const notification = await createNotification(body);
         return new Response(JSON.stringify(notification), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
+        });
+}
+    }
+
+    // Admin endpoints
+    if (path[0] === 'admin') {
+      // System stats
+      if (path[1] === 'system-stats' && req.method === 'GET') {
+        const stats = await getSystemStats();
+        return new Response(JSON.stringify(stats), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // User stats
+      if (path[1] === 'user-stats' && req.method === 'GET') {
+        const stats = await getUserStats();
+        return new Response(JSON.stringify(stats), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Security stats
+      if (path[1] === 'security-stats' && req.method === 'GET') {
+        const stats = await getSecurityStats();
+        return new Response(JSON.stringify(stats), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Financial stats
+      if (path[1] === 'financial-stats' && req.method === 'GET') {
+        const stats = await getFinancialStats();
+        return new Response(JSON.stringify(stats), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // User activities
+      if (path[1] === 'user-activities' && req.method === 'GET') {
+        const activities = await getUserActivities();
+        return new Response(JSON.stringify(activities), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Security config
+      if (path[1] === 'security-config' && req.method === 'GET') {
+        const config = await getSecurityConfig();
+        return new Response(JSON.stringify(config), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Security alerts
+      if (path[1] === 'security-alerts' && req.method === 'GET') {
+        const alerts = await getSecurityAlerts();
+        return new Response(JSON.stringify(alerts), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Security settings
+      if (path[1] === 'security-settings' && req.method === 'GET') {
+        const settings = await getSecuritySettings();
+        return new Response(JSON.stringify(settings), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Available reports
+      if (path[1] === 'available-reports' && req.method === 'GET') {
+        const reports = await getAvailableReports();
+        return new Response(JSON.stringify(reports), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Report activities
+      if (path[1] === 'report-activities' && req.method === 'GET') {
+        const activities = await getReportActivities();
+        return new Response(JSON.stringify(activities), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Database health
+      if (path[1] === 'database-health' && req.method === 'GET') {
+        const health = await getDatabaseHealth();
+        return new Response(JSON.stringify(health), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // API endpoints
+      if (path[1] === 'api-endpoints' && req.method === 'GET') {
+        const endpoints = await getApiEndpoints();
+        return new Response(JSON.stringify(endpoints), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // System alerts
+      if (path[1] === 'system-alerts' && req.method === 'GET') {
+        const alerts = await getSystemAlerts();
+        return new Response(JSON.stringify(alerts), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Create user
+      if (path[1] === 'users' && req.method === 'POST') {
+        const body = await req.json();
+        const user = await createUser(body);
+        return new Response(JSON.stringify(user), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
         });

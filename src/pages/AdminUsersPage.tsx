@@ -73,7 +73,7 @@ function AdminUsersPage() {
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">User List</div>
-            <button className="btn-primary">Add User</button>
+            <a href="/admin/add-user" className="btn-primary">Add User</a>
           </div>
           
           <div className="list-item">

@@ -6,10 +6,10 @@ function resolveApiBase(): string {
     const protocol = loc.protocol || 'http:';
   const hostname = loc.hostname || 'localhost';
   const port = loc.port || '';
-  if (port === '5173') return `${protocol}//${hostname}:8816/api`;
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
+  if (port === '5173') return `${protocol}//${hostname}:8816`;
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
   } catch (_) {
-    return 'http://localhost:8816/api';
+    return 'http://localhost:8816';
   }
 }
 
@@ -46,13 +46,13 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 }
 
 export const propertiesApi = {
-  getAll: () => apiRequest('/properties'),
-  getById: (id: string) => apiRequest(`/properties/${id}`),
-  create: (data: Record<string, unknown>) => apiRequest('/properties', {
+  getAll: () => apiRequest('/api/properties'),
+  getById: (id: string) => apiRequest(`/api/properties/${id}`),
+  create: (data: Record<string, unknown>) => apiRequest('/api/properties', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  update: (id: string, data: Record<string, unknown>) => apiRequest(`/properties/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/properties/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -60,10 +60,10 @@ export const propertiesApi = {
 
 export const unitsApi = {
   getAll: (propertyId?: string) => {
-    const endpoint = propertyId ? `/units?propertyId=${propertyId}` : '/units';
+    const endpoint = propertyId ? `/api/units?propertyId=${propertyId}` : '/api/units';
     return apiRequest(endpoint);
   },
-  create: (data: Record<string, unknown>) => apiRequest('/units', {
+  create: (data: Record<string, unknown>) => apiRequest('/api/units', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -72,10 +72,10 @@ export const unitsApi = {
 export const leasesApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/leases?${params}` : '/leases';
+    const endpoint = params ? `/api/leases?${params}` : '/api/leases';
     return apiRequest(endpoint);
   },
-  create: (data: Record<string, unknown>) => apiRequest('/leases', {
+  create: (data: Record<string, unknown>) => apiRequest('/api/leases', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -84,14 +84,14 @@ export const leasesApi = {
 export const paymentsApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/payments?${params}` : '/payments';
+    const endpoint = params ? `/api/payments?${params}` : '/api/payments';
     return apiRequest(endpoint);
   },
-  create: (data: Record<string, unknown>) => apiRequest('/payments', {
+  create: (data: Record<string, unknown>) => apiRequest('/api/payments', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  updateStatus: (id: string, status: string) => apiRequest(`/payments/${id}`, {
+  updateStatus: (id: string, status: string) => apiRequest(`/api/payments/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
   }),
@@ -100,14 +100,14 @@ export const paymentsApi = {
 export const maintenanceApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/maintenance?${params}` : '/maintenance';
+    const endpoint = params ? `/api/maintenance?${params}` : '/api/maintenance';
     return apiRequest(endpoint);
   },
-  create: (data: Record<string, unknown>) => apiRequest('/maintenance', {
+  create: (data: Record<string, unknown>) => apiRequest('/api/maintenance', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  update: (id: string, data: Record<string, unknown>) => apiRequest(`/maintenance/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/maintenance/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -116,14 +116,14 @@ export const maintenanceApi = {
 export const tasksApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/tasks?${params}` : '/tasks';
+    const endpoint = params ? `/api/tasks?${params}` : '/api/tasks';
     return apiRequest(endpoint);
   },
-  create: (data: Record<string, unknown>) => apiRequest('/tasks', {
+  create: (data: Record<string, unknown>) => apiRequest('/api/tasks', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  update: (id: string, data: Record<string, unknown>) => apiRequest(`/tasks/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/tasks/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
@@ -132,17 +132,17 @@ export const tasksApi = {
 export const reportsApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/reports?${params}` : '/reports';
+    const endpoint = params ? `/api/reports?${params}` : '/api/reports';
     return apiRequest(endpoint);
   },
-  create: (data: Record<string, unknown>) => apiRequest('/reports', {
+  create: (data: Record<string, unknown>) => apiRequest('/api/reports', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
 };
 
 export const dashboardApi = {
-  getStats: () => apiRequest('/dashboard/stats'),
+  getStats: () => apiRequest('/api/dashboard/stats'),
 };
 
 export const adminApi = {
@@ -159,25 +159,29 @@ export const adminApi = {
   getDatabaseHealth: () => apiRequest('/admin/database-health'),
   getApiEndpoints: () => apiRequest('/admin/api-endpoints'),
   getSystemAlerts: () => apiRequest('/admin/system-alerts'),
-};
-
-export const authApi = {
-  login: (email: string, password: string) => apiRequest('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  }),
-  register: (userData: Record<string, unknown>) => apiRequest('/auth/register', {
+  createUser: (userData: Record<string, unknown>) => apiRequest('/admin/users', {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
-  logout: () => apiRequest('/auth/logout', {
+};
+
+export const authApi = {
+  login: (email: string, password: string) => apiRequest('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  }),
+  register: (userData: Record<string, unknown>) => apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  logout: () => apiRequest('/api/auth/logout', {
     method: 'POST',
   }),
 };
 
 export const notificationsApi = {
-  getAll: (userId: string) => apiRequest(`/notifications/${userId}`),
-  create: (data: Record<string, unknown>) => apiRequest('/notifications', {
+  getAll: (userId: string) => apiRequest(`/api/notifications/${userId}`),
+  create: (data: Record<string, unknown>) => apiRequest('/api/notifications', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
@@ -186,22 +190,22 @@ export const notificationsApi = {
 export const terminationsApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/terminations?${params}` : '/terminations';
+    const endpoint = params ? `/api/terminations?${params}` : '/api/terminations';
     return apiRequest(endpoint);
   },
-  getById: (id: string) => apiRequest(`/terminations/${id}`),
-  create: (data: Record<string, unknown>) => apiRequest('/terminations', {
+  getById: (id: string) => apiRequest(`/api/terminations/${id}`),
+  create: (data: Record<string, unknown>) => apiRequest('/api/terminations', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  approve: (id: string) => apiRequest(`/terminations/${id}/approve`, {
+  approve: (id: string) => apiRequest(`/api/terminations/${id}/approve`, {
     method: 'PUT',
   }),
-  reject: (id: string, reason: string) => apiRequest(`/terminations/${id}/reject`, {
+  reject: (id: string, reason: string) => apiRequest(`/api/terminations/${id}/reject`, {
     method: 'PUT',
     body: JSON.stringify({ reason }),
   }),
-  update: (id: string, data: Record<string, unknown>) => apiRequest(`/terminations/${id}`, {
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/terminations/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),

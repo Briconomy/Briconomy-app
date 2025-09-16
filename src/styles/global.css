@@ -933,3 +933,38 @@ body {
     margin-bottom: 20px;
     line-height: 1.4;
 }
+
+/* Form Error States */
+.form-group input.error,
+.form-group select.error {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.form-actions .btn {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* User Form Specific */
+.user-form {
+    padding: 8px 0;
+}
+
+.user-form .form-group:last-child {
+    margin-bottom: 0;
+}

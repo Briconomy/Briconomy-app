@@ -444,8 +444,197 @@ export async function getDashboardStats() {
   totalRevenue: (totalRevenue[0] as Record<string, unknown> | undefined)?.total as number || 0,
       maintenanceStats
     };
-  } catch (error) {
+} catch (error) {
     console.error("Error fetching dashboard stats:", error);
+    throw error;
+  }
+}
+
+// Admin API Functions
+export async function getSystemStats() {
+  try {
+    await connectToMongoDB();
+    const systemStats = getCollection("system_stats");
+    const stats = await systemStats.find({}).toArray();
+    return mapDocs(stats);
+  } catch (error) {
+    console.error("Error fetching system stats:", error);
+    throw error;
+  }
+}
+
+export async function getUserStats() {
+  try {
+    await connectToMongoDB();
+    const userStats = getCollection("user_stats");
+    const stats = await userStats.find({}).toArray();
+    return mapDocs(stats);
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    throw error;
+  }
+}
+
+export async function getSecurityStats() {
+  try {
+    await connectToMongoDB();
+    const securityStats = getCollection("security_stats");
+    const stats = await securityStats.find({}).toArray();
+    return mapDocs(stats);
+  } catch (error) {
+    console.error("Error fetching security stats:", error);
+    throw error;
+  }
+}
+
+export async function getFinancialStats() {
+  try {
+    await connectToMongoDB();
+    const financialStats = getCollection("financial_stats");
+    const stats = await financialStats.find({}).toArray();
+    return mapDocs(stats);
+  } catch (error) {
+    console.error("Error fetching financial stats:", error);
+    throw error;
+  }
+}
+
+export async function getUserActivities() {
+  try {
+    await connectToMongoDB();
+    const userActivities = getCollection("user_activities");
+    const activities = await userActivities.find({}).toArray();
+    return mapDocs(activities);
+  } catch (error) {
+    console.error("Error fetching user activities:", error);
+    throw error;
+  }
+}
+
+export async function getSecurityConfig() {
+  try {
+    await connectToMongoDB();
+    const securityConfig = getCollection("security_config");
+    const config = await securityConfig.find({}).toArray();
+    return mapDocs(config);
+  } catch (error) {
+    console.error("Error fetching security config:", error);
+    throw error;
+  }
+}
+
+export async function getSecurityAlerts() {
+  try {
+    await connectToMongoDB();
+    const securityAlerts = getCollection("security_alerts");
+    const alerts = await securityAlerts.find({}).toArray();
+    return mapDocs(alerts);
+  } catch (error) {
+    console.error("Error fetching security alerts:", error);
+    throw error;
+  }
+}
+
+export async function getSecuritySettings() {
+  try {
+    await connectToMongoDB();
+    const securitySettings = getCollection("security_settings");
+    const settings = await securitySettings.find({}).toArray();
+    return mapDocs(settings);
+  } catch (error) {
+    console.error("Error fetching security settings:", error);
+    throw error;
+  }
+}
+
+export async function getAvailableReports() {
+  try {
+    await connectToMongoDB();
+    const availableReports = getCollection("available_reports");
+    const reports = await availableReports.find({}).toArray();
+    return mapDocs(reports);
+  } catch (error) {
+    console.error("Error fetching available reports:", error);
+    throw error;
+  }
+}
+
+export async function getReportActivities() {
+  try {
+    await connectToMongoDB();
+    const reportActivities = getCollection("report_activities");
+    const activities = await reportActivities.find({}).toArray();
+    return mapDocs(activities);
+  } catch (error) {
+    console.error("Error fetching report activities:", error);
+    throw error;
+  }
+}
+
+export async function getDatabaseHealth() {
+  try {
+    await connectToMongoDB();
+    const databaseHealth = getCollection("database_health");
+    const health = await databaseHealth.find({}).toArray();
+    return mapDocs(health);
+  } catch (error) {
+    console.error("Error fetching database health:", error);
+    throw error;
+  }
+}
+
+export async function getApiEndpoints() {
+  try {
+    await connectToMongoDB();
+    const apiEndpoints = getCollection("api_endpoints");
+    const endpoints = await apiEndpoints.find({}).toArray();
+    return mapDocs(endpoints);
+  } catch (error) {
+    console.error("Error fetching API endpoints:", error);
+    throw error;
+  }
+}
+
+export async function getSystemAlerts() {
+  try {
+    await connectToMongoDB();
+    const systemAlerts = getCollection("system_alerts");
+    const alerts = await systemAlerts.find({}).toArray();
+    return mapDocs(alerts);
+  } catch (error) {
+    console.error("Error fetching system alerts:", error);
+    throw error;
+  }
+}
+
+export async function createUser(userData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    const existingUser = await users.findOne({ email: userData.email });
+    if (existingUser) {
+      throw new Error("User with this email already exists");
+    }
+    
+    // Hash the password before storing
+    const password = String(userData.password ?? "");
+    const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+    const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    const toInsert = {
+      ...userData,
+      password: hashedPasswordHex,
+      createdAt: new Date(),
+      status: 'active'
+    };
+    
+    const result = await users.insertOne(toInsert);
+    return mapDoc(await users.findOne({ _id: result }));
+  } catch (error) {
+    console.error("Error creating user:", error);
     throw error;
   }
 }
