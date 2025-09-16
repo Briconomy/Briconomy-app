@@ -42,8 +42,8 @@ echo Frontend will be available at: http://localhost:5173
 echo API server will be available at: http://localhost:8000
 echo.
 
-REM Start API server minimized and hidden
-start /min "" cmd /c deno task api >nul 2>&1
+REM Start API server minimized and hidden with environment variables
+start /min "" cmd /c deno run --allow-net --allow-read --allow-env api-server.ts >nul 2>&1
 
 REM Start frontend dev server minimized and hidden
 start /min "" cmd /c deno task dev >nul 2>&1

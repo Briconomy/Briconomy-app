@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -46,6 +46,24 @@ function LoginPage() {
   } catch (_error) {
       setAuthError('Login failed. Please try again.');
     } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthError('');
+    setSubmitting(true);
+    
+    try {
+      const result = await loginWithGoogle();
+      
+      if (!result.success) {
+        setAuthError(result.message);
+        setSubmitting(false);
+      }
+      // If successful, the user will be redirected to Google
+    } catch (_error) {
+      setAuthError('Google login failed. Please try again.');
       setSubmitting(false);
     }
   };
@@ -241,22 +259,27 @@ function LoginPage() {
             {submitting ? 'Signing In...' : 'Sign In'}
           </button>
           
-          <button type="button" style={{
+          <button 
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={submitting}
+            style={{
             width: '100%',
             padding: '12px',
             border: 'none',
             borderRadius: '8px',
             fontSize: '16px',
             fontWeight: '600',
-            cursor: 'pointer',
+            cursor: submitting ? 'not-allowed' : 'pointer',
             marginBottom: '10px',
             background: '#4285f4',
             color: 'white',
             textDecoration: 'none',
             display: 'inline-block',
-            textAlign: 'center'
+            textAlign: 'center',
+            opacity: submitting ? 0.7 : 1
           }}>
-            Continue with Google SSO
+            {submitting ? 'Signing In...' : 'Continue with Google SSO'}
           </button>
           
           <button type="button" style={{

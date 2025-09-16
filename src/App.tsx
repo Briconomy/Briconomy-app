@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import CreateAccountPage from './pages/CreateAccountPage.tsx';
+import GoogleCallbackPage from './pages/GoogleCallbackPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
 import ManagerDashboard from './pages/ManagerDashboard.tsx';
 import CaretakerDashboard from './pages/CaretakerDashboard.tsx';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/create-account" element={<CreateAccountPage />} />
+              <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
               <Route path="/admin/security" element={<AdminRoute><AdminSecurityPage /></AdminRoute>} />

@@ -14,6 +14,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
+  loginWithGoogle: () => Promise<{ success: boolean; message: string; authUrl?: string }>;
+  handleGoogleCallback: (code: string, state?: string) => Promise<{ success: boolean; message: string; user?: User }>;
   register: (userData: Record<string, unknown>) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -109,10 +111,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('briconomy_token');
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const result = await authApi.googleOAuth();
+      
+      if (result.success && result.authUrl) {
+        // Redirect to Google OAuth URL
+        globalThis.location.href = result.authUrl;
+        return { success: true, message: 'Redirecting to Google...', authUrl: result.authUrl };
+      } else {
+        return { success: false, message: result.message || 'Failed to initiate Google OAuth' };
+      }
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      return { success: false, message: 'Failed to initiate Google OAuth' };
+    }
+  };
+
+  const handleGoogleCallback = async (code: string, state?: string) => {
+    try {
+      const result = await authApi.googleCallback(code, state);
+      
+      if (result.success && result.user) {
+        const raw = result.user as Record<string, unknown>;
+        const id = String((raw as { _id?: unknown; id?: unknown }).id ?? (raw as { _id?: unknown })._id ?? '');
+        const { _id: _ignored, ...rest } = raw as Record<string, unknown> & { _id?: unknown };
+        const userWithId = { id, ...(rest as Record<string, unknown>) } as unknown as User;
+        
+        setUser(userWithId);
+        localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
+        localStorage.setItem('briconomy_token', result.token || 'google-oauth-token');
+        return { success: true, message: result.message, user: userWithId };
+      } else {
+        return { success: false, message: result.message || 'Google OAuth authentication failed' };
+      }
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      return { success: false, message: 'Google OAuth authentication failed' };
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
+    loginWithGoogle,
+    handleGoogleCallback,
     register,
     logout,
     isAuthenticated: !!user,

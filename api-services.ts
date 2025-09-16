@@ -108,6 +108,74 @@ export async function registerUser(userData: Record<string, unknown>) {
   }
 }
 
+// OAuth-specific user operations
+export async function findUserByEmail(email: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const user = await users.findOne({ email });
+    return user;
+  } catch (error) {
+    console.error("Error finding user by email:", error);
+    throw error;
+  }
+}
+
+export async function createOAuthUser(userData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    const existingUser = await users.findOne({ email: userData.email });
+    if (existingUser) {
+      // Return existing user without password
+      const { password: _pw, ...userWithoutPassword } = existingUser as Record<string, unknown> & { password?: unknown };
+      const mappedUser = { id: String(userWithoutPassword._id ?? ""), ...Object.fromEntries(Object.entries(userWithoutPassword).filter(([k]) => k !== "_id")) };
+      return {
+        success: true,
+        message: "User already exists",
+        user: mappedUser,
+        isNewUser: false
+      };
+    }
+    
+    // Create new OAuth user
+    const password = String(userData.password ?? "");
+    const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+    const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    const toInsert: Record<string, unknown> = { 
+      ...userData, 
+      password: hashedPasswordHex, 
+      createdAt: new Date(),
+      isOAuthUser: true,
+      isActive: true
+    };
+    
+    await users.insertOne(toInsert);
+    const created = await users.findOne({ email: userData.email });
+    
+    if (!created) {
+      return { success: false, message: "Failed to create user" };
+    }
+    
+    const { password: _pw, ...userWithoutPassword } = created as Record<string, unknown> & { password?: unknown };
+    const mappedUser = { id: String(userWithoutPassword._id ?? ""), ...Object.fromEntries(Object.entries(userWithoutPassword).filter(([k]) => k !== "_id")) };
+    
+    return {
+      success: true,
+      message: "OAuth user created successfully",
+      user: mappedUser,
+      isNewUser: true
+    };
+  } catch (error) {
+    console.error("Error creating OAuth user:", error);
+    throw error;
+  }
+}
+
 // Properties API
 export async function getProperties() {
   try {

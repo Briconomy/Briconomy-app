@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
+import { load } from "https://deno.land/std@0.204.0/dotenv/mod.ts";
 import {
   getProperties,
   createProperty,
@@ -21,8 +22,20 @@ import {
   createNotification,
   getDashboardStats,
   loginUser,
-  registerUser
+  registerUser,
+  findUserByEmail,
+  createOAuthUser
 } from "./api-services.ts";
+import {
+  generateGoogleAuthUrl,
+  generateState,
+  exchangeCodeForTokens,
+  getGoogleUserInfo,
+  validateOAuthConfig
+} from "./oauth-utils.ts";
+
+// Load environment variables
+const _env = await load();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,6 +72,107 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, message: 'Logged out successfully' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      } else if (path[2] === 'google' && req.method === 'GET') {
+        // Initiate Google OAuth flow
+        try {
+          const config = validateOAuthConfig();
+          if (!config.valid) {
+            return new Response(JSON.stringify({ 
+              success: false, 
+              message: `OAuth configuration error: ${config.error}` 
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500
+            });
+          }
+
+          const state = generateState();
+          const authUrl = generateGoogleAuthUrl(state);
+          
+          return new Response(JSON.stringify({ 
+            success: true, 
+            authUrl: authUrl,
+            state: state 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          console.error('Google OAuth initiation error:', error);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: 'Failed to initiate Google OAuth' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
+      } else if (path[2] === 'google' && path[3] === 'callback' && req.method === 'POST') {
+        // Handle Google OAuth callback
+        try {
+          const data = await req.json();
+          const { code, state: _state } = data;
+
+          if (!code) {
+            return new Response(JSON.stringify({ 
+              success: false, 
+              message: 'Authorization code is required' 
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400
+            });
+          }
+
+          // Exchange code for tokens
+          const tokens = await exchangeCodeForTokens(code);
+          
+          // Get user info from Google
+          const googleUser = await getGoogleUserInfo(tokens.access_token);
+          
+          // Create or find user with OAuth data
+          const newUserData = {
+            fullName: googleUser.name,
+            email: googleUser.email,
+            phone: '', // Google doesn't provide phone by default
+            userType: 'tenant', // Default user type for Google OAuth users
+            password: generateState(), // Generate random password for OAuth users
+            profile: {
+              googleId: googleUser.id,
+              picture: googleUser.picture,
+              emailVerified: googleUser.verified_email
+            }
+          };
+          
+          const userResult = await createOAuthUser(newUserData);
+          
+          if (!userResult.success) {
+            return new Response(JSON.stringify({ 
+              success: false, 
+              message: userResult.message || 'Failed to create or find user account' 
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500
+            });
+          }
+
+          return new Response(JSON.stringify({ 
+            success: true, 
+            message: 'Google OAuth login successful',
+            user: userResult.user,
+            token: 'google-oauth-' + generateState(),
+            isNewUser: userResult.isNewUser
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          console.error('Google OAuth callback error:', error);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: 'Google OAuth authentication failed' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
       }
     }
 

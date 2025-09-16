@@ -157,6 +157,13 @@ export const authApi = {
   logout: () => apiRequest('/auth/logout', {
     method: 'POST',
   }),
+  googleOAuth: () => apiRequest('/auth/google', {
+    method: 'GET',
+  }),
+  googleCallback: (code: string, state?: string) => apiRequest('/auth/google/callback', {
+    method: 'POST',
+    body: JSON.stringify({ code, state }),
+  }),
 };
 
 export const notificationsApi = {
