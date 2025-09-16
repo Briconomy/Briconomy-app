@@ -167,21 +167,21 @@ return (
             <h3>Lease Information</h3>
             <div className="lease-details">
               <div className="lease-row">
-                <span>Monthly Rent:</span>
+                <span>Monthly Rent: </span>
                 <span className="lease-value">{formatCurrency(currentLease?.monthlyRent || 0)}</span>
               </div>
               <div className="lease-row">
-                <span>Lease Period:</span>
+                <span>Lease Period: </span>
                 <span className="lease-value">
                   {formatDate(currentLease?.startDate)} - {formatDate(currentLease?.endDate)}
                 </span>
               </div>
               <div className="lease-row">
-                <span>Security Deposit:</span>
+                <span>Security Deposit: </span>
                 <span className="lease-value">{formatCurrency(currentLease?.deposit || 0)}</span>
               </div>
               <div className="lease-row">
-                <span>Status:</span>
+                <span>Status: </span>
                 <span className={`lease-status ${currentLease?.status === 'active' ? 'status-active' : ''}`}>
                   {(currentLease?.status || 'unknown').charAt(0).toUpperCase() + (currentLease?.status || 'unknown').slice(1)}
                 </span>

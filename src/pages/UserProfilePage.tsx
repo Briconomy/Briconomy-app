@@ -97,19 +97,19 @@ function UserProfilePage() {
             <h3>Personal Information</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>Full Name</label>
+                <label>Full Name: </label>
                 <span>{user.fullName}</span>
               </div>
               <div className="info-item">
-                <label>Email</label>
+                <label>Email: </label>
                 <span>{user.email}</span>
               </div>
               <div className="info-item">
-                <label>Phone</label>
+                <label>Phone: </label>
                 <span>{user.phone}</span>
               </div>
               <div className="info-item">
-                <label>Member Since</label>
+                <label>Member Since: </label>
                 <span>{new Date(user.joinDate).toLocaleDateString()}</span>
               </div>
             </div>
@@ -119,27 +119,27 @@ function UserProfilePage() {
             <h3>Lease Information</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>Property</label>
+                <label>Property: </label>
                 <span>{user.property}</span>
               </div>
               <div className="info-item">
-                <label>Unit</label>
+                <label>Unit: </label>
                 <span>{user.unit}</span>
               </div>
               <div className="info-item">
-                <label>Lease Start</label>
+                <label>Lease Start: </label>
                 <span>{new Date(user.leaseStart).toLocaleDateString()}</span>
               </div>
               <div className="info-item">
-                <label>Lease End</label>
+                <label>Lease End: </label>
                 <span>{new Date(user.leaseEnd).toLocaleDateString()}</span>
               </div>
               <div className="info-item">
-                <label>Monthly Rent</label>
+                <label>Monthly Rent: </label>
                 <span>R{user.rent.toLocaleString()}</span>
               </div>
               <div className="info-item">
-                <label>Days Remaining</label>
+                <label>Days Remaining: </label>
                 <span>{leaseDaysRemaining} days</span>
               </div>
             </div>
@@ -149,15 +149,15 @@ function UserProfilePage() {
             <h3>Emergency Contact</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>Name</label>
+                <label>Name: </label>
                 <span>{user.emergencyContact.name}</span>
               </div>
               <div className="info-item">
-                <label>Relationship</label>
+                <label>Relationship: </label>
                 <span>{user.emergencyContact.relationship}</span>
               </div>
               <div className="info-item">
-                <label>Phone</label>
+                <label>Phone: </label>
                 <span>{user.emergencyContact.phone}</span>
               </div>
             </div>

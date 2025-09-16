@@ -319,12 +319,16 @@ return (
                       <p className="text-sm text-gray-600">{request.description}</p>
                       <div className="request-meta">
                         <span className="text-xs text-gray-500">
-                          {formatDate(request.createdAt)}
+                          {formatDate(request.createdAt)} 
                         </span>
+                        <br />
                         {request.assignedTo && (
-                          <span className="text-xs text-blue-600">
-                            Assigned to: {request.assignedTo}
-                          </span>
+                          <>
+                            <span className="text-xs text-blue-600">
+                              Assigned to: {request.assignedTo}
+                            </span>
+                            <br />
+                          </>
                         )}
                         {request.category && (
                           <span className="text-xs text-purple-600">
