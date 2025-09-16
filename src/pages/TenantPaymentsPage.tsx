@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
+import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';
 import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
 interface PaymentMethod {
@@ -18,6 +19,7 @@ interface PaymentMethod {
 function TenantPaymentsPage() {
   const [user, setUser] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [processing, setProcessing] = useState(false);
@@ -326,12 +328,22 @@ function TenantPaymentsPage() {
               title="Make Payment"
               description="Pay your rent online"
             />
-            <ActionCard
-              to="/tenant/profile"
-              icon="M"
-              title="Payment Methods"
-              description="Manage payment options"
-            />
+          </div>
+        </div>
+
+        <div className="payment-methods-section">
+          <div className="section-header">
+            <h3>Payment Methods</h3>
+            <button 
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowPaymentMethodsModal(true)}
+            >
+              Manage Payment Methods
+            </button>
+          </div>
+          <div className="payment-methods-summary">
+            <p>Manage your saved payment methods for quick checkout</p>
           </div>
         </div>
       </div>
@@ -468,6 +480,29 @@ function TenantPaymentsPage() {
         </div>
       )}
       
+      {showPaymentMethodsModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Payment Methods</h3>
+              <button type="button" className="close-btn" onClick={() => setShowPaymentMethodsModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <PaymentMethodsManager />
+              <div className="form-actions">
+                <button 
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowPaymentMethodsModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <BottomNav items={navItems} responsive={false} />
     </div>
   );
@@ -490,7 +525,7 @@ class ErrorBoundary extends React.Component<
     this.props.onError?.();
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return null;
     }
