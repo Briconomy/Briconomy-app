@@ -1,4 +1,4 @@
-import _React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -13,6 +13,7 @@ function TenantPaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [processing, setProcessing] = useState(false);
+  const [chartError, setChartError] = useState(false);
 
   const navItems = [
     { path: '/tenant', label: 'Home', active: false },
@@ -31,18 +32,18 @@ function TenantPaymentsPage() {
     [user?.id]
   );
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
   const loadUserData = () => {
     try {
-  const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
+      const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
     }
   };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
 
   const totalDue = payments
     ?.filter(p => p.status === 'pending')
@@ -114,7 +115,7 @@ function TenantPaymentsPage() {
   if (paymentsLoading || leasesLoading) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showLogout />
+        <TopNav showLogout />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -128,9 +129,35 @@ function TenantPaymentsPage() {
 
   const currentLease = leases?.[0];
 
+  const renderPaymentChart = () => {
+    if (chartError) {
+      return (
+        <div className="chart-error">
+          <p>Unable to load payment history chart</p>
+        </div>
+      );
+    }
+
+    if (!payments || payments.length === 0) {
+      return (
+        <div className="chart-empty">
+          <p>No payment history available</p>
+        </div>
+      );
+    }
+
+    return (
+      <ChartCard title="Payment History">
+        <ErrorBoundary onError={() => setChartError(true)}>
+          <PaymentChart payments={payments} />
+        </ErrorBoundary>
+      </ChartCard>
+    );
+  };
+
   return (
     <div className="app-container mobile-only">
-  <TopNav showLogout />
+      <TopNav showLogout />
       
       <div className="main-content">
         <div className="page-header">
@@ -165,9 +192,7 @@ function TenantPaymentsPage() {
           <StatCard value={payments?.filter(p => p.status === 'paid').length || 0} label="Payments Made" />
         </div>
 
-        <ChartCard title="Payment History">
-          <PaymentChart payments={payments} />
-        </ChartCard>
+        {renderPaymentChart()}
 
         <div className="data-table">
           <div className="table-header">
@@ -190,10 +215,10 @@ function TenantPaymentsPage() {
                 <span className={`status-badge ${getPaymentStatusColor(payment.status)}`}>
                   {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                 </span>
-        {payment.status === 'pending' && (
+                {payment.status === 'pending' && (
                   <button 
-          className="btn btn-primary btn-sm"
-          type="button"
+                    className="btn btn-primary btn-sm"
+                    type="button"
                     onClick={() => handleMakePayment(payment)}
                   >
                     Pay Now
@@ -202,6 +227,12 @@ function TenantPaymentsPage() {
               </div>
             </div>
           ))}
+
+          {payments?.length === 0 && (
+            <div className="no-data-state">
+              <p>No payments found. Please check back later.</p>
+            </div>
+          )}
         </div>
 
         <div className="quick-actions">
@@ -302,6 +333,32 @@ function TenantPaymentsPage() {
       <BottomNav items={navItems} responsive={false} />
     </div>
   );
+}
+
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; onError?: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; onError?: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_error: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.props.onError?.();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null;
+    }
+
+    return this.props.children;
+  }
 }
 
 export default TenantPaymentsPage;
