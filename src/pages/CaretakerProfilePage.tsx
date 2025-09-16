@@ -7,9 +7,7 @@ import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerProfilePage() {
   const [user, setUser] = useState(null);
-  const [isEditing, setIsEditing]                 <div key={task.id} className="activity-item">
-                  <div className="activity-icon">Completed</div>
-                  <div className="activity-content">seState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [notificationSettings, setNotificationSettings] = useState({
     email: true,
