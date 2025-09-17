@@ -33,6 +33,7 @@ import CreateLeasePage from './pages/CreateLeasePage.tsx';
 import DocumentManagementPage from './pages/DocumentManagementPage.tsx';
 import ReportingDashboardPage from './pages/ReportingDashboardPage.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
+import TenantProfileEditPage from './pages/TenantProfileEditPage.tsx';
 import ApiTestPage from './pages/ApiTestPage.tsx';
 import { ProtectedRoute, AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
@@ -91,6 +92,7 @@ function App() {
               <Route path="/manager/terminations/report" element={<ManagerRoute><TerminationReportPage /></ManagerRoute>} />
 
               <Route path="/tenant/profile" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
+              <Route path="/tenant/profile/edit" element={<TenantRoute><TenantProfileEditPage /></TenantRoute>} />
               <Route path="/tenant/profile/payment-methods" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/documents" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/help" element={<TenantRoute><UserProfilePage /></TenantRoute>} />

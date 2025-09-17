@@ -8,6 +8,20 @@ interface User {
   phone: string;
   userType: 'admin' | 'manager' | 'caretaker' | 'tenant';
   profile?: Record<string, unknown>;
+  // Extended profile information for tenants
+  avatar?: string;
+  joinDate?: string;
+  lastLogin?: string;
+  unit?: string;
+  property?: string;
+  rent?: number;
+  leaseStart?: string;
+  leaseEnd?: string;
+  emergencyContact?: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
 }
 
 interface AuthContextType {
@@ -15,6 +29,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
   register: (userData: Record<string, unknown>) => Promise<{ success: boolean; message: string }>;
+  updateUser: (userData: Partial<User>) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -46,7 +61,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (savedUser && token) {
         try {
           const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
+          
+          // Ensure extended profile fields exist for tenants
+          if (parsedUser.userType === 'tenant') {
+            const enhancedUser = {
+              ...parsedUser,
+              avatar: parsedUser.avatar || parsedUser.fullName?.substring(0, 2).toUpperCase() || 'T',
+              joinDate: parsedUser.joinDate || new Date().toISOString().split('T')[0],
+              lastLogin: parsedUser.lastLogin || new Date().toISOString(),
+              unit: parsedUser.unit || 'N/A',
+              property: parsedUser.property || 'N/A',
+              rent: parsedUser.rent || 0,
+              leaseStart: parsedUser.leaseStart || new Date().toISOString().split('T')[0],
+              leaseEnd: parsedUser.leaseEnd || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              emergencyContact: parsedUser.emergencyContact || {
+                name: '',
+                relationship: '',
+                phone: ''
+              }
+            };
+            setUser(enhancedUser);
+            localStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
+          } else {
+            setUser(parsedUser);
+          }
         } catch (error) {
           console.error('Error parsing saved user:', error);
           localStorage.removeItem('briconomy_user');
@@ -103,6 +141,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('briconomy_user');
@@ -114,6 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     login,
     register,
+    updateUser,
     logout,
     isAuthenticated: !!user,
   };
