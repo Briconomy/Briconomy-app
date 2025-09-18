@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
+import AIButton from '../components/AIButton.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 
 function AdminDashboard() {
@@ -46,7 +47,13 @@ function AdminDashboard() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Admin Dashboard</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="page-title">Admin Dashboard</div>
+            <AIButton 
+              userId="admin-user-1" 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
+          </div>
           <div className="page-subtitle">System overview and management</div>
         </div>
         

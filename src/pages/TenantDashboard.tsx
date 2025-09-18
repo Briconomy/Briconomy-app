@@ -1,16 +1,18 @@
-import _React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
-import AIChatbot from '../components/AIChatbot.tsx';
+import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
 function TenantDashboard() {
-  const [user, setUser] = useState(null);
-  const [_error, _setError] = useState<unknown>(null);
-  const [notifications, setNotifications] = useState([]);
+  const { t } = useLanguage();
+  const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
+  const [_error, _setError] = useState<Error | null>(null);
+  const [notifications, setNotifications] = useState<{ id: string; read: boolean }[]>([]);
   
   const navItems = [
     { path: '/tenant', label: 'Home', active: true },
@@ -54,7 +56,7 @@ function TenantDashboard() {
       const userRaw = localStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading user data:', err);
     }
   };
@@ -63,9 +65,9 @@ function TenantDashboard() {
     try {
       if (user?.id) {
         const notificationsData = await notificationsApi.getAll(user.id || '68bde3529b1d854514fa336a');
-        setNotifications(notificationsData.filter(n => !n.read).slice(0, 5));
+        setNotifications(notificationsData.filter((n: { read: boolean }) => !n.read).slice(0, 5));
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading notifications:', err);
     }
   };
@@ -104,19 +106,22 @@ function TenantDashboard() {
   const _paymentsData = payments || (useMockData ? mockData.payments : []);
   const leaseData = Array.isArray(lease) ? lease : [];
   const requestsData = Array.isArray(requests) ? requests : [];
-  const notificationsData = notifications.length > 0 ? notifications : (useMockData ? mockData.notifications : []);
+  const notificationsData = (() => {
+    if (notifications.length > 0) return notifications;
+    return useMockData ? mockData.notifications : [];
+  })();
 
   const isLoading = paymentsLoading || leaseLoading || requestsLoading || statsLoading;
   const hasError = paymentsError || leaseError || requestsError || statsError;
   const upcomingPayment = hasError ? null : getUpcomingPayment();
   const currentLease = hasError ? null : leaseData?.[0];
-  const pendingRequests = hasError ? [] : requestsData?.filter(r => r.status === 'pending') || [];
+  const pendingRequests = hasError ? [] : requestsData?.filter((r: { status: string }) => r.status === 'pending') || [];
   const unreadNotifications = hasError ? 0 : notificationsData.length;
 
 if (isLoading) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton={true} />
+  <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -130,11 +135,17 @@ if (isLoading) {
 
 return (
     <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton={true} />
+          <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Welcome Back</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="page-title">{t('dashboard.welcome_back')}</div>
+            <AIButton 
+              userId={user?.id || 'fallback-user'} 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
+          </div>
           <div className="page-subtitle">
             {currentLease?.unitId?.unitNumber || 'Unit'} - {currentLease?.propertyId?.name || 'Property'}
           </div>
@@ -147,20 +158,20 @@ return (
         
         <div className="dashboard-grid">
           <StatCard 
-            value={upcomingPayment ? formatCurrency(upcomingPayment.amount) : 'R0'} 
-            label="Rent Due" 
+            value={upcomingPayment ? formatCurrency(upcomingPayment.amount || 0) : 'R0'} 
+            label={t('dashboard.rent_due')} 
           />
           <StatCard 
-            value={upcomingPayment ? `${getDaysUntilDue(upcomingPayment.dueDate)} days` : 'N/A'} 
-            label="Due Date" 
+            value={upcomingPayment ? `${getDaysUntilDue(upcomingPayment.dueDate || new Date())} days` : 'N/A'} 
+            label={t('dashboard.due_date')} 
           />
           <StatCard 
-            value={pendingRequests.length} 
-            label="Requests" 
+            value={pendingRequests.length.toString()} 
+            label={t('dashboard.requests')} 
           />
           <StatCard 
-            value={unreadNotifications} 
-            label="Notifications" 
+            value={unreadNotifications.toString()} 
+            label={t('dashboard.notifications')} 
           />
         </div>
 
@@ -175,7 +186,7 @@ return (
               <div className="lease-row">
                 <span>Lease Period: </span>
                 <span className="lease-value">
-                  {formatDate(currentLease?.startDate)} - {formatDate(currentLease?.endDate)}
+                  {formatDate(currentLease?.startDate || '')} - {formatDate(currentLease?.endDate || '')}
                 </span>
               </div>
               <div className="lease-row">
@@ -196,43 +207,31 @@ return (
           <ActionCard
             onClick={() => globalThis.location.href = '/tenant/payments'}
             icon="P"
-            title="Pay Rent"
-            description="Make a payment"
+            title={t('dashboard.pay_rent')}
+            description={t('dashboard.make_payment')}
           />
           <ActionCard
             onClick={() => globalThis.location.href = '/tenant/requests'}
             icon="M"
-            title="Maintenance"
-            description="Report an issue"
+            title={t('dashboard.maintenance')}
+            description={t('dashboard.report_issue')}
           />
           <ActionCard
             onClick={() => globalThis.location.href = '/tenant/messages'}
             icon="C"
-            title="Contact"
-            description="Message management"
+            title={t('dashboard.contact')}
+            description={t('dashboard.message_management')}
           />
           <ActionCard
             onClick={() => globalThis.location.href = '/tenant/profile'}
             icon="U"
-            title="Profile"
-            description="Update information"
+            title={t('dashboard.profile')}
+            description={t('dashboard.update_info')}
           />
         </div>
       </div>
       
       <BottomNav items={navItems} responsive={false} />
-      
-      {/* AI Chatbot */}
-      {user?.id && (
-        <AIChatbot 
-          userId={user.id} 
-          language="en" 
-          onEscalate={() => {
-            // Optional: redirect to contact page or show escalation message
-            console.log('Chatbot escalated to human support');
-          }}
-        />
-      )}
       
       {/* Offline Indicator */}
       <OfflineIndicator />

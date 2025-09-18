@@ -123,11 +123,29 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', onEscalate
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div 
+        className="fixed bottom-4 right-4 z-50"
+        style={{ 
+          position: 'fixed', 
+          bottom: '16px', 
+          right: '16px', 
+          zIndex: 9999 
+        }}
+      >
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors pulse"
+          title="Chat with AI Assistant"
+          style={{
+            backgroundColor: '#2563eb',
+            color: 'white',
+            padding: '16px',
+            borderRadius: '50%',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          }}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -138,7 +156,17 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', onEscalate
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-80 h-96 bg-white border border-gray-300 rounded-lg shadow-xl z-50 flex flex-col">
+    <div 
+      className="fixed bottom-4 right-4 w-80 h-96 bg-white border border-gray-300 rounded-lg shadow-xl z-50 flex flex-col"
+      style={{ 
+        position: 'fixed', 
+        bottom: '16px', 
+        right: '16px', 
+        zIndex: 9999,
+        minWidth: '320px',
+        minHeight: '384px'
+      }}
+    >
       {/* Header */}
       <div className="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
         <div className="flex items-center space-x-2">
