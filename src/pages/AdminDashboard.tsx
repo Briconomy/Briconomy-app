@@ -6,16 +6,18 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import AIButton from '../components/AIButton.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 
 function AdminDashboard() {
+  const { t } = useLanguage();
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   
   const navItems = [
-    { path: '/admin', label: 'Dashboard', active: true },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/security', label: 'Security' },
-    { path: '/admin/reports', label: 'Reports' }
+    { path: '/admin', label: t('nav.dashboard'), active: true },
+    { path: '/admin/users', label: t('nav.users') },
+    { path: '/admin/security', label: t('nav.security') },
+    { path: '/admin/reports', label: t('nav.reports') }
   ];
 
   const { data: systemStats, loading: statsLoading } = useApi(() => adminApi.getSystemStats());

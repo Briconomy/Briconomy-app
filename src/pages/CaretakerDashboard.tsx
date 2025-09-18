@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import AIButton from '../components/AIButton.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { tasksApi, useApi } from '../services/api.ts';
 import '../utils/chart-registration.ts';
 
@@ -40,15 +41,16 @@ function SimpleErrorBoundary({ children, fallback }: { children: React.ReactNode
 }
 
 function CaretakerDashboard() {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [chartError, setChartError] = useState(null);
   
   const navItems = [
-    { path: '/caretaker', label: 'Tasks', active: true },
-    { path: '/caretaker/schedule', label: 'Schedule' },
-    { path: '/caretaker/history', label: 'History' },
-    { path: '/caretaker/profile', label: 'Profile' }
+    { path: '/caretaker', label: t('nav.tasks'), active: true },
+    { path: '/caretaker/schedule', label: t('nav.schedule') },
+    { path: '/caretaker/history', label: t('nav.history') },
+    { path: '/caretaker/profile', label: t('nav.profile') }
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
