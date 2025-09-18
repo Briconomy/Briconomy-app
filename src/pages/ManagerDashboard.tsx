@@ -16,10 +16,10 @@ function ManagerDashboard() {
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: true },
-    { path: '/manager/properties', label: 'Properties' },
-    { path: '/manager/leases', label: 'Leases' },
-    { path: '/manager/payments', label: 'Payments' }
+    { path: '/manager', label: t('nav.dashboard'), active: true },
+    { path: '/manager/properties', label: t('nav.properties') },
+    { path: '/manager/leases', label: t('nav.leases') },
+    { path: '/manager/payments', label: t('nav.payments') }
   ];
 
   return (

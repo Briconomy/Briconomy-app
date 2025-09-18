@@ -15,10 +15,10 @@ function TenantDashboard() {
   const [notifications, setNotifications] = useState<{ id: string; read: boolean }[]>([]);
   
   const navItems = [
-    { path: '/tenant', label: 'Home', active: true },
-    { path: '/tenant/payments', label: 'Payments' },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/profile', label: 'Profile' }
+    { path: '/tenant', label: t('nav.home'), active: true },
+    { path: '/tenant/payments', label: t('nav.payments') },
+    { path: '/tenant/requests', label: t('nav.requests') },
+    { path: '/tenant/profile', label: t('nav.profile') }
   ];
 
   const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(

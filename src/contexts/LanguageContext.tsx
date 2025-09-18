@@ -40,14 +40,21 @@ const translations: Translations = {
   'dashboard.update_info': { en: 'Update information', zu: 'Buyekeza ulwazi' },
 
   // Navigation
+  'nav.home': { en: 'Home', zu: 'Ikhaya' },
   'nav.dashboard': { en: 'Dashboard', zu: 'Ideshibodi' },
   'nav.properties': { en: 'Properties', zu: 'Izindawo' },
   'nav.payments': { en: 'Payments', zu: 'Ukukhokha' },
+  'nav.requests': { en: 'Requests', zu: 'Izicelo' },
   'nav.maintenance': { en: 'Maintenance', zu: 'Ukulungisa' },
   'nav.leases': { en: 'Leases', zu: 'Ama-lease' },
   'nav.communication': { en: 'Messages', zu: 'Imilayezo' },
   'nav.reports': { en: 'Reports', zu: 'Imibiko' },
   'nav.profile': { en: 'Profile', zu: 'Iphrofayela' },
+  'nav.tasks': { en: 'Tasks', zu: 'Imisebenzi' },
+  'nav.schedule': { en: 'Schedule', zu: 'Uhlelo' },
+  'nav.history': { en: 'History', zu: 'Umlando' },
+  'nav.users': { en: 'Users', zu: 'Abasebenzisi' },
+  'nav.security': { en: 'Security', zu: 'Ukuphepha' },
   'nav.settings': { en: 'Settings', zu: 'Izilungiselelo' },
   'nav.logout': { en: 'Logout', zu: 'Phuma' },
 
@@ -66,6 +73,15 @@ const translations: Translations = {
   'action.filter': { en: 'Filter', zu: 'Hlola' },
   'action.download': { en: 'Download', zu: 'Landa' },
   'action.upload': { en: 'Upload', zu: 'Layisha' },
+
+  // Payments
+  'payment.title': { en: 'Payments', zu: 'Ukukhokha' },
+  'payment.rent_payments': { en: 'Rent Payments', zu: 'Ukukhokha Irenti' },
+  'payment.amount_due': { en: 'Amount Due', zu: 'Imali Edingekayo' },
+  'payment.due_date': { en: 'Due Date', zu: 'Usuku Lokuphela' },
+  'payment.make_payment': { en: 'Make Payment', zu: 'Yenza Inkokhelo' },
+  'payment.payment_history': { en: 'Payment History', zu: 'Umlando Wokukhokhela' },
+  'payment.total_paid': { en: 'Total Paid', zu: 'Yonke Imali Ekhokhelwe' },
 
   // Status Labels
   'status.active': { en: 'Active', zu: 'Iyasebenza' },
@@ -88,7 +104,7 @@ const translations: Translations = {
   'property.description': { en: 'Description', zu: 'Incazelo' },
 
   // Payment Management
-  'payment.title': { en: 'Payment Management', zu: 'Ukuphatha Ukukhokha' },
+  'payment.management': { en: 'Payment Management', zu: 'Ukuphatha Ukukhokha' },
   'payment.amount': { en: 'Amount', zu: 'Imali' },
   'payment.date': { en: 'Payment Date', zu: 'Usuku Lokukhokha' },
   'payment.method': { en: 'Payment Method', zu: 'Indlela Yokukhokha' },
