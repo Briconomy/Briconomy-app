@@ -181,17 +181,16 @@ function TenantPaymentsPage() {
   };
 
 return (
-    <div className="app-container mobile-only">
+    <div className="app-container mobile-only" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <TopNav showLogout showBackButton={true} />
-      
-      <div className="main-content">
-        <div className="page-header">
+      <div className="main-content" style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }}>
+        <div className="page-header" style={{ marginBottom: '16px' }}>
           <div className="page-title">Payments</div>
           <div className="page-subtitle">Manage your rent and utilities</div>
         </div>
-        
+
         {currentLease && (
-          <div className="lease-summary-card">
+          <div className="lease-summary-card" style={{ marginBottom: '16px' }}>
             <h3>Current Lease</h3>
             <div className="lease-summary">
               <div className="lease-item">
@@ -209,8 +208,8 @@ return (
             </div>
           </div>
         )}
-        
-        <div className="dashboard-grid">
+
+        <div className="dashboard-grid" style={{ marginBottom: '16px', gap: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
           <StatCard value={formatCurrency(totalDue)} label="Total Due" />
           <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label="Next Payment" />
           <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label="Days Until Due" />
@@ -218,7 +217,7 @@ return (
         </div>
 
         {nextPayment && (
-          <div className="payment-reminder-card">
+          <div className="payment-reminder-card" style={{ marginBottom: '16px' }}>
             <div className="reminder-content">
               <div className="reminder-icon">Reminder</div>
               <div className="reminder-text">
@@ -239,9 +238,26 @@ return (
 
         {renderPaymentChart()}
 
-        <div className="payment-actions-section">
+        <div className="payment-methods-section" style={{ marginBottom: '16px' }}>
+          <div className="section-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+            <h3>Payment Methods</h3>
+            <button 
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowPaymentMethodsModal(true)}
+              style={{ marginTop: '4px' }}
+            >
+              Manage Payment Methods
+            </button>
+          </div>
+          <div className="payment-methods-summary">
+            <p>Manage your saved payment methods for quick checkout</p>
+          </div>
+        </div>
+
+        <div className="payment-actions-section" style={{ marginBottom: '16px' }}>
           <h3>Quick Actions</h3>
-          <div className="quick-actions">
+          <div className="quick-actions" style={{ display: 'flex', gap: '12px' }}>
             <ActionCard
               onClick={_handleDownloadStatement}
               icon="S"
@@ -257,158 +273,136 @@ return (
           </div>
         </div>
 
-        <div className="payment-methods-section">
-          <div className="section-header">
-            <h3>Payment Methods</h3>
-            <button 
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowPaymentMethodsModal(true)}
-            >
-              Manage Payment Methods
-            </button>
-          </div>
-          <div className="payment-methods-summary">
-            <p>Manage your saved payment methods for quick checkout</p>
-          </div>
-        </div>
-      </div>
-      
-      {showPaymentForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Make Payment</h3>
-              <button type="button" className="close-btn" onClick={() => setShowPaymentForm(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="payment-details">
-                <p><strong>Amount:</strong> {selectedPayment ? formatCurrency(selectedPayment.amount) : 'R0'}</p>
-                <p><strong>Type:</strong> {selectedPayment?.type || 'Rent'}</p>
-                <p><strong>Due Date:</strong> {selectedPayment ? formatDate(selectedPayment.dueDate) : 'N/A'}</p>
+        {showPaymentForm && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Make Payment</h3>
+                <button type="button" className="close-btn" onClick={() => setShowPaymentForm(false)}>×</button>
               </div>
-              
-              <div className="payment-methods">
-                <h4>Select Payment Method</h4>
-                
-                {savedPaymentMethods.length > 0 && (
-                  <div className="saved-payment-methods">
-                    <h5>Saved Payment Methods</h5>
-                    <div className="saved-methods-list">
-                      {savedPaymentMethods.map((method) => (
-                        <label key={method.id} className="saved-method-option">
-                          <input
-                            type="radio"
-                            name="savedPaymentMethod"
-                            value={method.id}
-                            checked={paymentMethod === `saved_${method.id}`}
-                            onChange={(e) => setPaymentMethod(`saved_${method.id}`)}
-                          />
-                          <div className="saved-method-info">
-                            <div className="method-header">
-                              <span className="method-icon">
-                                {method.type === 'bank_account' ? 'Bank' : 
-                                 method.type === 'credit_card' || method.type === 'debit_card' ? 'Card' : 'Mobile'}
-                              </span>
-                              <div className="method-details">
-                                <span className="method-name">{method.name}</span>
-                                <span className="method-details-text">{method.details}</span>
+              <div className="modal-body">
+                <div className="payment-details">
+                  <p><strong>Amount:</strong> {selectedPayment ? formatCurrency(selectedPayment.amount) : 'R0'}</p>
+                  <p><strong>Type:</strong> {selectedPayment?.type || 'Rent'}</p>
+                  <p><strong>Due Date:</strong> {selectedPayment ? formatDate(selectedPayment.dueDate) : 'N/A'}</p>
+                </div>
+                <div className="payment-methods">
+                  <h4>Select Payment Method</h4>
+                  {savedPaymentMethods.length > 0 && (
+                    <div className="saved-payment-methods">
+                      <h5>Saved Payment Methods</h5>
+                      <div className="saved-methods-list">
+                        {savedPaymentMethods.map((method) => (
+                          <label key={method.id} className="saved-method-option">
+                            <input
+                              type="radio"
+                              name="savedPaymentMethod"
+                              value={method.id}
+                              checked={paymentMethod === `saved_${method.id}`}
+                              onChange={(e) => setPaymentMethod(`saved_${method.id}`)}
+                            />
+                            <div className="saved-method-info">
+                              <div className="method-header">
+                                <span className="method-icon">
+                                  {method.type === 'bank_account' ? 'Bank' : 
+                                   method.type === 'credit_card' || method.type === 'debit_card' ? 'Card' : 'Mobile'}
+                                </span>
+                                <div className="method-details">
+                                  <span className="method-name">{method.name}</span>
+                                  <span className="method-details-text">{method.details}</span>
+                                </div>
+                                {method.isDefault && (
+                                  <span className="default-badge">Default</span>
+                                )}
                               </div>
-                              {method.isDefault && (
-                                <span className="default-badge">Default</span>
-                              )}
                             </div>
-                          </div>
-                        </label>
-                      ))}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="new-payment-methods">
+                    <h5>New Payment Method</h5>
+                    <div className="payment-options">
+                      <label className="payment-option">
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          value="bank_transfer"
+                          checked={paymentMethod === 'bank_transfer'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <span>Bank Transfer</span>
+                      </label>
+                      <label className="payment-option">
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          value="card"
+                          checked={paymentMethod === 'card'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <span>Credit/Debit Card</span>
+                      </label>
+                      <label className="payment-option">
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          value="eft"
+                          checked={paymentMethod === 'eft'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <span>EFT</span>
+                      </label>
                     </div>
                   </div>
-                )}
-                
-                <div className="new-payment-methods">
-                  <h5>New Payment Method</h5>
-                  <div className="payment-options">
-                    <label className="payment-option">
-                      <input 
-                        type="radio" 
-                        name="paymentMethod" 
-                        value="bank_transfer"
-                        checked={paymentMethod === 'bank_transfer'}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      <span>Bank Transfer</span>
-                    </label>
-                    <label className="payment-option">
-                      <input 
-                        type="radio" 
-                        name="paymentMethod" 
-                        value="card"
-                        checked={paymentMethod === 'card'}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      <span>Credit/Debit Card</span>
-                    </label>
-                    <label className="payment-option">
-                      <input 
-                        type="radio" 
-                        name="paymentMethod" 
-                        value="eft"
-                        checked={paymentMethod === 'eft'}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      <span>EFT</span>
-                    </label>
-                  </div>
                 </div>
-                
-              </div>
-              
-              <div className="form-actions">
-                <button 
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowPaymentForm(false)}
-                  disabled={processing}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handlePaymentSubmit}
-                  disabled={processing}
-                >
-                  {processing ? 'Processing...' : 'Confirm Payment'}
-                </button>
+                <div className="form-actions">
+                  <button 
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowPaymentForm(false)}
+                    disabled={processing}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handlePaymentSubmit}
+                    disabled={processing}
+                  >
+                    {processing ? 'Processing...' : 'Confirm Payment'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      {showPaymentMethodsModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Payment Methods</h3>
-              <button type="button" className="close-btn" onClick={() => setShowPaymentMethodsModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <PaymentMethodsManager />
-              <div className="form-actions">
-                <button 
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowPaymentMethodsModal(false)}
-                >
-                  Close
-                </button>
+        )}
+
+        {showPaymentMethodsModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>Payment Methods</h3>
+                <button type="button" className="close-btn" onClick={() => setShowPaymentMethodsModal(false)}>×</button>
+              </div>
+              <div className="modal-body">
+                <PaymentMethodsManager />
+                <div className="form-actions">
+                  <button 
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowPaymentMethodsModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      
+        )}
+      </div>
       <BottomNav items={navItems} responsive={false} />
     </div>
   );

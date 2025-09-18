@@ -258,23 +258,6 @@ return (
           <div className="page-subtitle">Maintenance requests and help support</div>
         </div>
         
-        <div className="tab-navigation">
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'requests' ? 'active' : ''}`}
-            onClick={() => setActiveTab('requests')}
-          >
-            Requests
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'help' ? 'active' : ''}`}
-            onClick={() => setActiveTab('help')}
-          >
-            Help & Support
-          </button>
-        </div>
-        
         {activeTab === 'requests' && (
           <>
             <div className="dashboard-grid">
@@ -296,18 +279,10 @@ return (
             )}
 
             <div className="data-table">
-              <div className="table-header">
+              <div className="table-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <div className="table-title">Your Requests</div>
-                <button 
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowRequestForm(true)}
-                >
-                  New Request
-                </button>
-                
                 {/* Offline Status Indicator */}
-                <div className="flex items-center space-x-2 ml-4">
+                <div className="flex items-center space-x-2 ml-4" >
                   <span className={`px-2 py-1 rounded text-xs ${isOnline ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                     {isOnline ? '🟢 Online' : '🟡 Offline'}
                   </span>
@@ -322,6 +297,14 @@ return (
                     </button>
                   )}
                 </div>
+                <button 
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowRequestForm(true)}
+                  style={{ marginTop: '8px' }}
+                >
+                  New Request
+                </button>
               </div>
               
               {requests?.length === 0 ? (
@@ -401,6 +384,12 @@ return (
                 icon="E"
                 title="Emergency Info"
                 description="Emergency contacts"
+              />
+              <ActionCard
+                onClick={() => setActiveTab('help')}
+                icon="H"
+                title="Help & Support"
+                description="FAQs and contact support"
               />
             </div>
 
