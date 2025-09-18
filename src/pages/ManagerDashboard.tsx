@@ -1,11 +1,18 @@
-import React from 'react';
+import { useState } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from "../components/BottomNav.tsx";
 import StatCard from "../components/StatCard.tsx";
 import ActionCard from "../components/ActionCard.tsx";
 import ChartCard from "../components/ChartCard.tsx";
+import AIChatbot from '../components/AIChatbot.tsx';
+import OfflineIndicator from '../components/OfflineIndicator.tsx';
+import InvoiceManagement from '../components/InvoiceManagement.tsx';
+import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 
 function ManagerDashboard() {
+  const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
+  
   const navItems = [
     { path: '/manager', label: 'Dashboard', active: true },
     { path: '/manager/properties', label: 'Properties' },
@@ -15,7 +22,7 @@ function ManagerDashboard() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} showLogout={true} />
+      <TopNav showBackButton showLogout />
       
       <div className="main-content">
         <div className="page-header">
@@ -48,6 +55,12 @@ function ManagerDashboard() {
             description="Contracts"
           />
           <ActionCard
+            onClick={() => setShowInvoiceManagement(true)}
+            icon="I"
+            title="Invoices"
+            description="Generate & manage"
+          />
+          <ActionCard
             onClick={() => {}}
             icon="M"
             title="Payments"
@@ -59,10 +72,42 @@ function ManagerDashboard() {
             title="Issues" 
             description="Handle escalations"
           />
+          <ActionCard
+            onClick={() => setShowAnnouncements(true)}
+            icon="A"
+            title="Announcements"
+            description="Property updates"
+          />
         </div>
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* AI Chatbot for managers */}
+      <AIChatbot 
+        userId="manager_user_id" // This should come from auth context
+        language="en" 
+        onEscalate={() => {
+          console.log('Manager chatbot escalated - handled internally');
+        }}
+      />
+      
+      {/* Offline Indicator */}
+      <OfflineIndicator />
+      
+      {/* Invoice Management Modal */}
+      {showInvoiceManagement && (
+        <InvoiceManagement 
+          onClose={() => setShowInvoiceManagement(false)}
+        />
+      )}
+      
+      {/* Announcement System Modal */}
+      {showAnnouncements && (
+        <AnnouncementSystem 
+          onClose={() => setShowAnnouncements(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,0 +1,71 @@
+import React, { useState, useEffect } from 'react';
+import { notificationService } from '../services/notifications';
+
+interface NotificationManagerProps {
+  userId: string;
+  userRole: string;
+}
+
+const NotificationManager: React.FC<NotificationManagerProps> = ({ userId, userRole }) => {
+  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    checkPermission();
+  }, []);
+
+  const checkPermission = async () => {
+    if ('Notification' in window) {
+      setPermission(Notification.permission);
+      if (Notification.permission === 'default') {
+        setIsVisible(true);
+      }
+    }
+  };
+
+  const requestPermission = async () => {
+    const newPermission = await notificationService.requestPermission();
+    setPermission(newPermission);
+    setIsVisible(false);
+  };
+
+  const dismissBanner = () => {
+    setIsVisible(false);
+  };
+
+  if (!isVisible || permission === 'granted' || permission === 'denied') {
+    return null;
+  }
+
+  return (
+    <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 z-50 shadow-lg">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <span className="text-xl">🔔</span>
+          <div>
+            <p className="font-semibold">Enable Notifications</p>
+            <p className="text-sm opacity-90">
+              Get real-time updates for rent reminders, maintenance, and important announcements
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={requestPermission}
+            className="bg-white text-blue-600 px-4 py-2 rounded font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Enable
+          </button>
+          <button
+            onClick={dismissBanner}
+            className="text-white hover:text-gray-200 p-2"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default NotificationManager;
