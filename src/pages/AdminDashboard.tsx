@@ -1,12 +1,15 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 
 function AdminDashboard() {
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
+  
   const navItems = [
     { path: '/admin', label: 'Dashboard', active: true },
     { path: '/admin/users', label: 'Users' },
@@ -39,7 +42,7 @@ function AdminDashboard() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} showLogout={true} />
+      <TopNav showBackButton showLogout />
       
       <div className="main-content">
         <div className="page-header">
@@ -96,10 +99,28 @@ function AdminDashboard() {
             <div className="action-title">Reports</div>
             <div className="action-desc">Analytics & insights</div>
           </Link>
+          
+          <button 
+            type="button"
+            onClick={() => setShowAnnouncements(true)}
+            className="action-card"
+            style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0, width: '100%' }}
+          >
+            <div className="action-icon">A</div>
+            <div className="action-title">Announcements</div>
+            <div className="action-desc">System-wide notifications</div>
+          </button>
         </div>
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* Announcement System Modal */}
+      {showAnnouncements && (
+        <AnnouncementSystem 
+          onClose={() => setShowAnnouncements(false)}
+        />
+      )}
     </div>
   );
 }

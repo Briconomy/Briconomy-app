@@ -638,3 +638,198 @@ export async function createUser(userData: Record<string, unknown>) {
     throw error;
   }
 }
+
+// Invoice API
+export async function createInvoice(invoiceData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    
+    const toInsert = {
+      ...invoiceData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await invoices.insertOne(toInsert);
+    return mapDoc(await invoices.findOne({ _id: result }));
+  } catch (error) {
+    console.error("Error creating invoice:", error);
+    throw error;
+  }
+}
+
+export async function getInvoices(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    const normalizedFilters = normalizeFilters(filters);
+    const invoiceList = await invoices.find(normalizedFilters).sort({ createdAt: -1 }).toArray();
+    return mapDocs(invoiceList);
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+    throw error;
+  }
+}
+
+export async function getInvoiceById(id: string) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    const invoice = await invoices.findOne({ _id: toId(id) });
+    return mapDoc(invoice);
+  } catch (error) {
+    console.error("Error fetching invoice:", error);
+    throw error;
+  }
+}
+
+export async function updateInvoiceStatus(id: string, status: string) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    
+    const result = await invoices.updateOne(
+      { _id: toId(id) },
+      { 
+        $set: { 
+          status,
+          updatedAt: new Date(),
+          ...(status === 'paid' ? { paidAt: new Date() } : {})
+        } 
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      throw new Error("Invoice not found");
+    }
+    
+    return mapDoc(await invoices.findOne({ _id: toId(id) }));
+  } catch (error) {
+    console.error("Error updating invoice status:", error);
+    throw error;
+  }
+}
+
+export async function deleteInvoice(id: string) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    const result = await invoices.deleteOne({ _id: toId(id) });
+    return result.deletedCount > 0;
+  } catch (error) {
+    console.error("Error deleting invoice:", error);
+    throw error;
+  }
+}
+
+// Chat API
+export async function saveChatMessage(messageData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const chatMessages = getCollection("chat_messages");
+    
+    const toInsert = {
+      ...messageData,
+      createdAt: new Date()
+    };
+    
+    const result = await chatMessages.insertOne(toInsert);
+    return mapDoc(await chatMessages.findOne({ _id: result }));
+  } catch (error) {
+    console.error("Error saving chat message:", error);
+    throw error;
+  }
+}
+
+export async function getChatMessages(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const chatMessages = getCollection("chat_messages");
+    const normalizedFilters = normalizeFilters(filters);
+    const messages = await chatMessages.find(normalizedFilters).sort({ createdAt: 1 }).toArray();
+    return mapDocs(messages);
+  } catch (error) {
+    console.error("Error fetching chat messages:", error);
+    throw error;
+  }
+}
+
+export async function createChatEscalation(escalationData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const escalations = getCollection("chat_escalations");
+    
+    const toInsert = {
+      ...escalationData,
+      createdAt: new Date(),
+      status: 'pending'
+    };
+    
+    const result = await escalations.insertOne(toInsert);
+    return mapDoc(await escalations.findOne({ _id: result }));
+  } catch (error) {
+    console.error("Error creating chat escalation:", error);
+    throw error;
+  }
+}
+
+// Announcement API
+export async function createAnnouncement(announcementData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const announcements = getCollection("announcements");
+    
+    const toInsert = {
+      ...announcementData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await announcements.insertOne(toInsert);
+    return mapDoc(await announcements.findOne({ _id: result }));
+  } catch (error) {
+    console.error("Error creating announcement:", error);
+    throw error;
+  }
+}
+
+export async function getAnnouncements(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const announcements = getCollection("announcements");
+    const normalizedFilters = normalizeFilters(filters);
+    const announcementList = await announcements.find(normalizedFilters).sort({ createdAt: -1 }).toArray();
+    return mapDocs(announcementList);
+  } catch (error) {
+    console.error("Error fetching announcements:", error);
+    throw error;
+  }
+}
+
+export async function updateAnnouncementStatus(id: string, status: string) {
+  try {
+    await connectToMongoDB();
+    const announcements = getCollection("announcements");
+    
+    const result = await announcements.updateOne(
+      { _id: toId(id) },
+      { 
+        $set: { 
+          status,
+          updatedAt: new Date(),
+          ...(status === 'sent' ? { sentAt: new Date() } : {})
+        } 
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      throw new Error("Announcement not found");
+    }
+    
+    return mapDoc(await announcements.findOne({ _id: toId(id) }));
+  } catch (error) {
+    console.error("Error updating announcement status:", error);
+    throw error;
+  }
+}

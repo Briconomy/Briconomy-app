@@ -1,0 +1,217 @@
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+  type?: 'text' | 'escalation';
+}
+
+interface FAQItem {
+  keywords: string[];
+  response: string;
+  category: 'rent' | 'maintenance' | 'lease' | 'general';
+  language: 'en' | 'zu';
+}
+
+export class ChatbotService {
+  private static instance: ChatbotService;
+  private failedReplies: number = 0;
+  private maxFailedReplies: number = 3;
+
+  static getInstance(): ChatbotService {
+    if (!ChatbotService.instance) {
+      ChatbotService.instance = new ChatbotService();
+    }
+    return ChatbotService.instance;
+  }
+
+  private faqs: FAQItem[] = [
+    // English FAQs
+    {
+      keywords: ['rent', 'payment', 'due', 'when', 'how much'],
+      response: 'Your monthly rent is due on the 1st of each month. You can check your exact amount and due date in the Payments section of your dashboard.',
+      category: 'rent',
+      language: 'en'
+    },
+    {
+      keywords: ['late', 'overdue', 'penalty', 'fee'],
+      response: 'Late payment fees may apply if rent is not paid within 7 days of the due date. Please contact your property manager for specific late fee information.',
+      category: 'rent',
+      language: 'en'
+    },
+    {
+      keywords: ['maintenance', 'repair', 'broken', 'issue', 'problem'],
+      response: 'You can report maintenance issues through the Maintenance Requests page. Include photos and describe the problem in detail for faster resolution.',
+      category: 'maintenance',
+      language: 'en'
+    },
+    {
+      keywords: ['lease', 'contract', 'agreement', 'end', 'renewal'],
+      response: 'You can view your lease agreement in the Lease Management section. For renewal questions, contact your property manager 60 days before expiry.',
+      category: 'lease',
+      language: 'en'
+    },
+    {
+      keywords: ['contact', 'manager', 'help', 'support'],
+      response: 'You can contact your property manager through the Communication page or call the property management office during business hours.',
+      category: 'general',
+      language: 'en'
+    },
+    {
+      keywords: ['emergency', 'urgent', 'water', 'electricity', 'gas'],
+      response: 'For emergencies like water leaks, electrical issues, or gas problems, call the emergency hotline immediately and also log the issue in Maintenance Requests.',
+      category: 'maintenance',
+      language: 'en'
+    },
+
+    // Zulu FAQs (Basic translations)
+    {
+      keywords: ['intsimbi', 'ukukhokha', 'nini', 'malini'],
+      response: 'Intsimbi yakho yenyanga kumele ikhokhelwe ngomhla we-1 wenyanga ngayinye. Ungabheka imali yakho nesikhathi sokukhokha kuleli khona Payments.',
+      category: 'rent',
+      language: 'zu'
+    },
+    {
+      keywords: ['ukusebenza', 'ukulungisa', 'ephukile', 'inkinga'],
+      response: 'Ungabika izinkinga zokulungisa nge-Maintenance Requests page. Faka izithombe nochaze inkinga ngokuphelele ukuze zilungiswe ngokushesha.',
+      category: 'maintenance',
+      language: 'zu'
+    },
+    {
+      keywords: ['ukuphila', 'isivumelwano', 'ukuphela', 'ukuvuselela'],
+      response: 'Ungabona isivumelwano sakho se-lease ku-Lease Management section. Emibuzo yokuvuselela, xhumana ne-property manager ezinsukwini ezingu-60 ngaphambi kokuphela.',
+      category: 'lease',
+      language: 'zu'
+    },
+    {
+      keywords: ['usizo', 'uxhumana', 'isidingo'],
+      response: 'Ungaxhumana ne-property manager yakho nge-Communication page noma ushaye nge-business hours.',
+      category: 'general',
+      language: 'zu'
+    }
+  ];
+
+  findResponse(userMessage: string, language: 'en' | 'zu' = 'en'): string | null {
+    const normalizedMessage = userMessage.toLowerCase();
+    
+    for (const faq of this.faqs) {
+      if (faq.language !== language) continue;
+      
+      const keywordMatch = faq.keywords.some(keyword => 
+        normalizedMessage.includes(keyword.toLowerCase())
+      );
+      
+      if (keywordMatch) {
+        this.failedReplies = 0; // Reset failed replies on successful match
+        return faq.response;
+      }
+    }
+    
+    this.failedReplies++;
+    return null;
+  }
+
+  processMessage(userMessage: string, language: 'en' | 'zu' = 'en'): ChatMessage {
+    const response = this.findResponse(userMessage, language);
+    
+    if (response) {
+      return {
+        id: Date.now().toString(),
+        text: response,
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'text'
+      };
+    }
+    
+    // Default responses for unmatched queries
+    const defaultResponses = {
+      en: this.failedReplies >= this.maxFailedReplies 
+        ? "I'm having trouble understanding your request. Let me connect you with a human agent who can better assist you."
+        : "I don't understand that question. Could you try rephrasing it? You can ask about rent payments, maintenance issues, lease information, or general support.",
+      zu: this.failedReplies >= this.maxFailedReplies
+        ? "Ngiyathola inkinga ekuzweni isicelo sakho. Ngivumele ngikuxhumanise nomuntu ongakusiza kangcono."
+        : "Angiqondi lowo mbuzo. Ungazama ukuwushisa kabusha? Ungabuza ngokukhokha intsimbi, izinkinga zokulungisa, imininingwane ye-lease, noma usizo."
+    };
+    
+    return {
+      id: Date.now().toString(),
+      text: defaultResponses[language],
+      sender: 'bot',
+      timestamp: new Date(),
+      type: this.failedReplies >= this.maxFailedReplies ? 'escalation' : 'text'
+    };
+  }
+
+  shouldEscalate(): boolean {
+    return this.failedReplies >= this.maxFailedReplies;
+  }
+
+  resetFailedReplies(): void {
+    this.failedReplies = 0;
+  }
+
+  // Chat session management
+  async saveMessage(message: ChatMessage, userId: string): Promise<void> {
+    try {
+      const chatData = {
+        userId,
+        messageId: message.id,
+        text: message.text,
+        sender: message.sender,
+        timestamp: message.timestamp,
+        type: message.type || 'text'
+      };
+
+      await fetch('/api/chat-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(chatData)
+      });
+    } catch (error) {
+      console.error('Error saving chat message:', error);
+    }
+  }
+
+  async getChatHistory(userId: string): Promise<ChatMessage[]> {
+    try {
+      const response = await fetch(`/api/chat-messages?userId=${userId}`);
+      if (!response.ok) return [];
+      
+      const messages = await response.json();
+      return messages.map((msg: any) => ({
+        id: msg.messageId,
+        text: msg.text,
+        sender: msg.sender,
+        timestamp: new Date(msg.timestamp),
+        type: msg.type
+      }));
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+      return [];
+    }
+  }
+
+  async escalateToHuman(userId: string, userMessage: string): Promise<void> {
+    try {
+      await fetch('/api/chat-escalations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          userMessage,
+          timestamp: new Date(),
+          status: 'pending'
+        })
+      });
+    } catch (error) {
+      console.error('Error escalating to human:', error);
+    }
+  }
+}
+
+export const chatbotService = ChatbotService.getInstance();

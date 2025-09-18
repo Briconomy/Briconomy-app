@@ -35,7 +35,18 @@ import {
   getDatabaseHealth,
   getApiEndpoints,
   getSystemAlerts,
-  createUser
+  createUser,
+  createInvoice,
+  getInvoices,
+  getInvoiceById,
+  updateInvoiceStatus,
+  deleteInvoice,
+  saveChatMessage,
+  getChatMessages,
+  createChatEscalation,
+  createAnnouncement,
+  getAnnouncements,
+  updateAnnouncementStatus
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -149,6 +160,93 @@ serve(async (req) => {
         const payment = await updatePaymentStatus(path[2], body.status);
         return new Response(JSON.stringify(payment), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Invoices endpoints
+    if (path[0] === 'api' && path[1] === 'invoices') {
+      if (req.method === 'GET' && path[2]) {
+        const invoice = await getInvoiceById(path[2]);
+        return new Response(JSON.stringify(invoice), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET') {
+        const filters = Object.fromEntries(url.searchParams);
+        const invoices = await getInvoices(filters);
+        return new Response(JSON.stringify(invoices), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST') {
+        const body = await req.json();
+        const invoice = await createInvoice(body);
+        return new Response(JSON.stringify(invoice), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
+        });
+      } else if (req.method === 'PATCH' && path[2]) {
+        const body = await req.json();
+        const invoice = await updateInvoiceStatus(path[2], body.status);
+        return new Response(JSON.stringify(invoice), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'DELETE' && path[2]) {
+        const success = await deleteInvoice(path[2]);
+        return new Response(JSON.stringify({ success }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Chat endpoints
+    if (path[0] === 'api' && path[1] === 'chat-messages') {
+      if (req.method === 'GET') {
+        const filters = Object.fromEntries(url.searchParams);
+        const messages = await getChatMessages(filters);
+        return new Response(JSON.stringify(messages), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST') {
+        const body = await req.json();
+        const message = await saveChatMessage(body);
+        return new Response(JSON.stringify(message), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
+        });
+      }
+    }
+
+    // Chat escalations endpoints
+    if (path[0] === 'api' && path[1] === 'chat-escalations') {
+      if (req.method === 'POST') {
+        const body = await req.json();
+        const escalation = await createChatEscalation(body);
+        return new Response(JSON.stringify(escalation), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
+        });
+      }
+    }
+
+    // Announcements endpoints
+    if (path[0] === 'api' && path[1] === 'announcements') {
+      if (req.method === 'POST' && path[2] && path[3] === 'send') {
+        const updatedAnnouncement = await updateAnnouncementStatus(path[2], 'sent');
+        return new Response(JSON.stringify(updatedAnnouncement), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET') {
+        const filters = Object.fromEntries(url.searchParams);
+        const announcements = await getAnnouncements(filters);
+        return new Response(JSON.stringify(announcements), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST') {
+        const body = await req.json();
+        const announcement = await createAnnouncement(body);
+        return new Response(JSON.stringify(announcement), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
         });
       }
     }

@@ -4,9 +4,13 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
+import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 
 function MaintenanceRequestsPage() {
+  const { isOnline, storeOfflineData, syncNow } = useOffline();
+  
   const [user, setUser] = useState(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -174,8 +178,16 @@ function MaintenanceRequestsPage() {
         updatedAt: new Date()
       };
 
-      await maintenanceApi.create(requestData);
-      await refetchRequests();
+      if (isOnline) {
+        // Online: Submit directly to server
+        await maintenanceApi.create(requestData);
+        await refetchRequests();
+      } else {
+        // Offline: Store locally for later sync
+        await storeOfflineData('maintenance_request', requestData);
+        // Show confirmation that it will be synced when online
+        alert('Request saved offline. It will be submitted when you\'re back online.');
+      }
       setShowRequestForm(false);
       setFormData({ title: '', description: '', priority: 'medium', category: 'general' });
     } catch (error) {
@@ -293,6 +305,23 @@ return (
                 >
                   New Request
                 </button>
+                
+                {/* Offline Status Indicator */}
+                <div className="flex items-center space-x-2 ml-4">
+                  <span className={`px-2 py-1 rounded text-xs ${isOnline ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                    {isOnline ? '🟢 Online' : '🟡 Offline'}
+                  </span>
+                  {!isOnline && (
+                    <button
+                      type="button"
+                      onClick={() => syncNow()}
+                      className="btn btn-secondary btn-xs"
+                      title="Sync when back online"
+                    >
+                      🔄 Sync
+                    </button>
+                  )}
+                </div>
               </div>
               
               {requests?.length === 0 ? (
@@ -652,7 +681,18 @@ return (
         )}
       </div>
       
-      {showRequestForm && (
+      {showRequestForm && !isOnline && (
+        <OfflineMaintenanceForm 
+          tenantId={user?.id || '507f1f77bcf86cd799439012'}
+          propertyId={leases?.[0]?.propertyId || '507f1f77bcf86cd799439013'}
+          onSuccess={(_data) => {
+            setShowRequestForm(false);
+            alert('Request saved offline. It will be submitted when you\'re back online.');
+          }}
+        />
+      )}
+      
+      {showRequestForm && isOnline && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">

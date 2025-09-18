@@ -3,6 +3,8 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
+import AIChatbot from '../components/AIChatbot.tsx';
+import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
 function TenantDashboard() {
@@ -219,6 +221,21 @@ return (
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* AI Chatbot */}
+      {user?.id && (
+        <AIChatbot 
+          userId={user.id} 
+          language="en" 
+          onEscalate={() => {
+            // Optional: redirect to contact page or show escalation message
+            console.log('Chatbot escalated to human support');
+          }}
+        />
+      )}
+      
+      {/* Offline Indicator */}
+      <OfflineIndicator />
     </div>
   );
 }
