@@ -4,12 +4,14 @@ import BottomNav from "../components/BottomNav.tsx";
 import StatCard from "../components/StatCard.tsx";
 import ActionCard from "../components/ActionCard.tsx";
 import ChartCard from "../components/ChartCard.tsx";
-import AIChatbot from '../components/AIChatbot.tsx';
+import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function ManagerDashboard() {
+  const { t } = useLanguage();
   const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   
@@ -26,15 +28,21 @@ function ManagerDashboard() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Property Manager</div>
-          <div className="page-subtitle">Listings, leases & payments</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="page-title">{t('dashboard.manager')}</div>
+            <AIButton 
+              userId="manager-user-1" 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
+          </div>
+          <div className="page-subtitle">{t('dashboard.listings_leases_payments')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="24" label="Listings" />
-          <StatCard value="R180k" label="Revenue" />
-          <StatCard value="89%" label="Occupancy" />
-          <StatCard value="3" label="Issues" />
+          <StatCard value="24" label={t('dashboard.listings')} />
+          <StatCard value="R180k" label={t('dashboard.revenue')} />
+          <StatCard value="89%" label={t('dashboard.occupancy')} />
+          <StatCard value="3" label={t('dashboard.issues')} />
         </div>
 
         <ChartCard title="Property Locations">
@@ -82,15 +90,6 @@ function ManagerDashboard() {
       </div>
       
       <BottomNav items={navItems} responsive={false} />
-      
-      {/* AI Chatbot for managers */}
-      <AIChatbot 
-        userId="manager_user_id" // This should come from auth context
-        language="en" 
-        onEscalate={() => {
-          console.log('Manager chatbot escalated - handled internally');
-        }}
-      />
       
       {/* Offline Indicator */}
       <OfflineIndicator />

@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import AIButton from '../components/AIButton.tsx';
 import { tasksApi, useApi } from '../services/api.ts';
 import '../utils/chart-registration.ts';
 
@@ -137,7 +138,13 @@ return (
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Caretaker Tasks</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="page-title">Caretaker Tasks</div>
+            <AIButton 
+              userId="caretaker-user-1" 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
+          </div>
           <div className="page-subtitle">Maintenance & updates</div>
           {hasError && (
             <div className="offline-indicator">

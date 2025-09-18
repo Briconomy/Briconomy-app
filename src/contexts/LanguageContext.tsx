@@ -17,6 +17,28 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const translations: Translations = {
+  // Dashboard
+  'dashboard.welcome_back': { en: 'Welcome Back', zu: 'Siyakwamukela' },
+  'dashboard.tenant': { en: 'Tenant Dashboard', zu: 'Ideshibodi Yomqashi' },
+  'dashboard.manager': { en: 'Property Manager', zu: 'Umphathi Wendawo' },
+  'dashboard.listings_leases_payments': { en: 'Listings, leases & payments', zu: 'Izindawo, ama-lease nemali' },
+  'dashboard.listings': { en: 'Listings', zu: 'Izindawo' },
+  'dashboard.revenue': { en: 'Revenue', zu: 'Imali Engenayo' },
+  'dashboard.occupancy': { en: 'Occupancy', zu: 'Ukukhona' },
+  'dashboard.issues': { en: 'Issues', zu: 'Izinkinga' },
+  'dashboard.rent_due': { en: 'Rent Due', zu: 'Irenti Elidingekayo' },
+  'dashboard.due_date': { en: 'Due Date', zu: 'Usuku Lokuphela' },
+  'dashboard.requests': { en: 'Requests', zu: 'Izicelo' },
+  'dashboard.notifications': { en: 'Notifications', zu: 'Izaziso' },
+  'dashboard.pay_rent': { en: 'Pay Rent', zu: 'Khokha Irenti' },
+  'dashboard.make_payment': { en: 'Make a payment', zu: 'Yenza inkokhelo' },
+  'dashboard.maintenance': { en: 'Maintenance', zu: 'Ukulungisa' },
+  'dashboard.report_issue': { en: 'Report an issue', zu: 'Bika inkinga' },
+  'dashboard.contact': { en: 'Contact', zu: 'Xhumana' },
+  'dashboard.message_management': { en: 'Message management', zu: 'Ukuphatha imilayezo' },
+  'dashboard.profile': { en: 'Profile', zu: 'Iphrofayela' },
+  'dashboard.update_info': { en: 'Update information', zu: 'Buyekeza ulwazi' },
+
   // Navigation
   'nav.dashboard': { en: 'Dashboard', zu: 'Ideshibodi' },
   'nav.properties': { en: 'Properties', zu: 'Izindawo' },
