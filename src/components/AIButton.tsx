@@ -23,8 +23,8 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate
   const [isLoading, setIsLoading] = useState(false);
 
   const quickReplies = language === 'en' 
-    ? ['How do I pay rent?', 'Report maintenance', 'Contact manager', 'Help']
-    : ['Ngingakhokha kanjani?', 'Bika ukulungisa', 'Xhumana nomphathi', 'Usizo'];
+    ? ['How do I pay my rent?', 'I need to report an issue', 'When is rent due?', 'Contact my manager']
+    : ['Ngingakhokha kanjani irenti?', 'Ngidinga ukubika inkinga', 'Irenti lidingeka nini?', 'Xhumana nomphathi wami'];
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -295,8 +295,16 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate
       </div>
 
       {/* Quick Replies */}
-      {messages.length === 1 && (
+      {messages.length <= 2 && (
         <div style={{ padding: '0 16px 16px', borderTop: '1px solid #e5e7eb' }}>
+          <p style={{ 
+            fontSize: '12px', 
+            color: '#6b7280', 
+            margin: '8px 0 4px 0',
+            fontWeight: '500'
+          }}>
+            {language === 'en' ? 'Quick suggestions:' : 'Iziphakamiso ezisheshayo:'}
+          </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
             {quickReplies.map((reply) => (
               <button
