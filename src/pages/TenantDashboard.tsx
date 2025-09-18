@@ -139,12 +139,9 @@ return (
       
       <div className="main-content">
         <div className="page-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div className="page-title">{t('dashboard.welcome_back')}</div>
-            <AIButton 
-              userId={user?.id || 'fallback-user'} 
-              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
-            />
+            
           </div>
           <div className="page-subtitle">
             {currentLease?.unitId?.unitNumber || 'Unit'} - {currentLease?.propertyId?.name || 'Property'}
@@ -203,7 +200,7 @@ return (
           </div>
         )}
 
-        <div className="quick-actions">
+        <div className="quick-actions" style={{ marginTop: '8px' }}>
           <ActionCard
             onClick={() => globalThis.location.href = '/tenant/payments'}
             icon="P"
@@ -228,6 +225,12 @@ return (
             title={t('dashboard.profile')}
             description={t('dashboard.update_info')}
           />
+        </div>
+        <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+        <AIButton 
+              userId={user?.id || 'fallback-user'} 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
         </div>
       </div>
       

@@ -132,8 +132,9 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minWidth: '50px',
+          minWidth: '360px',
           height: '36px'
+          
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = '#1d4ed8';
@@ -146,7 +147,7 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate
           e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
         }}
       >
-        BAI
+        AI Assistant
       </button>
     );
   }
