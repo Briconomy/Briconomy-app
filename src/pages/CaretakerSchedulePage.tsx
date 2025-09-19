@@ -274,14 +274,14 @@ function CaretakerSchedulePage() {
                       </span>
                       <span className="text-xs text-gray-500">
                         {task.property}
-                      </span>
+                      </span><br />
                       <span className="text-xs text-gray-500">
                         {formatDate(task.dueDate)} at {formatTime(task.dueDate)}
                       </span>
                       {task.estimatedHours && (
-                        <span className="text-xs text-blue-600">
+                        <><br /><span className="text-xs text-blue-600">
                           ~{task.estimatedHours}h
-                        </span>
+                        </span></>
                       )}
                     </div>
                   </div>
@@ -290,35 +290,46 @@ function CaretakerSchedulePage() {
           )}
         </div>
 
-        {/* Upcoming Deadlines */}
-        <ChartCard title="Upcoming Deadlines">
-          <div className="deadline-list">
+          {/* Upcoming Deadlines - Inline Style */}
+          <div className="data-table" style={{ marginTop: '2rem' }}>
+            <div className="table-header">
+              <div className="table-title">Upcoming Deadlines</div>
+              <div className="text-sm text-gray-500">
+                {tasksData.filter(task => task.status !== 'completed').length} tasks
+              </div>
+            </div>
             {tasksData
               .filter(task => task.status !== 'completed')
               .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
               .slice(0, 5)
               .map((task) => (
-                <div key={task.id} className="deadline-item">
-                  <div className="deadline-info">
-                    <div className="deadline-title">{task.title}</div>
-                    <div className="deadline-meta">
-                      <span className={`text-xs ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDate(task.dueDate)}
+                <div key={task.id} className="list-item">
+                  <div className="item-info">
+                    <div className="flex justify-between items-start">
+                      <h4 className={isOverdue(task.dueDate, task.status) ? 'text-red-600' : ''}>
+                        {task.title}
+                      </h4>
+                      <span className={`status-badge ${getStatusColor(task.status)}`}>
+                        {task.status === 'in_progress' ? 'In Progress' : 
+                         task.status === 'pending' ? 'Scheduled' :
+                         task.status === 'completed' ? 'Completed' : task.status}
                       </span>
                     </div>
-                  </div>
-                  <div className="deadline-status">
-                    <span className={`status-badge ${getStatusColor(task.status)}`}>
-                      {task.status === 'in_progress' ? 'Progress' : 'Scheduled'}
-                    </span>
+                    <div className="task-meta mt-2">
+                      <span className={`text-xs ${getPriorityColor(task.priority)}`}>
+                        {task.priority.toUpperCase()}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {task.property}
+                      </span><br />
+                      <span className="text-xs text-gray-500">
+                        {formatDate(task.dueDate)} at {formatTime(task.dueDate)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
           </div>
-        </ChartCard>
       </div>
       
       <BottomNav items={navItems} responsive={false} />
