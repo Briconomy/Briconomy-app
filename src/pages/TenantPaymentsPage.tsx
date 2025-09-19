@@ -194,15 +194,15 @@ return (
             <h3>Current Lease</h3>
             <div className="lease-summary">
               <div className="lease-item">
-                <span>Monthly Rent:</span>
+                <span>Monthly Rent: </span>
                 <span className="lease-value">{formatCurrency(currentLease.monthlyRent)}</span>
               </div>
               <div className="lease-item">
-                <span>Unit:</span>
+                <span>Unit: </span>
                 <span className="lease-value">{currentLease.unitId?.unitNumber || 'N/A'}</span>
               </div>
               <div className="lease-item">
-                <span>Property:</span>
+                <span>Property: </span>
                 <span className="lease-value">{currentLease.propertyId?.name || 'N/A'}</span>
               </div>
             </div>

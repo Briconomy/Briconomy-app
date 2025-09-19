@@ -51,10 +51,7 @@ function AdminDashboard() {
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div className="page-title">Admin Dashboard</div>
-            <AIButton 
-              userId="admin-user-1" 
-              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
-            />
+            
           </div>
           <div className="page-subtitle">System overview and management</div>
         </div>
@@ -119,6 +116,12 @@ function AdminDashboard() {
             <div className="action-title">Announcements</div>
             <div className="action-desc">System-wide notifications</div>
           </button>
+        </div>
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <AIButton 
+              userId="manager-user-1" 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
         </div>
       </div>
       

@@ -164,7 +164,7 @@ function ManagerPropertiesPage() {
         </div>
 
         <div className="results-info">
-          <span>{filteredProperties.length} properties found</span>
+          <span>{filteredProperties.length} Properties found</span>
           {lowBandwidthMode && (
             <span className="low-bandwidth-indicator">Low bandwidth mode</span>
           )}

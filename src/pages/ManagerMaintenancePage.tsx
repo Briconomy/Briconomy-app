@@ -305,17 +305,21 @@ function ManagerMaintenancePage() {
           )}
         </div>
       </div>
-      <div className="item-actions">
+      <div className="item-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', marginTop: '8px' }}>
         <button 
           className="btn btn-sm btn-secondary"
+          style={{ minWidth: '110px', fontSize: '1rem' }}
           onClick={() => handleViewDetails(request)}
+          type="button"
         >
           View Details
         </button>
         {!request.assignedTo && request.status !== 'completed' && (
           <button 
             className="btn btn-sm btn-primary"
+            style={{ minWidth: '110px', fontSize: '1rem' }}
             onClick={() => handleAssignRequest(request.id)}
+            type="button"
           >
             Assign
           </button>

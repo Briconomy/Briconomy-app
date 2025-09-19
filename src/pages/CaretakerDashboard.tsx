@@ -142,10 +142,7 @@ return (
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div className="page-title">Caretaker Tasks</div>
-            <AIButton 
-              userId="caretaker-user-1" 
-              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
-            />
+            
           </div>
           <div className="page-subtitle">Maintenance & updates</div>
           {hasError && (
@@ -206,6 +203,12 @@ return (
               <p>No tasks assigned</p>
             </div>
           )}
+        </div>
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <AIButton 
+              userId="manager-user-1" 
+              language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+            />
         </div>
       </div>
       

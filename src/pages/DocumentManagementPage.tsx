@@ -214,13 +214,17 @@ function DocumentManagementPage() {
           <StatCard value={pendingDocuments} label="Pending" />
           <StatCard value={`${totalSize.toFixed(1)} MB`} label="Storage" />
         </div>
-
-        <SearchFilter
-          placeholder="Search documents..."
-          onSearch={handleSearch}
-          filters={filters}
-          onFilterChange={handleFilterChange}
-        />
+        
+        <div style={{ display: 'flex',alignItems: 'center', justifyContent: 'center', margin: '24px 0' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center',justifyContent: 'center' }}>
+            <SearchFilter
+              placeholder="Search documents..."
+              onSearch={handleSearch}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+            />
+          </div>
+        </div>
 
         <DataTable
           title="Document Library"
