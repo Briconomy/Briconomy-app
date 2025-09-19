@@ -36,7 +36,90 @@ const translations: Translations = {
   'dashboard.report_issue': { en: 'Report an issue', zu: 'Bika inkinga' },
   'dashboard.contact': { en: 'Contact', zu: 'Xhumana' },
   'dashboard.message_management': { en: 'Message management', zu: 'Ukuphatha imilayezo' },
-  'dashboard.profile': { en: 'Profile', zu: 'Iphrofayela' },
+      profile: {
+      en: 'Profile',
+      zu: 'Iphrofayili'
+    },
+    subtitle: {
+      en: 'Manage your account information',
+      zu: 'Phatha ulwazi lwe-akhawunti yakho'
+    },
+    personalInfo: {
+      en: 'Personal Information',
+      zu: 'Ulwazi Lomuntu Siqu'
+    },
+    propertyInfo: {
+      en: 'Property Information', 
+      zu: 'Ulwazi Lwepropathi'
+    },
+    emergencyContact: {
+      en: 'Emergency Contact',
+      zu: 'Oxhumana Naye Esimweni Sesiphuthumiso'
+    },
+    preferences: {
+      en: 'Preferences',
+      zu: 'Okukhethayo'
+    },
+    security: {
+      en: 'Security',
+      zu: 'Ukuphepha'
+    },
+    notifications: {
+      en: 'Notifications',
+      zu: 'Izaziso'
+    },
+    emailNotifications: {
+      en: 'Email Notifications',
+      zu: 'Izaziso Ze-imeyili'
+    },
+    smsNotifications: {
+      en: 'SMS Notifications',
+      zu: 'Izaziso Ze-SMS'
+    },
+    twoFactorAuth: {
+      en: 'Two-Factor Authentication',
+      zu: 'Ukuqinisekisa Izinyathelo Ezimbili'
+    },
+    fullName: {
+      en: 'Full Name',
+      zu: 'Igama Eliphelele'
+    },
+    email: {
+      en: 'Email',
+      zu: 'I-imeyili'
+    },
+    phone: {
+      en: 'Phone',
+      zu: 'Ifoni'
+    },
+    memberSince: {
+      en: 'Member Since',
+      zu: 'Ilungu Kusukela'
+    },
+    leaseInfo: {
+      en: 'Lease Information',
+      zu: 'Ulwazi Lwesivumelwano'
+    },
+    leaseStart: {
+      en: 'Lease Start',
+      zu: 'Ukuqala Kwesivumelwano'
+    },
+    leaseEnd: {
+      en: 'Lease End',
+      zu: 'Ukuphela Kwesivumelwano'
+    },
+    accountSettings: {
+      en: 'Account Settings',
+      zu: 'Izilungiselelo Ze-akhawunti'
+    },
+    name: {
+      en: 'Name',
+      zu: 'Igama'
+    },
+    relationship: {
+      en: 'Relationship',
+      zu: 'Ubuhlobo'
+    },
   'dashboard.update_info': { en: 'Update information', zu: 'Buyekeza ulwazi' },
 
   // Navigation
@@ -57,6 +140,7 @@ const translations: Translations = {
   'nav.security': { en: 'Security', zu: 'Ukuphepha' },
   'nav.settings': { en: 'Settings', zu: 'Izilungiselelo' },
   'nav.logout': { en: 'Logout', zu: 'Phuma' },
+  'nav.analytics': { en: 'Analytics', zu: 'Ukuhlaziya' },
 
   // Common Actions
   'action.save': { en: 'Save', zu: 'Londoloza' },
@@ -171,6 +255,12 @@ const translations: Translations = {
   'property.address': { en: 'Address', zu: 'Ikheli' },
   'property.type': { en: 'Property Type', zu: 'Uhlobo Lwendawo' },
   'property.rent': { en: 'Monthly Rent', zu: 'Intsimbi Yenyanga' },
+  'property.unit': { en: 'Unit', zu: 'Iyunithi' },
+  'property.monthlyRent': { en: 'Monthly Rent', zu: 'Irenti Yenyanga' },
+  'property.leaseRemaining': { en: 'Lease Remaining', zu: 'Isivumelwano Esisele' },
+  'property.days': { en: 'days', zu: 'izinsuku' },
+  'property.daysRemaining': { en: 'Days Remaining', zu: 'Izinsuku Ezisele' },
+  'property.property': { en: 'Property', zu: 'Ipropathi' },
   'property.available': { en: 'Available', zu: 'Iyatholakala' },
   'property.occupied': { en: 'Occupied', zu: 'Kuhleli umuntu' },
   'property.amenities': { en: 'Amenities', zu: 'Izinsiza' },

@@ -1,13 +1,14 @@
-import React from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
-import { adminApi, useApi, formatCurrency } from '../services/api.ts';
+import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function AdminReportsPage() {
   const { t } = useLanguage();
+  
+  console.log('AdminReportsPage loaded', t('nav.dashboard'));
   
   const navItems = [
     { path: '/admin', label: t('nav.dashboard') },
