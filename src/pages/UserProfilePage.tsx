@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
-import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';
 import DocumentViewer from '../components/DocumentViewer.tsx';
 import ActivityLog from '../components/ActivityLog.tsx';
 
 function UserProfilePage() {
+  console.log('UserProfilePage loading...');
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState<'overview' | 'documents' | 'activity'>('overview');
 
   const navItems = [
-    { path: '/tenant', label: 'Home', active: false },
-    { path: '/tenant/payments', label: 'Payments' },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/profile', label: 'Profile', active: true }
+    { path: '/tenant', label: t('nav.home'), active: false },
+    { path: '/tenant/payments', label: t('nav.payments') },
+    { path: '/tenant/requests', label: t('nav.requests') },
+    { path: '/tenant/profile', label: t('nav.profile'), active: true }
   ];
 
   if (loading || !user) {
@@ -26,7 +28,7 @@ function UserProfilePage() {
       <div className="app-container mobile-only">
         <TopNav showLogout={true} showBackButton={true} />
         <div className="main-content">
-          <div className="loading">Loading profile...</div>
+          <div className="loading">{t('common.loading')}</div>
         </div>
         <BottomNav items={navItems} responsive={false} />
       </div>
@@ -42,8 +44,8 @@ function UserProfilePage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Profile</div>
-          <div className="page-subtitle">Manage your account information</div>
+          <div className="page-title">{t('profile')}</div>
+          <div className="page-subtitle">{t('subtitle')}</div>
         </div>
         
         <div className="profile-header">
@@ -59,20 +61,20 @@ function UserProfilePage() {
             className="btn btn-primary btn-sm"
             onClick={() => navigate('/tenant/profile/edit')}
           >
-            Edit
+            {t('common.edit')}
           </button>
         </div>
 
         <div className="dashboard-grid">
-          <StatCard value={user.unit} label="Unit" />
-          <StatCard value={`R${user.rent.toLocaleString()}`} label="Monthly Rent" />
-          <StatCard value={`${leaseDaysRemaining} days`} label="Lease Remaining" />
-          <StatCard value="Active" label="Status" />
+          <StatCard value={user.unit} label={t('property.unit')} />
+          <StatCard value={`R${user.rent.toLocaleString()}`} label={t('property.monthlyRent')} />
+          <StatCard value={`${leaseDaysRemaining} ${t('property.days')}`} label={t('property.leaseRemaining')} />
+          <StatCard value={t('status.active')} label={t('common.status')} />
         </div>
 
         <div className="profile-sections">
           <div className="profile-section">
-            <h3>Personal Information</h3>
+            <h3>{t('personalInfo')}</h3>
             <div className="info-grid">
               <div className="info-item">
                 <label>Full Name: </label>
@@ -94,7 +96,7 @@ function UserProfilePage() {
           </div>
 
           <div className="profile-section">
-            <h3>Lease Information</h3>
+            <h3>{t('leaseInfo')}</h3>
             <div className="info-grid">
               <div className="info-item">
                 <label>Property: </label>
@@ -124,7 +126,7 @@ function UserProfilePage() {
           </div>
 
           <div className="profile-section">
-            <h3>Emergency Contact</h3>
+            <h3>{t('emergencyContact')}</h3>
             <div className="info-grid">
               <div className="info-item">
                 <label>Name: </label>

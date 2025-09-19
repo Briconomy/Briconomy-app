@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 
 function TenantProfileEditPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
+  
+  console.log('TenantProfileEditPage loaded', { user });
   
   const [formData, setFormData] = useState({
     fullName: '',
