@@ -50,20 +50,20 @@ function AdminDashboard() {
       <div className="main-content">
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="page-title">Admin Dashboard</div>
+            <div className="page-title">{t('dashboard.admin')}</div>
             
           </div>
-          <div className="page-subtitle">System overview and management</div>
+          <div className="page-subtitle">{t('dashboard.system_overview')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.totalUsers} label="Total Users" />
-          <StatCard value={stats.totalProperties} label="Properties" />
+          <StatCard value={stats.totalUsers} label={t('dashboard.total_users')} />
+          <StatCard value={stats.totalProperties} label={t('nav.properties')} />
           <StatCard value={stats.uptime} label="Uptime" />
           <StatCard value={stats.responseTime} label="Response" />
         </div>
 
-        <ChartCard title="System Performance">
+        <ChartCard title={t('nav.reports')}>
           <div className="chart-placeholder">
             Chart.js Performance Analytics
           </div>
@@ -75,8 +75,8 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">U</div>
-            <div className="action-title">Users</div>
-            <div className="action-desc">Manage system users</div>
+            <div className="action-title">{t('nav.users')}</div>
+            <div className="action-desc">{t('dashboard.manage_users')}</div>
           </Link>
           
           <Link 
@@ -84,8 +84,8 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">S</div>
-            <div className="action-title">Security</div>
-            <div className="action-desc">System security</div>
+            <div className="action-title">{t('nav.security')}</div>
+            <div className="action-desc">{t('dashboard.system_security')}</div>
           </Link>
           
           <Link 
@@ -94,7 +94,7 @@ function AdminDashboard() {
           >
             <div className="action-icon">O</div>
             <div className="action-title">Operations</div>
-            <div className="action-desc">Performance & health</div>
+            <div className="action-desc">{t('dashboard.performance_health')}</div>
           </Link>
           
           <Link 
@@ -102,8 +102,8 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">R</div>
-            <div className="action-title">Reports</div>
-            <div className="action-desc">Analytics & insights</div>
+            <div className="action-title">{t('nav.reports')}</div>
+            <div className="action-desc">{t('dashboard.analytics_insights')}</div>
           </Link>
           
           <button 

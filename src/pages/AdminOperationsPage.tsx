@@ -4,13 +4,16 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { adminApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function AdminOperationsPage() {
+  const { t } = useLanguage();
+  
   const navItems = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/security', label: 'Security' },
-    { path: '/admin/reports', label: 'Reports' }
+    { path: '/admin', label: t('nav.dashboard') },
+    { path: '/admin/users', label: t('nav.users') },
+    { path: '/admin/security', label: t('nav.security') },
+    { path: '/admin/reports', label: t('nav.reports') }
   ];
 
   const { data: systemStats, loading: statsLoading } = useApi(() => adminApi.getSystemStats());
@@ -61,32 +64,32 @@ function AdminOperationsPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Operations Management</div>
-          <div className="page-subtitle">System performance and health monitoring</div>
+          <div className="page-title">{t('admin.operations')}</div>
+          <div className="page-subtitle">{t('admin.operations_desc')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.uptime} label="Uptime" />
-          <StatCard value={stats.responseTime} label="Response" />
-          <StatCard value={stats.errorRate} label="Error Rate" />
-          <StatCard value={stats.health} label="Health" />
+          <StatCard value={stats.uptime} label={t('admin.uptime')} />
+          <StatCard value={stats.responseTime} label={t('admin.response')} />
+          <StatCard value={stats.errorRate} label={t('admin.error_rate')} />
+          <StatCard value={stats.health} label={t('admin.health')} />
         </div>
 
-        <ChartCard title="System Performance">
+        <ChartCard title={t('admin.system_performance')}>
           <div className="chart-placeholder">
-            Chart.js Performance Analytics
+            Chart.js {t('admin.performance_analytics')}
           </div>
         </ChartCard>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Database Health</div>
+            <div className="table-title">{t('admin.database_health')}</div>
           </div>
           
           {healthLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading database health...</h4>
+                <h4>{t('common.loading')}...</h4>
               </div>
             </div>
           ) : (
@@ -106,13 +109,13 @@ function AdminOperationsPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">API Endpoints</div>
+            <div className="table-title">{t('admin.api_endpoints')}</div>
           </div>
           
           {endpointsLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading API endpoints...</h4>
+                <h4>{t('common.loading')}...</h4>
               </div>
             </div>
           ) : (
@@ -120,7 +123,7 @@ function AdminOperationsPage() {
               <div key={index} className="list-item">
                 <div className="item-info">
                   <h4>{endpoint.endpoint}</h4>
-                  <p>{endpoint.successRate}% success rate</p>
+                  <p>{endpoint.successRate}% {t('admin.success_rate')}</p>
                 </div>
                 <span className={`status-badge status-${endpoint.status}`}>
                   {endpoint.responseTime}
@@ -132,12 +135,12 @@ function AdminOperationsPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">System Alerts</div>
+            <div className="table-title">{t('admin.system_alerts')}</div>
           </div>
           {alertsLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading system alerts...</h4>
+                <h4>{t('common.loading')}...</h4>
               </div>
             </div>
           ) : (

@@ -7,8 +7,10 @@ import ChartCard from '../components/ChartCard.tsx';
 import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function MaintenanceRequestsPage() {
+  const { t } = useLanguage();
   const { isOnline, storeOfflineData, syncNow } = useOffline();
   
   const [user, setUser] = useState(null);
