@@ -8,8 +8,26 @@ import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
 
+// Simple error boundary for chart rendering
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static override getDerivedStateFromError(_error) {
+    return { hasError: true };
+  }
+  override componentDidCatch(_error, _errorInfo) {}
+  override render() {
+    if (this.state.hasError) {
+      return <div style={{ padding: '24px', textAlign: 'center', color: '#a94442' }}>Unable to render chart. Please check your data.</div>;
+    }
+    return this.props.children;
+  }
+}
+
 function ManagerPaymentsPage() {
-  const [payments, setPayments] = useState([
+  const [payments] = useState([
     {
       id: '1',
       tenantName: 'John Tenant',
@@ -88,7 +106,7 @@ function ManagerPaymentsPage() {
     applyFilters(term, statusFilter);
   };
 
-  const handleFilterChange = (key, value) => {
+  const handleFilterChange = (_key, value) => {
     setStatusFilter(value);
     applyFilters(searchTerm, value);
   };
@@ -181,11 +199,17 @@ function ManagerPaymentsPage() {
           data={filteredPayments}
           columns={paymentColumns}
           actions={null}
-          onRowClick={(payment) => {}}
+          onRowClick={(_payment) => {}}
         />
 
         <ChartCard title="Payment Trends">
-          <PaymentChart payments={payments} />
+          <ErrorBoundary>
+            {Array.isArray(payments) && payments.length > 0 ? (
+              <PaymentChart payments={payments} />
+            ) : (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#888' }}>No payment data available.</div>
+            )}
+          </ErrorBoundary>
         </ChartCard>
 
         <div className="quick-actions">

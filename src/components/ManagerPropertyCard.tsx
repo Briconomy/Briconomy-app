@@ -261,7 +261,7 @@ function ManagerPropertyCard({
               View
             </button>
             <button
-              style={{ ...styles.btn, ...styles.btnPrimary }}
+              style={{ ...styles.btn, ...styles.btnSecondary }}
               onClick={() => onEditProperty(property._id)}
             >
               Edit
