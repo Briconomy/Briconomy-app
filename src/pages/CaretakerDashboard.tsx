@@ -126,7 +126,7 @@ function CaretakerDashboard() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading your dashboard...</p>
+            <p>{t('caretaker.loading_dashboard')}...</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -141,38 +141,38 @@ return (
       <div className="main-content">
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="page-title">Caretaker Tasks</div>
+            <div className="page-title">{t('caretaker.tasks')}</div>
             
           </div>
-          <div className="page-subtitle">Maintenance & updates</div>
+          <div className="page-subtitle">{t('caretaker.maintenance_updates')}</div>
           {hasError && (
             <div className="offline-indicator">
-              <span>Offline - Please check your connection</span>
+              <span>{t('tenant.offline_message')}</span>
             </div>
           )}
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={assignedTasks} label="Assigned" />
-          <StatCard value={todayTasks} label="Today" />
-          <StatCard value={priorityTasks} label="Priority" />
-          <StatCard value={`${completionRate}%`} label="Rate" />
+          <StatCard value={assignedTasks} label={t('caretaker.assigned')} />
+          <StatCard value={todayTasks} label={t('caretaker.today')} />
+          <StatCard value={priorityTasks} label={t('caretaker.priority')} />
+          <StatCard value={`${completionRate}%`} label={t('caretaker.rate')} />
         </div>
 
-        <ChartCard title="Task Performance">
+        <ChartCard title={t('caretaker.task_performance')}>
           {chartError ? (
             <div className="chart-placeholder">
-              Chart temporarily unavailable
+              {t('caretaker.chart_unavailable')}
             </div>
           ) : (
             <SimpleErrorBoundary fallback={
               <div className="chart-placeholder">
-                Chart unavailable
+                {t('caretaker.chart_unavailable')}
               </div>
             }>
               <Suspense fallback={
                 <div className="chart-placeholder">
-                  Loading chart...
+                  {t('common.loading')}...
                 </div>
               }>
                 <TaskChart />
@@ -183,7 +183,7 @@ return (
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Today's Tasks</div>
+            <div className="table-title">{t('caretaker.today_tasks')}</div>
           </div>
           {tasksData.slice(0, 5).map((task) => (
             <div key={task.id} className="list-item">
@@ -192,15 +192,15 @@ return (
                 <p>{task.description}</p>
               </div>
               <span className={`status-badge status-${task.status}`}>
-                {task.status === 'in_progress' ? 'Progress' : 
-                 task.status === 'pending' ? 'Scheduled' :
-                 task.status === 'completed' ? 'Completed' : task.status}
+                {task.status === 'in_progress' ? t('caretaker.progress') : 
+                 task.status === 'pending' ? t('caretaker.scheduled') :
+                 task.status === 'completed' ? t('status.completed') : task.status}
               </span>
             </div>
           ))}
           {tasksData.length === 0 && (
             <div className="no-results">
-              <p>No tasks assigned</p>
+              <p>{t('caretaker.no_tasks')}</p>
             </div>
           )}
         </div>

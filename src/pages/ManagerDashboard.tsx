@@ -41,46 +41,46 @@ function ManagerDashboard() {
           <StatCard value="3" label={t('dashboard.issues')} />
         </div>
 
-        <ChartCard title="Property Locations">
-          <div className="map-placeholder">Interactive Property Map</div>
+        <ChartCard title={t('manager.property_locations')}>
+          <div className="map-placeholder">{t('manager.interactive_map')}</div>
         </ChartCard>
 
         <div className="quick-actions">
           <ActionCard
             to="/manager/properties"
             icon="P"
-            title="Properties"
-            description="Manage listings"
+            title={t('nav.properties')}
+            description={t('manager.manage_listings')}
           />
           <ActionCard
             to="/manager/leases"
             icon="L" 
-            title="Leases"
-            description="Contracts"
+            title={t('nav.leases')}
+            description={t('manager.contracts')}
           />
           <ActionCard
             onClick={() => setShowInvoiceManagement(true)}
             icon="I"
-            title="Invoices"
-            description="Generate & manage"
+            title={t('manager.invoices')}
+            description={t('manager.generate_manage')}
           />
           <ActionCard
             onClick={() => {}}
             icon="M"
-            title="Payments"
-            description="Rent collection"
+            title={t('nav.payments')}
+            description={t('manager.rent_collection')}
           />
           <ActionCard
             to="/manager/maintenance"
             icon="E"
-            title="Issues" 
-            description="Handle escalations"
+            title={t('manager.issues')} 
+            description={t('manager.handle_escalations')}
           />
           <ActionCard
             onClick={() => setShowAnnouncements(true)}
             icon="A"
-            title="Announcements"
-            description="Property updates"
+            title={t('manager.announcements')}
+            description={t('manager.property_updates')}
           />
         </div>
         <div style={{ marginTop: '16px', textAlign: 'center' }}>

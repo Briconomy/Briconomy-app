@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -134,7 +136,7 @@ function LoginPage() {
             color: '#2c3e50', 
             fontSize: '20px' 
           }}>
-            Sign In
+            {t('auth.sign_in')}
           </h2>
           
           {authError && (
@@ -162,14 +164,14 @@ function LoginPage() {
                 fontSize: '14px' 
               }}
             >
-              Email Address
+              {t('common.email_address')}
             </label>
             <input 
               type="email" 
               id="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="Enter your email"
+              placeholder={t('common.enter_email')}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -195,14 +197,14 @@ function LoginPage() {
                 fontSize: '14px' 
               }}
             >
-              Password
+              {t('auth.password')}
             </label>
             <input 
               type="password" 
               id="password"
               value={formData.password}
               onChange={handleInputChange}
-              placeholder="Enter your password"
+              placeholder={t('common.enter_password')}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -238,7 +240,7 @@ function LoginPage() {
               opacity: submitting ? 0.7 : 1
             }}
           >
-            {submitting ? 'Signing In...' : 'Sign In'}
+            {submitting ? t('common.signing_in') : t('auth.sign_in')}
           </button>
           
           <button type="button" style={{

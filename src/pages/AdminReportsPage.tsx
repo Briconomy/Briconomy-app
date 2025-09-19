@@ -4,13 +4,16 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { adminApi, useApi, formatCurrency } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function AdminReportsPage() {
+  const { t } = useLanguage();
+  
   const navItems = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/security', label: 'Security' },
-    { path: '/admin/reports', label: 'Reports', active: true }
+    { path: '/admin', label: t('nav.dashboard') },
+    { path: '/admin/users', label: t('nav.users') },
+    { path: '/admin/security', label: t('nav.security') },
+    { path: '/admin/reports', label: t('nav.reports'), active: true }
   ];
 
   const { data: financialStats, loading: statsLoading } = useApi(() => adminApi.getFinancialStats());
@@ -63,32 +66,32 @@ function AdminReportsPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Reports & Analytics</div>
-          <div className="page-subtitle">Business intelligence and insights</div>
+          <div className="page-title">{t('reports.title')} & {t('nav.analytics')}</div>
+          <div className="page-subtitle">{t('reports.title')} {t('dashboard.analytics_insights')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.monthlyRevenue} label="Monthly Revenue" />
-          <StatCard value={stats.occupancyRate} label="Occupancy Rate" />
-          <StatCard value={stats.collectionRate} label="Collection Rate" />
-          <StatCard value={stats.activeReports} label="Active Reports" />
+          <StatCard value={stats.monthlyRevenue} label={t('payments.monthly_revenue')} />
+          <StatCard value={stats.occupancyRate} label={t('reports.occupancy')} />
+          <StatCard value={stats.collectionRate} label={t('payments.collection_rate')} />
+          <StatCard value={stats.activeReports} label={t('reports.active_reports')} />
         </div>
 
-        <ChartCard title="Financial Overview">
+        <ChartCard title={t('reports.financial_overview')}>
           <div className="chart-placeholder">
-            Chart.js Financial Analytics
+            Chart.js {t('reports.financial')}
           </div>
         </ChartCard>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Available Reports</div>
+            <div className="table-title">{t('reports.available')}</div>
           </div>
           
           {reportsLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading available reports...</h4>
+                <h4>{t('common.loading')}...</h4>
               </div>
             </div>
           ) : (
@@ -106,42 +109,42 @@ function AdminReportsPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Report Generation</div>
+            <div className="table-title">{t('reports.generate')}</div>
           </div>
           
           <div className="form-group">
-            <label className="form-label">Report Type</label>
+            <label className="form-label">{t('reports.type')}</label>
             <select className="form-select">
-              <option>Financial Report</option>
-              <option>Occupancy Report</option>
-              <option>Maintenance Report</option>
-              <option>Performance Report</option>
-              <option>Custom Report</option>
+              <option>{t('reports.financial')}</option>
+              <option>{t('reports.occupancy')}</option>
+              <option>{t('reports.maintenance')}</option>
+              <option>{t('reports.performance')}</option>
+              <option>{t('reports.custom')}</option>
             </select>
           </div>
           
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">From Date</label>
+              <label className="form-label">{t('common.from_date')}</label>
               <input type="date" className="form-input" />
             </div>
             <div className="form-group">
-              <label className="form-label">To Date</label>
+              <label className="form-label">{t('common.to_date')}</label>
               <input type="date" className="form-input" />
             </div>
           </div>
           
-          <button className="btn-primary btn-block">Generate Report</button>
+          <button className="btn-primary btn-block">{t('reports.generate')}</button>
         </div>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Recent Report Activity</div>
+            <div className="table-title">{t('reports.recent_activity')}</div>
           </div>
           {activitiesLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading report activities...</h4>
+                <h4>{t('common.loading')}...</h4>
               </div>
             </div>
           ) : (

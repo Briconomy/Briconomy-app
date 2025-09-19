@@ -5,8 +5,10 @@ import ManagerPropertyCard from '../components/ManagerPropertyCard.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function ManagerPropertiesPage() {
+  const { t } = useLanguage();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,10 +19,10 @@ function ManagerPropertiesPage() {
   const { user } = useAuth();
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard' },
-    { path: '/manager/properties', label: 'Properties', active: true },
-    { path: '/manager/leases', label: 'Leases' },
-    { path: '/manager/payments', label: 'Payments' }
+    { path: '/manager', label: t('nav.dashboard') },
+    { path: '/manager/properties', label: t('nav.properties'), active: true },
+    { path: '/manager/leases', label: t('nav.leases') },
+    { path: '/manager/payments', label: t('nav.payments') }
   ];
 
   useEffect(() => {
@@ -93,7 +95,7 @@ function ManagerPropertiesPage() {
         <div className="main-content" style={{ padding: 16 }}>
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading properties...</p>
+            <p>{t('common.loading')}...</p>
           </div>
         </div>
       </div>
@@ -106,8 +108,8 @@ function ManagerPropertiesPage() {
         <TopNav showLogout={true} showBackButton={true} />
         <div className="main-content" style={{ padding: 16 }}>
           <div className="error-state">
-            <p>Error loading properties: {error}</p>
-            <button type="button" onClick={fetchProperties} className="btn btn-primary">Retry</button>
+            <p>{t('manager.error_loading')}: {error}</p>
+            <button type="button" onClick={fetchProperties} className="btn btn-primary">{t('common.retry')}</button>
           </div>
         </div>
       </div>
@@ -120,43 +122,43 @@ function ManagerPropertiesPage() {
 
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Property Management</div>
-          <div className="page-subtitle">Manage your property portfolio</div>
+          <div className="page-title">{t('property.title')}</div>
+          <div className="page-subtitle">{t('manager.manage_portfolio')}</div>
         </div>
 
         <div className="dashboard-grid">
           <div className="stat-card">
             <div className="stat-value">{totalProperties}</div>
-            <div className="stat-label">Total Properties</div>
+            <div className="stat-label">{t('properties.total')}</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{totalUnits}</div>
-            <div className="stat-label">Total Units</div>
+            <div className="stat-label">{t('manager.total_units')}</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{occupiedUnits}</div>
-            <div className="stat-label">Occupied Units</div>
+            <div className="stat-label">{t('manager.occupied_units')}</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{overallOccupancy}%</div>
-            <div className="stat-label">Occupancy Rate</div>
+            <div className="stat-label">{t('manager.occupancy_rate')}</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{formatCurrency(estimatedMonthlyRevenue)}</div>
-            <div className="stat-label">Est. Monthly Revenue</div>
+            <div className="stat-label">{t('manager.est_monthly_revenue')}</div>
           </div>
         </div>
 
         <div className="manager-actions">
           <button type="button" onClick={handleAddProperty} className="btn btn-primary">
-            + Add New Property
+            + {t('manager.add_new_property')}
           </button>
         </div>
 
         <div className="search-bar">
           <input
             type="text"
-            placeholder="Search your properties..."
+            placeholder={t('manager.search_properties')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -164,9 +166,9 @@ function ManagerPropertiesPage() {
         </div>
 
         <div className="results-info">
-          <span>{filteredProperties.length} Properties found</span>
+          <span>{filteredProperties.length} {t('manager.properties_found')}</span>
           {lowBandwidthMode && (
-            <span className="low-bandwidth-indicator">Low bandwidth mode</span>
+            <span className="low-bandwidth-indicator">{t('manager.low_bandwidth_mode')}</span>
           )}
         </div>
 
@@ -186,18 +188,18 @@ function ManagerPropertiesPage() {
 
         {filteredProperties.length === 0 && (
           <div className="no-results">
-            <h3>No properties found</h3>
+            <h3>{t('manager.no_properties_found')}</h3>
             <p>
               {properties.length === 0
-                ? "You don't have any properties yet. Start by adding one."
-                : "Try adjusting your search or add a new property."}
+                ? t('manager.no_properties_yet')
+                : t('manager.adjust_search')}
             </p>
             <button type="button" onClick={fetchProperties} className="btn btn-primary">
-              Refresh
+              {t('common.refresh')}
             </button>
             {properties.length === 0 && (
               <button type="button" onClick={handleAddProperty} className="btn btn-secondary">
-                Add Property
+                {t('properties.add')}
               </button>
             )}
           </div>

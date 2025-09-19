@@ -125,7 +125,7 @@ if (isLoading) {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading your dashboard...</p>
+            <p>{t('tenant.loading_dashboard')}...</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -144,11 +144,11 @@ return (
             
           </div>
           <div className="page-subtitle">
-            {currentLease?.unitId?.unitNumber || 'Unit'} - {currentLease?.propertyId?.name || 'Property'}
+            {currentLease?.unitId?.unitNumber || t('tenant.unit')} - {currentLease?.propertyId?.name || t('tenant.property')}
           </div>
           {hasError && (
             <div className="offline-indicator">
-              <span>Offline - Please check your connection</span>
+              <span>{t('tenant.offline_message')}</span>
             </div>
           )}
         </div>
@@ -174,24 +174,24 @@ return (
 
         {currentLease && (
           <div className="lease-info-card">
-            <h3>Lease Information</h3>
+            <h3>{t('tenant.lease_information')}</h3>
             <div className="lease-details">
               <div className="lease-row">
-                <span>Monthly Rent: </span>
+                <span>{t('tenant.monthly_rent')}: </span>
                 <span className="lease-value">{formatCurrency(currentLease?.monthlyRent || 0)}</span>
               </div>
               <div className="lease-row">
-                <span>Lease Period: </span>
+                <span>{t('tenant.lease_period')}: </span>
                 <span className="lease-value">
                   {formatDate(currentLease?.startDate || '')} - {formatDate(currentLease?.endDate || '')}
                 </span>
               </div>
               <div className="lease-row">
-                <span>Security Deposit: </span>
+                <span>{t('tenant.security_deposit')}: </span>
                 <span className="lease-value">{formatCurrency(currentLease?.deposit || 0)}</span>
               </div>
               <div className="lease-row">
-                <span>Status: </span>
+                <span>{t('common.status')}: </span>
                 <span className={`lease-status ${currentLease?.status === 'active' ? 'status-active' : ''}`}>
                   {(currentLease?.status || 'unknown').charAt(0).toUpperCase() + (currentLease?.status || 'unknown').slice(1)}
                 </span>

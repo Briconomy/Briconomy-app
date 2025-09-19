@@ -4,13 +4,16 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { adminApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function AdminUsersPage() {
+  const { t } = useLanguage();
+  
   const navItems = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/users', label: 'Users', active: true },
-    { path: '/admin/security', label: 'Security' },
-    { path: '/admin/reports', label: 'Reports' }
+    { path: '/admin', label: t('nav.dashboard') },
+    { path: '/admin/users', label: t('nav.users'), active: true },
+    { path: '/admin/security', label: t('nav.security') },
+    { path: '/admin/reports', label: t('nav.reports') }
   ];
 
   const { data: userStats, loading: statsLoading } = useApi(() => adminApi.getUserStats());
@@ -59,21 +62,21 @@ function AdminUsersPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">User Management</div>
-          <div className="page-subtitle">Manage system users and permissions</div>
+          <div className="page-title">{t('common.user_management')}</div>
+          <div className="page-subtitle">{t('admin.manage_users_desc')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.totalUsers} label="Total Users" />
-          <StatCard value={stats.activeUsers} label="Active" />
-          <StatCard value={stats.totalRoles} label="Roles" />
-          <StatCard value={stats.pendingUsers} label="Pending" />
+          <StatCard value={stats.totalUsers} label={t('dashboard.total_users')} />
+          <StatCard value={stats.activeUsers} label={t('status.active')} />
+          <StatCard value={stats.totalRoles} label={t('admin.roles')} />
+          <StatCard value={stats.pendingUsers} label={t('status.pending')} />
         </div>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">User List</div>
-            <a href="/admin/add-user" className="btn-primary">Add User</a>
+            <div className="table-title">{t('admin.user_list')}</div>
+            <a href="/admin/add-user" className="btn-primary">{t('common.add_user')}</a>
           </div>
           
           <div className="list-item">
@@ -81,7 +84,7 @@ function AdminUsersPage() {
               <h4>Sarah Johnson</h4>
               <p>admin@briconomy.com</p>
             </div>
-            <span className="status-badge status-admin">Admin</span>
+            <span className="status-badge status-admin">{t('admin.admin')}</span>
           </div>
           
           <div className="list-item">
@@ -89,7 +92,7 @@ function AdminUsersPage() {
               <h4>Michael Chen</h4>
               <p>manager1@briconomy.com</p>
             </div>
-            <span className="status-badge status-manager">Manager</span>
+            <span className="status-badge status-manager">{t('admin.manager')}</span>
           </div>
           
           <div className="list-item">
@@ -97,24 +100,24 @@ function AdminUsersPage() {
               <h4>Emma Thompson</h4>
               <p>tenant1@briconomy.com</p>
             </div>
-            <span className="status-badge status-tenant">Tenant</span>
+            <span className="status-badge status-tenant">{t('admin.tenant')}</span>
           </div>
         </div>
 
-        <ChartCard title="Role Distribution">
+        <ChartCard title={t('admin.role_distribution')}>
           <div className="chart-placeholder">
-            Chart.js Role Distribution Chart
+            Chart.js {t('admin.role_distribution')} Chart
           </div>
         </ChartCard>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Recent Activity</div>
+            <div className="table-title">{t('admin.recent_activity')}</div>
           </div>
           {activitiesLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading activities...</h4>
+                <h4>{t('common.loading')}...</h4>
               </div>
             </div>
           ) : (

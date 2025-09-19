@@ -7,6 +7,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
 import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';
 import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 interface PaymentMethod {
   id: string;
@@ -17,6 +18,7 @@ interface PaymentMethod {
 }
 
 function TenantPaymentsPage() {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
@@ -27,10 +29,10 @@ function TenantPaymentsPage() {
   const [savedPaymentMethods, setSavedPaymentMethods] = useState<PaymentMethod[]>([]);
 
   const navItems = [
-    { path: '/tenant', label: 'Home', active: false },
-    { path: '/tenant/payments', label: 'Payments', active: true },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/profile', label: 'Profile' }
+    { path: '/tenant', label: t('nav.home'), active: false },
+    { path: '/tenant/payments', label: t('nav.payments'), active: true },
+    { path: '/tenant/requests', label: t('nav.requests') },
+    { path: '/tenant/profile', label: t('nav.profile') }
   ];
 
   const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi(
