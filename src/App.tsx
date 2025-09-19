@@ -26,6 +26,7 @@ import CaretakerTasksPage from './pages/CaretakerTasksPage.tsx';
 import PropertyManagementPage from './pages/PropertyManagementPage.tsx';
 import LeaseManagementPage from './pages/LeaseManagementPage.tsx';
 import LeaseTerminationsPage from './pages/LeaseTerminationsPage.tsx';
+import LeaseRenewalsPage from './pages/LeaseRenewalsPage.tsx';
 import ManagerPaymentsPage from './pages/ManagerPaymentsPage.tsx';
 import ManagerMaintenancePage from './pages/ManagerMaintenancePage.tsx';
 import CommunicationPage from './pages/CommunicationPage.tsx';
@@ -68,6 +69,7 @@ function App() {
               <Route path="/manager/properties" element={<ManagerRoute><ManagerPropertiesPage /></ManagerRoute>} />
               <Route path="/manager/leases" element={<ManagerRoute><LeaseManagementPage /></ManagerRoute>} />
               <Route path="/manager/leases/new" element={<ManagerRoute><CreateLeasePage /></ManagerRoute>} />
+              <Route path="/manager/renewals" element={<ManagerRoute><LeaseRenewalsPage /></ManagerRoute>} />
               <Route path="/manager/payments" element={<ManagerRoute><ManagerPaymentsPage /></ManagerRoute>} />
               <Route path="/manager/maintenance" element={<ManagerRoute><ManagerMaintenancePage /></ManagerRoute>} />
               <Route path="/property/:id" element={<PropertyDetailsPage />} />

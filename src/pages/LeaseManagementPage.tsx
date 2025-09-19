@@ -218,7 +218,7 @@ return (
             description="New lease agreement"
           />  
           <ActionCard
-            onClick={() => {}}
+            to="/manager/renewals"
             icon="R"
             title="Renewals"
             description="Manage lease renewals"
