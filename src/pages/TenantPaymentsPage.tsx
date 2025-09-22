@@ -5,9 +5,9 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
-import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';
 import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 interface PaymentMethod {
   id: string;
@@ -19,10 +19,10 @@ interface PaymentMethod {
 
 function TenantPaymentsPage() {
   const { t } = useLanguage();
-  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [processing, setProcessing] = useState(false);
   const [chartError, setChartError] = useState(false);
@@ -81,12 +81,12 @@ function TenantPaymentsPage() {
   }, []);
 
   const totalDue = payments
-    ?.filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0) || 0;
+    ?.filter((p: any) => p.status === 'pending')
+    .reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
 
   const nextPayment = payments
-    ?.filter(p => p.status === 'pending')
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+    ?.filter((p: any) => p.status === 'pending')
+    .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
 
   const getDaysUntilDue = (dueDate: string | Date) => {
     const today = new Date();
@@ -96,7 +96,7 @@ function TenantPaymentsPage() {
     return diffDays;
   };
 
-  const getPaymentStatusColor = (status) => {
+  const getPaymentStatusColor = (status: string) => {
     switch (status) {
       case 'paid': return 'status-paid';
       case 'pending': return 'status-pending';
@@ -105,7 +105,7 @@ function TenantPaymentsPage() {
     }
   };
 
-  const handleMakePayment = (payment) => {
+  const handleMakePayment = (payment: any) => {
     setSelectedPayment(payment);
     setShowPaymentForm(true);
   };
@@ -130,8 +130,8 @@ function TenantPaymentsPage() {
 
   const _handleDownloadStatement = () => {
     const statementData = {
-      payments: payments?.filter(p => p.status === 'paid') || [],
-      totalPaid: payments?.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0) || 0,
+      payments: payments?.filter((p: any) => p.status === 'paid') || [],
+      totalPaid: payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + p.amount, 0) || 0,
       generatedDate: new Date().toISOString(),
       tenant: user
     };
@@ -150,7 +150,7 @@ function TenantPaymentsPage() {
   if (paymentsLoading || leasesLoading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout showBackButton={true} />
+        <TopNav showLogout showBackButton={true} />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -182,7 +182,7 @@ function TenantPaymentsPage() {
     );
   };
 
-return (
+  return (
     <div className="app-container mobile-only" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <TopNav showLogout showBackButton={true} />
       <div className="main-content" style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }}>
@@ -215,7 +215,7 @@ return (
           <StatCard value={formatCurrency(totalDue)} label="Total Due" />
           <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label="Next Payment" />
           <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label="Days Until Due" />
-          <StatCard value={payments?.filter(p => p.status === 'paid').length || 0} label="Payments Made" />
+          <StatCard value={payments?.filter((p: any) => p.status === 'paid').length || 0} label="Payments Made" />
         </div>
 
         {nextPayment && (
@@ -246,7 +246,7 @@ return (
             <button 
               type="button"
               className="btn btn-primary btn-sm"
-              onClick={() => setShowPaymentMethodsModal(true)}
+              onClick={() => navigate('/tenant/manage-payment-methods')}
               style={{ marginTop: '4px' }}
             >
               Manage Payment Methods
@@ -375,29 +375,6 @@ return (
                     disabled={processing}
                   >
                     {processing ? 'Processing...' : 'Confirm Payment'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showPaymentMethodsModal && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>Payment Methods</h3>
-                <button type="button" className="close-btn" onClick={() => setShowPaymentMethodsModal(false)}>×</button>
-              </div>
-              <div className="modal-body">
-                <PaymentMethodsManager />
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowPaymentMethodsModal(false)}
-                  >
-                    Close
                   </button>
                 </div>
               </div>
