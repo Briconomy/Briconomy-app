@@ -21,6 +21,7 @@ import ProspectiveTenantPropertiesPage from './pages/ProspectiveTenantProperties
 import PropertyDetailsPage from './pages/PropertyDetailsPage.tsx';
 import RentalApplicationPage from './pages/RentalApplicationPage.tsx';
 import TenantPaymentsPage from './pages/TenantPaymentsPage.tsx';
+import ManageTenantPaymentMethodPage from './pages/ManageTenantPaymentMethodPage.tsx';
 import MaintenanceRequestsPage from './pages/MaintenanceRequestsPage.tsx';
 import CaretakerTasksPage from './pages/CaretakerTasksPage.tsx';
 import PropertyManagementPage from './pages/PropertyManagementPage.tsx';
@@ -62,6 +63,7 @@ function App() {
               <Route path="/caretaker" element={<CaretakerRoute><CaretakerDashboard /></CaretakerRoute>} />
               <Route path="/tenant" element={<TenantRoute><TenantDashboard /></TenantRoute>} />
               <Route path="/tenant/payments" element={<TenantRoute><TenantPaymentsPage /></TenantRoute>} />
+              <Route path="/tenant/manage-payment-methods" element={<TenantRoute><ManageTenantPaymentMethodPage /></TenantRoute>} />
               <Route path="/tenant/requests" element={<TenantRoute><MaintenanceRequestsPage /></TenantRoute>} />
               <Route path="/caretaker/tasks" element={<CaretakerRoute><CaretakerTasksPage /></CaretakerRoute>} />
               <Route path="/properties" element={<PropertiesPage />} />
@@ -92,7 +94,6 @@ function App() {
               <Route path="/manager/terminations/settlement" element={<ManagerRoute><SettlementCalculatorPage /></ManagerRoute>} />
               <Route path="/manager/terminations/documents" element={<ManagerRoute><DocumentGeneratorPage /></ManagerRoute>} />
               <Route path="/manager/terminations/report" element={<ManagerRoute><TerminationReportPage /></ManagerRoute>} />
-
               <Route path="/tenant/profile" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/edit" element={<TenantRoute><TenantProfileEditPage /></TenantRoute>} />
               <Route path="/tenant/profile/payment-methods" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
