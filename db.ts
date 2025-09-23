@@ -6,6 +6,7 @@ let connectPromise: Promise<Db> | null = null;
 
 export async function connectToMongoDB(): Promise<Db> {
   if (db) return db;
+
   if (connectPromise !== null) return connectPromise;
 
   connectPromise = (async () => {
@@ -21,7 +22,7 @@ export async function connectToMongoDB(): Promise<Db> {
   const candidateDb = client.database("briconomy");
   await candidateDb.listCollectionNames();
         db = candidateDb;
-        console.log("Connected to MongoDB");
+        console.log("Connected to M ongoDB");
         return db;
       } catch (error) {
         lastError = error;
