@@ -6,7 +6,7 @@ let connectPromise: Promise<Db> | null = null;
 
 export async function connectToMongoDB(): Promise<Db> {
   if (db) return db;
-  if (connectPromise) return connectPromise;
+  if (connectPromise !== null) return connectPromise;
 
   connectPromise = (async () => {
     const uri = "mongodb://127.0.0.1:27017";
