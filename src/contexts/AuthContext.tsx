@@ -55,16 +55,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      console.log('AuthProvider: initializing...');
-      
       // Add a small delay to ensure localStorage is accessible
       await new Promise(resolve => setTimeout(resolve, 10));
       
       try {
         const savedUser = localStorage.getItem('briconomy_user');
         const token = localStorage.getItem('briconomy_token');
-        
-        console.log('AuthProvider: checking saved auth', { hasSavedUser: !!savedUser, hasToken: !!token });
         
         if (savedUser && token) {
           try {
