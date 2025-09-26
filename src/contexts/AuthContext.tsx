@@ -54,49 +54,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('briconomy_user');
-      const token = localStorage.getItem('briconomy_token');
+    const initializeAuth = async () => {
+      console.log('AuthProvider: initializing...');
       
-      if (savedUser && token) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          
-          // Ensure extended profile fields exist for tenants
-          if (parsedUser.userType === 'tenant') {
-            const enhancedUser = {
-              ...parsedUser,
-              avatar: parsedUser.avatar || parsedUser.fullName?.substring(0, 2).toUpperCase() || 'T',
-              joinDate: parsedUser.joinDate || new Date().toISOString().split('T')[0],
-              lastLogin: parsedUser.lastLogin || new Date().toISOString(),
-              unit: parsedUser.unit || 'N/A',
-              property: parsedUser.property || 'N/A',
-              rent: parsedUser.rent || 0,
-              leaseStart: parsedUser.leaseStart || new Date().toISOString().split('T')[0],
-              leaseEnd: parsedUser.leaseEnd || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              emergencyContact: parsedUser.emergencyContact || {
-                name: '',
-                relationship: '',
-                phone: ''
-              }
-            };
-            setUser(enhancedUser);
-            localStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
-          } else {
-            setUser(parsedUser);
+      // Add a small delay to ensure localStorage is accessible
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      try {
+        const savedUser = localStorage.getItem('briconomy_user');
+        const token = localStorage.getItem('briconomy_token');
+        
+        console.log('AuthProvider: checking saved auth', { hasSavedUser: !!savedUser, hasToken: !!token });
+        
+        if (savedUser && token) {
+          try {
+            const parsedUser = JSON.parse(savedUser);
+            
+            // Ensure extended profile fields exist for tenants
+            if (parsedUser.userType === 'tenant') {
+              const enhancedUser = {
+                ...parsedUser,
+                avatar: parsedUser.avatar || parsedUser.fullName?.substring(0, 2).toUpperCase() || 'T',
+                joinDate: parsedUser.joinDate || new Date().toISOString().split('T')[0],
+                lastLogin: parsedUser.lastLogin || new Date().toISOString(),
+                unit: parsedUser.unit || 'N/A',
+                property: parsedUser.property || 'N/A',
+                rent: parsedUser.rent || 0,
+                leaseStart: parsedUser.leaseStart || new Date().toISOString().split('T')[0],
+                leaseEnd: parsedUser.leaseEnd || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                emergencyContact: parsedUser.emergencyContact || {
+                  name: '',
+                  relationship: '',
+                  phone: ''
+                }
+              };
+              setUser(enhancedUser);
+              localStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
+            } else {
+              setUser(parsedUser);
+            }
+          } catch (error) {
+            console.error('Error parsing saved user:', error);
+            localStorage.removeItem('briconomy_user');
+            localStorage.removeItem('briconomy_token');
           }
-        } catch (error) {
-          console.error('Error parsing saved user:', error);
-          localStorage.removeItem('briconomy_user');
-          localStorage.removeItem('briconomy_token');
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setError('Auth initialization failed');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      setError('Auth initialization failed');
-    } finally {
-      setLoading(false);
-    }
+    };
+    
+    initializeAuth();
   }, []);
 
   if (error) {
