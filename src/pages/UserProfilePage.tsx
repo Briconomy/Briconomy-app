@@ -12,9 +12,12 @@ import ActivityLog from '../components/ActivityLog.tsx';
 function UserProfilePage() {
   console.log('UserProfilePage loading...');
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState<'overview' | 'documents' | 'activity'>('overview');
+
+  // Debug logging
+  console.log('UserProfilePage state:', { user, loading, isAuthenticated });
 
   const navItems = [
     { path: '/tenant', label: t('nav.home'), active: false },
