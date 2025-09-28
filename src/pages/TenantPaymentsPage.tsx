@@ -154,7 +154,7 @@ function TenantPaymentsPage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading payments...</p>
+            <p>{t('payments.loadingPayments')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -187,24 +187,24 @@ function TenantPaymentsPage() {
       <TopNav showLogout showBackButton={true} />
       <div className="main-content" style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }}>
         <div className="page-header" style={{ marginBottom: '16px' }}>
-          <div className="page-title">Payments</div>
-          <div className="page-subtitle">Manage your rent and utilities</div>
+          <div className="page-title">{t('nav.payments')}</div>
+          <div className="page-subtitle">{t('payments.subtitle')}</div>
         </div>
 
         {currentLease && (
           <div className="lease-summary-card" style={{ marginBottom: '16px' }}>
-            <h3>Current Lease</h3>
+            <h3>{t('payments.currentLease')}</h3>
             <div className="lease-summary">
               <div className="lease-item">
-                <span>Monthly Rent: </span>
+                <span>{t('payments.monthlyRent')} </span>
                 <span className="lease-value">{formatCurrency(currentLease.monthlyRent)}</span>
               </div>
               <div className="lease-item">
-                <span>Unit: </span>
+                <span>{t('payments.unit')} </span>
                 <span className="lease-value">{currentLease.unitId?.unitNumber || 'N/A'}</span>
               </div>
               <div className="lease-item">
-                <span>Property: </span>
+                <span>{t('payments.property')} </span>
                 <span className="lease-value">{currentLease.propertyId?.name || 'N/A'}</span>
               </div>
             </div>
@@ -212,27 +212,27 @@ function TenantPaymentsPage() {
         )}
 
         <div className="dashboard-grid" style={{ marginBottom: '16px', gap: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
-          <StatCard value={formatCurrency(totalDue)} label="Total Due" />
-          <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label="Next Payment" />
-          <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label="Days Until Due" />
-          <StatCard value={payments?.filter((p: any) => p.status === 'paid').length || 0} label="Payments Made" />
+          <StatCard value={formatCurrency(totalDue)} label={t('payments.totalDue')} />
+          <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label={t('payments.nextPayment')} />
+          <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label={t('payments.daysUntilDue')} />
+          <StatCard value={payments?.filter((p: any) => p.status === 'paid').length || 0} label={t('payments.paymentsMade')} />
         </div>
 
         {nextPayment && (
           <div className="payment-reminder-card" style={{ marginBottom: '16px' }}>
             <div className="reminder-content">
-              <div className="reminder-icon">Reminder</div>
+              <div className="reminder-icon">{t('payments.reminder')}</div>
               <div className="reminder-text">
-                <h4>Payment Reminder</h4>
+                <h4>{t('payments.paymentReminder')}</h4>
                 <p>Your rent payment of {formatCurrency(nextPayment.amount)} is due in {getDaysUntilDue(nextPayment.dueDate)} days</p>
-                <p className="due-date">Due Date: {formatDate(nextPayment.dueDate)}</p>
+                <p className="due-date">{t('payments.dueDate')} {formatDate(nextPayment.dueDate)}</p>
               </div>
               <button 
                 type="button"
                 className="btn btn-primary"
                 onClick={() => handleMakePayment(nextPayment)}
               >
-                Pay Now
+                {t('payments.payNow')}
               </button>
             </div>
           </div>
@@ -242,35 +242,35 @@ function TenantPaymentsPage() {
 
         <div className="payment-methods-section" style={{ marginBottom: '16px' }}>
           <div className="section-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-            <h3>Payment Methods</h3>
+            <h3>{t('payments.paymentMethods')}</h3>
             <button 
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => navigate('/tenant/manage-payment-methods')}
               style={{ marginTop: '4px' }}
             >
-              Manage Payment Methods
+              {t('payments.managePaymentMethods')}
             </button>
           </div>
           <div className="payment-methods-summary">
-            <p>Manage your saved payment methods for quick checkout</p>
+            <p>{t('payments.quickCheckout')}</p>
           </div>
         </div>
 
         <div className="payment-actions-section" style={{ marginBottom: '16px' }}>
-          <h3>Quick Actions</h3>
+          <h3>{t('payments.quickActions')}</h3>
           <div className="quick-actions" style={{ display: 'flex', gap: '12px' }}>
             <ActionCard
               onClick={_handleDownloadStatement}
               icon="S"
-              title="Download Statement"
-              description="Get your payment history"
+              title={t('payments.downloadStatement')}
+              description={t('payments.paymentHistory')}
             />
             <ActionCard
               onClick={() => setShowPaymentForm(true)}
               icon="P"
-              title="Make Payment"
-              description="Pay your rent online"
+              title={t('payments.makePayment')}
+              description={t('payments.payRentOnline')}
             />
           </div>
         </div>

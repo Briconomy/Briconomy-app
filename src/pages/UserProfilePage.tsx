@@ -77,19 +77,19 @@ function UserProfilePage() {
             <h3>{t('personalInfo')}</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>Full Name: </label>
+                <label>{t('profile.fullName')} </label>
                 <span>{user.fullName}</span>
               </div>
               <div className="info-item">
-                <label>Email: </label>
+                <label>{t('profile.email')} </label>
                 <span>{user.email}</span>
               </div>
               <div className="info-item">
-                <label>Phone: </label>
+                <label>{t('profile.phone')} </label>
                 <span>{user.phone}</span>
               </div>
               <div className="info-item">
-                <label>Member Since: </label>
+                <label>{t('profile.memberSince')} </label>
                 <span>{new Date(user.joinDate).toLocaleDateString()}</span>
               </div>
             </div>
@@ -99,27 +99,27 @@ function UserProfilePage() {
             <h3>{t('leaseInfo')}</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>Property: </label>
+                <label>{t('profile.property')} </label>
                 <span>{user.property}</span>
               </div>
               <div className="info-item">
-                <label>Unit: </label>
+                <label>{t('profile.unit')} </label>
                 <span>{user.unit}</span>
               </div>
               <div className="info-item">
-                <label>Lease Start: </label>
+                <label>{t('profile.leaseStart')} </label>
                 <span>{new Date(user.leaseStart).toLocaleDateString()}</span>
               </div>
               <div className="info-item">
-                <label>Lease End: </label>
+                <label>{t('profile.leaseEnd')} </label>
                 <span>{new Date(user.leaseEnd).toLocaleDateString()}</span>
               </div>
               <div className="info-item">
-                <label>Monthly Rent: </label>
+                <label>{t('profile.monthlyRent')} </label>
                 <span>R{user.rent.toLocaleString()}</span>
               </div>
               <div className="info-item">
-                <label>Days Remaining: </label>
+                <label>{t('profile.daysRemaining')} </label>
                 <span>{leaseDaysRemaining} days</span>
               </div>
             </div>
@@ -129,25 +129,25 @@ function UserProfilePage() {
             <h3>{t('emergencyContact')}</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>Name: </label>
+                <label>{t('profile.name')} </label>
                 <span>{user.emergencyContact.name}</span>
               </div>
               <div className="info-item">
-                <label>Relationship: </label>
+                <label>{t('profile.relationship')} </label>
                 <span>{user.emergencyContact.relationship}</span>
               </div>
               <div className="info-item">
-                <label>Phone: </label>
+                <label>{t('profile.phone')} </label>
                 <span>{user.emergencyContact.phone}</span>
               </div>
             </div>
           </div>
 
           <div className="profile-section">
-            <h3>Account Settings</h3>
+            <h3>{t('profile.accountSettings')}</h3>
             <div className="settings-grid">
               <div className="setting-item">
-                <label>Notifications</label>
+                <label>{t('profile.notifications')}</label>
                 <div className="toggle-switch">
                   <input type="checkbox" defaultChecked />
                   <span className="toggle-slider"></span>
