@@ -57,10 +57,10 @@ function TenantProfileEditPage() {
   };
 
   const navItems = [
-    { path: '/tenant', label: 'Home', active: false },
-    { path: '/tenant/payments', label: 'Payments' },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/profile', label: 'Profile', active: true }
+    { path: '/tenant', label: t('nav.home'), active: false },
+    { path: '/tenant/payments', label: t('nav.payments') },
+    { path: '/tenant/requests', label: t('nav.requests') },
+    { path: '/tenant/profile', label: t('nav.profile'), active: true }
   ];
 
   if (isLoading) {
@@ -68,7 +68,7 @@ function TenantProfileEditPage() {
       <div className="app-container mobile-only">
         <TopNav showLogout={true} showBackButton={true} />
         <div className="main-content">
-          <div className="loading">Loading profile data...</div>
+          <div className="loading">{t('common.loading')}</div>
         </div>
         <BottomNav items={navItems} responsive={false} />
       </div>
@@ -81,17 +81,17 @@ function TenantProfileEditPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Edit Profile</div>
-          <div className="page-subtitle">Update your personal information</div>
+          <div className="page-title">{t('profile.editProfile')}</div>
+          <div className="page-subtitle">{t('profile.updateInfo')}</div>
         </div>
 
         <div className="profile-edit-form">
           <form>
             <div className="form-section">
-              <h3>Personal Information</h3>
+              <h3>{t('profile.personalInfo')}</h3>
               
               <div className="form-group">
-                <label>Full Name</label>
+                <label>{t('profile.fullName')}</label>
                 <input
                   type="text"
                   value={formData.fullName}
@@ -101,7 +101,7 @@ function TenantProfileEditPage() {
               </div>
               
               <div className="form-group">
-                <label>Email</label>
+                <label>{t('profile.email')}</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -111,7 +111,7 @@ function TenantProfileEditPage() {
               </div>
               
               <div className="form-group">
-                <label>Phone</label>
+                <label>{t('profile.phone')}</label>
                 <input
                   type="tel"
                   value={formData.phone}
@@ -122,10 +122,10 @@ function TenantProfileEditPage() {
             </div>
 
             <div className="form-section">
-              <h3>Emergency Contact</h3>
+              <h3>{t('profile.emergencyContact')}</h3>
               
               <div className="form-group">
-                <label>Emergency Contact Name</label>
+                <label>{t('profile.name')}</label>
                 <input
                   type="text"
                   value={formData.emergencyContact.name}
@@ -138,7 +138,7 @@ function TenantProfileEditPage() {
               </div>
               
               <div className="form-group">
-                <label>Emergency Contact Relationship</label>
+                <label>{t('profile.relationship')}</label>
                 <input
                   type="text"
                   value={formData.emergencyContact.relationship}
@@ -151,7 +151,7 @@ function TenantProfileEditPage() {
               </div>
               
               <div className="form-group">
-                <label>Emergency Contact Phone</label>
+                <label>{t('profile.phone')}</label>
                 <input
                   type="tel"
                   value={formData.emergencyContact.phone}
@@ -170,14 +170,14 @@ function TenantProfileEditPage() {
                 className="btn btn-secondary"
                 onClick={handleCancel}
               >
-                Cancel
+                {t('action.cancel')}
               </button>
               <button 
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSaveProfile}
               >
-                Save Changes
+                {t('action.save')}
               </button>
             </div>
           </form>

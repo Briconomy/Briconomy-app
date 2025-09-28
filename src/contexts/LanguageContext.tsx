@@ -142,6 +142,14 @@ const translations: Translations = {
   'nav.logout': { en: 'Logout', zu: 'Phuma' },
   'nav.analytics': { en: 'Analytics', zu: 'Ukuhlaziya' },
 
+  // Profile
+  'profile.editProfile': { en: 'Edit Profile', zu: 'Hlela Iphrofayela' },
+  'profile.updateInfo': { en: 'Update your personal information', zu: 'Buyekeza ulwazi lwakho lomuntu siqu' },
+
+  // Payments
+  'payments.managePaymentMethods': { en: 'Manage Payment Methods', zu: 'Phatha Izindlela Zokukhokha' },
+  'payments.managePaymentMethodsSubtitle': { en: 'Add, edit or remove your saved payment methods', zu: 'Engeza, hlela noma susa izindlela zokukhokha ezilondoloziwe' },
+
   // Common Actions
   'action.save': { en: 'Save', zu: 'Londoloza' },
   'action.cancel': { en: 'Cancel', zu: 'Khansela' },
