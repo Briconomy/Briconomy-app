@@ -13,18 +13,28 @@ interface ChatMessage {
 interface AIButtonProps {
   userId: string;
   language?: 'en' | 'zu';
+  userRole?: 'tenant' | 'caretaker' | 'manager' | 'admin';
   onEscalate?: () => void;
 }
 
-const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate }) => {
+const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole = 'tenant', onEscalate }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const quickReplies = language === 'en' 
-    ? ['How do I pay my rent?', 'I need to report an issue', 'When is rent due?', 'Contact my manager']
-    : ['Ngingakhokha kanjani irenti?', 'Ngidinga ukubika inkinga', 'Irenti lidingeka nini?', 'Xhumana nomphathi wami'];
+  const getQuickReplies = () => {
+    if (userRole === 'caretaker') {
+      return language === 'en' 
+        ? ['View my tasks', 'Check maintenance requests', 'What\'s my schedule?', 'Show work history']
+        : ['Bheka imisebenzi yami', 'Bheka izicelo zokulungisa', 'Yini ishedyuli yami?', 'Bonisa umlando womsebenzi'];
+    }
+    return language === 'en' 
+      ? ['How do I pay my rent?', 'I need to report an issue', 'When is rent due?', 'Contact my manager']
+      : ['Ngingakhokha kanjani irenti?', 'Ngidinga ukubika inkinga', 'Irenti lidingeka nini?', 'Xhumana nomphathi wami'];
+  };
+
+  const quickReplies = getQuickReplies();
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -65,7 +75,7 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate
     await chatbotService.saveMessage(userMessage, userId);
 
     // Process with chatbot
-    const botResponse = chatbotService.processMessage(inputText, language);
+    const botResponse = chatbotService.processMessage(inputText, language, userRole);
     
     // Add bot response after short delay
     setTimeout(async () => {
@@ -98,11 +108,20 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', onEscalate
     if (messages.length === 0) {
       loadChatHistory();
       // Add welcome message
+      const getWelcomeMessage = () => {
+        if (userRole === 'caretaker') {
+          return language === 'en' 
+            ? 'Hello! I\'m your AI assistant. I can help you with your tasks, maintenance requests, schedule, and work history. How can I help you today?'
+            : 'Sawubona! Ngingumsizi wakho we-AI. Ngingakusiza ngemisebenzi yakho, izicelo zokulungisa, ishedyuli, nomlando womsebenzi. Ngingakusiza kanjani namuhla?';
+        }
+        return language === 'en' 
+          ? 'Hello! I\'m your AI assistant. How can I help you today?'
+          : 'Sawubona! Ngingumsizi wakho we-AI. Ngingakusiza kanjani namuhla?';
+      };
+
       const welcomeMessage: ChatMessage = {
         id: 'welcome',
-        text: language === 'en' 
-          ? 'Hello! I\'m your AI assistant. How can I help you today?'
-          : 'Sawubona! Ngingumsizi wakho we-AI. Ngingakusiza kanjani namuhla?',
+        text: getWelcomeMessage(),
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'

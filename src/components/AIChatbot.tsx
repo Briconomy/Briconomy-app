@@ -13,10 +13,11 @@ interface ChatMessage {
 interface ChatbotProps {
   userId: string;
   language?: 'en' | 'zu';
+  userRole?: 'tenant' | 'caretaker' | 'manager' | 'admin';
   onEscalate?: () => void;
 }
 
-const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', onEscalate }) => {
+const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole = 'tenant', onEscalate }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -27,11 +28,20 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', onEscalate
     if (isOpen) {
       loadChatHistory();
       // Add welcome message
+      const getWelcomeMessage = () => {
+        if (userRole === 'caretaker') {
+          return language === 'en' 
+            ? "Hi! I'm your AI assistant. I can help you with your tasks, maintenance requests, schedule, and work history. How can I help you today?"
+            : "Sawubona! Ngiyisisebenzi sakho se-AI. Ngingakusiza ngemisebenzi yakho, izicelo zokulungisa, ishedyuli, nomlando womsebenzi. Ngingakusiza kanjani namuhla?";
+        }
+        return language === 'en' 
+          ? "Hi! I'm your AI assistant. I can help you with rent payments, maintenance requests, lease information, and general questions. How can I help you today?"
+          : "Sawubona! Ngiyisisebenzi sakho se-AI. Ngingakusiza ngokukhokha intsimbi, izicelo zokulungisa, imininingwane ye-lease, nemibuzo ejwayelekile. Ngingakusiza kanjani namuhla?";
+      };
+
       const welcomeMessage: ChatMessage = {
         id: 'welcome',
-        text: language === 'en' 
-          ? "Hi! I'm your AI assistant. I can help you with rent payments, maintenance requests, lease information, and general questions. How can I help you today?"
-          : "Sawubona! Ngiyisisebenzi sakho se-AI. Ngingakusiza ngokukhokha intsimbi, izicelo zokulungisa, imininingwane ye-lease, nemibuzo ejwayelekile. Ngingakusiza kanjani namuhla?",
+        text: getWelcomeMessage(),
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
@@ -78,7 +88,7 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', onEscalate
     await chatbotService.saveMessage(userMessage, userId);
 
     // Process with chatbot
-    const botResponse = chatbotService.processMessage(inputText, language);
+    const botResponse = chatbotService.processMessage(inputText, language, userRole);
     
     // Add bot response after short delay
     setTimeout(async () => {
@@ -113,9 +123,18 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', onEscalate
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const quickReplies = language === 'en' 
-    ? ['Check rent status', 'Report maintenance issue', 'View lease details', 'Contact manager']
-    : ['Bheka isimo sentsimbi', 'Bika inkinga yokulungisa', 'Bheka imininingwane ye-lease', 'Xhumana ne-manager'];
+  const getQuickReplies = () => {
+    if (userRole === 'caretaker') {
+      return language === 'en' 
+        ? ['View my tasks', 'Check maintenance requests', 'What\'s my schedule?', 'Show work history']
+        : ['Bheka imisebenzi yami', 'Bheka izicelo zokulungisa', 'Yini ishedyuli yami?', 'Bonisa umlando womsebenzi'];
+    }
+    return language === 'en' 
+      ? ['Check rent status', 'Report maintenance issue', 'View lease details', 'Contact manager']
+      : ['Bheka isimo sentsimbi', 'Bika inkinga yokulungisa', 'Bheka imininingwane ye-lease', 'Xhumana ne-manager'];
+  };
+
+  const quickReplies = getQuickReplies();
 
   const handleQuickReply = (reply: string) => {
     setInputText(reply);

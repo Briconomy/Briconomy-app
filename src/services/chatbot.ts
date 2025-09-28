@@ -9,8 +9,9 @@ interface ChatMessage {
 interface FAQItem {
   keywords: string[];
   response: string;
-  category: 'rent' | 'maintenance' | 'lease' | 'general';
+  category: 'rent' | 'maintenance' | 'lease' | 'general' | 'tasks' | 'schedule';
   language: 'en' | 'zu';
+  userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' | 'all';
 }
 
 export class ChatbotService {
@@ -26,83 +27,169 @@ export class ChatbotService {
   }
 
   private faqs: FAQItem[] = [
-    // English FAQs
+    // English FAQs for Tenants
     {
       keywords: ['rent', 'payment', 'pay', 'due', 'when', 'how much', 'cost', 'money', 'bill'],
       response: 'Your monthly rent is due on the 1st of each month. You can check your exact amount and due date in the Payments section of your dashboard.',
       category: 'rent',
-      language: 'en'
+      language: 'en',
+      userRole: 'tenant'
     },
     {
       keywords: ['late', 'overdue', 'penalty', 'fee', 'missed', 'behind'],
       response: 'Late payment fees may apply if rent is not paid within 7 days of the due date. Please contact your property manager for specific late fee information.',
       category: 'rent',
-      language: 'en'
+      language: 'en',
+      userRole: 'tenant'
     },
     {
       keywords: ['maintenance', 'repair', 'broken', 'issue', 'problem', 'fix', 'not working', 'damaged'],
       response: 'You can report maintenance issues through the Maintenance Requests page. Include photos and describe the problem in detail for faster resolution.',
       category: 'maintenance',
-      language: 'en'
+      language: 'en',
+      userRole: 'tenant'
     },
     {
       keywords: ['lease', 'contract', 'agreement', 'end', 'renewal', 'extend', 'terminate'],
       response: 'You can view your lease agreement in the Lease Management section. For renewal questions, contact your property manager 60 days before expiry.',
       category: 'lease',
-      language: 'en'
+      language: 'en',
+      userRole: 'tenant'
     },
     {
       keywords: ['contact', 'manager', 'help', 'support', 'assistance', 'question'],
       response: 'You can contact your property manager through the Communication page or call the property management office during business hours.',
       category: 'general',
-      language: 'en'
+      language: 'en',
+      userRole: 'tenant'
     },
     {
       keywords: ['emergency', 'urgent', 'water', 'electricity', 'gas', 'leak', 'fire'],
       response: 'For emergencies like water leaks, electrical issues, or gas problems, call the emergency hotline immediately and also log the issue in Maintenance Requests.',
       category: 'maintenance',
-      language: 'en'
+      language: 'en',
+      userRole: 'all'
     },
     {
       keywords: ['how', 'what', 'where', 'guide', 'tutorial', 'instructions'],
       response: 'I can help you with rent payments, maintenance requests, lease information, and contacting your property manager. What would you like to know?',
       category: 'general',
-      language: 'en'
+      language: 'en',
+      userRole: 'tenant'
     },
 
-    // Zulu FAQs (Basic translations)
+    // English FAQs for Caretakers
+    {
+      keywords: ['task', 'tasks', 'assignment', 'work', 'job', 'schedule', 'duties'],
+      response: 'You can view your assigned tasks on the Tasks page. Check your schedule and mark tasks as completed when finished.',
+      category: 'tasks',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['maintenance', 'repair', 'broken', 'issue', 'problem', 'fix', 'not working', 'damaged'],
+      response: 'You can view and manage maintenance requests on the Maintenance page. Update the status and add notes when working on repairs.',
+      category: 'maintenance',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['schedule', 'calendar', 'appointments', 'when', 'time', 'availability'],
+      response: 'Check your schedule on the Schedule page to see upcoming tasks and maintenance appointments.',
+      category: 'schedule',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['history', 'completed', 'finished', 'done', 'past', 'previous'],
+      response: 'You can view your completed tasks and maintenance history on the History page to track your work progress.',
+      category: 'general',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['profile', 'information', 'details', 'account', 'settings'],
+      response: 'View and update your profile information on the Profile page, including your skills and contact details.',
+      category: 'general',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['how', 'what', 'where', 'guide', 'tutorial', 'instructions'],
+      response: 'I can help you with managing your tasks, maintenance requests, schedule, and viewing your work history. What would you like to know?',
+      category: 'general',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['report', 'reports', 'performance', 'statistics', 'stats'],
+      response: 'You can view your performance reports and work statistics to track your productivity and completed tasks.',
+      category: 'general',
+      language: 'en',
+      userRole: 'caretaker'
+    },
+
+    // Zulu FAQs for Tenants
     {
       keywords: ['intsimbi', 'ukukhokha', 'nini', 'malini'],
       response: 'Intsimbi yakho yenyanga kumele ikhokhelwe ngomhla we-1 wenyanga ngayinye. Ungabheka imali yakho nesikhathi sokukhokha kuleli khona Payments.',
       category: 'rent',
-      language: 'zu'
+      language: 'zu',
+      userRole: 'tenant'
     },
     {
       keywords: ['ukusebenza', 'ukulungisa', 'ephukile', 'inkinga'],
       response: 'Ungabika izinkinga zokulungisa nge-Maintenance Requests page. Faka izithombe nochaze inkinga ngokuphelele ukuze zilungiswe ngokushesha.',
       category: 'maintenance',
-      language: 'zu'
+      language: 'zu',
+      userRole: 'tenant'
     },
     {
       keywords: ['ukuphila', 'isivumelwano', 'ukuphela', 'ukuvuselela'],
       response: 'Ungabona isivumelwano sakho se-lease ku-Lease Management section. Emibuzo yokuvuselela, xhumana ne-property manager ezinsukwini ezingu-60 ngaphambi kokuphela.',
       category: 'lease',
-      language: 'zu'
+      language: 'zu',
+      userRole: 'tenant'
     },
     {
       keywords: ['usizo', 'uxhumana', 'isidingo'],
       response: 'Ungaxhumana ne-property manager yakho nge-Communication page noma ushaye nge-business hours.',
       category: 'general',
-      language: 'zu'
+      language: 'zu',
+      userRole: 'tenant'
+    },
+
+    // Zulu FAQs for Caretakers
+    {
+      keywords: ['umsebenzi', 'imisebenzi', 'ukuphathwa', 'ishedyuli'],
+      response: 'Ungabona imisebenzi yakho ekunikeziwe ekhoneni leMisebenzi. Bheka ishedyuli yakho futhi uphawule imisebenzi njengoba iphothiwe.',
+      category: 'tasks',
+      language: 'zu',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['ukulungisa', 'ukusebenza', 'ephukile', 'inkinga'],
+      response: 'Ungabona futhi uphathe izicelo zokulungisa ekhoneni lokuLungisa. Buyekeza isimo futhi wengeze amanothi uma usebenza ekulungiseni.',
+      category: 'maintenance',
+      language: 'zu',
+      userRole: 'caretaker'
+    },
+    {
+      keywords: ['ishedyuli', 'ikhalenda', 'ukubonana', 'nini', 'isikhathi'],
+      response: 'Bheka ishedyuli yakho ekhoneni leShedyuli ukubona imisebenzi ezayo neziqeshana zokulungisa.',
+      category: 'schedule',
+      language: 'zu',
+      userRole: 'caretaker'
     }
   ];
 
-  findResponse(userMessage: string, language: 'en' | 'zu' = 'en'): string | null {
+  findResponse(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant'): string | null {
     const normalizedMessage = userMessage.toLowerCase();
     
     // First try exact keyword matching
     for (const faq of this.faqs) {
       if (faq.language !== language) continue;
+      if (faq.userRole !== userRole && faq.userRole !== 'all') continue;
       
       const keywordMatch = faq.keywords.some(keyword => 
         normalizedMessage.includes(keyword.toLowerCase())
@@ -120,6 +207,7 @@ export class ChatbotService {
     
     for (const faq of this.faqs) {
       if (faq.language !== language) continue;
+      if (faq.userRole !== userRole && faq.userRole !== 'all') continue;
       
       for (const keyword of faq.keywords) {
         const similarity = this.calculateSimilarity(normalizedMessage, keyword.toLowerCase());
@@ -196,8 +284,8 @@ export class ChatbotService {
     return matrix[str2.length][str1.length];
   }
 
-  processMessage(userMessage: string, language: 'en' | 'zu' = 'en'): ChatMessage {
-    const response = this.findResponse(userMessage, language);
+  processMessage(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant'): ChatMessage {
+    const response = this.findResponse(userMessage, language, userRole);
     
     if (response) {
       return {
@@ -209,19 +297,45 @@ export class ChatbotService {
       };
     }
     
-    // Default responses for unmatched queries
+    // Role-specific default responses for unmatched queries
     const defaultResponses = {
-      en: this.failedReplies >= this.maxFailedReplies 
-        ? "I'm having trouble understanding your request. Let me connect you with a human agent who can better assist you."
-        : "I don't understand that question. Could you try rephrasing it? You can ask about rent payments, maintenance issues, lease information, or general support.",
-      zu: this.failedReplies >= this.maxFailedReplies
-        ? "Ngiyathola inkinga ekuzweni isicelo sakho. Ngivumele ngikuxhumanise nomuntu ongakusiza kangcono."
-        : "Angiqondi lowo mbuzo. Ungazama ukuwushisa kabusha? Ungabuza ngokukhokha intsimbi, izinkinga zokulungisa, imininingwane ye-lease, noma usizo."
+      tenant: {
+        en: this.failedReplies >= this.maxFailedReplies 
+          ? "I'm having trouble understanding your request. Let me connect you with a human agent who can better assist you."
+          : "I don't understand that question. Could you try rephrasing it? You can ask about rent payments, maintenance issues, lease information, or general support.",
+        zu: this.failedReplies >= this.maxFailedReplies
+          ? "Ngiyathola inkinga ekuzweni isicelo sakho. Ngivumele ngikuxhumanise nomuntu ongakusiza kangcono."
+          : "Angiqondi lowo mbuzo. Ungazama ukuwushisa kabusha? Ungabuza ngokukhokha intsimbi, izinkinga zokulungisa, imininingwane ye-lease, noma usizo."
+      },
+      caretaker: {
+        en: this.failedReplies >= this.maxFailedReplies 
+          ? "I'm having trouble understanding your request. Let me connect you with a supervisor who can better assist you."
+          : "I don't understand that question. Could you try rephrasing it? You can ask about your tasks, maintenance requests, schedule, or work history.",
+        zu: this.failedReplies >= this.maxFailedReplies
+          ? "Ngiyathola inkinga ekuzweni isicelo sakho. Ngivumele ngikuxhumanise nomphathi ongakusiza kangcono."
+          : "Angiqondi lowo mbuzo. Ungazama ukuwushisa kabusha? Ungabuza ngemisebenzi yakho, izicelo zokulungisa, ishedyuli, noma umlando womsebenzi."
+      },
+      manager: {
+        en: this.failedReplies >= this.maxFailedReplies 
+          ? "I'm having trouble understanding your request. Let me connect you with technical support."
+          : "I don't understand that question. Could you try rephrasing it? You can ask about property management, leases, payments, or reports.",
+        zu: this.failedReplies >= this.maxFailedReplies
+          ? "Ngiyathola inkinga ekuzweni isicelo sakho. Ngivumele ngikuxhumanise nosizo lwezobuchwepheshe."
+          : "Angiqondi lowo mbuzo. Ungazama ukuwushisa kabusha? Ungabuza ngokuphatha izakhiwo, amaqashi, izinkokhelo, noma imibiko."
+      },
+      admin: {
+        en: this.failedReplies >= this.maxFailedReplies 
+          ? "I'm having trouble understanding your request. Let me escalate this to senior support."
+          : "I don't understand that question. Could you try rephrasing it? You can ask about system administration, user management, security, or reports.",
+        zu: this.failedReplies >= this.maxFailedReplies
+          ? "Ngiyathola inkinga ekuzweni isicelo sakho. Ngivumele ngiphakamise lokhu kosizo oluphezulu."
+          : "Angiqondi lowo mbuzo. Ungazama ukuwushisa kabusha? Ungabuza ngokuphatha uhlelo, ukuphatha abasebenzisi, ukuphepha, noma imibiko."
+      }
     };
     
     return {
       id: Date.now().toString(),
-      text: defaultResponses[language],
+      text: defaultResponses[userRole][language],
       sender: 'bot',
       timestamp: new Date(),
       type: this.failedReplies >= this.maxFailedReplies ? 'escalation' : 'text'
