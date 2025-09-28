@@ -206,8 +206,9 @@ return (
         </div>
         <div style={{ marginTop: '16px', textAlign: 'center' }}>
         <AIButton 
-              userId="manager-user-1" 
+              userId={user?.id || "caretaker-user-1"} 
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+              userRole="caretaker"
             />
         </div>
       </div>
