@@ -372,20 +372,20 @@ return (
               <ActionCard
                 onClick={() => setShowRequestForm(true)}
                 icon="R"
-                title="Report Issue"
-                description="Create new request"
+                title={t('requests.reportIssue')}
+                description={t('requests.createNewRequest')}
               />
               <ActionCard
                 to="/tenant/messages"
                 icon="C"
-                title="Contact Caretaker"
-                description="Direct communication"
+                title={t('requests.contactCaretaker')}
+                description={t('requests.directCommunication')}
               />
               <ActionCard
                 onClick={() => setActiveTab('help')}
                 icon="E"
-                title="Emergency Info"
-                description="Emergency contacts"
+                title={t('requests.emergencyInfo')}
+                description={t('requests.emergencyContacts')}
               />
               <ActionCard
                 onClick={() => setActiveTab('help')}
@@ -395,7 +395,7 @@ return (
               />
             </div>
 
-            <ChartCard title="Request Status Overview">
+            <ChartCard title={t('requests.statusOverview')}>
               <div className="request-stats">
                 <div className="stat-item">
                   <div className="stat-value">{pendingCount}</div>

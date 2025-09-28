@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 interface FAQItem {
   id: string;
@@ -17,6 +18,7 @@ interface SupportTicket {
 }
 
 function HelpSupport() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'faq' | 'contact' | 'emergency'>('faq');
   const [showContactForm, setShowContactForm] = useState(false);
   const [selectedFAQ, setSelectedFAQ] = useState<string | null>(null);
@@ -129,32 +131,32 @@ function HelpSupport() {
           className={`tab-btn ${activeTab === 'faq' ? 'active' : ''}`}
           onClick={() => setActiveTab('faq')}
         >
-          FAQ
+          {t('help.faq')}
         </button>
         <button
           type="button"
           className={`tab-btn ${activeTab === 'contact' ? 'active' : ''}`}
           onClick={() => setActiveTab('contact')}
         >
-          Contact Us
+          {t('help.contactUs')}
         </button>
         <button
           type="button"
           className={`tab-btn ${activeTab === 'emergency' ? 'active' : ''}`}
           onClick={() => setActiveTab('emergency')}
         >
-          Emergency
+          {t('help.emergency')}
         </button>
       </div>
 
       <div className="tab-content">
         {activeTab === 'faq' && (
           <div className="faq-section">
-            <h3>Frequently Asked Questions</h3>
+            <h3>{t('help.frequentlyAskedQuestions')}</h3>
             
             <div className="faq-categories">
               <div className="faq-category">
-                <h4>Payments</h4>
+                <h4>{t('help.payments')}</h4>
                 {getFAQByCategory('Payments').map(item => (
                   <div key={item.id} className="faq-item">
                     <button
@@ -173,7 +175,7 @@ function HelpSupport() {
               </div>
 
               <div className="faq-category">
-                <h4>Maintenance</h4>
+                <h4>{t('help.maintenance')}</h4>
                 {getFAQByCategory('Maintenance').map(item => (
                   <div key={item.id} className="faq-item">
                     <button
@@ -192,7 +194,7 @@ function HelpSupport() {
               </div>
 
               <div className="faq-category">
-                <h4>Documents & Profile</h4>
+                <h4>{t('help.documentsProfile')}</h4>
                 {getFAQByCategory('Documents').concat(getFAQByCategory('Profile')).map(item => (
                   <div key={item.id} className="faq-item">
                     <button
