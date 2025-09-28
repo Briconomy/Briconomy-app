@@ -168,13 +168,13 @@ function TenantPaymentsPage() {
     if (!payments || payments.length === 0) {
       return (
         <div className="chart-empty">
-          <p>No payment history available</p>
+          <p>{t('payments.noPaymentHistory')}</p>
         </div>
       );
     }
 
     return (
-      <ChartCard title="Payment History">
+      <ChartCard title={t('payments.paymentHistoryChart')}>
         <ErrorBoundary onError={() => setChartError(true)}>
           <PaymentChart payments={payments} />
         </ErrorBoundary>
@@ -224,7 +224,7 @@ function TenantPaymentsPage() {
               <div className="reminder-icon">{t('payments.reminder')}</div>
               <div className="reminder-text">
                 <h4>{t('payments.paymentReminder')}</h4>
-                <p>Your rent payment of {formatCurrency(nextPayment.amount)} is due in {getDaysUntilDue(nextPayment.dueDate)} days</p>
+                <p>{t('payments.rentDueIn').replace('{amount}', formatCurrency(nextPayment.amount)).replace('{days}', getDaysUntilDue(nextPayment.dueDate).toString())}</p>
                 <p className="due-date">{t('payments.dueDate')} {formatDate(nextPayment.dueDate)}</p>
               </div>
               <button 

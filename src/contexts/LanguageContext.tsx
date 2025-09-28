@@ -189,6 +189,13 @@ const translations: Translations = {
   'requests.noRequestsFound': { en: 'No maintenance requests found', zu: 'Azikho izicelo zokulungisa ezitholiwe' },
   'requests.createFirstRequest': { en: 'Create Your First Request', zu: 'Yenza Isicelo Sakho Sokuqala' },
   'requests.loadingRequests': { en: 'Loading maintenance requests...', zu: 'Kuyalayisha izicelo zokulungisa...' },
+  'requests.statusOverview': { en: 'Request Status Overview', zu: 'Ukubuka Kwesimo Sezicelo' },
+  'requests.reportIssue': { en: 'Report Issue', zu: 'Bika Inkinga' },
+  'requests.createNewRequest': { en: 'Create new request', zu: 'Yenza isicelo esisha' },
+  'requests.contactCaretaker': { en: 'Contact Caretaker', zu: 'Xhumana Nomgcini' },
+  'requests.directCommunication': { en: 'Direct communication', zu: 'Ukuxhumana ngqo' },
+  'requests.emergencyInfo': { en: 'Emergency Info', zu: 'Ulwazi Lwesiphuthumiso' },
+  'requests.emergencyContacts': { en: 'Emergency contacts', zu: 'Oxhumana nabo esimweni sesiphuthumiso' },
 
   // Profile Labels
   'profile.fullName': { en: 'Full Name:', zu: 'Igama Eliphelele:' },
@@ -205,6 +212,20 @@ const translations: Translations = {
   'profile.relationship': { en: 'Relationship:', zu: 'Ubuhlobo:' },
   'profile.accountSettings': { en: 'Account Settings', zu: 'Izilungiselelo Ze-akhawunti' },
   'profile.notifications': { en: 'Notifications', zu: 'Izaziso' },
+  'profile.documents': { en: 'Documents', zu: 'Amadokhumenti' },
+  'profile.viewDocuments': { en: 'View your documents', zu: 'Buka amadokhumenti akho' },
+  'profile.activityLog': { en: 'Activity Log', zu: 'Irekhodi Lemisebenzi' },
+  'profile.viewActivity': { en: 'View recent activity', zu: 'Buka imisebenzi yamuva' },
+  'profile.backToOverview': { en: 'Back to Overview', zu: 'Buyela Ekubukeni' },
+
+  // Help & Support
+  'help.faq': { en: 'FAQ', zu: 'Imibuzo Evame Ukubuzwa' },
+  'help.contactUs': { en: 'Contact Us', zu: 'Sixhumane' },
+  'help.emergency': { en: 'Emergency', zu: 'Isiphuthumiso' },
+  'help.frequentlyAskedQuestions': { en: 'Frequently Asked Questions', zu: 'Imibuzo Evame Ukubuzwa' },
+  'help.payments': { en: 'Payments', zu: 'Ukukhokha' },
+  'help.maintenance': { en: 'Maintenance', zu: 'Ukulungisa' },
+  'help.documentsProfile': { en: 'Documents & Profile', zu: 'Amadokhumenti Nephrofayili' },
 
   // Property/Lease Terms
   'property.unit': { en: 'Unit', zu: 'Iyunithi' },

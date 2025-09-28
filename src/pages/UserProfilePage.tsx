@@ -182,14 +182,14 @@ function UserProfilePage() {
           <ActionCard
             onClick={() => setActiveSection('documents')}
             icon="D"
-            title="Documents"
-            description="View your documents"
+            title={t('profile.documents')}
+            description={t('profile.viewDocuments')}
           />
           <ActionCard
             onClick={() => setActiveSection('activity')}
             icon="L"
-            title="Activity Log"
-            description="View recent activity"
+            title={t('profile.activityLog')}
+            description={t('profile.viewActivity')}
           />
         </div>
       </div>
@@ -199,13 +199,13 @@ function UserProfilePage() {
       {activeSection === 'documents' && (
         <div className="profile-section">
           <div className="section-header">
-            <h3>Documents</h3>
+            <h3>{t('profile.documents')}</h3>
             <button 
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={() => setActiveSection('overview')}
             >
-              Back to Overview
+              {t('profile.backToOverview')}
             </button>
           </div>
           <DocumentViewer />
@@ -216,13 +216,13 @@ function UserProfilePage() {
       {activeSection === 'activity' && (
         <div className="profile-section">
           <div className="section-header">
-            <h3>Activity Log</h3>
+            <h3>{t('profile.activityLog')}</h3>
             <button 
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={() => setActiveSection('overview')}
             >
-              Back to Overview
+              {t('profile.backToOverview')}
             </button>
           </div>
           <ActivityLog />
