@@ -159,6 +159,94 @@ export class ChatbotService {
       userRole: 'tenant'
     },
 
+    // English FAQs for Managers
+    {
+      keywords: ['property', 'properties', 'building', 'buildings', 'manage', 'add', 'view'],
+      response: 'You can manage your properties on the Properties page. Add new properties, view details, and manage units and tenants.',
+      category: 'general',
+      language: 'en',
+      userRole: 'manager'
+    },
+    {
+      keywords: ['lease', 'leases', 'contract', 'agreement', 'tenant', 'rental'],
+      response: 'Manage lease agreements on the Leases page. Create new leases, track renewals, and handle lease documentation.',
+      category: 'lease',
+      language: 'en',
+      userRole: 'manager'
+    },
+    {
+      keywords: ['payment', 'payments', 'rent', 'money', 'collection', 'invoice'],
+      response: 'Track rent payments and manage invoices on the Payments page. Monitor payment status and handle tenant payment methods.',
+      category: 'rent',
+      language: 'en',
+      userRole: 'manager'
+    },
+    {
+      keywords: ['maintenance', 'repair', 'request', 'issue', 'work order'],
+      response: 'Review and assign maintenance requests to caretakers. Monitor repair progress and manage work orders.',
+      category: 'maintenance',
+      language: 'en',
+      userRole: 'manager'
+    },
+    {
+      keywords: ['report', 'reports', 'analytics', 'statistics', 'performance'],
+      response: 'Generate property performance reports, financial summaries, and tenant analytics to track your portfolio.',
+      category: 'general',
+      language: 'en',
+      userRole: 'manager'
+    },
+    {
+      keywords: ['how', 'what', 'where', 'guide', 'tutorial', 'instructions'],
+      response: 'I can help you with property management, lease agreements, rent collection, maintenance oversight, and reporting. What would you like to know?',
+      category: 'general',
+      language: 'en',
+      userRole: 'manager'
+    },
+
+    // English FAQs for Admins
+    {
+      keywords: ['user', 'users', 'account', 'accounts', 'manage', 'add', 'remove', 'create'],
+      response: 'You can manage user accounts on the Users page. Add new users, modify permissions, or deactivate accounts as needed.',
+      category: 'general',
+      language: 'en',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['security', 'permissions', 'access', 'login', 'password', 'authentication'],
+      response: 'Monitor security settings and user access on the Security page. Review login attempts, manage permissions, and configure security policies.',
+      category: 'general',
+      language: 'en',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['report', 'reports', 'analytics', 'statistics', 'data', 'metrics'],
+      response: 'Generate and view system reports on the Reports page. Access user activity, financial reports, and system performance metrics.',
+      category: 'general',
+      language: 'en',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['system', 'operations', 'maintenance', 'backup', 'database', 'server'],
+      response: 'Manage system operations and maintenance tasks on the Operations page. Monitor system health, perform backups, and handle database maintenance.',
+      category: 'general',
+      language: 'en',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['announcement', 'announcements', 'notify', 'notification', 'broadcast', 'message'],
+      response: 'Send system-wide announcements and notifications to all users through the announcement system on your dashboard.',
+      category: 'general',
+      language: 'en',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['how', 'what', 'where', 'guide', 'tutorial', 'instructions'],
+      response: 'I can help you with user management, security settings, system reports, operations, and sending announcements. What would you like to know?',
+      category: 'general',
+      language: 'en',
+      userRole: 'admin'
+    },
+
     // Zulu FAQs for Caretakers
     {
       keywords: ['umsebenzi', 'imisebenzi', 'ukuphathwa', 'ishedyuli'],
@@ -180,6 +268,29 @@ export class ChatbotService {
       category: 'schedule',
       language: 'zu',
       userRole: 'caretaker'
+    },
+
+    // Zulu FAQs for Admins
+    {
+      keywords: ['umsebenzisi', 'abasebenzisi', 'i-akhawunti', 'ama-akhawunti', 'ukuphatha'],
+      response: 'Ungaphatha ama-akhawunti abasebenzisi ekhoneni laBasebenzisi. Wengeze abasebenzisi abasha, shintsha izimvume, noma uvale ama-akhawunti njengoba kudingeka.',
+      category: 'general',
+      language: 'zu',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['ukuphepha', 'izimvume', 'ukufinyelela', 'ukungena', 'iphasiwedi'],
+      response: 'Qaphela izilungiselelo zokuphepha nokufinyelela kwabasebenzisi ekhoneni lokuPhepha. Buyekeza imizamo yokungena, uphatha izimvume, futhi ulungiselele izinqubomgomo zokuphepha.',
+      category: 'general',
+      language: 'zu',
+      userRole: 'admin'
+    },
+    {
+      keywords: ['umbiko', 'imibiko', 'ukuhlaziya', 'izibalo', 'idatha'],
+      response: 'Khiqiza futhi ubuke imibiko yesistimu ekhoneni leMibiko. Finyelela ukusebenza kwabasebenzisi, imibiko yezimali, nezibalo zokusebenza kwesistimu.',
+      category: 'general',
+      language: 'zu',
+      userRole: 'admin'
     }
   ];
 

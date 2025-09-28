@@ -29,6 +29,16 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
         ? ['View my tasks', 'Check maintenance requests', 'What\'s my schedule?', 'Show work history']
         : ['Bheka imisebenzi yami', 'Bheka izicelo zokulungisa', 'Yini ishedyuli yami?', 'Bonisa umlando womsebenzi'];
     }
+    if (userRole === 'manager') {
+      return language === 'en' 
+        ? ['View properties', 'Check lease status', 'Review payments', 'Maintenance overview']
+        : ['Bheka izakhiwo', 'Bheka isimo samaqashi', 'Buyekeza izinkokhelo', 'Ukubuka ukulungisa'];
+    }
+    if (userRole === 'admin') {
+      return language === 'en' 
+        ? ['Manage users', 'Check system reports', 'Security settings', 'Send announcement']
+        : ['Phatha abasebenzisi', 'Bheka imibiko yesistimu', 'Izilungiselelo zokuphepha', 'Thumela isimemezelo'];
+    }
     return language === 'en' 
       ? ['How do I pay my rent?', 'I need to report an issue', 'When is rent due?', 'Contact my manager']
       : ['Ngingakhokha kanjani irenti?', 'Ngidinga ukubika inkinga', 'Irenti lidingeka nini?', 'Xhumana nomphathi wami'];
@@ -113,6 +123,16 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
           return language === 'en' 
             ? 'Hello! I\'m your AI assistant. I can help you with your tasks, maintenance requests, schedule, and work history. How can I help you today?'
             : 'Sawubona! Ngingumsizi wakho we-AI. Ngingakusiza ngemisebenzi yakho, izicelo zokulungisa, ishedyuli, nomlando womsebenzi. Ngingakusiza kanjani namuhla?';
+        }
+        if (userRole === 'manager') {
+          return language === 'en' 
+            ? 'Hello! I\'m your AI assistant. I can help you with property management, lease agreements, rent collection, maintenance oversight, and reporting. How can I help you today?'
+            : 'Sawubona! Ngingumsizi wakho we-AI. Ngingakusiza ngokuphatha izakhiwo, izivumelwano zokukodisha, ukuqoqa intsimbi, ukubheka ukulungisa, nemibiko. Ngingakusiza kanjani namuhla?';
+        }
+        if (userRole === 'admin') {
+          return language === 'en' 
+            ? 'Hello! I\'m your AI assistant. I can help you with user management, system reports, security settings, operations, and announcements. How can I help you today?'
+            : 'Sawubona! Ngingumsizi wakho we-AI. Ngingakusiza ngokuphatha abasebenzisi, imibiko yesistimu, izilungiselelo zokuphepha, ukusebenza, nezimemezelo. Ngingakusiza kanjani namuhla?';
         }
         return language === 'en' 
           ? 'Hello! I\'m your AI assistant. How can I help you today?'

@@ -87,6 +87,7 @@ function ManagerDashboard() {
         <AIButton 
               userId="manager-user-1" 
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
+              userRole="manager"
             />
         </div>
       </div>
