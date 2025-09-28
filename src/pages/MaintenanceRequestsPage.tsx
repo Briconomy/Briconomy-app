@@ -240,7 +240,7 @@ return (
          <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading maintenance requests...</p>
+            <p>{t('requests.loadingRequests')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -256,33 +256,33 @@ return (
        
        <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Support Center</div>
-          <div className="page-subtitle">Maintenance requests and help support</div>
+          <div className="page-title">{t('requests.title')}</div>
+          <div className="page-subtitle">{t('requests.subtitle')}</div>
         </div>
         
         {activeTab === 'requests' && (
           <>
             <div className="dashboard-grid">
-              <StatCard value={pendingCount} label="Pending" />
-              <StatCard value={inProgressCount} label="In Progress" />
-              <StatCard value={completedCount} label="Completed" />
-              <StatCard value={requests?.length || 0} label="Total" />
+              <StatCard value={pendingCount} label={t('requests.pending')} />
+              <StatCard value={inProgressCount} label={t('requests.inProgress')} />
+              <StatCard value={completedCount} label={t('requests.completed')} />
+              <StatCard value={requests?.length || 0} label={t('requests.total')} />
             </div>
 
             {currentLease && (
               <div className="unit-info-card">
-                <h3>Your Unit</h3>
+                <h3>{t('requests.yourUnit')}</h3>
                 <div className="unit-details">
-                  <p><strong>Unit:</strong> {currentLease.unitId?.unitNumber || 'N/A'}</p>
-                  <p><strong>Property:</strong> {currentLease.propertyId?.name || 'N/A'}</p>
-                  <p><strong>Address:</strong> {currentLease.propertyId?.address || 'N/A'}</p>
+                  <p><strong>{t('payments.unit')}</strong> {currentLease.unitId?.unitNumber || 'N/A'}</p>
+                  <p><strong>{t('payments.property')}</strong> {currentLease.propertyId?.name || 'N/A'}</p>
+                  <p><strong>{t('requests.address')}</strong> {currentLease.propertyId?.address || 'N/A'}</p>
                 </div>
               </div>
             )}
 
             <div className="data-table">
               <div className="table-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <div className="table-title">Your Requests</div>
+                <div className="table-title">{t('requests.yourRequests')}</div>
                 {/* Offline Status Indicator */}
                 <div className="flex items-center space-x-2 ml-4" >
                   <span className={`px-2 py-1 rounded text-xs ${isOnline ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -305,19 +305,19 @@ return (
                   onClick={() => setShowRequestForm(true)}
                   style={{ marginTop: '8px' }}
                 >
-                  New Request
+                  {t('requests.newRequest')}
                 </button>
               </div>
               
               {requests?.length === 0 ? (
                 <div className="empty-state">
-                  <p>No maintenance requests found</p>
+                  <p>{t('requests.noRequestsFound')}</p>
                   <button 
                     type="button"
                     className="btn btn-primary"
                     onClick={() => setShowRequestForm(true)}
                   >
-                    Create Your First Request
+                    {t('requests.createFirstRequest')}
                   </button>
                 </div>
               ) : (
