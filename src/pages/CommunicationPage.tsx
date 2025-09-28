@@ -4,6 +4,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ interface Message {
 }
 
 const CommunicationPage: React.FC = () => {
+  const { t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [activeConversation, setActiveConversation] = useState<Contact | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -46,10 +48,10 @@ const CommunicationPage: React.FC = () => {
 }
 
 const navItems: NavItem[] = [
-    { path: '/tenant', label: 'Home', active: false },
-    { path: '/tenant/payments', label: 'Payments' },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/messages', label: 'Messages', active: true }
+    { path: '/tenant', label: t('nav.home'), active: false },
+    { path: '/tenant/payments', label: t('nav.payments') },
+    { path: '/tenant/requests', label: t('nav.requests') },
+    { path: '/tenant/messages', label: t('nav.communication'), active: true }
   ];
 
   const { data: notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(
