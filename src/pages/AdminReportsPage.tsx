@@ -94,7 +94,7 @@ function AdminReportsPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton />
+      <TopNav showBackButton showLogout />
       
       <div className="main-content">
         <div className="page-header">

@@ -57,7 +57,7 @@ function AdminSecurityPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} />
+      <TopNav showBackButton showLogout />
       
       <div className="main-content">
         <div className="page-header">

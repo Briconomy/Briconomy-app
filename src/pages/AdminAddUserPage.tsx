@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/api.ts';
+import TopNav from '../components/TopNav.tsx';
 
 function AdminAddUserPage() {
   const navigate = useNavigate();
@@ -171,67 +172,7 @@ const handleCreateUser = async () => {
       position: 'relative',
       boxShadow: '0 0 20px rgba(0,0,0,0.1)'
     }}>
-      <div style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #e9ecef',
-        padding: '12px 16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        height: '60px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-<a 
-            href="/admin/users" 
-            style={{
-              background: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              color: '#495057',
-              width: '32px',
-              height: '32px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              textDecoration: 'none'
-            }}
-          >
-            ←
-          </a>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#2c3e50'
-          }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              background: '#162F1B',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '16px'
-            }}>
-              B
-            </div>
-            <span>Briconomy</span>
-          </div>
-        </div>
-      </div>
+      <TopNav showBackButton showLogout />
       
       <div style={{ padding: '20px 16px' }}>
         <div style={{
