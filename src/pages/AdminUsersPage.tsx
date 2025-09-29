@@ -1,4 +1,3 @@
-import React from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -58,7 +57,7 @@ function AdminUsersPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} />
+      <TopNav showBackButton showLogout />
       
       <div className="main-content">
         <div className="page-header">
