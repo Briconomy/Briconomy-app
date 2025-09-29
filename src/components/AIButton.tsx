@@ -335,16 +335,15 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
       </div>
 
       {/* Quick Replies */}
-      {messages.length <= 2 && (
-        <div style={{ padding: '0 16px 16px', borderTop: '1px solid #e5e7eb' }}>
-          <p style={{ 
-            fontSize: '12px', 
-            color: '#6b7280', 
-            margin: '8px 0 4px 0',
-            fontWeight: '500'
-          }}>
-            {language === 'en' ? 'Quick suggestions:' : 'Iziphakamiso ezisheshayo:'}
-          </p>
+      <div style={{ padding: '0 16px 16px', borderTop: '1px solid #e5e7eb' }}>
+        <p style={{ 
+          fontSize: '12px', 
+          color: '#6b7280', 
+          margin: '8px 0 4px 0',
+          fontWeight: '500'
+        }}>
+          {language === 'en' ? 'Quick suggestions:' : 'Iziphakamiso ezisheshayo:'}
+        </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
             {quickReplies.map((reply) => (
               <button
@@ -373,7 +372,6 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
             ))}
           </div>
         </div>
-      )}
 
       {/* Input */}
       <div style={{ padding: '16px', borderTop: '1px solid #e5e7eb' }}>

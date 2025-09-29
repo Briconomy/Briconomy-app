@@ -245,22 +245,20 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
       </div>
 
       {/* Quick Replies */}
-      {messages.length === 1 && (
-        <div className="px-3 py-2 border-t border-gray-200">
-          <div className="flex flex-wrap gap-1">
-            {quickReplies.map((reply, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => handleQuickReply(reply)}
-                className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
-              >
-                {reply}
-              </button>
-            ))}
-          </div>
+      <div className="px-3 py-2 border-t border-gray-200">
+        <div className="flex flex-wrap gap-1">
+          {quickReplies.map((reply, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => handleQuickReply(reply)}
+              className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+            >
+              {reply}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Input */}
       <div className="p-3 border-t border-gray-200">
