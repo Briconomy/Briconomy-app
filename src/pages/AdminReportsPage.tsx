@@ -4,11 +4,8 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-
 function AdminReportsPage() {
   const { t } = useLanguage();
-  
-  console.log('AdminReportsPage loaded', t('nav.dashboard'));
   
   const navItems = [
     { path: '/admin', label: t('nav.dashboard') },
@@ -17,12 +14,12 @@ function AdminReportsPage() {
     { path: '/admin/reports', label: t('nav.reports'), active: true }
   ];
 
-  const { data: financialStats, loading: statsLoading } = useApi(() => adminApi.getFinancialStats());
-  const { data: availableReports, loading: reportsLoading } = useApi(() => adminApi.getAvailableReports());
-  const { data: reportActivities, loading: activitiesLoading } = useApi(() => adminApi.getReportActivities());
+  const { data: financialStats, loading: statsLoading, error: statsError } = useApi(() => adminApi.getFinancialStats());
+  const { data: availableReports, loading: reportsLoading, error: reportsError } = useApi(() => adminApi.getAvailableReports());
+  const { data: reportActivities, loading: activitiesLoading, error: activitiesError } = useApi(() => adminApi.getReportActivities());
 
   const getFinancialStatsData = () => {
-    if (statsLoading || !financialStats) {
+    if (statsError || !financialStats || (Array.isArray(financialStats) && financialStats.length === 0)) {
       return {
         monthlyRevenue: 'R840k',
         occupancyRate: '88%',
@@ -31,7 +28,16 @@ function AdminReportsPage() {
       };
     }
     
-    const stats = financialStats[0];
+    if (statsLoading) {
+      return {
+        monthlyRevenue: t('common.loading') + '...',
+        occupancyRate: t('common.loading') + '...',
+        collectionRate: t('common.loading') + '...',
+        activeReports: t('common.loading') + '...'
+      };
+    }
+    
+    const stats = Array.isArray(financialStats) ? financialStats[0] : financialStats;
     return {
       monthlyRevenue: `R${(stats.monthlyRevenue / 1000).toFixed(0)}k`,
       occupancyRate: `${stats.occupancyRate}%`,
@@ -39,6 +45,31 @@ function AdminReportsPage() {
       activeReports: stats.activeReports?.toString() || '24'
     };
   };
+
+  const getFallbackReports = () => [
+    { title: t('reports.financial') + ' ' + t('reports.title'), description: 'Monthly financial summary report', status: 'ready' },
+    { title: t('reports.occupancy') + ' ' + t('reports.title'), description: 'Property occupancy analysis report', status: 'pending' },
+    { title: t('reports.maintenance') + ' ' + t('reports.title'), description: 'Maintenance cost analysis report', status: 'ready' },
+    { title: t('reports.performance') + ' ' + t('reports.title'), description: 'System performance metrics report', status: 'processing' }
+  ];
+
+  const getFallbackActivities = () => [
+    { 
+      action: t('reports.financial') + ' ' + t('reports.title') + ' ' + t('reports.generate'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      details: 'System generated monthly report automatically'
+    },
+    { 
+      action: t('reports.occupancy') + ' analysis updated',
+      timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+      details: 'Automated analysis completed successfully'
+    },
+    { 
+      action: t('reports.maintenance') + ' ' + t('reports.title') + ' ' + t('reports.generate'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+      details: 'Weekly maintenance summary completed'
+    }
+  ];
 
   const formatActivityTime = (timestamp: string) => {
     const now = new Date();
@@ -63,13 +94,19 @@ function AdminReportsPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} />
+      <TopNav showBackButton />
       
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">{t('reports.title')} & {t('nav.analytics')}</div>
           <div className="page-subtitle">{t('reports.title')} {t('dashboard.analytics_insights')}</div>
         </div>
+
+        {(statsError || reportsError || activitiesError) && (
+          <div className="alert alert-warning mb-4">
+            <p>API connection failed - Using fallback data</p>
+          </div>
+        )}
         
         <div className="dashboard-grid">
           <StatCard value={stats.monthlyRevenue} label={t('payments.monthly_revenue')} />
@@ -96,8 +133,8 @@ function AdminReportsPage() {
               </div>
             </div>
           ) : (
-            availableReports?.map((report: any, index: number) => (
-              <div key={index} className="list-item">
+            (availableReports || getFallbackReports()).map((report: { title: string; description: string; status: string }, index: number) => (
+              <div key={`report-${report.title}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{report.title}</h4>
                   <p>{report.description}</p>
@@ -135,7 +172,7 @@ function AdminReportsPage() {
             </div>
           </div>
           
-          <button className="btn-primary btn-block">{t('reports.generate')}</button>
+          <button type="button" className="btn-primary btn-block">{t('reports.generate')}</button>
         </div>
 
         <div className="data-table">
@@ -149,8 +186,8 @@ function AdminReportsPage() {
               </div>
             </div>
           ) : (
-            reportActivities?.map((activity: any, index: number) => (
-              <div key={index} className="list-item">
+            (reportActivities || getFallbackActivities()).map((activity: { action: string; timestamp: string; details: string }, index: number) => (
+              <div key={`activity-${activity.timestamp}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{activity.action}</h4>
                   <p>{formatActivityTime(activity.timestamp)} - {activity.details}</p>
