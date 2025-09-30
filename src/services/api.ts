@@ -46,7 +46,16 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 }
 
 export const propertiesApi = {
-  getAll: () => apiRequest('/api/properties'),
+  getAll: (filters: Record<string, unknown> = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
+    });
+    const url = params.toString() ? `/api/properties?${params.toString()}` : '/api/properties';
+    return apiRequest(url);
+  },
   getById: (id: string) => apiRequest(`/api/properties/${id}`),
   create: (data: Record<string, unknown>) => apiRequest('/api/properties', {
     method: 'POST',
@@ -142,7 +151,16 @@ export const reportsApi = {
 };
 
 export const dashboardApi = {
-  getStats: () => apiRequest('/api/dashboard/stats'),
+  getStats: (filters: Record<string, unknown> = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
+    });
+    const url = params.toString() ? `/api/dashboard/stats?${params.toString()}` : '/api/dashboard/stats';
+    return apiRequest(url);
+  },
 };
 
 export const adminApi = {

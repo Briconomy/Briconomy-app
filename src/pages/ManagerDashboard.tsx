@@ -19,20 +19,20 @@ function ManagerDashboard() {
   const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
   const [userLoaded, setUserLoaded] = useState(false);
 
-  // API calls for real-time data
+  // API calls for real-time data - FILTERED BY MANAGER ID
   const { data: dashboardStats, loading: statsLoading, error: statsError } = useApi(
-    () => userLoaded ? dashboardApi.getStats() : Promise.resolve(null),
-    [userLoaded]
+    () => userLoaded && user?.id ? dashboardApi.getStats({ managerId: user.id }) : Promise.resolve(null),
+    [user?.id, userLoaded]
   );
 
   const { data: properties, loading: propertiesLoading, error: propertiesError } = useApi(
-    () => userLoaded && user?.id ? propertiesApi.getAll() : Promise.resolve([]),
+    () => userLoaded && user?.id ? propertiesApi.getAll({ managerId: user.id }) : Promise.resolve([]),
     [user?.id, userLoaded]
   );
 
   const { data: maintenanceRequests, loading: maintenanceLoading, error: maintenanceError } = useApi(
-    () => userLoaded ? maintenanceApi.getAll({ status: 'pending' }) : Promise.resolve([]),
-    [userLoaded]
+    () => userLoaded && user?.id ? maintenanceApi.getAll({ status: 'pending', managerId: user.id }) : Promise.resolve([]),
+    [user?.id, userLoaded]
   );
 
   useEffect(() => {
