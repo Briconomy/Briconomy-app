@@ -8,6 +8,7 @@ import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
+import NotificationWidget from '../components/NotificationWidget.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function ManagerDashboard() {
@@ -90,6 +91,8 @@ function ManagerDashboard() {
               userRole="manager"
             />
         </div>
+        
+        <NotificationWidget />
       </div>
       
       <BottomNav items={navItems} responsive={false} />

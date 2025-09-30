@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
+import NotificationWidget from '../components/NotificationWidget.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
@@ -232,6 +233,8 @@ return (
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
             />
         </div>
+        
+        <NotificationWidget />
       </div>
       
       <BottomNav items={navItems} responsive={false} />
