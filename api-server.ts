@@ -56,7 +56,82 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
+// WebSocket connection management
+const connectedUsers = new Map<string, WebSocket>();
+
+// Broadcast notification to specific users
+function broadcastToUsers(userIds: string[], notification: any) {
+  const message = JSON.stringify({
+    type: 'notification',
+    data: notification
+  });
+  
+  userIds.forEach(userId => {
+    const socket = connectedUsers.get(userId);
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      try {
+        socket.send(message);
+      } catch (error) {
+        console.error(`Failed to send message to user ${userId}:`, error);
+        // Remove dead connection
+        connectedUsers.delete(userId);
+      }
+    }
+  });
+}
+
+// Broadcast to all connected users
+function broadcastToAll(notification: any) {
+  const message = JSON.stringify({
+    type: 'notification',
+    data: notification
+  });
+  
+  connectedUsers.forEach((socket, userId) => {
+    if (socket.readyState === WebSocket.OPEN) {
+      try {
+        socket.send(message);
+      } catch (error) {
+        console.error(`Failed to broadcast to user ${userId}:`, error);
+        connectedUsers.delete(userId);
+      }
+    } else {
+      // Clean up dead connections
+      connectedUsers.delete(userId);
+    }
+  });
+}
+
 serve(async (req) => {
+  // Handle WebSocket upgrade
+  if (req.headers.get("upgrade") === "websocket") {
+    const url = new URL(req.url);
+    const userId = url.searchParams.get("userId");
+    
+    if (!userId) {
+      return new Response("Missing userId parameter", { status: 400 });
+    }
+    
+    const { socket, response } = Deno.upgradeWebSocket(req);
+    
+    socket.onopen = () => {
+      console.log(`WebSocket connected for user: ${userId}`);
+      connectedUsers.set(userId, socket);
+    };
+    
+    socket.onclose = () => {
+      console.log(`WebSocket disconnected for user: ${userId}`);
+      connectedUsers.delete(userId);
+    };
+    
+    socket.onerror = (error) => {
+      console.error(`WebSocket error for user ${userId}:`, error);
+      connectedUsers.delete(userId);
+    };
+    
+    return response;
+  }
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -337,7 +412,8 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
-        const notification = await createNotification(body);
+        const broadcaster = { broadcastToUsers };
+        const notification = await createNotification(body, broadcaster);
         return new Response(JSON.stringify(notification), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201

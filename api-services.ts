@@ -394,7 +394,10 @@ export async function getNotifications(userId: string) {
   }
 }
 
-export async function createNotification(notificationData: Record<string, unknown>) {
+export async function createNotification(
+  notificationData: Record<string, unknown>, 
+  broadcaster?: { broadcastToUsers: (userIds: string[], notification: unknown) => void }
+) {
   try {
     await connectToMongoDB();
     const notifications = getCollection("notifications");
@@ -410,26 +413,62 @@ export async function createNotification(notificationData: Record<string, unknow
         userType: { $in: targetUserTypes } 
       }).toArray();
       
-      const notificationPromises = targetUsers.map(user => 
-        notifications.insertOne({
+      const createdNotifications = [];
+      
+      for (const user of targetUsers) {
+        const notificationDoc = {
           userId: user._id,
           title: notificationData.title,
           message: notificationData.message,
           type: notificationData.type,
           read: false,
           createdAt: new Date()
-        })
-      );
+        };
+        
+        const result = await notifications.insertOne(notificationDoc);
+        
+        // Create notification object for broadcasting
+        const createdNotification = {
+          _id: result.insertedId,
+          userId: String(user._id),
+          title: notificationData.title,
+          message: notificationData.message,
+          type: notificationData.type,
+          read: false,
+          createdAt: notificationDoc.createdAt.toISOString()
+        };
+        
+        createdNotifications.push(createdNotification);
+        
+        // Broadcast to this specific user if broadcaster is available
+        if (broadcaster) {
+          broadcaster.broadcastToUsers([String(user._id)], createdNotification);
+        }
+      }
       
-      await Promise.all(notificationPromises);
-      return { success: true, count: targetUsers.length };
+      return { success: true, count: targetUsers.length, notifications: createdNotifications };
     } else {
       // Single user notification
-      const result = await notifications.insertOne({ 
+      const notificationDoc = { 
         ...notificationData, 
         read: false, 
         createdAt: new Date() 
-      });
+      };
+      
+      const result = await notifications.insertOne(notificationDoc);
+      
+      const createdNotification = {
+        _id: result.insertedId,
+        ...notificationDoc,
+        userId: String(notificationData.userId),
+        createdAt: notificationDoc.createdAt.toISOString()
+      };
+      
+      // Broadcast to single user if broadcaster is available
+      if (broadcaster && notificationData.userId) {
+        broadcaster.broadcastToUsers([String(notificationData.userId)], createdNotification);
+      }
+      
       return result;
     }
   } catch (error) {
