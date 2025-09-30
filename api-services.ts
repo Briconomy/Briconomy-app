@@ -109,12 +109,13 @@ export async function registerUser(userData: Record<string, unknown>) {
 }
 
 // Properties API
-export async function getProperties() {
+export async function getProperties(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const properties = getCollection("properties");
-  const rows = await properties.find({}).toArray();
-  return mapDocs(rows);
+    const normalizedFilters = normalizeFilters(filters);
+    const rows = await properties.find(normalizedFilters).toArray();
+    return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching properties:", error);
     throw error;
@@ -281,8 +282,22 @@ export async function getMaintenanceRequests(filters: Record<string, unknown> = 
   try {
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
-  const rows = await requests.find(normalizeFilters(filters) as Record<string, unknown>).toArray();
-  return mapDocs(rows);
+    const properties = getCollection("properties");
+    
+    let queryFilters = normalizeFilters(filters) as Record<string, unknown>;
+    
+    // If managerId is provided, get properties for that manager and filter by those propertyIds
+    if (filters.managerId) {
+      const managerProperties = await properties.find({ managerId: toId(filters.managerId) }).toArray();
+      const propertyIds = managerProperties.map(p => p._id);
+      
+      // Replace managerId filter with propertyId filter
+      delete queryFilters.managerId;
+      queryFilters.propertyId = { $in: propertyIds };
+    }
+    
+    const rows = await requests.find(queryFilters).toArray();
+    return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching maintenance requests:", error);
     throw error;
@@ -504,7 +519,7 @@ export async function updateNotification(id: string, updateData: Record<string, 
 }
 
 // Analytics API
-export async function getDashboardStats() {
+export async function getDashboardStats(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     
@@ -514,16 +529,41 @@ export async function getDashboardStats() {
     const payments = getCollection("payments");
     const maintenanceRequests = getCollection("maintenance_requests");
     
-    const totalProperties = await properties.countDocuments({});
-    const totalUnits = await units.countDocuments({});
-    const occupiedUnits = await units.countDocuments({ status: 'occupied' });
-  const activeLeases = await leases.countDocuments({ status: 'active' });
+    const normalizedFilters = normalizeFilters(filters);
+    
+    // If managerId filter is provided, get only properties for that manager
+    let propertyFilter = {};
+    let propertyIds = [];
+    
+    if (normalizedFilters.managerId) {
+      propertyFilter = { managerId: normalizedFilters.managerId };
+      const managerProperties = await properties.find(propertyFilter).toArray();
+      propertyIds = managerProperties.map(p => p._id);
+    }
+    
+    const totalProperties = await properties.countDocuments(propertyFilter);
+    
+    // For units, leases, payments - filter by propertyId if manager-specific
+    const unitFilter = propertyIds.length > 0 ? { propertyId: { $in: propertyIds } } : {};
+    const totalUnits = await units.countDocuments(unitFilter);
+    const occupiedUnits = await units.countDocuments({ ...unitFilter, status: 'occupied' });
+    
+    const leaseFilter = propertyIds.length > 0 ? { propertyId: { $in: propertyIds } } : {};
+    const activeLeases = await leases.countDocuments({ ...leaseFilter, status: 'active' });
+    
+    const revenueMatch = propertyIds.length > 0 
+      ? { status: 'paid', propertyId: { $in: propertyIds } }
+      : { status: 'paid' };
     const totalRevenue = await payments.aggregate([
-      { $match: { status: 'paid' } },
+      { $match: revenueMatch },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]).toArray();
     
+    const maintenanceMatch = propertyIds.length > 0 
+      ? { propertyId: { $in: propertyIds } }
+      : {};
     const maintenanceStats = await maintenanceRequests.aggregate([
+      { $match: maintenanceMatch },
       {
         $group: {
           _id: '$status',
@@ -538,10 +578,10 @@ export async function getDashboardStats() {
       occupiedUnits,
       occupancyRate: totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0,
       activeLeases,
-  totalRevenue: (totalRevenue[0] as Record<string, unknown> | undefined)?.total as number || 0,
+      totalRevenue: (totalRevenue[0] as Record<string, unknown> | undefined)?.total as number || 0,
       maintenanceStats
     };
-} catch (error) {
+  } catch (error) {
     console.error("Error fetching dashboard stats:", error);
     throw error;
   }

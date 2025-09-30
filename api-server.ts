@@ -185,7 +185,8 @@ serve(async (req) => {
     // Properties endpoints
     if (path[0] === 'api' && path[1] === 'properties') {
       if (req.method === 'GET') {
-        const properties = await getProperties();
+        const filters = Object.fromEntries(url.searchParams);
+        const properties = await getProperties(filters);
         return new Response(JSON.stringify(properties), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -415,7 +416,8 @@ serve(async (req) => {
     // Dashboard stats endpoint
     if (path[0] === 'api' && path[1] === 'dashboard' && path[2] === 'stats') {
       if (req.method === 'GET') {
-        const stats = await getDashboardStats();
+        const filters = Object.fromEntries(url.searchParams);
+        const stats = await getDashboardStats(filters);
         return new Response(JSON.stringify(stats), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
