@@ -266,31 +266,88 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto mx-4">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Announcements</h1>
-            <div className="flex items-center space-x-4">
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        maxWidth: '90vw',
+        width: '100%',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        margin: '0 16px'
+      }}>
+        <div style={{ padding: '24px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px'
+          }}>
+            <h1 style={{
+              fontSize: '28px',
+              fontWeight: 'bold',
+              color: '#111827',
+              margin: 0
+            }}>Announcements</h1>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
               <button
                 type="button"
                 onClick={() => setShowQuickOptions(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                style={{
+                  backgroundColor: '#16a34a',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
               >
-                <span>Quick Options</span>
+                Quick Options
               </button>
               <button
                 type="button"
                 onClick={() => setShowCreateForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
               >
-                <span>Custom Announcement</span>
+                Custom Announcement
               </button>
               {onClose && (
                 <button 
                   type="button"
                   onClick={onClose}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  style={{
+                    color: '#6b7280',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    padding: '4px 8px'
+                  }}
                 >
                   ×
                 </button>
@@ -299,7 +356,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
           </div>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fca5a5',
+              color: '#b91c1c',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '16px'
+            }}>
               {error}
             </div>
           )}
@@ -307,51 +371,156 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
 
       {/* Quick Options Modal */}
       {showQuickOptions && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Quick Announcement Options</h2>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '600px',
+            margin: '0 16px',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: 'bold',
+                margin: 0
+              }}>Quick Announcement Options</h2>
               <button
                 type="button"
                 onClick={() => setShowQuickOptions(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                style={{
+                  color: '#6b7280',
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px'
+                }}
               >
                 ×
               </button>
             </div>
             
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {quickAnnouncementTemplates.map((template, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => selectTemplate(template)}
-                  className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors"
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{template.title}</h3>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(template.priority)}`}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px'
+                  }}>
+                    <h3 style={{
+                      fontWeight: '600',
+                      color: '#111827',
+                      margin: 0
+                    }}>{template.title}</h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        borderRadius: '12px',
+                        backgroundColor: template.priority === 'high' ? '#fef2f2' : template.priority === 'medium' ? '#fffbeb' : '#f0fdf4',
+                        color: template.priority === 'high' ? '#dc2626' : template.priority === 'medium' ? '#d97706' : '#16a34a'
+                      }}>
                         {template.priority}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span style={{
+                        fontSize: '12px',
+                        color: '#6b7280'
+                      }}>
                         {template.targetAudience}
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-2">{template.message}</p>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    margin: 0,
+                    lineHeight: '1.4',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}>{template.message}</p>
                 </button>
               ))}
             </div>
 
-            <div className="mt-6 pt-4 border-t">
+            <div style={{
+              marginTop: '24px',
+              paddingTop: '16px',
+              borderTop: '1px solid #e5e7eb'
+            }}>
               <button
                 type="button"
                 onClick={() => {
                   setShowQuickOptions(false);
                   setShowCreateForm(true);
                 }}
-                className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#f3f4f6',
+                  color: '#374151',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e5e7eb';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
               >
                 Create Custom Announcement
               </button>
@@ -362,13 +531,44 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
 
       {/* Create Form Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h2 className="text-xl font-bold mb-4">Create New Announcement</h2>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '500px',
+            margin: '0 16px',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              marginBottom: '16px',
+              margin: '0 0 16px 0'
+            }}>Create New Announcement</h2>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '4px'
+                }}>
                   Title
                 </label>
                 <input
@@ -376,13 +576,34 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '4px'
+                }}>
                   Message
                 </label>
                 <textarea
@@ -390,21 +611,60 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                   value={formData.message}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '4px'
+                  }}>
                     Category
                   </label>
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      width: '100%',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      outline: 'none',
+                      backgroundColor: 'white'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#3b82f6';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   >
                     <option value="general">General</option>
                     <option value="maintenance">Maintenance</option>
@@ -414,14 +674,36 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '4px'
+                  }}>
                     Priority
                   </label>
                   <select
                     name="priority"
                     value={formData.priority}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      width: '100%',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      outline: 'none',
+                      backgroundColor: 'white'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#3b82f6';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -431,14 +713,36 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '4px'
+                }}>
                   Target Audience
                 </label>
                 <select
                   name="targetAudience"
                   value={formData.targetAudience}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    backgroundColor: 'white'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 >
                   <option value="all">All Users</option>
                   <option value="tenants">Tenants Only</option>
@@ -448,7 +752,13 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '4px'
+                }}>
                   Schedule For (Optional)
                 </label>
                 <input
@@ -456,22 +766,76 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                   name="scheduledFor"
                   value={formData.scheduledFor}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                paddingTop: '16px' 
+              }}>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  style={{
+                    flex: 1,
+                    backgroundColor: loading ? '#9ca3af' : '#2563eb',
+                    color: 'white',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontWeight: '500',
+                    opacity: loading ? 0.5 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.backgroundColor = '#1d4ed8';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                    }
+                  }}
                 >
                   {formData.scheduledFor ? 'Schedule' : 'Send Now'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#d1d5db',
+                    color: '#374151',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#9ca3af';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#d1d5db';
+                  }}
                 >
                   Cancel
                 </button>
@@ -482,38 +846,90 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
       )}
 
           {/* Announcements List */}
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {announcements.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No announcements yet</p>
-                <p className="text-gray-400">Create your first announcement to get started</p>
+              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <p style={{ color: '#6b7280', fontSize: '18px', margin: '0 0 8px 0' }}>No announcements yet</p>
+                <p style={{ color: '#9ca3af', margin: 0 }}>Create your first announcement to get started</p>
               </div>
             ) : (
               announcements.map((announcement) => (
-                <div key={announcement._id} className="bg-gray-50 border border-gray-200 rounded-lg p-6 shadow-sm">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                <div key={announcement._id} style={{
+                  backgroundColor: '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        backgroundColor: '#dbeafe',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#2563eb',
+                        fontWeight: 'bold'
+                      }}>
                         {getCategoryIcon(announcement.category)}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{announcement.title}</h3>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <h3 style={{
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#111827',
+                          margin: '0 0 4px 0'
+                        }}>{announcement.title}</h3>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '14px',
+                          color: '#6b7280'
+                        }}>
                           <span>To: {announcement.targetAudience}</span>
                           <span>•</span>
                           <span>{announcement.category}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(announcement.priority)}`}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        borderRadius: '12px',
+                        backgroundColor: announcement.priority === 'high' ? '#fef2f2' : announcement.priority === 'medium' ? '#fffbeb' : '#f0fdf4',
+                        color: announcement.priority === 'high' ? '#dc2626' : announcement.priority === 'medium' ? '#d97706' : '#16a34a'
+                      }}>
                         {announcement.priority}
                       </span>
                       {announcement.status === 'scheduled' && announcement._id && (
                         <button
                           type="button"
                           onClick={() => sendNow(announcement._id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          style={{
+                            color: '#2563eb',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#1d4ed8';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#2563eb';
+                          }}
                         >
                           Send Now
                         </button>
@@ -521,9 +937,20 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                     </div>
                   </div>
                   
-                  <p className="text-gray-700 mb-3">{announcement.message}</p>
+                  <p style={{
+                    color: '#374151',
+                    marginBottom: '12px',
+                    lineHeight: '1.5',
+                    margin: '0 0 12px 0'
+                  }}>{announcement.message}</p>
                   
-                  <div className="flex justify-between items-center text-sm text-gray-500">
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '14px',
+                    color: '#6b7280'
+                  }}>
                     <div>
                       {announcement.status === 'scheduled' && announcement.scheduledFor ? (
                         <span>Scheduled for: {new Date(announcement.scheduledFor).toLocaleString()}</span>
@@ -531,8 +958,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                         <span>Sent: {new Date(announcement.createdAt).toLocaleString()}</span>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(announcement.status)}`}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        backgroundColor: announcement.status === 'sent' ? '#dcfce7' : announcement.status === 'scheduled' ? '#dbeafe' : '#f3f4f6',
+                        color: announcement.status === 'sent' ? '#166534' : announcement.status === 'scheduled' ? '#1e40af' : '#374151'
+                      }}>
                         {announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}
                       </span>
                     </div>
