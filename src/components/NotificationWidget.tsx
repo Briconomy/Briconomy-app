@@ -20,6 +20,25 @@ const NotificationWidget: React.FC = () => {
   useEffect(() => {
     if (user?.id) {
       fetchNotifications();
+      
+      // Set up polling every 30 seconds for new notifications
+      const pollInterval = setInterval(() => {
+        fetchNotifications();
+      }, 30000);
+      
+      // Refresh notifications when user returns to tab
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          fetchNotifications();
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      return () => {
+        clearInterval(pollInterval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
   }, [user?.id]);
 
@@ -166,16 +185,46 @@ const NotificationWidget: React.FC = () => {
               </span>
             )}
           </div>
-          <span 
-            style={{
-              fontSize: '18px',
-              color: '#6c757d',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.3s ease'
-            }}
-          >
-            ▼
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                fetchNotifications();
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: '#6c757d',
+                padding: '4px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e9ecef';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              title="Refresh notifications"
+            >
+              🔄
+            </button>
+            <span 
+              style={{
+                fontSize: '18px',
+                color: '#6c757d',
+                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease'
+              }}
+            >
+              ▼
+            </span>
+          </div>
         </div>
 
         {loading ? (
