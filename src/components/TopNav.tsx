@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { LanguageSwitcher, useLanguage } from '../contexts/LanguageContext.tsx';
+import NotificationDisplay from './NotificationDisplay.tsx';
 
 interface TopNavProps {
   showBackButton?: boolean;
@@ -40,6 +41,7 @@ function TopNav({ showBackButton = false, backLink = '/', showLogout = false }: 
       
       <div className="nav-right">
         <LanguageSwitcher />
+        {user && user.userType !== 'admin' && <NotificationDisplay />}
         {showLogout && (
           <button type="button" onClick={handleLogout} className="logout-btn">{t('nav.logout')}</button>
         )}
