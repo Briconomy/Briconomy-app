@@ -19,6 +19,7 @@ import {
   createReport,
   getNotifications,
   createNotification,
+  updateNotification,
   getDashboardStats,
   loginUser,
   registerUser,
@@ -341,7 +342,13 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
         });
-}
+      } else if (req.method === 'PUT' && path[2]) {
+        const body = await req.json();
+        const result = await updateNotification(path[2], body);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     // Admin endpoints

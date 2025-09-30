@@ -398,10 +398,68 @@ export async function createNotification(notificationData: Record<string, unknow
   try {
     await connectToMongoDB();
     const notifications = getCollection("notifications");
-  const result = await notifications.insertOne({ ...(notificationData as Record<string, unknown>), read: false, createdAt: new Date() });
-    return result;
+    const users = getCollection("users");
+    
+    // If this is an announcement notification, send to multiple users based on targetAudience
+    if (notificationData.type === 'announcement' && notificationData.targetAudience) {
+      const targetUserTypes = notificationData.targetAudience === 'all' 
+        ? ['manager', 'tenant', 'caretaker']
+        : [notificationData.targetAudience];
+      
+      const targetUsers = await users.find({ 
+        userType: { $in: targetUserTypes } 
+      }).toArray();
+      
+      const notificationPromises = targetUsers.map(user => 
+        notifications.insertOne({
+          userId: user._id,
+          title: notificationData.title,
+          message: notificationData.message,
+          type: notificationData.type,
+          read: false,
+          createdAt: new Date()
+        })
+      );
+      
+      await Promise.all(notificationPromises);
+      return { success: true, count: targetUsers.length };
+    } else {
+      // Single user notification
+      const result = await notifications.insertOne({ 
+        ...notificationData, 
+        read: false, 
+        createdAt: new Date() 
+      });
+      return result;
+    }
   } catch (error) {
     console.error("Error creating notification:", error);
+    throw error;
+  }
+}
+
+export async function updateNotification(id: string, updateData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const notifications = getCollection("notifications");
+    
+    const result = await notifications.updateOne(
+      { _id: toId(id) },
+      { 
+        $set: { 
+          ...updateData,
+          updatedAt: new Date()
+        } 
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      throw new Error("Notification not found");
+    }
+    
+    return mapDoc(await notifications.findOne({ _id: toId(id) }));
+  } catch (error) {
+    console.error("Error updating notification:", error);
     throw error;
   }
 }
