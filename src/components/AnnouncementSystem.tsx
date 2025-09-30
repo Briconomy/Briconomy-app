@@ -274,85 +274,112 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
       bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
-      zIndex: 1000
+      zIndex: 1000,
+      padding: '16px',
+      paddingTop: '60px'
     }}>
       <div style={{
         backgroundColor: 'white',
         borderRadius: '12px',
-        maxWidth: '90vw',
+        maxWidth: '480px',
         width: '100%',
-        maxHeight: '90vh',
+        maxHeight: '80vh',
         overflowY: 'auto',
-        margin: '0 16px'
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
       }}>
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '20px' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '24px'
+            marginBottom: '20px'
           }}>
             <h1 style={{
-              fontSize: '28px',
+              fontSize: '20px',
               fontWeight: 'bold',
               color: '#111827',
               margin: 0
             }}>Announcements</h1>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px'
-            }}>
-              <button
+            {onClose && (
+              <button 
                 type="button"
-                onClick={() => setShowQuickOptions(true)}
+                onClick={onClose}
                 style={{
-                  backgroundColor: '#16a34a',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
+                  color: '#6b7280',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
                   border: 'none',
+                  background: 'none',
                   cursor: 'pointer',
-                  fontWeight: '500'
+                  padding: '4px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                Quick Options
+                ×
               </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(true)}
-                style={{
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                Custom Announcement
-              </button>
-              {onClose && (
-                <button 
-                  type="button"
-                  onClick={onClose}
-                  style={{
-                    color: '#6b7280',
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    border: 'none',
-                    background: 'none',
-                    cursor: 'pointer',
-                    padding: '4px 8px'
-                  }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
+            )}
+          </div>
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowQuickOptions(true)}
+              style={{
+                backgroundColor: '#16a34a',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '500',
+                fontSize: '14px',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#15803d';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#16a34a';
+              }}
+            >
+              Quick Options
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(true)}
+              style={{
+                backgroundColor: '#2563eb',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '500',
+                fontSize: '14px',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1d4ed8';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+              }}
+            >
+              Custom Announcement
+            </button>
           </div>
 
           {error && (
@@ -379,17 +406,18 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          zIndex: 1001
+          zIndex: 1001,
+          padding: '16px',
+          paddingTop: '60px'
         }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
-            padding: '24px',
+            padding: '20px',
             width: '100%',
-            maxWidth: '600px',
-            margin: '0 16px',
+            maxWidth: '400px',
             maxHeight: '80vh',
             overflowY: 'auto'
           }}>
@@ -400,21 +428,28 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
               marginBottom: '16px'
             }}>
               <h2 style={{
-                fontSize: '20px',
+                fontSize: '18px',
                 fontWeight: 'bold',
                 margin: 0
-              }}>Quick Announcement Options</h2>
+              }}>Quick Templates</h2>
               <button
                 type="button"
                 onClick={() => setShowQuickOptions(false)}
                 style={{
                   color: '#6b7280',
-                  fontSize: '24px',
+                  fontSize: '18px',
                   fontWeight: 'bold',
                   border: 'none',
                   background: 'none',
                   cursor: 'pointer',
-                  padding: '4px 8px'
+                  padding: '4px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 ×
@@ -539,28 +574,57 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
           bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          zIndex: 1001
+          zIndex: 1001,
+          padding: '16px',
+          paddingTop: '60px'
         }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
-            padding: '24px',
+            padding: '20px',
             width: '100%',
-            maxWidth: '500px',
-            margin: '0 16px',
-            maxHeight: '90vh',
+            maxWidth: '400px',
+            maxHeight: '80vh',
             overflowY: 'auto'
           }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              marginBottom: '16px',
-              margin: '0 0 16px 0'
-            }}>Create New Announcement</h2>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                margin: 0
+              }}>Create Announcement</h2>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                style={{
+                  color: '#6b7280',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                ×
+              </button>
+            </div>
             
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label style={{
                   display: 'block',
@@ -610,12 +674,12 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                   name="message"
                   value={formData.message}
                   onChange={handleInputChange}
-                  rows={4}
+                  rows={3}
                   style={{
                     width: '100%',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    padding: '8px 10px',
                     fontSize: '14px',
                     outline: 'none',
                     resize: 'vertical',
@@ -633,7 +697,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{
                     display: 'block',
@@ -787,8 +851,8 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
 
               <div style={{ 
                 display: 'flex', 
-                gap: '12px', 
-                paddingTop: '16px' 
+                gap: '8px', 
+                paddingTop: '12px' 
               }}>
                 <button
                   type="submit"
@@ -797,11 +861,12 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                     flex: 1,
                     backgroundColor: loading ? '#9ca3af' : '#2563eb',
                     color: 'white',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    borderRadius: '6px',
                     border: 'none',
                     cursor: loading ? 'not-allowed' : 'pointer',
                     fontWeight: '500',
+                    fontSize: '14px',
                     opacity: loading ? 0.5 : 1
                   }}
                   onMouseEnter={(e) => {
@@ -824,11 +889,12 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                     flex: 1,
                     backgroundColor: '#d1d5db',
                     color: '#374151',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    borderRadius: '6px',
                     border: 'none',
                     cursor: 'pointer',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    fontSize: '14px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#9ca3af';
