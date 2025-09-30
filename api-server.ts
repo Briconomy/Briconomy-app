@@ -60,24 +60,38 @@ const corsHeaders = {
 const connectedUsers = new Map<string, WebSocket>();
 
 // Broadcast notification to specific users
-function broadcastToUsers(userIds: string[], notification: any) {
+function broadcastToUsers(userIds: string[], notification: unknown) {
+  console.log(`Broadcasting notification to users: ${userIds.join(', ')}`);
+  console.log(`Connected users: ${Array.from(connectedUsers.keys()).join(', ')}`);
+  
   const message = JSON.stringify({
     type: 'notification',
     data: notification
   });
+  
+  let successCount = 0;
+  let failCount = 0;
   
   userIds.forEach(userId => {
     const socket = connectedUsers.get(userId);
     if (socket && socket.readyState === WebSocket.OPEN) {
       try {
         socket.send(message);
+        successCount++;
+        console.log(`Message sent to user ${userId}`);
       } catch (error) {
+        failCount++;
         console.error(`Failed to send message to user ${userId}:`, error);
         // Remove dead connection
         connectedUsers.delete(userId);
       }
+    } else {
+      failCount++;
+      console.log(`User ${userId} not connected or socket not ready`);
     }
   });
+  
+  console.log(`Broadcast complete: ${successCount} success, ${failCount} failed`);
 }
 
 // Broadcast to all connected users
@@ -108,7 +122,10 @@ serve(async (req) => {
     const url = new URL(req.url);
     const userId = url.searchParams.get("userId");
     
+    console.log(`🔌 WebSocket upgrade request received for userId: ${userId}`);
+    
     if (!userId) {
+      console.log("❌ WebSocket upgrade rejected: Missing userId parameter");
       return new Response("Missing userId parameter", { status: 400 });
     }
     
@@ -116,12 +133,14 @@ serve(async (req) => {
     
     socket.onopen = () => {
       console.log(`WebSocket connected for user: ${userId}`);
+      console.log(`Total connected users: ${connectedUsers.size + 1}`);
       connectedUsers.set(userId, socket);
     };
     
     socket.onclose = () => {
       console.log(`WebSocket disconnected for user: ${userId}`);
       connectedUsers.delete(userId);
+      console.log(`Total connected users: ${connectedUsers.size}`);
     };
     
     socket.onerror = (error) => {
@@ -540,6 +559,56 @@ serve(async (req) => {
         return new Response(JSON.stringify(user), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
+        });
+      }
+    }
+
+    // Debug endpoint to show connected WebSocket users
+    if (path[0] === 'api' && path[1] === 'debug' && path[2] === 'connections') {
+      if (req.method === 'GET') {
+        const connections = Array.from(connectedUsers.entries()).map(([userId, socket]) => ({
+          userId,
+          readyState: socket.readyState,
+          readyStateText: socket.readyState === WebSocket.OPEN ? 'OPEN' : 
+                         socket.readyState === WebSocket.CONNECTING ? 'CONNECTING' :
+                         socket.readyState === WebSocket.CLOSING ? 'CLOSING' : 'CLOSED'
+        }));
+        
+        return new Response(JSON.stringify({
+          totalConnections: connectedUsers.size,
+          connections
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Test endpoint to send a notification to all connected users
+    if (path[0] === 'api' && path[1] === 'debug' && path[2] === 'test-notification') {
+      if (req.method === 'POST') {
+        const testNotification = {
+          _id: 'test-' + Date.now(),
+          userId: 'test',
+          title: 'Test Notification',
+          message: 'This is a test real-time notification!',
+          type: 'announcement',
+          read: false,
+          createdAt: new Date().toISOString()
+        };
+
+        // Send to all connected users
+        const allUserIds = Array.from(connectedUsers.keys());
+        console.log(`🧪 Test notification - targeting users: ${allUserIds.join(', ')}`);
+        
+        broadcastToUsers(allUserIds, testNotification);
+        
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Test notification sent',
+          targetedUsers: allUserIds,
+          notification: testNotification
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     }
