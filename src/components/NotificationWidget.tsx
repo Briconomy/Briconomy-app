@@ -21,12 +21,54 @@ const NotificationWidget: React.FC = () => {
     if (user?.id) {
       fetchNotifications();
       
-      // Set up polling every 30 seconds for new notifications
-      const pollInterval = setInterval(() => {
-        fetchNotifications();
-      }, 30000);
+      // Set up WebSocket connection for real-time notifications
+      const wsProtocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = globalThis.location.hostname === 'localhost' ? 'localhost:8816' : globalThis.location.host;
+      const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
       
-      // Refresh notifications when user returns to tab
+      const ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log('WebSocket connected for notifications');
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'notification') {
+            // Add new notification to the top of the list
+            setNotifications(prev => {
+              const newNotification = {
+                _id: String(data.data._id),
+                userId: data.data.userId,
+                title: data.data.title,
+                message: data.data.message,
+                type: data.data.type,
+                read: data.data.read,
+                createdAt: data.data.createdAt
+              };
+              
+              // Avoid duplicates by checking if notification already exists
+              const exists = prev.some(n => n._id === newNotification._id);
+              if (exists) return prev;
+              
+              return [newNotification, ...prev.slice(0, 9)]; // Keep only latest 10
+            });
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+      
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
+      // Refresh notifications when user returns to tab (fallback)
       const handleVisibilityChange = () => {
         if (!document.hidden) {
           fetchNotifications();
@@ -36,7 +78,7 @@ const NotificationWidget: React.FC = () => {
       document.addEventListener('visibilitychange', handleVisibilityChange);
       
       return () => {
-        clearInterval(pollInterval);
+        ws.close();
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }
