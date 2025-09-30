@@ -145,6 +145,26 @@ const NotificationWidget: React.FC = () => {
     }
   };
 
+  const deleteNotification = async (notificationId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the read action
+    
+    try {
+      const API_BASE_URL = getApiBaseUrl();
+      const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete notification');
+      
+      // Remove the notification from the local state
+      setNotifications(prev => 
+        prev.filter(notif => notif._id !== notificationId)
+      );
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
   const displayNotifications = notifications.slice(0, expanded ? 10 : 3);
 
@@ -353,16 +373,47 @@ const NotificationWidget: React.FC = () => {
                       <span style={{ fontSize: '11px', color: '#868e96' }}>
                         {formatTimeAgo(notification.createdAt)}
                       </span>
-                      {!notification.read && (
-                        <div 
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => deleteNotification(notification._id, e)}
                           style={{
-                            width: '6px',
-                            height: '6px',
-                            backgroundColor: '#007bff',
-                            borderRadius: '50%'
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            color: '#dc3545',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.7,
+                            transition: 'opacity 0.2s ease'
                           }}
-                        ></div>
-                      )}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                            e.currentTarget.style.backgroundColor = '#f8d7da';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '0.7';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                          title="Delete notification"
+                        >
+                          🗑️
+                        </button>
+                        {!notification.read && (
+                          <div 
+                            style={{
+                              width: '6px',
+                              height: '6px',
+                              backgroundColor: '#007bff',
+                              borderRadius: '50%'
+                            }}
+                          ></div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

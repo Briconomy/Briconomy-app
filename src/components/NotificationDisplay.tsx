@@ -84,6 +84,26 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
     }
   };
 
+  const deleteNotification = async (notificationId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the read action
+    
+    try {
+      const API_BASE_URL = getApiBaseUrl();
+      const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete notification');
+      
+      // Remove the notification from the local state
+      setNotifications(prev => 
+        prev.filter(notif => notif._id !== notificationId)
+      );
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
   const displayNotifications = showAll 
     ? notifications 
@@ -166,9 +186,19 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                       <span className="text-xs text-gray-500">
                         {formatTimeAgo(notification.createdAt)}
                       </span>
-                      {!notification.read && (
-                        <span className="text-xs text-blue-600 font-medium">New</span>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={(e) => deleteNotification(notification._id, e)}
+                          className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity"
+                          title="Delete notification"
+                        >
+                          🗑️
+                        </button>
+                        {!notification.read && (
+                          <span className="text-xs text-blue-600 font-medium">New</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -251,9 +281,19 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                         <span className="text-xs text-gray-500">
                           {formatTimeAgo(notification.createdAt)}
                         </span>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={(e) => deleteNotification(notification._id, e)}
+                            className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity text-xs"
+                            title="Delete notification"
+                          >
+                            🗑️
+                          </button>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

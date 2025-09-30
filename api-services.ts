@@ -518,6 +518,24 @@ export async function updateNotification(id: string, updateData: Record<string, 
   }
 }
 
+export async function deleteNotification(id: string) {
+  try {
+    await connectToMongoDB();
+    const notifications = getCollection("notifications");
+    
+    const result = await notifications.deleteOne({ _id: toId(id) });
+    
+    if (result.deletedCount === 0) {
+      throw new Error("Notification not found");
+    }
+    
+    return { success: true, deletedId: id };
+  } catch (error) {
+    console.error("Error deleting notification:", error);
+    throw error;
+  }
+}
+
 // Analytics API
 export async function getDashboardStats(filters: Record<string, unknown> = {}) {
   try {
