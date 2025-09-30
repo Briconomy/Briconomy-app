@@ -104,9 +104,8 @@ function CaretakerDashboard() {
     ];
   };
 
-  const useMockData = tasksError || !tasks;
-  const mockTasks = getMockTasks();
-  const tasksData = Array.isArray(tasks) ? tasks : (useMockData ? mockTasks : []);
+  // Use real data from API - no more mock fallback
+  const tasksData = Array.isArray(tasks) ? tasks : [];
   
   const isLoading = tasksLoading;
   const hasError = tasksError || error;

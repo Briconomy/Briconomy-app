@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from "../components/BottomNav.tsx";
 import StatCard from "../components/StatCard.tsx";
@@ -10,11 +10,46 @@ import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { dashboardApi, propertiesApi, maintenanceApi, formatCurrency, useApi } from '../services/api.ts';
 
 function ManagerDashboard() {
   const { t } = useLanguage();
   const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
+  const [userLoaded, setUserLoaded] = useState(false);
+
+  // API calls for real-time data
+  const { data: dashboardStats, loading: statsLoading, error: statsError } = useApi(
+    () => userLoaded ? dashboardApi.getStats() : Promise.resolve(null),
+    [userLoaded]
+  );
+
+  const { data: properties, loading: propertiesLoading, error: propertiesError } = useApi(
+    () => userLoaded && user?.id ? propertiesApi.getAll() : Promise.resolve([]),
+    [user?.id, userLoaded]
+  );
+
+  const { data: maintenanceRequests, loading: maintenanceLoading, error: maintenanceError } = useApi(
+    () => userLoaded ? maintenanceApi.getAll({ status: 'pending' }) : Promise.resolve([]),
+    [userLoaded]
+  );
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = () => {
+    try {
+      const userRaw = localStorage.getItem('briconomy_user');
+      const userData = userRaw ? JSON.parse(userRaw) : null;
+      setUser(userData);
+      setUserLoaded(true);
+    } catch (err: unknown) {
+      console.error('Error loading user data:', err);
+      setUserLoaded(true);
+    }
+  };
   
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), active: true },
@@ -22,6 +57,24 @@ function ManagerDashboard() {
     { path: '/manager/leases', label: t('nav.leases') },
     { path: '/manager/payments', label: t('nav.payments') }
   ];
+
+  const isLoading = !userLoaded || statsLoading || propertiesLoading || maintenanceLoading;
+  const hasError = statsError || propertiesError || maintenanceError;
+
+  if (isLoading) {
+    return (
+      <div className="app-container mobile-only">
+        <TopNav showBackButton showLogout />
+        <div className="main-content">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>{t('dashboard.loading')}...</p>
+          </div>
+        </div>
+        <BottomNav items={navItems} responsive={false} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container mobile-only">
@@ -33,13 +86,30 @@ function ManagerDashboard() {
             <div className="page-title">{t('dashboard.manager')}</div>
           </div>
           <div className="page-subtitle">{t('dashboard.listings_leases_payments')}</div>
+          {hasError && (
+            <div className="offline-indicator">
+              <span>Some data may be unavailable</span>
+            </div>
+          )}
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value="24" label={t('dashboard.listings')} />
-          <StatCard value="R180k" label={t('dashboard.revenue')} />
-          <StatCard value="89%" label={t('dashboard.occupancy')} />
-          <StatCard value="3" label={t('dashboard.issues')} />
+          <StatCard 
+            value={properties?.length?.toString() || '0'} 
+            label={t('dashboard.listings')} 
+          />
+          <StatCard 
+            value={dashboardStats?.totalRevenue ? formatCurrency(dashboardStats.totalRevenue) : 'R0'} 
+            label={t('dashboard.revenue')} 
+          />
+          <StatCard 
+            value={dashboardStats?.occupancyRate ? `${dashboardStats.occupancyRate}%` : '0%'} 
+            label={t('dashboard.occupancy')} 
+          />
+          <StatCard 
+            value={maintenanceRequests?.length?.toString() || '0'} 
+            label={t('dashboard.issues')} 
+          />
         </div>
 
         <ChartCard title={t('manager.property_locations')}>
