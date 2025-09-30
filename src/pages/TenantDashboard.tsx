@@ -14,6 +14,7 @@ function TenantDashboard() {
   const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
   const [_error, _setError] = useState<Error | null>(null);
   const [notifications, setNotifications] = useState<{ id: string; read: boolean }[]>([]);
+  const [userLoaded, setUserLoaded] = useState(false);
   
   const navItems = [
     { path: '/tenant', label: t('nav.home'), active: true },
@@ -22,24 +23,25 @@ function TenantDashboard() {
     { path: '/tenant/profile', label: t('nav.profile') }
   ];
 
+  // Only make API calls after user is loaded
   const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(
-    () => paymentsApi.getAll(user?.id ? { tenantId: user.id } : {}),
-    [user?.id]
+    () => userLoaded && user?.id ? paymentsApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id, userLoaded]
   );
 
   const { data: lease, loading: leaseLoading, error: leaseError } = useApi(
-    () => leasesApi.getAll(user?.id ? { tenantId: user.id } : {}),
-    [user?.id]
+    () => userLoaded && user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id, userLoaded]
   );
 
   const { data: requests, loading: requestsLoading, error: requestsError } = useApi(
-    () => maintenanceApi.getAll(user?.id ? { tenantId: user.id } : {}),
-    [user?.id]
+    () => userLoaded && user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id, userLoaded]
   );
 
   const { data: _stats, loading: statsLoading, error: statsError } = useApi(
-    () => dashboardApi.getStats(),
-    []
+    () => userLoaded ? dashboardApi.getStats() : Promise.resolve(null),
+    [userLoaded]
   );
 
   useEffect(() => {
@@ -57,8 +59,10 @@ function TenantDashboard() {
       const userRaw = localStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
+      setUserLoaded(true);
     } catch (err: unknown) {
       console.error('Error loading user data:', err);
+      setUserLoaded(true); // Set loaded even on error to prevent infinite loading
     }
   };
 
@@ -71,15 +75,6 @@ function TenantDashboard() {
     } catch (err: unknown) {
       console.error('Error loading notifications:', err);
     }
-  };
-
-  const getMockData = () => {
-    return {
-      payments: [],
-      lease: [],
-      requests: [],
-      notifications: []
-    };
   };
 
   type PaymentLite = { status?: string; dueDate?: string | Date; amount?: number };
@@ -101,23 +96,20 @@ function TenantDashboard() {
     return diffDays;
   };
 
-  const useMockData = paymentsError || leaseError || requestsError || statsError;
-  const mockData = getMockData();
-  
-  const _paymentsData = payments || (useMockData ? mockData.payments : []);
+  // Use real data from API calls
+  const _paymentsData = Array.isArray(payments) ? payments : [];
   const leaseData = Array.isArray(lease) ? lease : [];
   const requestsData = Array.isArray(requests) ? requests : [];
-  const notificationsData = (() => {
-    if (notifications.length > 0) return notifications;
-    return useMockData ? mockData.notifications : [];
-  })();
+  const notificationsData = notifications || [];
 
-  const isLoading = paymentsLoading || leaseLoading || requestsLoading || statsLoading;
+  const isLoading = !userLoaded || paymentsLoading || leaseLoading || requestsLoading || statsLoading;
   const hasError = paymentsError || leaseError || requestsError || statsError;
-  const upcomingPayment = hasError ? null : getUpcomingPayment();
-  const currentLease = hasError ? null : leaseData?.[0];
-  const pendingRequests = hasError ? [] : requestsData?.filter((r: { status: string }) => r.status === 'pending') || [];
-  const unreadNotifications = hasError ? 0 : notificationsData.length;
+  
+  // Calculate real dashboard metrics
+  const upcomingPayment = getUpcomingPayment();
+  const currentLease = leaseData?.[0] || null;
+  const pendingRequests = requestsData?.filter((r: { status: string }) => r.status === 'pending') || [];
+  const unreadNotifications = notificationsData.filter((n: { read: boolean }) => !n.read).length;
 
 if (isLoading) {
     return (

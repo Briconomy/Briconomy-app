@@ -134,9 +134,8 @@ function ManagerMaintenancePage() {
     ];
   };
 
-  const useMockData = maintenanceError || !maintenance;
-  const mockMaintenance = getMockMaintenance();
-  const maintenanceData = Array.isArray(maintenance) ? maintenance : (useMockData ? mockMaintenance : []);
+  // Use real data from API - no more mock fallback
+  const maintenanceData = Array.isArray(maintenance) ? maintenance : [];
 
   // Get unique properties for filter
   const properties = [...new Set(maintenanceData.map(req => req.property))];
