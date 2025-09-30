@@ -132,7 +132,7 @@ const translations: Translations = {
   'nav.leases': { en: 'Leases', zu: 'Ama-lease' },
   'nav.communication': { en: 'Messages', zu: 'Imilayezo' },
   'nav.reports': { en: 'Reports', zu: 'Imibiko' },
-  'nav.profile': { en: 'Profile', zu: 'Iphrofayela' },
+  'nav.profile': { en: 'Profile', zu: 'Iphrofayili' },
   'nav.tasks': { en: 'Tasks', zu: 'Imisebenzi' },
   'nav.schedule': { en: 'Schedule', zu: 'Uhlelo' },
   'nav.history': { en: 'History', zu: 'Umlando' },
@@ -143,7 +143,7 @@ const translations: Translations = {
   'nav.analytics': { en: 'Analytics', zu: 'Ukuhlaziya' },
 
   // Profile
-  'profile.editProfile': { en: 'Edit Profile', zu: 'Hlela Iphrofayela' },
+  'profile.editProfile': { en: 'Edit Profile', zu: 'Hlela Iphrofayili' },
   'profile.updateInfo': { en: 'Update your personal information', zu: 'Buyekeza ulwazi lwakho lomuntu siqu' },
 
   // Payments
@@ -335,7 +335,6 @@ const translations: Translations = {
   'payment.total_paid': { en: 'Total Paid', zu: 'Yonke Imali Ekhokhelwe' },
 
   // Status Labels
-  'status.active': { en: 'Active', zu: 'Iyasebenza' },
   'status.inactive': { en: 'Inactive', zu: 'Ayisebenzi' },
   'status.pending': { en: 'Pending', zu: 'Kusalindile' },
   'status.completed': { en: 'Completed', zu: 'Kuphelile' },
@@ -348,11 +347,7 @@ const translations: Translations = {
   'property.title': { en: 'Property Management', zu: 'Ukuphatha Izindawo' },
   'property.address': { en: 'Address', zu: 'Ikheli' },
   'property.type': { en: 'Property Type', zu: 'Uhlobo Lwendawo' },
-  'property.rent': { en: 'Monthly Rent', zu: 'Intsimbi Yenyanga' },
-  'property.unit': { en: 'Unit', zu: 'Iyunithi' },
-  'property.monthlyRent': { en: 'Monthly Rent', zu: 'Irenti Yenyanga' },
-  'property.leaseRemaining': { en: 'Lease Remaining', zu: 'Isivumelwano Esisele' },
-  'property.days': { en: 'days', zu: 'izinsuku' },
+  'property.rent': { en: 'Monthly Rent', zu: 'Irenti Yenyanga' },
   'property.daysRemaining': { en: 'Days Remaining', zu: 'Izinsuku Ezisele' },
   'property.property': { en: 'Property', zu: 'Ipropathi' },
   'property.available': { en: 'Available', zu: 'Iyatholakala' },
@@ -432,8 +427,7 @@ const translations: Translations = {
   'tenants.contact': { en: 'Contact Tenant', zu: 'Xhumana Nomqashi' },
   'tenants.lease': { en: 'Lease Details', zu: 'Imininingwane Yeqashi' },
   
-  // Payments Section
-  'payments.title': { en: 'Payments', zu: 'Ukukhokha' },
+
   'payments.all': { en: 'All Payments', zu: 'Konke Ukukhokha' },
   'payments.pending': { en: 'Pending Payments', zu: 'Ukukhokha Okusalindile' },
   'payments.overdue': { en: 'Overdue Payments', zu: 'Ukukhokha Okweqile' },
@@ -442,7 +436,7 @@ const translations: Translations = {
   'payments.record': { en: 'Record Payment', zu: 'Bhala Inkokhelo' },
   'payments.history': { en: 'Payment History', zu: 'Umlando Wezikhokho' },
   'payments.methods': { en: 'Payment Methods', zu: 'Izindlela Zokukhokha' },
-  'payments.due_date': { en: 'Due Date', zu: 'Usuku Lokukhokhwa' },
+  'payments.due_date': { en: 'Due Date', zu: 'Usuku Lokuphela' },
   'payments.amount_due': { en: 'Amount Due', zu: 'Imali Ekhokhwayo' },
   'payments.amount_paid': { en: 'Amount Paid', zu: 'Imali Ekhokhiwe' },
   'payments.outstanding': { en: 'Outstanding', zu: 'Esasele' },
@@ -599,7 +593,6 @@ const translations: Translations = {
   'common.lease': { en: 'Lease', zu: 'Iqashi' },
   'common.renew': { en: 'Renew', zu: 'Vuselela' },
   'common.emergency_contacts': { en: 'Emergency Contacts', zu: 'Oxhumana Nabo Esimeni Esiphuthumayo' },
-  'common.property_manager': { en: 'Property Manager', zu: 'Umphathi Wendawo' },
   'common.security': { en: 'Security', zu: 'Ukuphepha' },
   'common.fire_department': { en: 'Fire Department', zu: 'Umnyango Womlilo' },
   'common.police': { en: 'Police', zu: 'Amaphoyisa' },
