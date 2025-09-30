@@ -125,7 +125,7 @@ serve(async (req) => {
     console.log(`🔌 WebSocket upgrade request received for userId: ${userId}`);
     
     if (!userId) {
-      console.log("❌ WebSocket upgrade rejected: Missing userId parameter");
+      console.log("WebSocket upgrade rejected: Missing userId parameter");
       return new Response("Missing userId parameter", { status: 400 });
     }
     
