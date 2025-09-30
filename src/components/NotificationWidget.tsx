@@ -22,20 +22,24 @@ const NotificationWidget: React.FC = () => {
       fetchNotifications();
       
       // Set up WebSocket connection for real-time notifications
-      const wsProtocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsHost = globalThis.location.hostname === 'localhost' ? 'localhost:8816' : globalThis.location.host;
+      const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
       const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
+      
+      console.log(`Attempting WebSocket connection for user ${user.id} at ${wsUrl}`);
       
       const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {
-        console.log('WebSocket connected for notifications');
+        console.log(`WebSocket connected for notifications - User: ${user.id}`);
       };
       
       ws.onmessage = (event) => {
         try {
+          console.log(`WebSocket message received for user ${user.id}:`, event.data);
           const data = JSON.parse(event.data);
           if (data.type === 'notification') {
+            console.log(`Processing notification:`, data.data);
             // Add new notification to the top of the list
             setNotifications(prev => {
               const newNotification = {
@@ -50,8 +54,12 @@ const NotificationWidget: React.FC = () => {
               
               // Avoid duplicates by checking if notification already exists
               const exists = prev.some(n => n._id === newNotification._id);
-              if (exists) return prev;
+              if (exists) {
+                console.log(`Duplicate notification ignored: ${newNotification._id}`);
+                return prev;
+              }
               
+              console.log(`New notification added: ${newNotification.title}`);
               return [newNotification, ...prev.slice(0, 9)]; // Keep only latest 10
             });
           }
@@ -61,11 +69,11 @@ const NotificationWidget: React.FC = () => {
       };
       
       ws.onclose = () => {
-        console.log('WebSocket disconnected');
+        console.log(`WebSocket disconnected for user ${user.id}`);
       };
       
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error(`WebSocket error for user ${user.id}:`, error);
       };
       
       // Refresh notifications when user returns to tab (fallback)
