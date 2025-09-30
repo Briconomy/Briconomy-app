@@ -20,6 +20,7 @@ import {
   getNotifications,
   createNotification,
   updateNotification,
+  deleteNotification,
   getDashboardStats,
   loginUser,
   registerUser,
@@ -442,6 +443,11 @@ serve(async (req) => {
       } else if (req.method === 'PUT' && path[2]) {
         const body = await req.json();
         const result = await updateNotification(path[2], body);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'DELETE' && path[2]) {
+        const result = await deleteNotification(path[2]);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
