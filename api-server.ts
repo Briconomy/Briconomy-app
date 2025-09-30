@@ -598,7 +598,7 @@ serve(async (req) => {
 
         // Send to all connected users
         const allUserIds = Array.from(connectedUsers.keys());
-        console.log(`🧪 Test notification - targeting users: ${allUserIds.join(', ')}`);
+        console.log(`Test notification - targeting users: ${allUserIds.join(', ')}`);
         
         broadcastToUsers(allUserIds, testNotification);
         
