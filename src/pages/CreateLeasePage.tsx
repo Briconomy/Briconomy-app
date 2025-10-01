@@ -1,46 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
+import { propertiesApi, unitsApi, leasesApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function CreateLeasePage() {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    tenant: '',
-    property: '',
-    unit: '',
+    tenantId: '',
+    propertyId: '',
+    unitId: '',
     startDate: '',
     endDate: '',
     monthlyRent: '',
-    deposit: ''
+    deposit: '',
+    terms: ''
   });
 
   const navItems = [
     { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties' },
+    { path: '/manager/properties', label: 'Properties' },
     { path: '/manager/leases', label: 'Leases', active: true },
     { path: '/manager/payments', label: 'Payments' }
   ];
 
-  const tenants = [
-    { id: '1', name: 'John Tenant' },
-    { id: '2', name: 'Jane Smith' },
-    { id: '3', name: 'Mike Johnson' },
-    { id: '4', name: 'Sarah Wilson' }
-  ];
-
-  const properties = [
-    { id: '1', name: 'Blue Hills Apartments' },
-    { id: '2', name: 'Green Valley Complex' },
-    { id: '3', name: 'Sunset Towers' }
-  ];
-
-  const units = [
-    { id: '2A', propertyId: '1', propertyName: 'Blue Hills Apartments' },
-    { id: '3C', propertyId: '1', propertyName: 'Blue Hills Apartments' },
-    { id: '1B', propertyId: '2', propertyName: 'Green Valley Complex' },
-    { id: '4D', propertyId: '3', propertyName: 'Sunset Towers' }
-  ];
-
-  const filteredUnits = units.filter(unit => unit.propertyId === formData.property);
+  // Fetch real data from database
+  const { data: properties } = useApi(() => propertiesApi.getAll(), []);
+  const { data: tenants } = useApi(() => 
+    fetch('/api/users?userType=tenant').then(res => res.json()), []
+  );
+  const { data: units } = useApi(() => 
+    formData.propertyId ? unitsApi.getAll(formData.propertyId) : Promise.resolve([]), 
+    [formData.propertyId]
+  );
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -49,15 +44,37 @@ function CreateLeasePage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Creating lease with data:', formData);
-    window.location.href = '/manager/leases';
+    setSubmitting(true);
+
+    try {
+      const leaseData = {
+        tenantId: formData.tenantId,
+        propertyId: formData.propertyId,
+        unitId: formData.unitId,
+        startDate: new Date(formData.startDate),
+        endDate: new Date(formData.endDate),
+        monthlyRent: Number(formData.monthlyRent),
+        deposit: Number(formData.deposit),
+        terms: formData.terms,
+        status: 'active'
+      };
+
+      await leasesApi.create(leaseData);
+      alert('Lease created successfully!');
+      navigate('/manager/leases');
+    } catch (error) {
+      console.error('Error creating lease:', error);
+      alert('Failed to create lease. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -69,14 +86,14 @@ function CreateLeasePage() {
           <div className="form-group">
             <label>Select Tenant</label>
             <select
-              value={formData.tenant}
-              onChange={(e) => handleInputChange('tenant', e.target.value)}
+              value={formData.tenantId}
+              onChange={(e) => handleInputChange('tenantId', e.target.value)}
               required
             >
               <option value="">Choose Tenant</option>
-              {tenants.map(tenant => (
+              {tenants?.map(tenant => (
                 <option key={tenant.id} value={tenant.id}>
-                  {tenant.name}
+                  {tenant.fullName}
                 </option>
               ))}
             </select>
@@ -85,15 +102,15 @@ function CreateLeasePage() {
           <div className="form-group">
             <label>Select Property</label>
             <select
-              value={formData.property}
+              value={formData.propertyId}
               onChange={(e) => {
-                handleInputChange('property', e.target.value);
-                handleInputChange('unit', '');
+                handleInputChange('propertyId', e.target.value);
+                handleInputChange('unitId', '');
               }}
               required
             >
               <option value="">Choose Property</option>
-              {properties.map(property => (
+              {properties?.map(property => (
                 <option key={property.id} value={property.id}>
                   {property.name}
                 </option>
@@ -104,15 +121,15 @@ function CreateLeasePage() {
           <div className="form-group">
             <label>Select Unit</label>
             <select
-              value={formData.unit}
-              onChange={(e) => handleInputChange('unit', e.target.value)}
+              value={formData.unitId}
+              onChange={(e) => handleInputChange('unitId', e.target.value)}
               required
-              disabled={!formData.property}
+              disabled={!formData.propertyId}
             >
               <option value="">Choose Unit</option>
-              {filteredUnits.map(unit => (
+              {units?.map(unit => (
                 <option key={unit.id} value={unit.id}>
-                  {unit.id} - {unit.propertyName}
+                  {unit.unitNumber}
                 </option>
               ))}
             </select>
@@ -162,19 +179,30 @@ function CreateLeasePage() {
             </div>
           </div>
 
+          <div className="form-group">
+            <label>Additional Terms</label>
+            <textarea
+              value={formData.terms}
+              onChange={(e) => handleInputChange('terms', e.target.value)}
+              placeholder="Enter any additional lease terms and conditions..."
+              rows={3}
+            />
+          </div>
+
           <div className="form-actions">
             <button 
               type="button"
               className="btn btn-secondary"
-              onClick={() => window.location.href = '/manager/leases'}
+              onClick={() => navigate('/manager/leases')}
             >
               Cancel
             </button>
             <button 
               type="submit"
               className="btn btn-primary"
+              disabled={submitting}
             >
-              Create Lease
+              {submitting ? 'Creating...' : 'Create Lease'}
             </button>
           </div>
         </form>

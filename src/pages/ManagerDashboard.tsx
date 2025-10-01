@@ -10,7 +10,7 @@ import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import { dashboardApi, propertiesApi, maintenanceApi, formatCurrency, useApi } from '../services/api.ts';
+import { dashboardApi, propertiesApi, maintenanceApi, leasesApi, formatCurrency, useApi } from '../services/api.ts';
 
 function ManagerDashboard() {
   const { t } = useLanguage();
@@ -33,6 +33,11 @@ function ManagerDashboard() {
   const { data: maintenanceRequests, loading: maintenanceLoading, error: maintenanceError } = useApi(
     () => userLoaded && user?.id ? maintenanceApi.getAll({ status: 'pending', managerId: user.id }) : Promise.resolve([]),
     [user?.id, userLoaded]
+  );
+
+  const { data: leases, loading: leasesLoading } = useApi(
+    () => userLoaded ? leasesApi.getAll() : Promise.resolve([]),
+    [userLoaded]
   );
 
   useEffect(() => {
@@ -103,8 +108,8 @@ function ManagerDashboard() {
             label={t('dashboard.revenue')} 
           />
           <StatCard 
-            value={dashboardStats?.occupancyRate ? `${dashboardStats.occupancyRate}%` : '0%'} 
-            label={t('dashboard.occupancy')} 
+            value={leases?.filter(l => l.status === 'active')?.length?.toString() || '0'} 
+            label="Active Leases" 
           />
           <StatCard 
             value={maintenanceRequests?.length?.toString() || '0'} 
