@@ -233,8 +233,31 @@ const translations: Translations = {
   'property.days': { en: 'days', zu: 'izinsuku' },
   'property.leaseRemaining': { en: 'Lease Remaining', zu: 'Isivumelwano Esisele' },
 
-  // Status
-  'status.active': { en: 'Active', zu: 'Kuyasebenza' },
+  // Lease Management
+  'lease.management': { en: 'Lease Management', zu: 'Ukuphatha Ama-lease' },
+  'lease.manage_tenant_leases': { en: 'Manage tenant leases and agreements', zu: 'Phatha ama-lease nabaqashi nezivumelwano' },
+  'lease.active_leases': { en: 'Active Leases', zu: 'Ama-lease Asebenzayo' },
+  'lease.monthly_revenue': { en: 'Monthly Revenue', zu: 'Imali Engenayo Yenyanga' },
+  'lease.expiring_soon': { en: 'Expiring Soon', zu: 'Zizophela Maduze' },
+  'lease.search_placeholder': { en: 'Search leases...', zu: 'Sesha ama-lease...' },
+  'lease.portfolio': { en: 'Lease Portfolio', zu: 'Iphothifolio Yama-lease' },
+  'lease.overview': { en: 'Lease Overview', zu: 'Ukubuka Konke Kwama-lease' },
+  'lease.create_lease': { en: 'Create Lease', zu: 'Dala I-lease' },
+  'lease.new_lease_agreement': { en: 'New lease agreement', zu: 'Isivumelwano esisha se-lease' },
+  'lease.renewals': { en: 'Renewals', zu: 'Ukuvuselela' },
+  'lease.manage_renewals': { en: 'Manage lease renewals', zu: 'Phatha ukuvuselelwa kwama-lease' },
+  'lease.terminations': { en: 'Terminations', zu: 'Ukuqediswa' },
+  'lease.handle_terminations': { en: 'Handle lease terminations', zu: 'Phatha ukuqediswa kwama-lease' },
+  'lease.agreements': { en: 'Lease agreements', zu: 'Izivumelwano ze-lease' },
+  'lease.monthly_rent': { en: 'Monthly Rent', zu: 'Irenti Yenyanga' },
+  'lease.end_date': { en: 'End Date', zu: 'Usuku Lokuphela' },
+
+  // Status (additional)
+  'status.expired': { en: 'Expired', zu: 'Ziphelelwe yisikhathi' },
+  'status.terminated': { en: 'Terminated', zu: 'Ziqediwe' },
+
+  // Common (additional)
+  'common.all_statuses': { en: 'All Statuses', zu: 'Zonke Izimo' },
 
   // Common Actions
   'action.save': { en: 'Save', zu: 'Londoloza' },

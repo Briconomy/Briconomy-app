@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
+import { connectToMongoDB, getCollection } from "./db.ts";
 import {
   getProperties,
   createProperty,
@@ -180,6 +181,40 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, message: 'Logged out successfully' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+    }
+
+    // Users endpoints
+    if (path[0] === 'api' && path[1] === 'users') {
+      if (req.method === 'GET') {
+        try {
+          await connectToMongoDB();
+          const users = getCollection("users");
+          const userType = url.searchParams.get('userType');
+          
+          let query = {};
+          if (userType) {
+            query = { userType };
+          }
+          
+          const result = await users.find(query).toArray();
+          const sanitizedUsers = result.map(user => ({
+            id: user._id?.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            userType: user.userType,
+            phone: user.phone
+          }));
+          
+          return new Response(JSON.stringify(sanitizedUsers), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
       }
     }
 
