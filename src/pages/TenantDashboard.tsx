@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -11,6 +12,7 @@ import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi,
 
 function TenantDashboard() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
   const [_error, _setError] = useState<Error | null>(null);
   const [notifications, setNotifications] = useState<{ id: string; read: boolean }[]>([]);
@@ -195,25 +197,25 @@ return (
 
         <div className="quick-actions" style={{ marginTop: '8px' }}>
           <ActionCard
-            onClick={() => globalThis.location.href = '/tenant/payments'}
+            onClick={() => navigate('/tenant/payments')}
             icon="P"
             title={t('dashboard.pay_rent')}
             description={t('dashboard.make_payment')}
           />
           <ActionCard
-            onClick={() => globalThis.location.href = '/tenant/requests'}
+            onClick={() => navigate('/tenant/requests')}
             icon="M"
             title={t('dashboard.maintenance')}
             description={t('dashboard.report_issue')}
           />
           <ActionCard
-            onClick={() => globalThis.location.href = '/tenant/messages'}
+            onClick={() => navigate('/tenant/messages')}
             icon="C"
             title={t('dashboard.contact')}
             description={t('dashboard.message_management')}
           />
           <ActionCard
-            onClick={() => globalThis.location.href = '/tenant/profile'}
+            onClick={() => navigate('/tenant/profile')}
             icon="U"
             title={t('dashboard.profile')}
             description={t('dashboard.update_info')}

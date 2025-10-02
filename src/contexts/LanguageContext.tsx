@@ -217,6 +217,9 @@ const translations: Translations = {
   'profile.activityLog': { en: 'Activity Log', zu: 'Irekhodi Lemisebenzi' },
   'profile.viewActivity': { en: 'View recent activity', zu: 'Buka imisebenzi yamuva' },
   'profile.backToOverview': { en: 'Back to Overview', zu: 'Buyela Ekubukeni' },
+  'profile.personalInfo': { en: 'Personal Information', zu: 'Ulwazi Lomuntu Siqu' },
+  'profile.leaseInfo': { en: 'Lease Information', zu: 'Ulwazi Lwesivumelwano' },
+  'profile.emergencyContact': { en: 'Emergency Contact', zu: 'Oxhumana Naye Esimweni Sesiphuthumiso' },
 
   // Help & Support
   'help.faq': { en: 'FAQ', zu: 'Imibuzo Evame Ukubuzwa' },
