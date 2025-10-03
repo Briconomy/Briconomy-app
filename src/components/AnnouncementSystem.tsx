@@ -275,7 +275,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
   const sendNotificationToUsers = async (announcement: Announcement) => {
     try {
       const API_BASE_URL = getApiBaseUrl();
-      await fetch(`${API_BASE_URL}/api/notifications`, {
+      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -285,11 +285,16 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
           message: announcement.message,
           type: 'announcement',
           targetAudience: announcement.targetAudience,
-          createdBy: announcement.createdBy
+          createdBy: announcement.createdBy || user?.id || 'unknown'
         })
       });
-    } catch (_err) {
-      console.error('Failed to send notifications to users');
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Failed to send notifications to users:', error);
+      // Don't throw the error - just log it so the announcement still gets created
     }
   };
 
