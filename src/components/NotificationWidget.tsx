@@ -40,6 +40,24 @@ const NotificationWidget: React.FC = () => {
           const data = JSON.parse(event.data);
           if (data.type === 'notification') {
             console.log(`Processing notification:`, data.data);
+            
+            // Check if this is an announcement deletion notification
+            if (data.data.type === 'announcement_deleted') {
+              console.log(`Received announcement deletion notice: ${data.data.originalTitle}`);
+              // Remove any notifications related to this announcement
+              setNotifications(prev => {
+                const filtered = prev.filter(n => 
+                  !(n.type === 'announcement' && n.title.includes(data.data.originalTitle))
+                );
+                if (filtered.length !== prev.length) {
+                  console.log(`Removed ${prev.length - filtered.length} notifications related to deleted announcement`);
+                }
+                return filtered;
+              });
+              // Don't add the deletion notification to the list - just use it to clean up
+              return;
+            }
+            
             // Add new notification to the top of the list
             setNotifications(prev => {
               const newNotification = {
