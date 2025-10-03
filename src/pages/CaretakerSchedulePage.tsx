@@ -184,7 +184,7 @@ function CaretakerSchedulePage() {
   if (tasksLoading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+<TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -198,7 +198,7 @@ function CaretakerSchedulePage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton/>
       
       <div className="main-content">
         <div className="page-header">
@@ -216,18 +216,21 @@ function CaretakerSchedulePage() {
         {/* View Mode Selector */}
         <div className="view-mode-selector">
           <button 
+            type="button"
             className={`btn btn-sm ${viewMode === 'day' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setViewMode('day')}
           >
             Day
           </button>
           <button 
+            type="button"
             className={`btn btn-sm ${viewMode === 'week' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setViewMode('week')}
           >
             Week
           </button>
           <button 
+            type="button"
             className={`btn btn-sm ${viewMode === 'month' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setViewMode('month')}
           >

@@ -179,7 +179,7 @@ function PropertiesPage() {
 if (loading) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showBackButton={true} backLink="/" />
+  <TopNav showBackButton backLink="/" />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -193,7 +193,7 @@ if (loading) {
 if (error) {
     return (
       <div className="app-container mobile-only">
-  <TopNav showBackButton={true} backLink="/" />
+  <TopNav showBackButton backLink="/" />
         <div className="main-content">
           <div className="error-state">
             <p>Error loading properties: {error}</p>
@@ -218,7 +218,7 @@ if (error) {
 
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} />
+        <TopNav showBackButton />
         
         <div className="main-content">
           <div className="page-header">
@@ -347,7 +347,7 @@ if (error) {
   if (isTenant) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} />
+        <TopNav showBackButton />
         
         <div className="main-content">
           <div className="page-header">
@@ -409,7 +409,7 @@ if (error) {
   // Public View - Prospective Tenant Property Search
   return (
     <div className="app-container mobile-only">
-<TopNav showBackButton={true} backLink="/" />
+<TopNav showBackButton backLink="/" />
       
       <div className="main-content">
         <div className="page-header">
