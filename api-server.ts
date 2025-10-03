@@ -49,7 +49,8 @@ import {
   createChatEscalation,
   createAnnouncement,
   getAnnouncements,
-  updateAnnouncementStatus
+  updateAnnouncementStatus,
+  deleteAnnouncement
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -365,6 +366,11 @@ serve(async (req) => {
       if (req.method === 'POST' && path[2] && path[3] === 'send') {
         const updatedAnnouncement = await updateAnnouncementStatus(path[2], 'sent');
         return new Response(JSON.stringify(updatedAnnouncement), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'DELETE' && path[2]) {
+        const result = await deleteAnnouncement(path[2]);
+        return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'GET') {
