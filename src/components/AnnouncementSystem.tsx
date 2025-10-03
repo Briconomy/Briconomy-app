@@ -150,6 +150,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       if (!response.ok) throw new Error('Failed to fetch announcements');
       const data = await response.json();
       console.log('Fetched announcements:', data);
+      console.log('Announcements with IDs:', data.map(a => ({ title: a.title, id: a._id, hasId: !!a._id })));
       setAnnouncements(data);
     } catch (_err) {
       console.error('Error fetching announcements:', _err);
@@ -263,15 +264,10 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     }
   };
 
-  const deleteAnnouncement = async (announcementId: string | undefined) => {
-    console.log('Delete requested for announcement ID:', announcementId);
+  const deleteAnnouncement = async (announcement: Announcement) => {
+    console.log('Delete requested for announcement:', { id: announcement._id, title: announcement.title });
     console.log('Current announcements:', announcements.map(a => ({ id: a._id, title: a.title })));
     
-    if (!announcementId) {
-      setError('Cannot delete: announcement ID is undefined');
-      return;
-    }
-
     if (!confirm('Are you sure you want to permanently delete this announcement?')) {
       return;
     }
@@ -279,32 +275,72 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     try {
       setLoading(true);
       const API_BASE_URL = getApiBaseUrl();
-      console.log(`Sending DELETE request to: ${API_BASE_URL}/api/announcements/${announcementId}`);
       
-      const response = await fetch(`${API_BASE_URL}/api/announcements/${announcementId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+      // If announcement has a proper _id, use the standard delete endpoint
+      if (announcement._id && typeof announcement._id === 'string' && announcement._id.length === 24) {
+        console.log(`Sending DELETE request to: ${API_BASE_URL}/api/announcements/${announcement._id}`);
+        
+        const response = await fetch(`${API_BASE_URL}/api/announcements/${announcement._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Delete API error:', response.status, errorText);
+          throw new Error(`Failed to delete announcement: ${response.status} ${errorText}`);
         }
-      });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Delete API error:', response.status, errorText);
-        throw new Error(`Failed to delete announcement: ${response.status} ${errorText}`);
+        const result = await response.json();
+        console.log('Delete API response:', result);
+
+        // Remove the announcement from the local state by _id
+        setAnnouncements(prev => {
+          const filtered = prev.filter(a => a._id !== announcement._id);
+          console.log(`Filtered by _id: ${filtered.length} (was ${prev.length})`);
+          return filtered;
+        });
+        console.log(`Announcement ${announcement._id} deleted successfully`);
+      } else {
+        // For announcements without proper _id, delete by matching content
+        console.log('Announcement lacks proper _id, deleting by content match');
+        
+        const response = await fetch(`${API_BASE_URL}/api/announcements/delete-by-content`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: announcement.title,
+            message: announcement.message,
+            createdBy: announcement.createdBy,
+            createdAt: announcement.createdAt
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Delete by content API error:', response.status, errorText);
+          throw new Error(`Failed to delete announcement: ${response.status} ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('Delete by content API response:', result);
+
+        // Remove the announcement from local state by matching content
+        setAnnouncements(prev => {
+          const filtered = prev.filter(a => !(
+            a.title === announcement.title && 
+            a.message === announcement.message && 
+            a.createdBy === announcement.createdBy
+          ));
+          console.log(`Filtered by content: ${filtered.length} (was ${prev.length})`);
+          return filtered;
+        });
+        console.log(`Announcement "${announcement.title}" deleted successfully by content match`);
       }
-
-      const result = await response.json();
-      console.log('Delete API response:', result);
-
-      // Remove the announcement from the local state
-      const beforeCount = announcements.length;
-      setAnnouncements(prev => {
-        const filtered = prev.filter(a => a._id !== announcementId);
-        console.log(`Filtered announcements: ${filtered.length} (was ${prev.length})`);
-        return filtered;
-      });
-      console.log(`Announcement ${announcementId} deleted successfully. Before: ${beforeCount}, After: ${announcements.length - 1}`);
     } catch (error) {
       console.error('Failed to delete announcement:', error);
       setError(error instanceof Error ? error.message : 'Failed to delete announcement');
@@ -1058,7 +1094,6 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
               </div>
             ) : (
               announcements.map((announcement) => {
-                console.log('Rendering announcement:', { id: announcement._id, title: announcement.title, hasId: !!announcement._id });
                 return (
                 <div key={announcement._id} style={{
                   backgroundColor: '#f9fafb',
@@ -1145,33 +1180,34 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                             Send Now
                           </button>
                         )}
-                        {announcement._id && (
-                          <button
-                            type="button"
-                            onClick={() => deleteAnnouncement(announcement._id)}
-                            style={{
-                              color: '#dc2626',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              border: 'none',
-                              background: 'none',
-                              cursor: 'pointer',
-                              padding: '4px 8px',
-                              borderRadius: '4px'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = '#b91c1c';
-                              e.currentTarget.style.backgroundColor = '#fef2f2';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = '#dc2626';
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                            title="Delete announcement permanently"
-                          >
-                            Delete
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            console.log('Delete button clicked for:', announcement.title);
+                            deleteAnnouncement(announcement);
+                          }}
+                          style={{
+                            color: '#dc2626',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 8px',
+                            borderRadius: '4px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#b91c1c';
+                            e.currentTarget.style.backgroundColor = '#fef2f2';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#dc2626';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                          title="Delete announcement permanently"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>

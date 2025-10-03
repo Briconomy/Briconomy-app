@@ -154,25 +154,91 @@ const NotificationWidget: React.FC = () => {
   const deleteNotification = async (notificationId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering the read action
     
+    console.log('Delete notification called for ID:', notificationId);
+    console.log('Current notifications before delete:', notifications.map(n => ({ id: n._id, title: n.title })));
+    
+    // Find the notification to check if it's an announcement
+    const notification = notifications.find(n => n._id === notificationId);
+    if (!notification) {
+      console.error('Notification not found for ID:', notificationId);
+      return;
+    }
+    
+    console.log('Found notification to delete:', { id: notification._id, title: notification.title, type: notification.type });
+    
+    // For announcement notifications, ask for confirmation since it will delete the announcement permanently
+    if (notification.type === 'announcement') {
+      if (!confirm('This will permanently delete this announcement for all users. Are you sure?')) {
+        return;
+      }
+    }
+    
     try {
       const API_BASE_URL = getApiBaseUrl();
-      const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+      
+      // First, delete the notification
+      const notificationResponse = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE',
       });
       
-      if (!response.ok) throw new Error('Failed to delete notification');
+      if (!notificationResponse.ok) throw new Error('Failed to delete notification');
+      
+      // If it's an announcement notification, also delete the original announcement
+      if (notification.type === 'announcement') {
+        console.log('Deleting announcement notification, attempting to delete source announcement');
+        
+        // Try to delete by content matching since we don't have the announcement ID
+        try {
+          const deleteAnnouncementResponse = await fetch(`${API_BASE_URL}/api/announcements/delete-by-content`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              title: notification.title,
+              message: notification.message,
+              createdBy: notification.userId // This might not match exactly, but worth trying
+            })
+          });
+          
+          if (deleteAnnouncementResponse.ok) {
+            console.log('Successfully deleted source announcement');
+          } else {
+            console.warn('Could not delete source announcement, but notification was deleted');
+          }
+        } catch (announcementError) {
+          console.warn('Error deleting source announcement:', announcementError);
+          // Continue anyway - at least the notification is deleted
+        }
+      }
       
       // Remove the notification from the local state
-      setNotifications(prev => 
-        prev.filter(notif => notif._id !== notificationId)
-      );
+      setNotifications(prev => {
+        const filtered = prev.filter(notif => notif._id !== notificationId);
+        console.log('Notifications after delete:', { 
+          before: prev.length, 
+          after: filtered.length,
+          removedId: notificationId,
+          remaining: filtered.map(n => ({ id: n._id, title: n.title }))
+        });
+        return filtered;
+      });
+      
+      console.log(`${notification.type === 'announcement' ? 'Announcement' : 'Notification'} deleted successfully`);
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
-  const displayNotifications = notifications.slice(0, expanded ? 10 : 3);
+  const displayNotifications = expanded ? notifications.slice(0, 10) : notifications.slice(0, 3);
+  
+  console.log('NotificationWidget render:', { 
+    total: notifications.length, 
+    unread: unreadCount, 
+    expanded, 
+    displaying: displayNotifications.length 
+  });
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -222,7 +288,10 @@ const NotificationWidget: React.FC = () => {
             marginBottom: '12px',
             cursor: 'pointer'
           }}
-          onClick={() => setExpanded(!expanded)}
+          onClick={(e) => {
+            console.log('Header clicked, toggling expanded from', expanded, 'to', !expanded);
+            setExpanded(!expanded);
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div 
