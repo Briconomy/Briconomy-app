@@ -374,10 +374,21 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'DELETE' && path[2]) {
-        const result = await deleteAnnouncement(path[2]);
-        return new Response(JSON.stringify(result), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        try {
+          const result = await deleteAnnouncement(path[2]);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          console.error("Error in DELETE announcement endpoint:", error);
+          return new Response(JSON.stringify({ 
+            error: 'Failed to delete announcement', 
+            details: error.message 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
       } else if (req.method === 'POST' && path[2] === 'delete-by-content') {
         const body = await req.json();
         const result = await deleteAnnouncementByContent(body);
@@ -385,10 +396,20 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'GET') {
+        console.log("=== ANNOUNCEMENT GET REQUEST ===");
         const filters = Object.fromEntries(url.searchParams);
+        console.log("Request filters:", filters);
         const announcements = await getAnnouncements(filters);
+        console.log(`API returning ${announcements.length} announcements to client`);
+        console.log("Final announcements being returned:", announcements.map(a => ({ id: a.id, title: a.title })));
         return new Response(JSON.stringify(announcements), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
@@ -397,6 +418,36 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
         });
+      }
+    }
+    
+    // Debug endpoints
+    if (path[0] === 'api' && path[1] === 'debug' && path[2] === 'announcements') {
+      if (req.method === 'GET') {
+        try {
+          await connectToMongoDB();
+          const announcements = getCollection("announcements");
+          const rawAnnouncements = await announcements.find({}).sort({ createdAt: -1 }).toArray();
+          
+          const debugInfo = {
+            count: rawAnnouncements.length,
+            announcements: rawAnnouncements.map(a => ({
+              _id: a._id?.toString(),
+              title: a.title,
+              createdAt: a.createdAt,
+              status: a.status
+            }))
+          };
+          
+          return new Response(JSON.stringify(debugInfo), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ error: error.message }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
       }
     }
 

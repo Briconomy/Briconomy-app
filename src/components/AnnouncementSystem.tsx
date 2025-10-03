@@ -150,8 +150,27 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       if (!response.ok) throw new Error('Failed to fetch announcements');
       const data = await response.json();
       console.log('Fetched announcements:', data);
-      console.log('Announcements with IDs:', data.map(a => ({ title: a.title, id: a._id, hasId: !!a._id })));
-      setAnnouncements(data);
+      
+      // Normalize the announcements to ensure they have _id field
+      const normalizedData = data.map((announcement: any) => ({
+        ...announcement,
+        _id: announcement.id || announcement._id
+      }));
+      
+      // Remove any potential duplicates based on _id
+      const uniqueAnnouncements = normalizedData.filter((announcement, index, self) => 
+        index === self.findIndex(a => a._id === announcement._id)
+      );
+      
+      console.log('Normalized announcements with IDs:', uniqueAnnouncements.map(a => ({ 
+        title: a.title, 
+        _id: a._id, 
+        id: a.id,
+        hasId: !!a._id 
+      })));
+      
+      console.log(`Setting ${uniqueAnnouncements.length} unique announcements (filtered from ${data.length})`);
+      setAnnouncements(uniqueAnnouncements);
     } catch (_err) {
       console.error('Error fetching announcements:', _err);
       setError(_err instanceof Error ? _err.message : 'An error occurred');
@@ -213,6 +232,13 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       const newAnnouncement = await response.json();
       console.log('Created announcement:', newAnnouncement);
       
+      // Ensure the announcement has the correct _id field for UI consistency
+      const normalizedAnnouncement = {
+        ...newAnnouncement,
+        _id: newAnnouncement.id || newAnnouncement._id
+      };
+      console.log('Normalized announcement:', normalizedAnnouncement);
+      
       // Send immediate notification if not scheduled
       if (!formData.scheduledFor) {
         try {
@@ -221,13 +247,20 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
           console.warn('Browser notification failed:', error);
         }
         try {
-          await sendNotificationToUsers(newAnnouncement);
+          await sendNotificationToUsers(normalizedAnnouncement);
         } catch (error) {
           console.warn('Server notification failed:', error);
         }
       }
 
-      setAnnouncements(prev => [newAnnouncement, ...prev]);
+      // Refresh announcements from server instead of adding to state to avoid duplicates
+      try {
+        await fetchAnnouncements();
+      } catch (fetchError) {
+        console.warn('Failed to refresh announcements after creation:', fetchError);
+        // Still close the form even if refresh fails
+      }
+      
       setShowCreateForm(false);
       setFormData({
         title: '',
@@ -239,7 +272,10 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       });
       setError(null);
     } catch (_err) {
-      setError(_err instanceof Error ? _err.message : 'Failed to create announcement');
+      console.error('Create announcement error:', _err);
+      const errorMessage = _err instanceof Error ? _err.message : 'Failed to create announcement';
+      console.error('Error message:', errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
