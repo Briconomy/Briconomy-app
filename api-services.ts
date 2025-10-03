@@ -525,7 +525,8 @@ export async function deleteNotification(id: string) {
     
     const result = await notifications.deleteOne({ _id: toId(id) });
     
-    if (result.deletedCount === 0) {
+    // MongoDB returns the number of deleted documents directly
+    if (result === 0) {
       throw new Error("Notification not found");
     }
     
