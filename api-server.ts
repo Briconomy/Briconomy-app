@@ -121,6 +121,10 @@ function broadcastToAll(notification: any) {
 }
 
 serve(async (req) => {
+  const requestUrl = new URL(req.url);
+  const requestPath = requestUrl.pathname.split('/').filter(p => p);
+  console.log(`${req.method} ${requestUrl.pathname} - Path parts: [${requestPath.join(', ')}]`);
+  
   // Handle WebSocket upgrade
   if (req.headers.get("upgrade") === "websocket") {
     const url = new URL(req.url);

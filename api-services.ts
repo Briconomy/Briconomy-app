@@ -933,6 +933,7 @@ export async function createChatEscalation(escalationData: Record<string, unknow
 // Announcement API
 export async function createAnnouncement(announcementData: Record<string, unknown>) {
   try {
+    console.log("Creating announcement with data:", announcementData);
     await connectToMongoDB();
     const announcements = getCollection("announcements");
     
@@ -942,23 +943,49 @@ export async function createAnnouncement(announcementData: Record<string, unknow
       updatedAt: new Date()
     };
     
+    console.log("Inserting announcement:", toInsert);
     const result = await announcements.insertOne(toInsert);
-    return mapDoc(await announcements.findOne({ _id: result }));
+    console.log("Insert result:", result);
+    console.log("Result type:", typeof result);
+    
+    // For MongoDB, the insertedId should be accessed properly
+    const insertedId = (result as any).insertedId || result;
+    console.log("Using insertedId:", insertedId);
+    
+    const createdAnnouncement = await announcements.findOne({ _id: insertedId });
+    console.log("Found created announcement:", createdAnnouncement);
+    
+    const mappedResult = mapDoc(createdAnnouncement);
+    console.log("Mapped announcement result:", mappedResult);
+    
+    return mappedResult;
   } catch (error) {
     console.error("Error creating announcement:", error);
+    console.error("Error stack:", error.stack);
     throw error;
   }
 }
 
 export async function getAnnouncements(filters: Record<string, unknown> = {}) {
   try {
+    console.log("getAnnouncements called with filters:", filters);
     await connectToMongoDB();
     const announcements = getCollection("announcements");
     const normalizedFilters = normalizeFilters(filters);
+    console.log("Normalized filters for announcement query:", normalizedFilters);
+    
     const announcementList = await announcements.find(normalizedFilters).sort({ createdAt: -1 }).toArray();
-    return mapDocs(announcementList);
+    console.log(`Found ${announcementList.length} announcements in database`);
+    console.log("Raw announcements from DB:", announcementList.map(a => ({ _id: a._id, title: a.title })));
+    
+    const mappedResults = mapDocs(announcementList);
+    console.log(`Returning ${mappedResults.length} mapped announcements`);
+    console.log("Mapped announcements:", mappedResults.map(a => ({ id: a.id, title: a.title })));
+    
+    return mappedResults;
   } catch (error) {
     console.error("Error fetching announcements:", error);
+    console.error("Error stack:", error.stack);
     throw error;
   }
 }

@@ -191,6 +191,9 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       };
 
       const API_BASE_URL = getApiBaseUrl();
+      console.log(`Creating announcement at: ${API_BASE_URL}/api/announcements`);
+      console.log('Announcement data:', announcementData);
+      
       const response = await fetch(`${API_BASE_URL}/api/announcements`, {
         method: 'POST',
         headers: {
@@ -199,9 +202,16 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
         body: JSON.stringify(announcementData)
       });
 
-      if (!response.ok) throw new Error('Failed to create announcement');
+      console.log('Create announcement response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Create announcement error:', response.status, errorText);
+        throw new Error(`Failed to create announcement: ${response.status} ${errorText}`);
+      }
       
       const newAnnouncement = await response.json();
+      console.log('Created announcement:', newAnnouncement);
       
       // Send immediate notification if not scheduled
       if (!formData.scheduledFor) {
@@ -287,22 +297,33 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
           }
         });
 
-        if (!response.ok) {
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Delete API response:', result);
+
+          // Remove the announcement from the local state by _id
+          setAnnouncements(prev => {
+            const filtered = prev.filter(a => a._id !== announcement._id);
+            console.log(`Filtered by _id: ${filtered.length} (was ${prev.length})`);
+            return filtered;
+          });
+          console.log(`Announcement ${announcement._id} deleted successfully`);
+          
+          // Also send notification to remove from everyone's notification widgets
+          await broadcastAnnouncementDeletion(announcement);
+        } else if (response.status === 500) {
+          // Ghost announcement - remove from UI anyway since it's not in database
+          setAnnouncements(prev => {
+            const filtered = prev.filter(a => a._id !== announcement._id);
+            console.log(`Ghost announcement removed from UI: ${filtered.length} (was ${prev.length})`);
+            return filtered;
+          });
+          console.log(`Ghost announcement ${announcement._id} removed from UI (was not in database)`);
+        } else {
           const errorText = await response.text();
           console.error('Delete API error:', response.status, errorText);
           throw new Error(`Failed to delete announcement: ${response.status} ${errorText}`);
         }
-
-        const result = await response.json();
-        console.log('Delete API response:', result);
-
-        // Remove the announcement from the local state by _id
-        setAnnouncements(prev => {
-          const filtered = prev.filter(a => a._id !== announcement._id);
-          console.log(`Filtered by _id: ${filtered.length} (was ${prev.length})`);
-          return filtered;
-        });
-        console.log(`Announcement ${announcement._id} deleted successfully`);
       } else {
         // For announcements without proper _id, delete by matching content
         console.log('Announcement lacks proper _id, deleting by content match');
@@ -320,26 +341,41 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
           })
         });
 
-        if (!response.ok) {
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Delete by content API response:', result);
+
+          // Remove the announcement from local state by matching content
+          setAnnouncements(prev => {
+            const filtered = prev.filter(a => !(
+              a.title === announcement.title && 
+              a.message === announcement.message && 
+              a.createdBy === announcement.createdBy
+            ));
+            console.log(`Filtered by content: ${filtered.length} (was ${prev.length})`);
+            return filtered;
+          });
+          console.log(`Announcement "${announcement.title}" deleted successfully by content match`);
+          
+          // Also send notification to remove from everyone's notification widgets
+          await broadcastAnnouncementDeletion(announcement);
+        } else if (response.status === 500) {
+          // Ghost announcement - remove from UI anyway since it's not in database
+          setAnnouncements(prev => {
+            const filtered = prev.filter(a => !(
+              a.title === announcement.title && 
+              a.message === announcement.message && 
+              a.createdBy === announcement.createdBy
+            ));
+            console.log(`Ghost announcement removed from UI: ${filtered.length} (was ${prev.length})`);
+            return filtered;
+          });
+          console.log(`Ghost announcement "${announcement.title}" removed from UI (was not in database)`);
+        } else {
           const errorText = await response.text();
           console.error('Delete by content API error:', response.status, errorText);
           throw new Error(`Failed to delete announcement: ${response.status} ${errorText}`);
         }
-
-        const result = await response.json();
-        console.log('Delete by content API response:', result);
-
-        // Remove the announcement from local state by matching content
-        setAnnouncements(prev => {
-          const filtered = prev.filter(a => !(
-            a.title === announcement.title && 
-            a.message === announcement.message && 
-            a.createdBy === announcement.createdBy
-          ));
-          console.log(`Filtered by content: ${filtered.length} (was ${prev.length})`);
-          return filtered;
-        });
-        console.log(`Announcement "${announcement.title}" deleted successfully by content match`);
       }
     } catch (error) {
       console.error('Failed to delete announcement:', error);
@@ -393,6 +429,42 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     } catch (error) {
       console.error('Failed to send notifications to users:', error);
       // Don't throw the error - just log it so the announcement still gets created
+    }
+  };
+
+  const broadcastAnnouncementDeletion = async (announcement: Announcement) => {
+    try {
+      const API_BASE_URL = getApiBaseUrl();
+      
+      // Send a special notification to tell all users to remove this announcement from their notifications
+      const requestBody = {
+        title: `Announcement Deleted: ${announcement.title}`,
+        message: `The announcement "${announcement.title}" has been removed.`,
+        type: 'announcement_deleted',
+        targetAudience: announcement.targetAudience,
+        createdBy: user?.id || 'manager',
+        announcementId: announcement._id,
+        originalTitle: announcement.title
+      };
+      
+      console.log(`Broadcasting announcement deletion to all users:`, requestBody);
+      
+      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      if (response.ok) {
+        console.log('Announcement deletion broadcasted successfully');
+      } else {
+        console.warn('Failed to broadcast announcement deletion');
+      }
+    } catch (error) {
+      console.error('Failed to broadcast announcement deletion:', error);
+      // Don't throw - deletion succeeded, broadcast is just a bonus
     }
   };
 
