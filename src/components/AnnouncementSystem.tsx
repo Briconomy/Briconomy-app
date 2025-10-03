@@ -137,6 +137,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
   const quickAnnouncementTemplates = getQuickAnnouncementTemplates();
 
   useEffect(() => {
+    console.log('AnnouncementSystem mounted, current user role:', currentUserRole);
     fetchAnnouncements();
   }, []);
 
@@ -144,11 +145,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     try {
       setLoading(true);
       const API_BASE_URL = getApiBaseUrl();
+      console.log('Fetching announcements from:', `${API_BASE_URL}/api/announcements`);
       const response = await fetch(`${API_BASE_URL}/api/announcements`);
       if (!response.ok) throw new Error('Failed to fetch announcements');
       const data = await response.json();
+      console.log('Fetched announcements:', data);
       setAnnouncements(data);
     } catch (_err) {
+      console.error('Error fetching announcements:', _err);
       setError(_err instanceof Error ? _err.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -256,6 +260,56 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       );
     } catch (_err) {
       setError('Failed to send announcement');
+    }
+  };
+
+  const deleteAnnouncement = async (announcementId: string | undefined) => {
+    console.log('Delete requested for announcement ID:', announcementId);
+    console.log('Current announcements:', announcements.map(a => ({ id: a._id, title: a.title })));
+    
+    if (!announcementId) {
+      setError('Cannot delete: announcement ID is undefined');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to permanently delete this announcement?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const API_BASE_URL = getApiBaseUrl();
+      console.log(`Sending DELETE request to: ${API_BASE_URL}/api/announcements/${announcementId}`);
+      
+      const response = await fetch(`${API_BASE_URL}/api/announcements/${announcementId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Delete API error:', response.status, errorText);
+        throw new Error(`Failed to delete announcement: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Delete API response:', result);
+
+      // Remove the announcement from the local state
+      const beforeCount = announcements.length;
+      setAnnouncements(prev => {
+        const filtered = prev.filter(a => a._id !== announcementId);
+        console.log(`Filtered announcements: ${filtered.length} (was ${prev.length})`);
+        return filtered;
+      });
+      console.log(`Announcement ${announcementId} deleted successfully. Before: ${beforeCount}, After: ${announcements.length - 1}`);
+    } catch (error) {
+      console.error('Failed to delete announcement:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete announcement');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1003,7 +1057,9 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                 <p style={{ color: '#9ca3af', margin: 0 }}>Create your first announcement to get started</p>
               </div>
             ) : (
-              announcements.map((announcement) => (
+              announcements.map((announcement) => {
+                console.log('Rendering announcement:', { id: announcement._id, title: announcement.title, hasId: !!announcement._id });
+                return (
                 <div key={announcement._id} style={{
                   backgroundColor: '#f9fafb',
                   border: '1px solid #e5e7eb',
@@ -1062,28 +1118,61 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                       }}>
                         {announcement.priority}
                       </span>
-                      {announcement.status === 'scheduled' && announcement._id && (
-                        <button
-                          type="button"
-                          onClick={() => sendNow(announcement._id)}
-                          style={{
-                            color: '#2563eb',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            border: 'none',
-                            background: 'none',
-                            cursor: 'pointer'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = '#1d4ed8';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = '#2563eb';
-                          }}
-                        >
-                          Send Now
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {announcement.status === 'scheduled' && announcement._id && (
+                          <button
+                            type="button"
+                            onClick={() => sendNow(announcement._id)}
+                            style={{
+                              color: '#2563eb',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              border: 'none',
+                              background: 'none',
+                              cursor: 'pointer',
+                              padding: '4px 8px',
+                              borderRadius: '4px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#1d4ed8';
+                              e.currentTarget.style.backgroundColor = '#f3f4f6';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = '#2563eb';
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            Send Now
+                          </button>
+                        )}
+                        {announcement._id && (
+                          <button
+                            type="button"
+                            onClick={() => deleteAnnouncement(announcement._id)}
+                            style={{
+                              color: '#dc2626',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              border: 'none',
+                              background: 'none',
+                              cursor: 'pointer',
+                              padding: '4px 8px',
+                              borderRadius: '4px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#b91c1c';
+                              e.currentTarget.style.backgroundColor = '#fef2f2';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = '#dc2626';
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                            title="Delete announcement permanently"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -1121,7 +1210,8 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                     </div>
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
       </div>

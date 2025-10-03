@@ -988,3 +988,26 @@ export async function updateAnnouncementStatus(id: string, status: string) {
     throw error;
   }
 }
+
+export async function deleteAnnouncement(id: string) {
+  try {
+    await connectToMongoDB();
+    const announcements = getCollection("announcements");
+    
+    const announcement = await announcements.findOne({ _id: toId(id) });
+    if (!announcement) {
+      throw new Error("Announcement not found");
+    }
+    
+    const result = await announcements.deleteOne({ _id: toId(id) });
+    
+    if (result.deletedCount === 0) {
+      throw new Error("Failed to delete announcement");
+    }
+    
+    return { success: true, deletedId: id };
+  } catch (error) {
+    console.error("Error deleting announcement:", error);
+    throw error;
+  }
+}
