@@ -213,7 +213,7 @@ function CaretakerProfilePage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+<TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -227,13 +227,13 @@ function CaretakerProfilePage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">My Profile</div>
           <div className="page-subtitle">Personal information and settings</div>
-          <button 
+          <button type="button"
             className={`btn ${isEditing ? 'btn-secondary' : 'btn-primary'} btn-sm`}
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           >

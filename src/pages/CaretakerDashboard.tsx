@@ -24,8 +24,8 @@ function SimpleErrorBoundary({ children, fallback }: { children: React.ReactNode
       setError(event.error);
     };
 
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
+    globalThis.addEventListener('error', handleError);
+    return () => globalThis.removeEventListener('error', handleError);
   }, []);
 
   if (hasError) {
@@ -122,7 +122,7 @@ function CaretakerDashboard() {
   if (isLoading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -136,7 +136,7 @@ function CaretakerDashboard() {
 
 return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">

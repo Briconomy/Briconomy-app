@@ -33,7 +33,14 @@ function AdminDashboard() {
       };
     }
     
-    const overviewStats = systemStats.find((stat: any) => stat.category === 'overview');
+    type SystemStat = {
+      category: string;
+      totalUsers?: number;
+      totalProperties?: number;
+      uptime?: string;
+      responseTime?: string;
+    };
+    const overviewStats = systemStats.find((stat: SystemStat) => stat.category === 'overview');
     return {
       totalUsers: overviewStats?.totalUsers?.toString() || '0',
       totalProperties: overviewStats?.totalProperties?.toString() || '0',

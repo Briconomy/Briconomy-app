@@ -145,7 +145,7 @@ function LeaseRenewalsPage() {
       render: (value, row) => (
         <div className="action-buttons">
           {!row.renewalOfferSent && (
-            <button 
+            <button type="button"
               className="btn btn-primary btn-sm"
               onClick={() => handleSendRenewalOffer(row.id)}
             >
@@ -175,7 +175,7 @@ function LeaseRenewalsPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">

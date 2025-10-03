@@ -141,7 +141,7 @@ function AdminSecurityPage() {
                   <h4>{setting.setting}</h4>
                   <p>{setting.value}</p>
                 </div>
-                {setting.configurable && <button className="btn-secondary">Configure</button>}
+                {setting.configurable && <button type="button" className="btn-secondary">Configure</button>}
               </div>
             ))
           )}

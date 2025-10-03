@@ -239,7 +239,7 @@ function CaretakerMaintenancePage() {
   if (maintenanceLoading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -253,7 +253,7 @@ function CaretakerMaintenancePage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -325,7 +325,7 @@ function CaretakerMaintenancePage() {
                 if (statusDiff !== 0) return -statusDiff;
                 
                 // Finally sort by creation date (newest first)
-                return new Date(b.createdAt) - new Date(a.createdAt);
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
               })
               .map((request) => (
                 <div key={request.id} className="list-item">
@@ -357,14 +357,14 @@ function CaretakerMaintenancePage() {
                     </div>
                   </div>
                   <div className="item-actions">
-                    <button 
+                    <button type="button"
                       className="btn btn-sm btn-secondary"
                       onClick={() => handleViewDetails(request)}
                     >
                       View Details
                     </button>
                     {request.status === 'pending' && (
-                      <button 
+                      <button type="button"
                         className="btn btn-sm btn-primary"
                         onClick={() => handleStatusChange(request.id, 'in_progress')}
                       >
@@ -372,7 +372,7 @@ function CaretakerMaintenancePage() {
                       </button>
                     )}
                     {request.status === 'in_progress' && (
-                      <button 
+                      <button type="button"
                         className="btn btn-sm btn-primary"
                         onClick={() => handleStatusChange(request.id, 'completed')}
                       >
@@ -412,19 +412,19 @@ function CaretakerMaintenancePage() {
         {/* Quick Actions */}
         <ChartCard title="Quick Actions">
           <div className="quick-actions-grid">
-            <button className="action-btn" onClick={() => {}}>
+            <button type="button" className="action-btn" onClick={() => {}}>
               <div className="action-icon">List</div>
               <div className="action-text">New Request</div>
             </button>
-            <button className="action-btn" onClick={() => {}}>
+            <button type="button" className="action-btn" onClick={() => {}}>
               <div className="action-icon">Chart</div>
               <div className="action-text">Generate Report</div>
             </button>
-            <button className="action-btn" onClick={() => {}}>
+            <button type="button" className="action-btn" onClick={() => {}}>
               <div className="action-icon">Phone</div>
               <div className="action-text">Contact Tenant</div>
             </button>
-            <button className="action-btn" onClick={() => {}}>
+            <button type="button" className="action-btn" onClick={() => {}}>
               <div className="action-icon">Camera</div>
               <div className="action-text">Upload Photos</div>
             </button>

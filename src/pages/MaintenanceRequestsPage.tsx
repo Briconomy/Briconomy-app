@@ -236,7 +236,7 @@ function MaintenanceRequestsPage() {
   if (requestsLoading || leasesLoading) {
 return (
        <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton={true} />
+  <TopNav showLogout showBackButton />
          <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -252,7 +252,7 @@ return (
 
 return (
      <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton={true} />
+  <TopNav showLogout showBackButton/>
        
        <div className="main-content">
         <div className="page-header">
@@ -620,7 +620,7 @@ return (
                         <button 
                           type="button"
                           className="btn btn-primary btn-sm"
-                          onClick={() => window.location.href = `tel:${contact.phone.replace(/\s/g, '')}`}
+                          onClick={() => globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`}
                         >
                           Call Now
                         </button>

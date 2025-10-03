@@ -121,7 +121,7 @@ export const apiWithOfflineFallback = async (
   apiCall: () => Promise<Response>,
   offlineData: Record<string, unknown>,
   offlineType: string
-): Promise<any> => {
+): Promise<{ success: boolean; offline?: boolean; message?: string } | Record<string, unknown>> => {
   try {
     if (!navigator.onLine) {
       // Store offline and return optimistic response
