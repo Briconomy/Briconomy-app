@@ -18,10 +18,12 @@ interface Announcement {
 
 interface AnnouncementSystemProps {
   onClose?: () => void;
+  userRole?: 'admin' | 'manager' | 'caretaker' | 'tenant';
 }
 
-const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
+const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRole }) => {
   const { user } = useAuth();
+  const currentUserRole = userRole || user?.userType;
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showQuickOptions, setShowQuickOptions] = useState(false);
@@ -33,54 +35,106 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
     message: '',
     category: 'general' as 'general' | 'maintenance' | 'urgent' | 'events',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    targetAudience: 'all' as 'all' | 'tenants' | 'caretakers' | 'managers',
+    targetAudience: (currentUserRole === 'manager' ? 'tenants' : 'all') as 'all' | 'tenants' | 'caretakers' | 'managers',
     scheduledFor: ''
   });
 
-  const quickAnnouncementTemplates = [
-    {
-      title: 'System Maintenance',
-      message: 'The system will be undergoing scheduled maintenance from [TIME] to [TIME] on [DATE]. Access may be limited during this period.',
-      category: 'maintenance' as const,
-      priority: 'high' as const,
-      targetAudience: 'all' as const
-    },
-    {
-      title: 'Payment Reminder',
-      message: 'This is a friendly reminder that rent payments are due by [DATE]. Please ensure your payment is submitted on time to avoid late fees.',
-      category: 'general' as const,
-      priority: 'medium' as const,
-      targetAudience: 'tenants' as const
-    },
-    {
-      title: 'Emergency Notice',
-      message: 'URGENT: [DESCRIPTION OF EMERGENCY]. Please follow the instructions provided and contact management immediately if you need assistance.',
-      category: 'urgent' as const,
-      priority: 'high' as const,
-      targetAudience: 'all' as const
-    },
-    {
-      title: 'Building Updates',
-      message: 'Important building updates: [DETAILS]. These changes will take effect on [DATE]. Please review and contact management with any questions.',
-      category: 'general' as const,
-      priority: 'medium' as const,
-      targetAudience: 'all' as const
-    },
-    {
-      title: 'Policy Changes',
-      message: 'We are implementing new policies regarding [POLICY AREA]. These changes will be effective [DATE]. Please review the attached documentation.',
-      category: 'general' as const,
-      priority: 'medium' as const,
-      targetAudience: 'all' as const
-    },
-    {
-      title: 'Maintenance Schedule',
-      message: 'Routine maintenance will be performed in [AREA/BUILDING] on [DATE] from [TIME] to [TIME]. Access may be restricted during this period.',
-      category: 'maintenance' as const,
-      priority: 'medium' as const,
-      targetAudience: 'managers' as const
+  const getQuickAnnouncementTemplates = () => {
+    if (currentUserRole === 'manager') {
+      return [
+        {
+          title: 'Rent Payment Due',
+          message: 'This is a friendly reminder that rent payments are due by [DATE]. Please ensure your payment is submitted on time to avoid late fees.',
+          category: 'general' as const,
+          priority: 'medium' as const,
+          targetAudience: 'tenants' as const
+        },
+        {
+          title: 'Property Maintenance Notice',
+          message: 'Scheduled maintenance will be performed on [DATE] from [TIME] to [TIME]. Please plan accordingly and contact us if you have any concerns.',
+          category: 'maintenance' as const,
+          priority: 'medium' as const,
+          targetAudience: 'tenants' as const
+        },
+        {
+          title: 'Maintenance Task Assignment',
+          message: 'New maintenance tasks have been assigned. Please check your dashboard for details and complete them by [DATE].',
+          category: 'maintenance' as const,
+          priority: 'medium' as const,
+          targetAudience: 'caretakers' as const
+        },
+        {
+          title: 'Urgent Property Issue',
+          message: 'URGENT: There is an issue requiring immediate attention at [PROPERTY/UNIT]. Please address this matter promptly.',
+          category: 'urgent' as const,
+          priority: 'high' as const,
+          targetAudience: 'caretakers' as const
+        },
+        {
+          title: 'Lease Renewal Notice',
+          message: 'Your lease is approaching its expiration date on [DATE]. Please contact us to discuss renewal options.',
+          category: 'general' as const,
+          priority: 'medium' as const,
+          targetAudience: 'tenants' as const
+        },
+        {
+          title: 'Property Inspection Schedule',
+          message: 'Property inspections will be conducted on [DATE]. Please ensure all units are accessible and notify tenants in advance.',
+          category: 'maintenance' as const,
+          priority: 'medium' as const,
+          targetAudience: 'caretakers' as const
+        }
+      ];
     }
-  ];
+    
+    // Default templates for admin users
+    return [
+      {
+        title: 'System Maintenance',
+        message: 'The system will be undergoing scheduled maintenance from [TIME] to [TIME] on [DATE]. Access may be limited during this period.',
+        category: 'maintenance' as const,
+        priority: 'high' as const,
+        targetAudience: 'all' as const
+      },
+      {
+        title: 'Payment Reminder',
+        message: 'This is a friendly reminder that rent payments are due by [DATE]. Please ensure your payment is submitted on time to avoid late fees.',
+        category: 'general' as const,
+        priority: 'medium' as const,
+        targetAudience: 'tenants' as const
+      },
+      {
+        title: 'Emergency Notice',
+        message: 'URGENT: [DESCRIPTION OF EMERGENCY]. Please follow the instructions provided and contact management immediately if you need assistance.',
+        category: 'urgent' as const,
+        priority: 'high' as const,
+        targetAudience: 'all' as const
+      },
+      {
+        title: 'Building Updates',
+        message: 'Important building updates: [DETAILS]. These changes will take effect on [DATE]. Please review and contact management with any questions.',
+        category: 'general' as const,
+        priority: 'medium' as const,
+        targetAudience: 'all' as const
+      },
+      {
+        title: 'Policy Changes',
+        message: 'We are implementing new policies regarding [POLICY AREA]. These changes will be effective [DATE]. Please review the attached documentation.',
+        category: 'general' as const,
+        priority: 'medium' as const,
+        targetAudience: 'all' as const
+      },
+      {
+        title: 'Maintenance Schedule',
+        message: 'Routine maintenance will be performed in [AREA/BUILDING] on [DATE] from [TIME] to [TIME]. Access may be restricted during this period.',
+        category: 'maintenance' as const,
+        priority: 'medium' as const,
+        targetAudience: 'managers' as const
+      }
+    ];
+  };
+
+  const quickAnnouncementTemplates = getQuickAnnouncementTemplates();
 
   useEffect(() => {
     fetchAnnouncements();
@@ -157,7 +211,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
         message: '',
         category: 'general',
         priority: 'medium',
-        targetAudience: 'all',
+        targetAudience: currentUserRole === 'manager' ? 'tenants' : 'all',
         scheduledFor: ''
       });
       setError(null);
@@ -808,10 +862,19 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose }) => {
                     e.target.style.boxShadow = 'none';
                   }}
                 >
-                  <option value="all">All Users</option>
-                  <option value="tenants">Tenants Only</option>
-                  <option value="caretakers">Caretakers Only</option>
-                  <option value="managers">Managers Only</option>
+                  {currentUserRole === 'manager' ? (
+                    <>
+                      <option value="tenants">Tenants Only</option>
+                      <option value="caretakers">Caretakers Only</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="all">All Users</option>
+                      <option value="tenants">Tenants Only</option>
+                      <option value="caretakers">Caretakers Only</option>
+                      <option value="managers">Managers Only</option>
+                    </>
+                  )}
                 </select>
               </div>
 
