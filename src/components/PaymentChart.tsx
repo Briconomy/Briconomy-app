@@ -56,7 +56,7 @@ function PaymentChart({ payments = [] }) {
     const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
       const dateA = new Date(a);
       const dateB = new Date(b);
-      return dateA - dateB;
+      return dateA.getTime() - dateB.getTime();
     });
 
     const last6Months = sortedMonths.slice(-6);

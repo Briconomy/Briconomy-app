@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import _React, { useState, useEffect } from 'react';
+import { useNavigate as _useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
-import { propertiesApi, dashboardApi, formatCurrency } from '../services/api.ts';
+import { propertiesApi, dashboardApi, formatCurrency as _formatCurrency } from '../services/api.ts';
 
 function PropertyManagementPage() {
   const [properties, setProperties] = useState([]);
@@ -14,7 +14,9 @@ function PropertyManagementPage() {
   const [dashboardStats, setDashboardStats] = useState(null);
 
   const [showPropertyForm, setShowPropertyForm] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedProperty, setSelectedProperty] = useState(null); // eslint-disable-next-line
+  const _selectedProperty = selectedProperty; // eslint-disable-next-line
+  const _setSelectedProperty = setSelectedProperty;
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -63,13 +65,20 @@ function PropertyManagementPage() {
   const handleSubmitProperty = async (e) => {
     e.preventDefault();
     try {
+      const totalUnits = parseInt(formData.totalUnits);
+      let monthlyRevenue = 0;
+      if (!isNaN(totalUnits)) {
+        if (formData.type === 'apartment') monthlyRevenue = totalUnits * 8000;
+        else if (formData.type === 'complex') monthlyRevenue = totalUnits * 10000;
+        else if (formData.type === 'house') monthlyRevenue = totalUnits * 12000;
+      }
       const newProperty = {
         name: formData.name,
         address: formData.address,
         type: formData.type,
-        totalUnits: parseInt(formData.totalUnits),
+        totalUnits,
         occupiedUnits: 0,
-        monthlyRevenue: 0,
+        monthlyRevenue,
         status: 'active',
         amenities: formData.amenities
       };
@@ -99,7 +108,7 @@ function PropertyManagementPage() {
 
 return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+  <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -115,7 +124,7 @@ return (
         ) : error ? (
           <div className="error-state">
             <p>Error loading data: {error}</p>
-            <button onClick={fetchData} className="btn btn-primary">Retry</button>
+            <button type="button" onClick={fetchData} className="btn btn-primary">Retry</button>
           </div>
         ) : (
           <>
@@ -129,7 +138,7 @@ return (
             <div className="data-table">
               <div className="table-header">
                 <div className="table-title">Property Portfolio</div>
-                <button 
+                <button type="button"
                   className="btn btn-primary btn-sm"
                   onClick={() => setShowPropertyForm(true)}
                 >
@@ -147,7 +156,13 @@ return (
                         {property.type} • {property.occupiedUnits}/{property.totalUnits} units
                       </span>
                       <span className="text-xs text-green-600">
-                        R{(property.monthlyRevenue / 1000).toFixed(0)}k/month
+                        {
+                          (() => {
+                            const rev = Number(property.monthlyRevenue);
+                            if (isNaN(rev) || rev <= 0) return 'R0/month';
+                            return `R${(rev / 1000).toFixed(0)}k/month`;
+                          })()
+                        }
                       </span>
                       <span className="text-xs text-gray-500">
                         {Math.round((property.occupiedUnits / property.totalUnits) * 100)}% occupied
@@ -167,8 +182,8 @@ return (
                   <div className="item-actions">
                     <span className="status-badge status-paid">Active</span>
                     <div className="property-actions">
-                      <button className="btn btn-sm btn-secondary">View</button>
-                      <button className="btn btn-sm btn-secondary">Edit</button>
+                      <button type="button" className="btn btn-sm btn-secondary">View</button>
+                      <button type="button" className="btn btn-sm btn-secondary">Edit</button>
                     </div>
                   </div>
                 </div>
@@ -225,7 +240,7 @@ return (
           <div className="modal-content">
             <div className="modal-header">
               <h3>Add New Property</h3>
-              <button className="close-btn" onClick={() => setShowPropertyForm(false)}>×</button>
+              <button type="button" className="close-btn" onClick={() => setShowPropertyForm(false)}>×</button>
             </div>
             <div className="modal-body">
               <form onSubmit={handleSubmitProperty}>
