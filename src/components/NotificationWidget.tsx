@@ -106,13 +106,19 @@ const NotificationWidget: React.FC = () => {
   };
 
   const fetchNotifications = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.warn('Cannot fetch notifications: user.id is undefined');
+      return;
+    }
     
     try {
       setLoading(true);
       const API_BASE_URL = getApiBaseUrl();
+      console.log(`Fetching notifications for user ${user.id} from ${API_BASE_URL}/api/notifications/${user.id}`);
       const response = await fetch(`${API_BASE_URL}/api/notifications/${user.id}`);
-      if (!response.ok) throw new Error('Failed to fetch notifications');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
       setNotifications(data.slice(0, 10));
     } catch (error) {

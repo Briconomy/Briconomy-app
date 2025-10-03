@@ -275,23 +275,31 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
   const sendNotificationToUsers = async (announcement: Announcement) => {
     try {
       const API_BASE_URL = getApiBaseUrl();
+      const requestBody = {
+        title: announcement.title,
+        message: announcement.message,
+        type: 'announcement',
+        targetAudience: announcement.targetAudience,
+        createdBy: announcement.createdBy || user?.id || 'unknown'
+      };
+      
+      console.log(`Sending notification to ${API_BASE_URL}/api/notifications with body:`, requestBody);
+      
       const response = await fetch(`${API_BASE_URL}/api/notifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: announcement.title,
-          message: announcement.message,
-          type: 'announcement',
-          targetAudience: announcement.targetAudience,
-          createdBy: announcement.createdBy || user?.id || 'unknown'
-        })
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
-        throw new Error(`Server responded with status ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
       }
+      
+      const result = await response.json();
+      console.log('Notification sent successfully:', result);
     } catch (error) {
       console.error('Failed to send notifications to users:', error);
       // Don't throw the error - just log it so the announcement still gets created
