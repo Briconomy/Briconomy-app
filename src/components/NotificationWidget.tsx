@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface NotificationItem {
-  _id: string;
+  id: string;
   userId: string;
   title: string;
   message: string;
@@ -43,7 +43,7 @@ const NotificationWidget: React.FC = () => {
             // Add new notification to the top of the list
             setNotifications(prev => {
               const newNotification = {
-                _id: String(data.data._id),
+                id: String(data.data.id || data.data._id),
                 userId: data.data.userId,
                 title: data.data.title,
                 message: data.data.message,
@@ -53,9 +53,9 @@ const NotificationWidget: React.FC = () => {
               };
               
               // Avoid duplicates by checking if notification already exists
-              const exists = prev.some(n => n._id === newNotification._id);
+              const exists = prev.some(n => n.id === newNotification.id);
               if (exists) {
-                console.log(`Duplicate notification ignored: ${newNotification._id}`);
+                console.log(`Duplicate notification ignored: ${newNotification.id}`);
                 return prev;
               }
               
@@ -105,6 +105,17 @@ const NotificationWidget: React.FC = () => {
     }
   };
 
+  // Keep track of notifications we know are deleted (ghost notifications)
+  // Load from localStorage to persist across page reloads
+  const [deletedNotificationIds, setDeletedNotificationIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('deletedNotificationIds');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
   const fetchNotifications = async () => {
     if (!user?.id) {
       console.warn('Cannot fetch notifications: user.id is undefined');
@@ -120,7 +131,18 @@ const NotificationWidget: React.FC = () => {
         throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-      setNotifications(data.slice(0, 10));
+      console.log('Fetched notifications raw data:', data);
+      
+      // Filter out notifications we know are deleted (ghost notifications)
+      const filteredData = data.filter(notification => 
+        !deletedNotificationIds.has(notification.id)
+      );
+      
+      if (filteredData.length !== data.length) {
+        console.log(`Filtered out ${data.length - filteredData.length} known ghost notifications`);
+      }
+      
+      setNotifications(filteredData.slice(0, 10));
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -141,7 +163,7 @@ const NotificationWidget: React.FC = () => {
       
       setNotifications(prev => 
         prev.map(notif => 
-          notif._id === notificationId 
+          notif.id === notificationId 
             ? { ...notif, read: true }
             : notif
         )
@@ -155,78 +177,40 @@ const NotificationWidget: React.FC = () => {
     event.stopPropagation(); // Prevent triggering the read action
     
     console.log('Delete notification called for ID:', notificationId);
-    console.log('Current notifications before delete:', notifications.map(n => ({ id: n._id, title: n.title })));
-    
-    // Find the notification to check if it's an announcement
-    const notification = notifications.find(n => n._id === notificationId);
-    if (!notification) {
-      console.error('Notification not found for ID:', notificationId);
-      return;
-    }
-    
-    console.log('Found notification to delete:', { id: notification._id, title: notification.title, type: notification.type });
-    
-    // For announcement notifications, ask for confirmation since it will delete the announcement permanently
-    if (notification.type === 'announcement') {
-      if (!confirm('This will permanently delete this announcement for all users. Are you sure?')) {
-        return;
-      }
-    }
     
     try {
       const API_BASE_URL = getApiBaseUrl();
       
-      // First, delete the notification
-      const notificationResponse = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+      // Delete the notification from the server
+      const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE',
       });
       
-      if (!notificationResponse.ok) throw new Error('Failed to delete notification');
-      
-      // If it's an announcement notification, also delete the original announcement
-      if (notification.type === 'announcement') {
-        console.log('Deleting announcement notification, attempting to delete source announcement');
-        
-        // Try to delete by content matching since we don't have the announcement ID
-        try {
-          const deleteAnnouncementResponse = await fetch(`${API_BASE_URL}/api/announcements/delete-by-content`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              title: notification.title,
-              message: notification.message,
-              createdBy: notification.userId // This might not match exactly, but worth trying
-            })
-          });
-          
-          if (deleteAnnouncementResponse.ok) {
-            console.log('Successfully deleted source announcement');
-          } else {
-            console.warn('Could not delete source announcement, but notification was deleted');
-          }
-        } catch (announcementError) {
-          console.warn('Error deleting source announcement:', announcementError);
-          // Continue anyway - at least the notification is deleted
-        }
-      }
-      
-      // Remove the notification from the local state
-      setNotifications(prev => {
-        const filtered = prev.filter(notif => notif._id !== notificationId);
-        console.log('Notifications after delete:', { 
-          before: prev.length, 
-          after: filtered.length,
-          removedId: notificationId,
-          remaining: filtered.map(n => ({ id: n._id, title: n.title }))
+      if (response.ok) {
+        // Successfully deleted from database - remove from UI and mark as deleted
+        setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+        setDeletedNotificationIds(prev => {
+          const newSet = new Set([...prev, notificationId]);
+          localStorage.setItem('deletedNotificationIds', JSON.stringify([...newSet]));
+          return newSet;
         });
-        return filtered;
-      });
-      
-      console.log(`${notification.type === 'announcement' ? 'Announcement' : 'Notification'} deleted successfully`);
+        console.log('Notification deleted successfully from database and UI');
+      } else if (response.status === 500) {
+        // Notification doesn't exist in database (ghost notification)
+        // Remove from UI anyway since it's not in the database and mark as deleted
+        setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+        setDeletedNotificationIds(prev => {
+          const newSet = new Set([...prev, notificationId]);
+          localStorage.setItem('deletedNotificationIds', JSON.stringify([...newSet]));
+          return newSet;
+        });
+        console.log('Ghost notification removed from UI (was not in database)');
+      } else {
+        throw new Error(`Failed to delete notification: ${response.status}`);
+      }
     } catch (error) {
       console.error('Error deleting notification:', error);
+      // For network errors, don't remove from UI - let user try again
     }
   };
 
@@ -384,7 +368,7 @@ const NotificationWidget: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {displayNotifications.map((notification) => (
               <div
-                key={notification._id}
+                key={notification.id}
                 style={{
                   backgroundColor: notification.read ? '#ffffff' : '#e3f2fd',
                   border: `1px solid ${notification.read ? '#dee2e6' : '#90caf9'}`,
@@ -393,7 +377,7 @@ const NotificationWidget: React.FC = () => {
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
-                onClick={() => !notification.read && markAsRead(notification._id)}
+                onClick={() => !notification.read && markAsRead(notification.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <div 
@@ -451,7 +435,7 @@ const NotificationWidget: React.FC = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
                           type="button"
-                          onClick={(e) => deleteNotification(notification._id, e)}
+                          onClick={(e) => deleteNotification(notification.id, e)}
                           style={{
                             background: 'none',
                             border: 'none',
