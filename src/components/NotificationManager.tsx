@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { notificationService } from '../services/notifications';
+import { notificationService } from '../services/notifications.ts';
 
 interface NotificationManagerProps {
   userId: string;
@@ -50,13 +50,13 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({ userId, userR
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button
+          <button type="button"
             onClick={requestPermission}
             className="bg-white text-blue-600 px-4 py-2 rounded font-semibold hover:bg-gray-100 transition-colors"
           >
             Enable
           </button>
-          <button
+          <button type="button"
             onClick={dismissBanner}
             className="text-white hover:text-gray-200 p-2"
           >

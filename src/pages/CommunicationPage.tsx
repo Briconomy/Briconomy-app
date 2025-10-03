@@ -166,7 +166,7 @@ const handleStartNewMessage = (recipient: Contact) => {
   if (notificationsLoading || leasesLoading || requestsLoading) {
     return (
 <div className="app-container mobile-only">
-<TopNav showLogout showBackButton={true} />
+<TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -183,7 +183,7 @@ const handleStartNewMessage = (recipient: Contact) => {
 
 return (
       <div className="app-container mobile-only">
-        <TopNav showLogout showBackButton={true} />
+        <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">

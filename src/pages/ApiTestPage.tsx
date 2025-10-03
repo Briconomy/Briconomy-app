@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
 import {
   propertiesApi,
   unitsApi,
@@ -162,7 +162,7 @@ function ApiTestPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton/>
       
       <div className="main-content">
         <div className="page-header">
@@ -171,7 +171,7 @@ function ApiTestPage() {
         </div>
 
         <div className="test-controls">
-          <button 
+          <button type="button"
             className="btn btn-primary"
             onClick={runAllTests}
             disabled={Object.keys(loading).some(key => loading[key])}
@@ -193,7 +193,7 @@ function ApiTestPage() {
                         <span className="loading-indicator">Testing...</span>
                       )}
                     </div>
-                    <button 
+                    <button type="button"
                       className="btn btn-sm btn-secondary"
                       onClick={() => runTest(testGroup.id, test.name, test.fn)}
                       disabled={loading[testGroup.id]}

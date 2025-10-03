@@ -178,20 +178,24 @@ function CaretakerHistoryPage() {
     let dateFilter = (item) => true;
 
     switch (filterPeriod) {
-      case 'week':
+      case 'week': {
         const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         dateFilter = (item) => new Date(item.completedDate || item.createdAt) >= weekStart;
         break;
-      case 'month':
+      }
+      case 'month': {
         const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         dateFilter = (item) => new Date(item.completedDate || item.createdAt) >= monthStart;
         break;
-      case 'year':
+      }
+      case 'year': {
         const yearStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
         dateFilter = (item) => new Date(item.completedDate || item.createdAt) >= yearStart;
         break;
-      default:
+      }
+      default: {
         break;
+      }
     }
 
     const statusFilter = (item) => filterStatus === 'all' || item.status === filterStatus;
@@ -284,7 +288,7 @@ function CaretakerHistoryPage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -298,7 +302,7 @@ function CaretakerHistoryPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -357,7 +361,7 @@ function CaretakerHistoryPage() {
             </div>
           ) : (
             filteredData.tasks
-              .sort((a, b) => new Date(b.completedDate || b.createdAt) - new Date(a.completedDate || a.createdAt))
+              .sort((a, b) => new Date(b.completedDate || b.createdAt).getTime() - new Date(a.completedDate || a.createdAt).getTime())
               .map((task) => (
                 <div key={task.id} className="list-item">
                   <div className="item-info">
@@ -411,7 +415,7 @@ function CaretakerHistoryPage() {
             </div>
           ) : (
             filteredData.maintenance
-              .sort((a, b) => new Date(b.completedDate || b.createdAt) - new Date(a.completedDate || a.createdAt))
+              .sort((a, b) => new Date(b.completedDate || b.createdAt).getTime() - new Date(a.completedDate || a.createdAt).getTime())
               .map((request) => (
                 <div key={request.id} className="list-item">
                   <div className="item-info">

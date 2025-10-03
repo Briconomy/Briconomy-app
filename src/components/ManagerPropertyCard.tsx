@@ -254,25 +254,25 @@ function ManagerPropertyCard({
           </div>
 
           <div style={styles.actions}>
-            <button
+            <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
               onClick={() => onViewDetails(property._id)}
             >
               View
             </button>
-            <button
+            <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
               onClick={() => onEditProperty(property._id)}
             >
               Edit
             </button>
-            <button
+            <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
               onClick={() => onManageUnits(property._id)}
             >
               Units
             </button>
-            <button
+            <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
               onClick={() => onViewTenants(property._id)}
             >

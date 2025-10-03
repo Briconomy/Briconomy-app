@@ -243,7 +243,7 @@ const InitiateTerminationPage: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
             <div className="page-title">Initiate Termination</div>
@@ -258,7 +258,7 @@ const InitiateTerminationPage: React.FC = () => {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -293,7 +293,7 @@ const InitiateTerminationPage: React.FC = () => {
                 <div className="no-data-icon">List</div>
                 <h5>No Active Leases Found</h5>
                 <p>There are no active leases available for termination.</p>
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => navigate('/manager/leases')}
                 >
@@ -325,13 +325,13 @@ const InitiateTerminationPage: React.FC = () => {
             )}
             
             <div className="step-actions">
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={() => navigate('/manager/terminations')}
               >
                 Cancel
               </button>
-              <button 
+              <button type="button"
                 className="btn btn-primary"
                 onClick={handleNextStep}
                 disabled={!selectedLease}
@@ -357,7 +357,7 @@ const InitiateTerminationPage: React.FC = () => {
                   <p>{selectedLease.unit.property} - Unit {selectedLease.unit.number}</p>
                   <p>Current Rent: {formatCurrency(selectedLease.currentRent)}/month</p>
                 </div>
-                <button 
+                <button type="button"
                   className="btn btn-sm btn-outline"
                   onClick={() => setFormStep(1)}
                 >
@@ -450,13 +450,13 @@ const InitiateTerminationPage: React.FC = () => {
             )}
             
             <div className="step-actions">
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={handlePreviousStep}
               >
                 Back
               </button>
-              <button 
+              <button type="button"
                 className="btn btn-primary"
                 onClick={handleNextStep}
                 disabled={!terminationForm.reason || !terminationForm.terminationDate}
@@ -557,19 +557,19 @@ const InitiateTerminationPage: React.FC = () => {
             </div>
             
             <div className="step-actions">
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={handlePreviousStep}
               >
                 Back
               </button>
-              <button 
+              <button type="button"
                 className="btn btn-outline"
                 onClick={handleReset}
               >
                 Start Over
               </button>
-              <button 
+              <button type="button"
                 className="btn btn-primary"
                 onClick={() => setShowConfirmModal(true)}
               >
@@ -594,14 +594,14 @@ const InitiateTerminationPage: React.FC = () => {
           </div>
           
           <div className="modal-actions">
-            <button 
+            <button type="button"
               className="btn btn-secondary"
               onClick={() => setShowConfirmModal(false)}
               disabled={submitting}
             >
               Cancel
             </button>
-            <button 
+            <button type="button"
               className="btn btn-primary"
               onClick={handleSubmitTermination}
               disabled={submitting}

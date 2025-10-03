@@ -129,6 +129,7 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
 
           <div className="flex flex-wrap gap-4 mb-6">
           <button
+            type="button"
             onClick={generateMonthlyInvoices}
             disabled={loading}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
@@ -137,6 +138,7 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
           </button>
           
           <button
+            type="button"
             onClick={processOverdueInvoices}
             disabled={loading}
             className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
@@ -145,6 +147,7 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
           </button>
           
           <button
+            type="button"
             onClick={fetchInvoices}
             disabled={loading}
             className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50"
@@ -238,17 +241,14 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(invoice.status)}`}>
                       {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {invoice.status === 'pending' && (
-                      <button
-                        onClick={() => markAsPaid(invoice._id!)}
-                        className="text-green-600 hover:text-green-900 mr-3"
-                      >
-                        Mark Paid
-                      </button>
-                    )}
-                    <button className="text-blue-600 hover:text-blue-900">
+                    <button
+                      type="button"
+                      onClick={() => markAsPaid(invoice._id!)}
+                      className="text-green-600 hover:text-green-900 mr-3"
+                    >
+                      Mark Paid
+                    </button>
+                    <button type="button" className="text-blue-600 hover:text-blue-900">
                       View PDF
                     </button>
                   </td>

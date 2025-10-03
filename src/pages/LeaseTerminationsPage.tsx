@@ -384,7 +384,7 @@ const LeaseTerminationsPage: React.FC = () => {
       label: 'Actions',
       render: (value, row) => (
         <div className="action-buttons">
-          <button 
+          <button type="button"
             className="btn btn-secondary btn-sm"
             onClick={() => viewTermination(row)}
           >
@@ -392,14 +392,14 @@ const LeaseTerminationsPage: React.FC = () => {
           </button>
           {row.status === 'pending' && (
             <>
-              <button 
+              <button type="button"
                 className="btn btn-primary btn-sm"
                 onClick={() => handleTerminationAction(row._id, 'approve')}
                 disabled={actionLoading === row._id}
               >
                 {actionLoading === row._id ? 'Processing...' : 'Approve'}
               </button>
-              <button 
+              <button type="button"
                 className="btn btn-danger btn-sm"
                 onClick={() => handleTerminationAction(row._id, 'reject')}
                 disabled={actionLoading === row._id}
@@ -441,7 +441,7 @@ const LeaseTerminationsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
             <div className="page-title">Lease Terminations</div>
@@ -456,7 +456,7 @@ const LeaseTerminationsPage: React.FC = () => {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -588,7 +588,7 @@ const LeaseTerminationsPage: React.FC = () => {
               <div className="detail-section">
                 <h4>Actions</h4>
                 <div className="modal-actions">
-                  <button
+                  <button type="button"
                     onClick={() => handleTerminationAction(selectedTermination._id, 'approve')}
                     disabled={actionLoading === selectedTermination._id}
                     className="btn btn-primary"
@@ -603,7 +603,7 @@ const LeaseTerminationsPage: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 mb-2"
                       rows={3}
                     />
-                    <button
+                    <button type="button"
                       onClick={() => handleTerminationAction(selectedTermination._id, 'reject')}
                       disabled={!terminationReason.trim() || actionLoading === selectedTermination._id}
                       className="btn btn-danger w-full"
@@ -616,7 +616,7 @@ const LeaseTerminationsPage: React.FC = () => {
             )}
 
             <div className="modal-actions">
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={() => {
                   setShowDetailsModal(false);
@@ -686,14 +686,14 @@ const LeaseTerminationsPage: React.FC = () => {
               </div>
               
               <div className="modal-actions">
-                <button 
+                <button type="button"
                   className="btn btn-primary"
                   onClick={() => setFormStep(2)}
                   disabled={!selectedLease}
                 >
                   Continue to Details
                 </button>
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowInitiateModal(false)}
                 >
@@ -716,7 +716,7 @@ const LeaseTerminationsPage: React.FC = () => {
                     <p>{selectedLease.unit.property} - Unit {selectedLease.unit.number}</p>
                     <p>Current Rent: R{selectedLease.currentRent.toLocaleString()}/month</p>
                   </div>
-                  <button 
+                  <button type="button"
                     className="btn btn-sm btn-outline"
                     onClick={() => setFormStep(1)}
                   >
@@ -819,13 +819,13 @@ const LeaseTerminationsPage: React.FC = () => {
               )}
               
               <div className="modal-actions">
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setFormStep(1)}
                 >
                   Back
                 </button>
-                <button 
+                <button type="button"
                   className="btn btn-primary"
                   onClick={() => {
                     const tempTermination = {
@@ -931,13 +931,13 @@ const LeaseTerminationsPage: React.FC = () => {
               </div>
               
               <div className="modal-actions">
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setFormStep(2)}
                 >
                   Back
                 </button>
-                <button 
+                <button type="button"
                   className="btn btn-primary"
                   onClick={() => {
                     const newTermination: Termination = {
@@ -1066,7 +1066,7 @@ const LeaseTerminationsPage: React.FC = () => {
               </div>
               
               <div className="modal-actions">
-                <button 
+                <button type="button"
                   className="btn btn-primary"
                   onClick={() => {
                     alert('Settlement calculations saved successfully!');
@@ -1075,7 +1075,7 @@ const LeaseTerminationsPage: React.FC = () => {
                 >
                   Save All Calculations
                 </button>
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowSettlementModal(false)}
                 >
@@ -1088,7 +1088,7 @@ const LeaseTerminationsPage: React.FC = () => {
               <div className="no-data-icon">No Settlement Data Available</div>
               <h5>No Settlement Data Available</h5>
               <p>There are no approved terminations available for settlement calculation.</p>
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowSettlementModal(false)}
               >
@@ -1181,17 +1181,17 @@ const LeaseTerminationsPage: React.FC = () => {
                               <div className="document-actions">
                                 {doc.generated ? (
                                   <div className="action-buttons">
-                                    <button className="btn btn-sm btn-primary">
+                                    <button type="button" className="btn btn-sm btn-primary">
                                       View Document
                                     </button>
-                                    <button className="btn btn-sm btn-secondary">
+                                    <button type="button" className="btn btn-sm btn-secondary">
                                       Download
                                     </button>
                                   </div>
                                 ) : (
                                   <div className="pending-info">
                                     <p>This document will be generated automatically upon completion of final inspection.</p>
-                                    <button className="btn btn-sm btn-outline" disabled>
+                                    <button type="button" className="btn btn-sm btn-outline" disabled>
                                       Generate Manually
                                     </button>
                                   </div>
@@ -1223,7 +1223,7 @@ const LeaseTerminationsPage: React.FC = () => {
               </div>
               
               <div className="modal-actions">
-                <button 
+                <button type="button"
                   className="btn btn-primary"
                   onClick={() => {
                     alert('All available documents generated successfully!');
@@ -1232,7 +1232,7 @@ const LeaseTerminationsPage: React.FC = () => {
                 >
                   Generate All Available Documents
                 </button>
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowDocumentsModal(false)}
                 >
@@ -1245,7 +1245,7 @@ const LeaseTerminationsPage: React.FC = () => {
               <div className="no-data-icon">No Documents Available</div>
               <h5>No Documents Available</h5>
               <p>There are no approved terminations available for document generation.</p>
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowDocumentsModal(false)}
               >
@@ -1387,13 +1387,13 @@ const LeaseTerminationsPage: React.FC = () => {
                       <div className="action-section">
                         <h6>Export Options</h6>
                         <div className="export-buttons">
-                          <button className="btn btn-primary">
+                          <button type="button" className="btn btn-primary">
                             Export as PDF
                           </button>
-                          <button className="btn btn-secondary">
+                          <button type="button" className="btn btn-secondary">
                             Export as Excel
                           </button>
-                          <button className="btn btn-outline">
+                          <button type="button" className="btn btn-outline">
                             Copy Summary
                           </button>
                         </div>
@@ -1404,7 +1404,7 @@ const LeaseTerminationsPage: React.FC = () => {
               })()}
               
               <div className="modal-actions">
-                <button 
+                <button type="button"
                   className="btn btn-primary"
                   onClick={() => {
                     alert('Report exported successfully!');
@@ -1413,7 +1413,7 @@ const LeaseTerminationsPage: React.FC = () => {
                 >
                   Generate Full Report
                 </button>
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowReportModal(false)}
                 >
@@ -1426,7 +1426,7 @@ const LeaseTerminationsPage: React.FC = () => {
               <div className="no-data-icon">No Report Data Available</div>
               <h5>No Report Data Available</h5>
               <p>There are no termination records available for report generation.</p>
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowReportModal(false)}
               >

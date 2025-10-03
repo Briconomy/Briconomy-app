@@ -102,7 +102,7 @@ function CaretakerTasksPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton/>
       
       <div className="main-content">
         <div className="page-header">
@@ -120,7 +120,7 @@ function CaretakerTasksPage() {
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">Assigned Tasks</div>
-            <button 
+            <button type="button"
               className="btn btn-primary btn-sm"
               onClick={() => setShowTaskForm(true)}
             >
@@ -152,13 +152,13 @@ function CaretakerTasksPage() {
                 <div className="task-actions">
                   {task.status === 'pending' && (
                     <>
-                      <button 
+                      <button type="button"
                         className="btn btn-sm btn-secondary"
                         onClick={() => handleStatusChange(task.id, 'in_progress')}
                       >
                         Start
                       </button>
-                      <button 
+                      <button type="button"
                         className="btn btn-sm btn-primary"
                         onClick={() => handleStatusChange(task.id, 'completed')}
                       >
@@ -167,7 +167,7 @@ function CaretakerTasksPage() {
                     </>
                   )}
                   {task.status === 'in_progress' && (
-                    <button 
+                    <button type="button"
                       className="btn btn-sm btn-primary"
                       onClick={() => handleStatusChange(task.id, 'completed')}
                     >

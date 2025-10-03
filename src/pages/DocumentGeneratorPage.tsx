@@ -341,7 +341,7 @@ const DocumentGeneratorPage: React.FC = () => {
   if (loading) {
 return (
      <div className="app-container mobile-only">
-       <TopNav showLogout={true} showBackButton={true} />
+       <TopNav showLogout showBackButton />
        <div className="main-content">
           <div className="page-header">
             <div className="page-title">Document Generator</div>
@@ -356,7 +356,7 @@ return (
 
 return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -406,7 +406,7 @@ return (
             <div className="no-data-icon">Document</div>
             <h5>No Terminations Available</h5>
             <p>There are no terminations available for document generation.</p>
-            <button 
+            <button type="button"
               className="btn btn-secondary"
               onClick={() => navigate('/manager/terminations')}
             >
@@ -469,13 +469,13 @@ return (
                           <div className="document-actions">
                             {doc.generated ? (
                               <div className="action-buttons">
-                                <button 
+                                <button type="button"
                                   className="btn btn-sm btn-primary"
                                   onClick={() => handleDownloadDocument(doc.name, termination.tenant.name)}
                                 >
                                   View
                                 </button>
-                                <button 
+                                <button type="button"
                                   className="btn btn-sm btn-secondary"
                                   onClick={() => handleDownloadDocument(doc.name, termination.tenant.name)}
                                 >
@@ -486,7 +486,7 @@ return (
                               <div className="pending-info">
                                 <p>This document will be available when the termination status changes.</p>
                                 {termination.status === 'approved' && (
-                                  <button 
+                                  <button type="button"
                                     className="btn btn-sm btn-outline"
                                     onClick={() => handleGenerateDocument(termination._id, doc.name)}
                                     disabled={generating && selectedDocument?.docName === doc.name}
@@ -503,14 +503,14 @@ return (
                   </div>
                   
                   <div className="case-actions">
-                    <button 
+                    <button type="button"
                       className="btn btn-sm btn-secondary"
                       onClick={() => viewTerminationDetails(termination)}
                     >
                       View Details
                     </button>
                     {termination.status === 'approved' && (
-                      <button 
+                      <button type="button"
                         className="btn btn-sm btn-primary"
                         onClick={() => {
                           const pendingDocs = terminationDocs.filter(d => !d.generated);
@@ -532,20 +532,20 @@ return (
         )}
 
         <div className="page-actions">
-          <button 
+          <button type="button"
             className="btn btn-secondary"
             onClick={() => navigate('/manager/terminations')}
           >
             Back to Terminations
           </button>
-          <button 
+          <button type="button"
             className="btn btn-outline"
             onClick={() => setShowTemplatesModal(true)}
           >
             View Templates
           </button>
           {terminations.filter(t => t.status === 'approved').length > 0 && (
-            <button 
+            <button type="button"
               className="btn btn-primary"
               onClick={() => setShowGenerateModal(true)}
             >
@@ -607,7 +607,7 @@ return (
             )}
 
             <div className="modal-actions">
-              <button 
+              <button type="button"
                 className="btn btn-secondary"
                 onClick={() => {
                   setShowDetailsModal(false);
@@ -650,14 +650,14 @@ return (
           </div>
           
           <div className="modal-actions">
-            <button 
+            <button type="button"
               className="btn btn-secondary"
               onClick={() => setShowGenerateModal(false)}
               disabled={generating}
             >
               Cancel
             </button>
-            <button 
+            <button type="button"
               className="btn btn-primary"
               onClick={handleGenerateAllDocuments}
               disabled={generating}
@@ -705,7 +705,7 @@ return (
           </div>
           
           <div className="modal-actions">
-            <button 
+            <button type="button"
               className="btn btn-secondary"
               onClick={() => setShowTemplatesModal(false)}
             >

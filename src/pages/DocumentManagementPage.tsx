@@ -200,7 +200,7 @@ function DocumentManagementPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -231,7 +231,7 @@ function DocumentManagementPage() {
           data={filteredDocuments}
           columns={documentColumns}
           actions={
-            <button 
+            <button type="button"
               className="btn btn-primary btn-sm"
               onClick={() => setShowUploadForm(true)}
             >
@@ -274,7 +274,7 @@ function DocumentManagementPage() {
           <div className="modal-content">
             <div className="modal-header">
               <h3>Upload Document</h3>
-              <button className="close-btn" onClick={() => setShowUploadForm(false)}>×</button>
+              <button type="button" className="close-btn" onClick={() => setShowUploadForm(false)}>×</button>
             </div>
             <div className="modal-body">
               <div className="upload-area">
@@ -293,7 +293,7 @@ function DocumentManagementPage() {
               </div>
               
               <div className="form-actions">
-                <button 
+                <button type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowUploadForm(false)}
                 >

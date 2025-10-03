@@ -330,7 +330,7 @@ function ManagerMaintenancePage() {
   if (maintenanceLoading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -344,7 +344,7 @@ function ManagerMaintenancePage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
