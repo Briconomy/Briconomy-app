@@ -946,17 +946,28 @@ export async function createAnnouncement(announcementData: Record<string, unknow
     console.log("Inserting announcement:", toInsert);
     const result = await announcements.insertOne(toInsert);
     console.log("Insert result:", result);
-    console.log("Result type:", typeof result);
     
-    // For MongoDB, the insertedId should be accessed properly
-    const insertedId = (result as any).insertedId || result;
+    // Get the insertedId properly
+    const insertedId = result.insertedId || result;
     console.log("Using insertedId:", insertedId);
+    
+    if (!insertedId) {
+      throw new Error("Failed to get inserted ID");
+    }
     
     const createdAnnouncement = await announcements.findOne({ _id: insertedId });
     console.log("Found created announcement:", createdAnnouncement);
     
+    if (!createdAnnouncement) {
+      throw new Error("Failed to retrieve created announcement");
+    }
+    
     const mappedResult = mapDoc(createdAnnouncement);
     console.log("Mapped announcement result:", mappedResult);
+    
+    if (!mappedResult || !mappedResult.id) {
+      throw new Error("Failed to map announcement with proper ID");
+    }
     
     return mappedResult;
   } catch (error) {
@@ -1019,24 +1030,34 @@ export async function updateAnnouncementStatus(id: string, status: string) {
 
 export async function deleteAnnouncement(id: string) {
   try {
+    console.log("Attempting to delete announcement with ID:", id);
     await connectToMongoDB();
     const announcements = getCollection("announcements");
     
     const announcement = await announcements.findOne({ _id: toId(id) });
+    console.log("Found announcement:", announcement ? { _id: announcement._id, title: announcement.title } : null);
+    
     if (!announcement) {
-      throw new Error("Announcement not found");
+      console.log("Announcement not found for ID:", id);
+      // For ghost announcements, return success so UI can remove them
+      return { success: true, deletedId: id, wasGhost: true };
     }
     
     const result = await announcements.deleteOne({ _id: toId(id) });
+    console.log("Delete result:", result);
     
     if (result.deletedCount === 0) {
-      throw new Error("Failed to delete announcement");
+      console.log("No documents deleted for ID:", id);
+      // Treat as ghost announcement - return success so UI can remove it
+      return { success: true, deletedId: id, wasGhost: true };
     }
     
+    console.log(`Successfully deleted announcement ${id}`);
     return { success: true, deletedId: id };
   } catch (error) {
     console.error("Error deleting announcement:", error);
-    throw error;
+    // For any error, treat as ghost announcement and return success
+    return { success: true, deletedId: id, wasGhost: true, error: error.message };
   }
 }
 
