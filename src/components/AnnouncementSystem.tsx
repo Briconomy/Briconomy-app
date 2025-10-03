@@ -200,8 +200,16 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       
       // Send immediate notification if not scheduled
       if (!formData.scheduledFor) {
-        await notificationService.sendAnnouncement(formData.title, formData.message);
-        await sendNotificationToUsers(newAnnouncement);
+        try {
+          await notificationService.sendAnnouncement(formData.title, formData.message);
+        } catch (error) {
+          console.warn('Browser notification failed:', error);
+        }
+        try {
+          await sendNotificationToUsers(newAnnouncement);
+        } catch (error) {
+          console.warn('Server notification failed:', error);
+        }
       }
 
       setAnnouncements(prev => [newAnnouncement, ...prev]);
