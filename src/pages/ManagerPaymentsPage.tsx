@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -14,7 +14,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     super(props);
     this.state = { hasError: false };
   }
-  static override getDerivedStateFromError(_error) {
+  static getDerivedStateFromError(_error) {
     return { hasError: true };
   }
   override componentDidCatch(_error, _errorInfo) {}
@@ -172,7 +172,7 @@ function ManagerPaymentsPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+  <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -230,8 +230,33 @@ function ManagerPaymentsPage() {
             icon="E"
             title="Export Data"
             description="Download CSV"
+            onClick={() => {
+              // #COMPLETION_DRIVE: Assuming filteredPayments contains the correct data to export
+              // #SUGGEST_VERIFY: Download and open CSV to confirm correct data
+              const csvRows = [];
+              const headers = ["Tenant","Property","Unit","Amount","Due Date","Status"];
+              csvRows.push(headers.join(","));
+              filteredPayments.forEach(p => {
+                csvRows.push([
+                  p.tenantName,
+                  p.propertyName,
+                  p.unitNumber,
+                  p.amount,
+                  p.dueDate,
+                  p.status
+                ].map(v => `"${v ?? ''}"`).join(","));
+              });
+              const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "payments.csv");
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
           />
-        </div>
+  </div>
 
       </div>
       

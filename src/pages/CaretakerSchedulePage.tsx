@@ -253,7 +253,7 @@ function CaretakerSchedulePage() {
             </div>
           ) : (
             filteredTasks
-              .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+              .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
               .map((task) => (
                 <div key={task.id} className="list-item">
                   <div className="item-info">
@@ -300,7 +300,7 @@ function CaretakerSchedulePage() {
             </div>
             {tasksData
               .filter(task => task.status !== 'completed')
-              .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+              .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
               .slice(0, 5)
               .map((task) => (
                 <div key={task.id} className="list-item">
