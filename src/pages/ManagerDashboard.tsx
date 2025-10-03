@@ -153,7 +153,10 @@ function ManagerDashboard() {
             description={t('manager.handle_escalations')}
           />
           <ActionCard
-            onClick={() => setShowAnnouncements(true)}
+            onClick={() => {
+              console.log('Announcements button clicked');
+              setShowAnnouncements(true);
+            }}
             icon="A"
             title={t('manager.announcements')}
             description={t('manager.property_updates')}

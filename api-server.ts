@@ -50,7 +50,8 @@ import {
   createAnnouncement,
   getAnnouncements,
   updateAnnouncementStatus,
-  deleteAnnouncement
+  deleteAnnouncement,
+  deleteAnnouncementByContent
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -370,6 +371,12 @@ serve(async (req) => {
         });
       } else if (req.method === 'DELETE' && path[2]) {
         const result = await deleteAnnouncement(path[2]);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST' && path[2] === 'delete-by-content') {
+        const body = await req.json();
+        const result = await deleteAnnouncementByContent(body);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });

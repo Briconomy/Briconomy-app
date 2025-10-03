@@ -1011,3 +1011,57 @@ export async function deleteAnnouncement(id: string) {
     throw error;
   }
 }
+
+export async function deleteAnnouncementByContent(announcementData: {
+  title: string;
+  message: string;
+  createdBy: string;
+  createdAt: string | Date;
+}) {
+  try {
+    await connectToMongoDB();
+    const announcements = getCollection("announcements");
+    
+    // Convert createdAt to Date if it's a string
+    const createdAt = typeof announcementData.createdAt === 'string' 
+      ? new Date(announcementData.createdAt) 
+      : announcementData.createdAt;
+    
+    console.log("Attempting to delete announcement by content:", {
+      title: announcementData.title,
+      message: announcementData.message,
+      createdBy: announcementData.createdBy,
+      createdAt: createdAt
+    });
+    
+    // Find the announcement by matching content
+    const announcement = await announcements.findOne({
+      title: announcementData.title,
+      message: announcementData.message,
+      createdBy: announcementData.createdBy
+    });
+    
+    if (!announcement) {
+      console.log("No announcement found matching the content criteria");
+      throw new Error("Announcement not found");
+    }
+    
+    console.log("Found announcement to delete:", { _id: announcement._id, title: announcement.title });
+    
+    const result = await announcements.deleteOne({
+      title: announcementData.title,
+      message: announcementData.message,
+      createdBy: announcementData.createdBy
+    });
+    
+    if (result.deletedCount === 0) {
+      throw new Error("Failed to delete announcement");
+    }
+    
+    console.log(`Successfully deleted announcement: ${announcement.title}`);
+    return { success: true, deletedTitle: announcementData.title, deletedCount: result.deletedCount };
+  } catch (error) {
+    console.error("Error deleting announcement by content:", error);
+    throw error;
+  }
+}
