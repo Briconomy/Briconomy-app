@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -6,14 +6,11 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
-import DocumentViewer from '../components/DocumentViewer.tsx';
-import ActivityLog from '../components/ActivityLog.tsx';
 
 function UserProfilePage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { t } = useLanguage();
-  const [activeSection, setActiveSection] = useState<'overview' | 'documents' | 'activity'>('overview');
 
   const navItems = [
     { path: '/tenant', label: t('nav.home'), active: false },
@@ -71,7 +68,7 @@ function UserProfilePage() {
             className="btn btn-primary btn-sm"
             onClick={() => navigate('/tenant/profile/edit')}
           >
-            {t('common.edit')}
+            {t('common.edit_user')}
           </button>
         </div>
 
@@ -190,54 +187,19 @@ function UserProfilePage() {
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => setActiveSection('documents')}
+            to="/tenant/documents"
             icon="D"
             title={t('profile.documents')}
             description={t('profile.viewDocuments')}
           />
           <ActionCard
-            onClick={() => setActiveSection('activity')}
+            to="/tenant/activity"
             icon="L"
             title={t('profile.activityLog')}
             description={t('profile.viewActivity')}
           />
         </div>
       </div>
-
-      {/* Dynamic Sections */}
-
-      {activeSection === 'documents' && (
-        <div className="profile-section">
-          <div className="section-header">
-            <h3>{t('profile.documents')}</h3>
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveSection('overview')}
-            >
-              {t('profile.backToOverview')}
-            </button>
-          </div>
-          <DocumentViewer />
-        </div>
-      )}
-
-
-      {activeSection === 'activity' && (
-        <div className="profile-section">
-          <div className="section-header">
-            <h3>{t('profile.activityLog')}</h3>
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveSection('overview')}
-            >
-              {t('profile.backToOverview')}
-            </button>
-          </div>
-          <ActivityLog />
-        </div>
-      )}
       
       <BottomNav items={navItems} responsive={false} />
     </div>
