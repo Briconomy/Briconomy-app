@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface ActivityItem {
   id: string;
@@ -6,12 +6,12 @@ interface ActivityItem {
   title: string;
   description: string;
   timestamp: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   status?: 'success' | 'pending' | 'failed';
 }
 
 function ActivityLog() {
-  const [activities, setActivities] = useState<ActivityItem[]>([
+  const [activities, _setActivities] = useState<ActivityItem[]>([
     {
       id: '1',
       type: 'login',
@@ -114,7 +114,7 @@ function ActivityLog() {
     return matchesFilter && matchesSearch;
   });
 
-  const handleExport = async () => {
+  const handleExport = () => {
     setExporting(true);
     
     // Simulate export process
@@ -175,15 +175,28 @@ function ActivityLog() {
     <div className="activity-log">
       <div className="activity-header">
         <h3>Activity Log</h3>
-        <div className="activity-actions">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search activities..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="search-box" style={{ marginBottom: '16px' }}>
+          <input
+            type="text"
+            placeholder="Search activities..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid #ddd',
+              fontSize: '14px',
+              backgroundColor: '#fff',
+              outline: 'none',
+              transition: 'border-color 0.2s ease',
+              boxSizing: 'border-box'
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#162F1B'}
+            onBlur={(e) => e.target.style.borderColor = '#ddd'}
+          />
+        </div>
+        <div className="activity-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
           <button 
             type="button"
             className="btn btn-primary btn-sm"
@@ -196,53 +209,130 @@ function ActivityLog() {
       </div>
 
       <div className="activity-filters">
-        <div className="filter-buttons">
+        <div className="filter-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
           <button
             type="button"
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+            className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('all')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             All ({activityCounts.all})
           </button>
           <button
             type="button"
-            className={`filter-btn ${filter === 'login' ? 'active' : ''}`}
+            className={`btn ${filter === 'login' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('login')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             Logins ({activityCounts.login})
           </button>
           <button
             type="button"
-            className={`filter-btn ${filter === 'payment' ? 'active' : ''}`}
+            className={`btn ${filter === 'payment' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('payment')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             Payments ({activityCounts.payment})
           </button>
           <button
             type="button"
-            className={`filter-btn ${filter === 'maintenance_request' ? 'active' : ''}`}
+            className={`btn ${filter === 'maintenance_request' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('maintenance_request')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             Maintenance ({activityCounts.maintenance_request})
           </button>
           <button
             type="button"
-            className={`filter-btn ${filter === 'profile_update' ? 'active' : ''}`}
+            className={`btn ${filter === 'profile_update' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('profile_update')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             Profile ({activityCounts.profile_update})
           </button>
           <button
             type="button"
-            className={`filter-btn ${filter === 'document_upload' ? 'active' : ''}`}
+            className={`btn ${filter === 'document_upload' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('document_upload')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             Documents ({activityCounts.document_upload})
           </button>
           <button
             type="button"
-            className={`filter-btn ${filter === 'lease_action' ? 'active' : ''}`}
+            className={`btn ${filter === 'lease_action' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setFilter('lease_action')}
+            style={{ 
+              fontSize: '11px', 
+              padding: '2px 6px', 
+              minHeight: 'auto', 
+              borderRadius: '12px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flex: 'none',
+              width: 'auto',
+              minWidth: 'auto'
+            }}
           >
             Lease ({activityCounts.lease_action})
           </button>
