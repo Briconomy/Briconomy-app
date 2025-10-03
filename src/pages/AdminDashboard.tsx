@@ -140,6 +140,7 @@ function AdminDashboard() {
       {showAnnouncements && (
         <AnnouncementSystem 
           onClose={() => setShowAnnouncements(false)}
+          userRole="admin"
         />
       )}
     </div>

@@ -186,6 +186,7 @@ function ManagerDashboard() {
       {showAnnouncements && (
         <AnnouncementSystem 
           onClose={() => setShowAnnouncements(false)}
+          userRole="manager"
         />
       )}
     </div>
