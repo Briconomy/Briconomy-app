@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface PaymentMethod {
   id: string;
@@ -9,91 +10,83 @@ interface PaymentMethod {
 }
 
 function PaymentMethodsManager() {
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: '1',
-      type: 'bank_account',
-      name: 'Primary Bank Account',
-      details: '**** **** **** 1234',
-      isDefault: true
-    }
-  ]);
-  
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
-  const [formData, setFormData] = useState({
-    type: 'bank_account' as PaymentMethod['type'],
-    name: '',
-    details: '',
-    isDefault: false
-  });
+  const navigate = useNavigate();
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [methodToDelete, setMethodToDelete] = useState<PaymentMethod | null>(null);
+
+  useEffect(() => {
+    // Load payment methods from localStorage
+    const loadPaymentMethods = () => {
+      try {
+        const savedMethods = localStorage.getItem('paymentMethods');
+        if (savedMethods) {
+          setPaymentMethods(JSON.parse(savedMethods));
+        } else {
+          // Set default method if none exist
+          const defaultMethods = [
+            {
+              id: '1',
+              type: 'bank_account' as PaymentMethod['type'],
+              name: 'Primary Bank Account',
+              details: '**** **** **** 1234',
+              isDefault: true
+            }
+          ];
+          setPaymentMethods(defaultMethods);
+          localStorage.setItem('paymentMethods', JSON.stringify(defaultMethods));
+        }
+      } catch (error) {
+        console.error('Error loading payment methods:', error);
+      }
+    };
+
+    loadPaymentMethods();
+  }, []);
 
   const handleAddMethod = () => {
-    setEditingMethod(null);
-    setFormData({
-      type: 'bank_account',
-      name: '',
-      details: '',
-      isDefault: false
-    });
-    setShowAddForm(true);
+    navigate('/tenant/add-payment-method'); 
   };
 
   const handleEditMethod = (method: PaymentMethod) => {
-    setEditingMethod(method);
-    setFormData({
-      type: method.type,
-      name: method.name,
-      details: method.details,
-      isDefault: method.isDefault
-    });
-    setShowAddForm(true);
+    navigate(`/tenant/edit-payment-method/${method.id}`);
   };
 
-  const handleDeleteMethod = (id: string) => {
-    setPaymentMethods(prev => prev.filter(method => method.id !== id));
+  const handleDeleteMethod = (method: PaymentMethod) => {
+    setMethodToDelete(method);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (methodToDelete) {
+      try {
+        const updatedMethods = paymentMethods.filter(method => method.id !== methodToDelete.id);
+        setPaymentMethods(updatedMethods);
+        localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
+      } catch (error) {
+        console.error('Error deleting payment method:', error);
+      }
+    }
+    setShowDeleteConfirm(false);
+    setMethodToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setMethodToDelete(null);
   };
 
   const handleSetDefault = (id: string) => {
-    setPaymentMethods(prev => 
-      prev.map(method => ({
+    try {
+      const updatedMethods = paymentMethods.map(method => ({
         ...method,
         isDefault: method.id === id
-      }))
-    );
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (editingMethod) {
-      // Update existing method
-      setPaymentMethods(prev => 
-        prev.map(method => 
-          method.id === editingMethod.id 
-            ? { ...formData, id: editingMethod.id }
-            : formData.isDefault 
-              ? { ...method, isDefault: false }
-              : method
-        )
-      );
-    } else {
-      // Add new method
-      const newMethod: PaymentMethod = {
-        ...formData,
-        id: Date.now().toString()
-      };
-      
-      setPaymentMethods(prev => {
-        if (formData.isDefault) {
-          return prev.map(method => ({ ...method, isDefault: false })).concat(newMethod);
-        }
-        return prev.concat(newMethod);
-      });
+      }));
+      setPaymentMethods(updatedMethods);
+      localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
+    } catch (error) {
+      console.error('Error setting default payment method:', error);
     }
-    
-    setShowAddForm(false);
-    setEditingMethod(null);
   };
 
   const getMethodIcon = (type: PaymentMethod['type']) => {
@@ -177,7 +170,7 @@ function PaymentMethodsManager() {
                 <button 
                   type="button"
                   className="btn btn-sm btn-danger"
-                  onClick={() => handleDeleteMethod(method.id)}
+                  onClick={() => handleDeleteMethod(method)}
                 >
                   Delete
                 </button>
@@ -187,91 +180,36 @@ function PaymentMethodsManager() {
         )}
       </div>
 
-      {showAddForm && (
+      {showDeleteConfirm && methodToDelete && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>{editingMethod ? 'Edit Payment Method' : 'Add Payment Method'}</h3>
-              <button 
-                type="button"
-                className="close-btn"
-                onClick={() => setShowAddForm(false)}
-              >
-                ×
-              </button>
+              <h3>Delete Payment Method</h3>
             </div>
             <div className="modal-body">
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label>Payment Method Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      type: e.target.value as PaymentMethod['type']
-                    }))}
-                  >
-                    <option value="bank_account">Bank Account</option>
-                    <option value="credit_card">Credit Card</option>
-                    <option value="debit_card">Debit Card</option>
-                    <option value="eft">EFT</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Method Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Primary Bank Account"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Account Details</label>
-                  <input
-                    type="text"
-                    value={formData.details}
-                    onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
-                    placeholder="e.g., **** **** **** 1234"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={formData.isDefault}
-                      onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
-                    />
-                    Set as default payment method
-                  </label>
-                </div>
-
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowAddForm(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={!formData.name || !formData.details}
-                  >
-                    {editingMethod ? 'Update Method' : 'Add Method'}
-                  </button>
-                </div>
-              </form>
+              <p>Are you sure you want to delete the payment method "{methodToDelete.name}"?</p>
+              <p>This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                type="button"
+                className="btn btn-secondary"
+                onClick={cancelDelete}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                className="btn btn-danger"
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
