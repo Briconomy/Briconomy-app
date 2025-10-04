@@ -39,6 +39,8 @@ import TenantProfileEditPage from './pages/TenantProfileEditPage.tsx';
 import TenantDocumentsPage from './pages/TenantDocumentsPage.tsx';
 import TenantActivityPage from './pages/TenantActivityPage.tsx';
 import ApiTestPage from './pages/ApiTestPage.tsx';
+import AddPaymentMethodPage from './pages/AddPaymentMethodPage.tsx';
+import EditPaymentMethodPage from './pages/EditPaymentMethodPage.tsx';
 import { ProtectedRoute, AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { ProspectiveTenantProvider } from './contexts/ProspectiveTenantContext.tsx';
@@ -66,6 +68,8 @@ function App() {
               <Route path="/tenant" element={<TenantRoute><TenantDashboard /></TenantRoute>} />
               <Route path="/tenant/payments" element={<TenantRoute><TenantPaymentsPage /></TenantRoute>} />
               <Route path="/tenant/manage-payment-methods" element={<TenantRoute><ManageTenantPaymentMethodPage /></TenantRoute>} />
+              <Route path="/tenant/add-payment-method" element={<TenantRoute><AddPaymentMethodPage /></TenantRoute>} />
+              <Route path="/tenant/edit-payment-method/:id" element={<TenantRoute><EditPaymentMethodPage /></TenantRoute>} />
               <Route path="/tenant/requests" element={<TenantRoute><MaintenanceRequestsPage /></TenantRoute>} />
               <Route path="/caretaker/tasks" element={<CaretakerRoute><CaretakerTasksPage /></CaretakerRoute>} />
               <Route path="/properties" element={<PropertiesPage />} />

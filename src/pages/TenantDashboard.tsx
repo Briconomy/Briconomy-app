@@ -70,10 +70,12 @@ function TenantDashboard() {
 
   const loadNotifications = async () => {
     try {
-      if (user?.id) {
-        const notificationsData = await notificationsApi.getAll(user.id || '68bde3529b1d854514fa336a');
-        setNotifications(notificationsData.filter((n: { read: boolean }) => !n.read).slice(0, 5));
+      if (!user?.id) {
+        console.warn('No user ID available for notifications');
+        return;
       }
+      const notificationsData = await notificationsApi.getAll(user.id);
+      setNotifications(notificationsData.filter((n: { read: boolean }) => !n.read).slice(0, 5));
     } catch (err: unknown) {
       console.error('Error loading notifications:', err);
     }
@@ -217,7 +219,7 @@ return (
           <ActionCard
             onClick={() => navigate('/tenant/profile')}
             icon="U"
-            title={t('dashboard.profile')}
+            title={t('common.profile')}
             description={t('dashboard.update_info')}
           />
         </div>

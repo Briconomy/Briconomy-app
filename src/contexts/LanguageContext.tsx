@@ -362,6 +362,7 @@ const translations: Translations = {
 
   // Status Labels
   'status.inactive': { en: 'Inactive', zu: 'Ayisebenzi' },
+  'status.active': { en: 'Active', zu: 'Iyasebenza' },
   'status.pending': { en: 'Pending', zu: 'Kusalindile' },
   'status.completed': { en: 'Completed', zu: 'Kuphelile' },
   'status.approved': { en: 'Approved', zu: 'Kuvunyiwe' },

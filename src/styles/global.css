@@ -1061,3 +1061,87 @@ body {
 .user-form .form-group:last-child {
     margin-bottom: 0;
 }
+
+/* Modal Styles for Delete Confirmation */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 90%;
+    margin: 20px;
+}
+
+.modal-header {
+    padding: 20px 20px 0 20px;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.modal-body {
+    padding: 16px 20px;
+}
+
+.modal-body p {
+    margin: 0 0 12px 0;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.modal-body p:last-child {
+    margin-bottom: 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    padding: 0 20px 20px 20px;
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-actions .btn-secondary {
+    background: #6c757d;
+    color: #fff;
+}
+
+.modal-actions .btn-secondary:hover {
+    background: #545862;
+}
+
+.modal-actions .btn-danger {
+    background: #dc3545;
+    color: #fff;
+}
+
+.modal-actions .btn-danger:hover {
+    background: #c82333;
+}
