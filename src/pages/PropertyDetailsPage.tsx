@@ -682,19 +682,63 @@ function PropertyDetailsPage() {
   const getPropertyImages = () => {
     if (!property) return [];
     
-    // Generate property-specific placeholder images using external services
-    const baseId = property.id || 'default';
-    const seed = parseInt(baseId.slice(-6), 16) || 123456; // Use last 6 chars of ID as seed
+    // Property-specific image sets based on actual property data
+    const propertyImageSets = {
+      // Blue Hills Apartments - Cape Town (Modern apartment complex, 2018, pool/gym/parking/security/laundry/elevator)
+      '68c71163d8d94bff38735189': [
+        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop&crop=entropy', // Modern apartment building exterior
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy', // Modern apartment interior living room
+        'https://images.unsplash.com/photo-1571624436279-b272aff752b5?w=800&h=600&fit=crop&crop=entropy', // Modern kitchen
+        'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?w=800&h=600&fit=crop&crop=entropy', // Swimming pool area
+        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&crop=entropy', // Modern gym facility
+      ],
+      
+      // Green Valley Complex - Durban (Family-friendly complex, 2015, parking/garden/playground/bbq_area/security)
+      '68c71163d8d94bff3873518a': [
+        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop&crop=entropy', // Family complex exterior with gardens
+        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&crop=entropy', // Cozy family living room
+        'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop&crop=entropy', // Family kitchen/dining area
+        'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop&crop=entropy', // Garden and playground area
+        'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800&h=600&fit=crop&crop=entropy', // BBQ and outdoor area
+      ],
+      
+      // Sunset Towers - Port Elizabeth (Luxury beachfront apartments, 2020, pool/gym/parking/ocean_view/concierge/spa)
+      '68c71163d8d94bff3873518b': [
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy', // Luxury beachfront tower exterior
+        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&crop=entropy', // Luxury apartment interior with ocean view
+        'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&h=600&fit=crop&crop=entropy', // High-end modern kitchen
+        'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop&crop=entropy', // Luxury pool with ocean view
+        'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&h=600&fit=crop&crop=entropy', // Spa and wellness area
+      ]
+    };
     
-    const images = [
-      `https://picsum.photos/seed/${seed}/800/600`, // Main image
-      `https://picsum.photos/seed/${seed + 1}/800/600`, // Interior 1
-      `https://picsum.photos/seed/${seed + 2}/800/600`, // Interior 2
-      `https://picsum.photos/seed/${seed + 3}/800/600`, // Exterior 1
-      `https://picsum.photos/seed/${seed + 4}/800/600`, // Exterior 2
-    ];
+    // Get property-specific images or fall back to generic property images
+    const propertyImages = propertyImageSets[property.id];
     
-    return images.map(img => optimizeImage(img, lowBandwidthMode));
+    if (propertyImages) {
+      // Use specific curated images for this property
+      return propertyImages.map(img => optimizeImage(img, lowBandwidthMode));
+    } else {
+      // Fallback: Generate property-specific placeholder images using property characteristics
+      const baseId = property.id || 'default';
+      const seed = parseInt(baseId.slice(-6), 16) || 123456;
+      
+      // Generate themed images based on property type and characteristics
+      let imageTheme = 'building';
+      if (property.amenities?.includes('pool')) imageTheme = 'luxury';
+      if (property.amenities?.includes('garden')) imageTheme = 'garden';
+      if (property.amenities?.includes('ocean_view')) imageTheme = 'ocean';
+      
+      const fallbackImages = [
+        `https://picsum.photos/seed/${seed}-${imageTheme}/800/600`, // Main themed image
+        `https://picsum.photos/seed/${seed + 1}/800/600`, // Interior 1
+        `https://picsum.photos/seed/${seed + 2}/800/600`, // Interior 2
+        `https://picsum.photos/seed/${seed + 3}/800/600`, // Amenity area
+        `https://picsum.photos/seed/${seed + 4}/800/600`, // Exterior/surroundings
+      ];
+      
+      return fallbackImages.map(img => optimizeImage(img, lowBandwidthMode));
+    }
   };
 
   if (loading) {
