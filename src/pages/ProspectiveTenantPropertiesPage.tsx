@@ -145,6 +145,31 @@ function ProspectiveTenantPropertiesPage() {
     globalThis.location.href = `/apply/${propertyId}`;
   };
 
+  const getPropertyImage = (property: any) => {
+    // Property-specific main images to match the detail page
+    const propertyMainImages = {
+      // Blue Hills Apartments - Modern Cape Town apartment building
+      '68c71163d8d94bff38735189': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop&crop=entropy',
+      
+      // Green Valley Complex - Family-friendly Durban complex
+      '68c71163d8d94bff3873518a': 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop&crop=entropy',
+      
+      // Sunset Towers - Luxury Port Elizabeth beachfront
+      '68c71163d8d94bff3873518b': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop&crop=entropy'
+    };
+    
+    // Get property-specific main image or fall back to placeholder
+    const mainImage = propertyMainImages[property.id];
+    
+    if (mainImage) {
+      return optimizeImage(mainImage, lowBandwidthMode);
+    } else {
+      // Fallback for any other properties
+      const seed = parseInt(property.id?.slice(-6) || '123456', 16);
+      return optimizeImage(`https://picsum.photos/seed/${seed}/400/300`, lowBandwidthMode);
+    }
+  };
+
   if (loading) {
     return (
       <div className="app-container mobile-only">
@@ -256,11 +281,12 @@ function ProspectiveTenantPropertiesPage() {
                 <div className="property-image-container">
                   <div className="property-image">
                     <img 
-                      src={imageUrl} 
+                      src={getPropertyImage(property)}
                       alt={property.name}
+                      className="property-image"
                       onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRTVFNUU5Ii8+CjxwYXRoIGQ9Ik0xMjUgNzVIMTc1VjEyNUgxMjVWNzVaTTE0MCA5MEgxNjBWMTBIMTQwVjkwWk0xNDAgMTBIMTYwVjExMEgxNDBWMTAwWk0xNDAgMTEwSDE2MFYxMjBIMTQwVjExMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHRleHQgeD0iMTUwIiB5PSIxNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Qjc2OEYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCI+UHJvcGVydHkgSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=';
+                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRTVFNUU5Ii8+CjxwYXRoIGQ9Ik0xNzUgMTEySDIyNVYxODJIMTc1VjExMlpNMTkwIDEzMkgyMFYxNDJIMTkwVjEzMlpNMTkwIDE0MkgyMFYxNTJIMTkwVjE0MlpNMTkwIDE1MkgyMFYxNjJIMTkwVjE1MloiIGZpbGw9IiM5Q0EzQUYiLz4KPHRleHQgeD0iMjAwIiB5PSIxOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Qjc2OEYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiI+UHJvcGVydHkgSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=';
                       }}
                     />
                   </div>
