@@ -203,6 +203,200 @@ const modalStyles = `
     font-size: 18px;
     color: #6c757d;
   }
+
+  /* Enhanced property card styling to match browse properties page */
+  .property-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .property-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .property-info {
+    padding: 16px;
+  }
+
+  .property-price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #FF894D;
+    margin-bottom: 8px;
+  }
+
+  .property-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+  }
+
+  .property-location {
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .property-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .property-type,
+  .property-units,
+  .occupancy-rate {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .property-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .year-built,
+  .last-renovation {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .property-description p {
+    color: #333;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .property-amenities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .amenity-tag {
+    background: rgba(22, 47, 27, 0.1);
+    color: #162F1B;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .property-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+    flex: 1;
+  }
+
+  .btn-sm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary.btn-sm {
+    background: #f8f9fa;
+    color: #495057;
+    border: 2px solid #e9ecef;
+  }
+
+  .btn-secondary.btn-sm:hover:not(:disabled) {
+    background: #e9ecef;
+    border-color: #dee2e6;
+  }
+
+  .btn-primary.btn-sm {
+    background: #162F1B;
+    color: white;
+  }
+
+  .btn-primary.btn-sm:hover:not(:disabled) {
+    background: #1a3a20;
+  }
+
+  /* Unit cards styling */
+  .units-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .unit-detail-card {
+    margin-bottom: 0;
+    border-left: 4px solid transparent;
+  }
+
+  .unit-detail-card:has(.unit-status-badge.available) {
+    border-left-color: #28a745;
+  }
+
+  .unit-detail-card:has(.unit-status-badge.unavailable) {
+    border-left-color: #dc3545;
+  }
+
+  .unit-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+
+  .unit-status-badge.available {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+
+  .unit-status-badge.unavailable {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+
+  .unit-header-info {
+    position: relative;
+    padding-right: 80px;
+  }
+
+  .final-action-section {
+    text-align: center;
+  }
+
+  .final-action-section .property-actions {
+    justify-content: center;
+    max-width: 300px;
+    margin: 0 auto;
+  }
   
   .price-subtitle {
     font-size: 14px;
@@ -1046,146 +1240,196 @@ function PropertyDetailsPage() {
           </button>
         </div>
 
-        <div className="property-overview-section">
-          <h2>Property Overview</h2>
-          <div className="overview-grid">
-            <div className="overview-item">
-              <span className="overview-label">Property Type</span>
-              <span className="overview-value">{property.type}</span>
+        {/* Property Overview Card */}
+        <div className="property-card">
+          <div className="property-info">
+            <div className="property-price">{formatCurrency(calculateEstimatedRent(property))}/month</div>
+            <div className="property-title">{property.name}</div>
+            <div className="property-location">{property.address}</div>
+            
+            <div className="property-details">
+              <span className="property-type">{property.type}</span>
+              <span className="property-units">{property.totalUnits} units</span>
+              <span className="occupancy-rate">{availability.percentage}% available</span>
             </div>
-            <div className="overview-item">
-              <span className="overview-label">Total Units</span>
-              <span className="overview-value">{property.totalUnits}</span>
+
+            <div className="property-meta">
+              {property.yearBuilt && (
+                <span className="year-built">Built: {property.yearBuilt}</span>
+              )}
+              {property.lastRenovation && (
+                <span className="last-renovation">Renovated: {property.lastRenovation}</span>
+              )}
             </div>
-            <div className="overview-item">
-              <span className="overview-label">Available Units</span>
-              <span className="overview-value">{availability.available}</span>
-            </div>
-            <div className="overview-item">
-              <span className="overview-label">Availability</span>
-              <span className="overview-value">{availability.percentage}%</span>
-            </div>
-            {property.yearBuilt && (
-              <div className="overview-item">
-                <span className="overview-label">Year Built</span>
-                <span className="overview-value">{property.yearBuilt}</span>
-              </div>
-            )}
-            {property.lastRenovation && (
-              <div className="overview-item">
-                <span className="overview-label">Last Renovated</span>
-                <span className="overview-value">{property.lastRenovation}</span>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="property-description-section">
-          <h2>About This Property</h2>
-          <p>{property.description || 'This is a beautiful property in a prime location with excellent amenities and convenient access to local attractions.'}</p>
+        {/* Property Description Card */}
+        <div className="property-card">
+          <div className="property-info">
+            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>About This Property</h3>
+            <div className="property-description">
+              <p>{property.description || 'This is a beautiful property in a prime location with excellent amenities and convenient access to local attractions.'}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="property-amenities-section">
-          <h2>Amenities</h2>
-          <div className="amenities-grid">
-            {property.amenities.map((amenity, index) => (
-              <div key={index} className="amenity-item">
-                <span className="amenity-icon">Available</span>
-                <span className="amenity-name">{amenity.replace('_', ' ')}</span>
-              </div>
-            ))}
+        {/* Amenities Card */}
+        <div className="property-card">
+          <div className="property-info">
+            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>Amenities</h3>
+            <div className="property-amenities">
+              {property.amenities.map((amenity, index) => (
+                <span key={index} className="amenity-tag">
+                  {amenity.replace('_', ' ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Property Actions */}
+        <div className="property-card">
+          <div className="property-info">
+            <div className="property-actions">
+              <button type="button"
+                onClick={() => globalThis.location.href = '/browse-properties'}
+                className="btn btn-secondary btn-sm"
+              >
+                Back to Properties
+              </button>
+              <button type="button"
+                onClick={handleApplyNow}
+                className="btn btn-primary btn-sm"
+                disabled={availability.available === 0}
+              >
+                {availability.available > 0 ? 'Apply Now' : 'Join Waitlist'}
+              </button>
+            </div>
           </div>
         </div>
 
         {units.length > 0 && (
-          <div className="available-units-section">
-            <h2>Unit Details</h2>
-            <div className="units-list">
-              {units.map((unit, index) => (
-                <div key={unit.id || `unit-${index}`} className={`unit-card ${unit.status}`}>
-                  <div className="unit-info">
-                    <div className="unit-header">
-                      <h4>Unit {unit.unitNumber}</h4>
-                      <span className={`unit-status ${unit.status}`}>
-                        {unit.status === 'occupied' ? 'Occupied' : 
-                         unit.status === 'vacant' ? 'Vacant' : 
-                         unit.status === 'maintenance' ? 'Maintenance' : 'Unknown'}
-                      </span>
-                    </div>
-                    <div className="unit-details">
-                      <span className="unit-specs">
-                        {unit.bedrooms} bed • {unit.bathrooms} bath • {unit.sqft} sqm
-                      </span>
-                      <span className="unit-floor">Floor {unit.floor}</span>
-                    </div>
-                    <p className="unit-rent">{formatCurrency(unit.rent)}/month</p>
-                    
-                    {unit.features && unit.features.length > 0 && (
-                      <div className="unit-features">
-                        {unit.features.map((feature, idx) => (
-                          <span key={idx} className="feature-tag">
-                            {feature.replace('_', ' ')}
-                          </span>
-                        ))}
+          <div className="property-card">
+            <div className="property-info">
+              <h3 style={{ marginBottom: '16px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>Available Units ({units.filter(u => u.status === 'vacant').length})</h3>
+              <div className="units-grid">
+                {units.map((unit, index) => (
+                  <div key={unit.id || `unit-${index}`} className="property-card unit-detail-card">
+                    <div className="property-info">
+                      <div className="unit-header-info">
+                        <div className="property-price">{formatCurrency(unit.rent)}/month</div>
+                        <div className="property-title">Unit {unit.unitNumber}</div>
+                        <div className="property-location">Floor {unit.floor}</div>
+                        
+                        <div className="property-details">
+                          <span className="property-type">{unit.bedrooms} bed</span>
+                          <span className="property-units">{unit.bathrooms} bath</span>
+                          <span className="occupancy-rate">{unit.sqft} sqm</span>
+                        </div>
+
+                        <div className={`availability-badge unit-status-badge ${unit.status === 'vacant' ? 'available' : 'unavailable'}`}>
+                          {unit.status === 'occupied' ? 'Occupied' : 
+                           unit.status === 'vacant' ? 'Available' : 
+                           unit.status === 'maintenance' ? 'Maintenance' : 'Unknown'}
+                        </div>
                       </div>
-                    )}
-                    
-                    {unit.maintenanceNotes && (
-                      <div className="maintenance-notes">
-                        <strong>Maintenance:</strong> {unit.maintenanceNotes}
-                      </div>
-                    )}
-                    
-                    {unit.status === 'vacant' && (
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          if (propertyId) {
-                            navigate(`/apply/${propertyId}?unit=${unit.id || unit.unitNumber}`);
-                          } else {
-                            console.error('Property ID is undefined');
-                            navigate('/properties');
-                          }
-                        }}
-                        className="btn btn-primary btn-sm"
-                      >
-                        Apply for Unit
-                      </button>
-                    )}
+
+                      {unit.features && unit.features.length > 0 && (
+                        <div className="property-amenities" style={{ marginTop: '12px' }}>
+                          {unit.features.map((feature, idx) => (
+                            <span key={idx} className="amenity-tag">
+                              {feature.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {unit.maintenanceNotes && (
+                        <div className="property-description" style={{ marginTop: '12px' }}>
+                          <p style={{ color: '#e67e22', fontSize: '13px', fontWeight: '500' }}>
+                            <strong>Maintenance Note:</strong> {unit.maintenanceNotes}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {unit.status === 'vacant' && (
+                        <div className="property-actions" style={{ marginTop: '16px' }}>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              if (propertyId) {
+                                navigate(`/apply/${propertyId}?unit=${unit.id || unit.unitNumber}`);
+                              } else {
+                                console.error('Property ID is undefined');
+                                navigate('/properties');
+                              }
+                            }}
+                            className="btn btn-primary btn-sm"
+                            style={{ width: '100%' }}
+                          >
+                            Apply for This Unit
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        <div className="property-location-section">
-          <h2>Location</h2>
-          <div className="location-info">
-            <p className="address">{property.address}</p>
-            <div className="map-placeholder">
-              <div className="map-placeholder-content">
-                <span className="map-icon">Location</span>
-                <p>Interactive map coming soon</p>
-                <p className="map-subtitle">Google Maps integration will be available</p>
+        {/* Location Card */}
+        <div className="property-card">
+          <div className="property-info">
+            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>Location</h3>
+            <div className="property-location" style={{ fontSize: '16px', marginBottom: '16px' }}>{property.address}</div>
+            <div className="location-map-placeholder">
+              <div style={{ 
+                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)', 
+                padding: '40px 20px', 
+                borderRadius: '8px', 
+                textAlign: 'center',
+                border: '2px dashed #dee2e6'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>📍</div>
+                <p style={{ color: '#6c757d', margin: '0 0 4px 0', fontWeight: '500' }}>Interactive Map</p>
+                <p style={{ color: '#6c757d', margin: '0', fontSize: '12px' }}>Google Maps integration coming soon</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="property-actions-section">
-          <div className="action-buttons">
-            <button type="button" onClick={handleBack} className="btn btn-secondary">
-              Back to Properties
-            </button>
-            <button 
-              type="button"
-              onClick={handleApplyNow}
-              className="btn btn-primary"
-              disabled={availability.available === 0}
-            >
-              {availability.available > 0 ? 'Apply Now' : 'Join Waitlist'}
-            </button>
+        {/* Final Action Section */}
+        <div className="property-card">
+          <div className="property-info">
+            <div className="final-action-section">
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <div className="property-price" style={{ marginBottom: '4px' }}>
+                  {availability.available > 0 ? `${availability.available} units available` : 'Fully occupied'}
+                </div>
+                <div style={{ color: '#6c757d', fontSize: '14px' }}>
+                  Ready to make this your home?
+                </div>
+              </div>
+              <div className="property-actions">
+                <button type="button" 
+                  onClick={handleBack} 
+                  className="btn btn-secondary btn-sm"
+                >
+                  Back to Properties
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleApplyNow}
+                  className="btn btn-primary btn-sm"
+                  disabled={availability.available === 0}
+                >
+                  {availability.available > 0 ? 'Apply Now' : 'Join Waitlist'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
