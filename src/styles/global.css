@@ -1145,3 +1145,53 @@ body {
 .modal-actions .btn-danger:hover {
     background: #c82333;
 }
+
+/* Recipient button styling - consistent with app styles */
+.recipient-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid #f8f9fa;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-align: left;
+}
+
+.recipient-button:last-child {
+    border-bottom: none;
+}
+
+.recipient-button:hover {
+    background: #f8f9fa;
+}
+
+.recipient-button.emergency-contact .recipient-role {
+    background: #FF894D;
+    color: white;
+}
+
+.recipient-details {
+    text-align: left;
+}
+
+.recipient-details h5 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.recipient-role {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #162F1B;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
