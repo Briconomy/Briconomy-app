@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 import { connectToMongoDB, getCollection } from "./db.ts";
 import {
   getProperties,
+  getPropertyById,
   createProperty,
   getUnits,
   createUnit,
@@ -227,11 +228,34 @@ serve(async (req) => {
     // Properties endpoints
     if (path[0] === 'api' && path[1] === 'properties') {
       if (req.method === 'GET') {
-        const filters = Object.fromEntries(url.searchParams);
-        const properties = await getProperties(filters);
-        return new Response(JSON.stringify(properties), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        // Check if there's a property ID in the path (/api/properties/:id)
+        if (path[2]) {
+          const propertyId = path[2];
+          try {
+            const property = await getPropertyById(propertyId);
+            if (!property) {
+              return new Response(JSON.stringify({ error: 'Property not found' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 404
+              });
+            }
+            return new Response(JSON.stringify(property), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          } catch (_error) {
+            return new Response(JSON.stringify({ error: 'Invalid property ID' }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400
+            });
+          }
+        } else {
+          // Get all properties with filters
+          const filters = Object.fromEntries(url.searchParams);
+          const properties = await getProperties(filters);
+          return new Response(JSON.stringify(properties), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
       } else if (req.method === 'POST') {
         const body = await req.json();
         const property = await createProperty(body);

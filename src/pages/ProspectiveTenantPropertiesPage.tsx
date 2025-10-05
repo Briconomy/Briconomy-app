@@ -17,7 +17,7 @@ function ProspectiveTenantPropertiesPage() {
 
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
-  const { session, updateSearchPreferences, addViewedProperty, isActive } = useProspectiveTenant();
+  const { session: _session, updateSearchPreferences, addViewedProperty, isActive: _isActive } = useProspectiveTenant();
   const navigate = useNavigate();
 
   const navItems = [
@@ -247,10 +247,10 @@ function ProspectiveTenantPropertiesPage() {
           {filteredProperties.map((property) => {
             const estimatedRent = calculateEstimatedRent(property);
             const availability = getPropertyAvailability(property);
-            const imageUrl = optimizeImage(`/api/properties/${property._id}/image`, lowBandwidthMode);
+            const imageUrl = optimizeImage(`/api/properties/${property.id}/image`, lowBandwidthMode);
 
             return (
-              <div key={property._id} className="property-card">
+              <div key={property.id} className="property-card">
                 <div className="property-image-container">
                   <div className="property-image">
                     <img 
@@ -302,13 +302,13 @@ function ProspectiveTenantPropertiesPage() {
 
                   <div className="property-actions">
                     <button type="button"
-                      onClick={() => handleViewDetails(property._id)}
+                      onClick={() => handleViewDetails(property.id)}
                       className="btn btn-secondary btn-sm"
                     >
                       View Details
                     </button>
                     <button type="button"
-                      onClick={() => handleApplyNow(property._id)}
+                      onClick={() => handleApplyNow(property.id)}
                       className="btn btn-primary btn-sm"
                       disabled={availability.available === 0}
                     >
