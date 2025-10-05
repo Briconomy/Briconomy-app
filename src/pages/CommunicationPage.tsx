@@ -361,19 +361,20 @@ return (
               <div className="recipient-list">
                 <h4>Select Recipient</h4>
                 {contacts.map((contact) => (
-                  <div 
+                  <button 
+                    type="button"
                     key={contact.id} 
-                    className="recipient-item"
+                    className={`recipient-button ${contact.type === 'emergency' ? 'emergency-contact' : ''}`}
                     onClick={() => handleStartNewMessage(contact)}
                   >
                     <div className="recipient-avatar">{contact.avatar}</div>
-                    <div>
+                    <div className="recipient-details">
                       <h5>{contact.name}</h5>
                       <span className={`recipient-role ${contact.type === 'emergency' ? 'emergency-role' : ''}`}>
                         {contact.role}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
