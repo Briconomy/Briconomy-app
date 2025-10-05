@@ -6,7 +6,6 @@ echo.
 REM Kill any existing processes on ports 5173, 8000, and 8816
 echo Cleaning up existing processes...
 for /f "tokens=5" %%a in ('netstat -aon ^| find ":5173" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon ^| find ":8000" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -aon ^| find ":8816" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
 
 REM Kill any remaining Deno processes
@@ -49,7 +48,7 @@ echo Database will be initialized by the application on first run if needed
 REM Start both development servers
 echo Starting development servers...
 echo Frontend will be available at: http://localhost:5173
-echo API server will be available at: http://localhost:8000
+echo API server will be available at: http://localhost:8816
 echo.
 
 REM Start API server minimized and hidden
@@ -59,6 +58,16 @@ REM Start frontend dev server minimized and hidden
 start /min "" cmd /c deno task dev >nul 2>&1
 
 echo Servers are starting up in background...
+echo.
+echo ========================================
+echo   Briconomy Application Started!
+echo ========================================
+echo Frontend: http://localhost:5173
+echo API:      http://localhost:8816
+echo ========================================
+echo.
 echo Your application should be ready in a few moments.
+echo Both servers are running in the background.
+echo.
 echo Press any key to close this window
 pause
