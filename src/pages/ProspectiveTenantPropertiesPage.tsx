@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
 
 function ProspectiveTenantPropertiesPage() {
@@ -17,13 +18,14 @@ function ProspectiveTenantPropertiesPage() {
 
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
+  const { t } = useLanguage();
   const { session: _session, updateSearchPreferences, addViewedProperty, isActive: _isActive } = useProspectiveTenant();
   const navigate = useNavigate();
 
   const navItems = [
-    { path: '/', label: 'Home', active: false },
-    { path: '/browse-properties', label: 'Properties', active: true },
-    { path: '/login', label: 'Login', active: false }
+    { path: '/', label: t('nav.home'), active: false },
+    { path: '/browse-properties', label: t('nav.properties'), active: true },
+    { path: '/login', label: t('auth.login'), active: false }
   ];
 
   useEffect(() => {
@@ -177,7 +179,7 @@ function ProspectiveTenantPropertiesPage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading properties...</p>
+            <p>{t('common.loading')}</p>
           </div>
         </div>
       </div>
@@ -190,8 +192,8 @@ function ProspectiveTenantPropertiesPage() {
         <TopNav showBackButton backLink="/" />
         <div className="main-content">
           <div className="error-state">
-            <p>Error loading properties: {error}</p>
-            <button type="button" onClick={fetchProperties} className="btn btn-primary">Retry</button>
+            <p>{t('common.error')}: {error}</p>
+            <button type="button" onClick={fetchProperties} className="btn btn-primary">{t('common.refresh')}</button>
           </div>
         </div>
       </div>
@@ -204,11 +206,11 @@ function ProspectiveTenantPropertiesPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Available Properties</div>
-          <div className="page-subtitle">Find your perfect home</div>
+          <div className="page-title">{t('prospect.available_properties')}</div>
+          <div className="page-subtitle">{t('prospect.find_perfect_home')}</div>
           <div className="prospective-tenant-indicator">
-            <span className="indicator-badge"> Prospective Tenant Mode</span>
-            <span className="indicator-text">Browse freely - No login required</span>
+            <span className="indicator-badge">{t('prospect.tenant_mode')}</span>
+            <span className="indicator-text">{t('prospect.browse_freely')}</span>
           </div>
         </div>
 
@@ -216,7 +218,7 @@ function ProspectiveTenantPropertiesPage() {
           <div className="search-bar">
             <input
               type="text"
-              placeholder="Search properties..."
+              placeholder={t('prospect.search_properties')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -225,25 +227,25 @@ function ProspectiveTenantPropertiesPage() {
 
           <div className="filter-controls">
             <div className="filter-group">
-              <label>Property Type</label>
+              <label>{t('prospect.property_type')}</label>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="filter-select"
               >
-                <option value="all">All Types</option>
-                <option value="apartment">Apartment</option>
-                <option value="complex">Complex</option>
-                <option value="house">House</option>
+                <option value="all">{t('prospect.all_types')}</option>
+                <option value="apartment">{t('prospect.apartment')}</option>
+                <option value="complex">{t('prospect.complex')}</option>
+                <option value="house">{t('prospect.house')}</option>
               </select>
             </div>
 
             <div className="price-range-filter">
-              <label>Price Range (ZAR/month)</label>
+              <label>{t('prospect.price_range')}</label>
               <div className="price-inputs">
                 <input
                   type="number"
-                  placeholder="Min"
+                  placeholder={t('prospect.min')}
                   value={priceRange.min}
                   onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
                   className="price-input"
@@ -251,7 +253,7 @@ function ProspectiveTenantPropertiesPage() {
                 <span>-</span>
                 <input
                   type="number"
-                  placeholder="Max"
+                  placeholder={t('prospect.max')}
                   value={priceRange.max}
                   onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
                   className="price-input"
@@ -262,9 +264,9 @@ function ProspectiveTenantPropertiesPage() {
         </div>
 
         <div className="results-info">
-          <span>{filteredProperties.length} properties found</span>
+          <span>{filteredProperties.length} {t('prospect.properties_found')}</span>
           {lowBandwidthMode && (
-            <span className="low-bandwidth-indicator">Low bandwidth mode</span>
+            <span className="low-bandwidth-indicator">{t('prospect.low_bandwidth')}</span>
           )}
         </div>
 
@@ -291,7 +293,7 @@ function ProspectiveTenantPropertiesPage() {
                     />
                   </div>
                   <div className={`availability-badge ${availability.available > 0 ? 'available' : 'unavailable'}`}>
-                    {availability.available > 0 ? `${availability.available} available` : 'Fully occupied'}
+                    {availability.available > 0 ? `${availability.available} ${t('prospect.available')}` : t('prospect.fully_occupied')}
                   </div>
                 </div>
                 
@@ -302,8 +304,8 @@ function ProspectiveTenantPropertiesPage() {
                   
                   <div className="property-details">
                     <span className="property-type">{property.type}</span>
-                    <span className="property-units">{property.totalUnits} units</span>
-                    <span className="occupancy-rate">{availability.percentage}% available</span>
+                    <span className="property-units">{property.totalUnits} {t('prospect.units')}</span>
+                    <span className="occupancy-rate">{availability.percentage}% {t('prospect.available')}</span>
                   </div>
 
                   <div className="property-description">
@@ -311,9 +313,9 @@ function ProspectiveTenantPropertiesPage() {
                   </div>
 
                   <div className="property-meta">
-                    <span className="year-built">Built: {property.yearBuilt}</span>
+                    <span className="year-built">{t('prospect.built')} {property.yearBuilt}</span>
                     {property.lastRenovation && (
-                      <span className="last-renovation">Renovated: {property.lastRenovation}</span>
+                      <span className="last-renovation">{t('prospect.renovated')} {property.lastRenovation}</span>
                     )}
                   </div>
 
@@ -333,14 +335,14 @@ function ProspectiveTenantPropertiesPage() {
                       onClick={() => handleViewDetails(property.id)}
                       className="btn btn-secondary btn-sm"
                     >
-                      View Details
+                      {t('prospect.view_details')}
                     </button>
                     <button type="button"
                       onClick={() => handleApplyNow(property.id)}
                       className="btn btn-primary btn-sm"
                       disabled={availability.available === 0}
                     >
-                      {availability.available > 0 ? 'Apply Now' : 'Unavailable'}
+                      {availability.available > 0 ? t('prospect.apply_now') : t('prospect.unavailable')}
                     </button>
                   </div>
                 </div>
@@ -352,7 +354,7 @@ function ProspectiveTenantPropertiesPage() {
         {filteredProperties.length === 0 && (
           <div className="no-results">
             <div className="no-results-icon">House</div>
-            <h3>No properties found</h3>
+            <h3>{t('prospect.no_properties')}</h3>
             {properties.length === 0 ? (
               <>
                 <p>There are currently no properties available in the system.</p>
@@ -376,7 +378,7 @@ function ProspectiveTenantPropertiesPage() {
               }}
               className="btn btn-primary"
             >
-              {properties.length === 0 ? 'Refresh Properties' : 'Clear Filters'}
+              {properties.length === 0 ? t('prospect.refresh_properties') : t('prospect.clear_filters')}
             </button>
           </div>
         )}

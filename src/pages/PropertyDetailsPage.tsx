@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, unitsApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 // Add styles for the image modal and gallery
 const modalStyles = `
@@ -509,6 +510,7 @@ function PropertyDetailsPage() {
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const isManager = user?.userType === 'manager';
   const isTenant = user?.userType === 'tenant';
@@ -1252,24 +1254,24 @@ function PropertyDetailsPage() {
               <span className="price">{formatCurrency(calculateEstimatedRent(property))}</span>
               <span className="period">/month</span>
             </div>
-            <div className="price-subtitle">Average estimated rent</div>
+            <div className="price-subtitle">{t('prospect.average_rent')}</div>
           </div>
           
           <div className="pricing-details">
             <div className="pricing-item">
-              <span className="pricing-label">Rent Range:</span>
+              <span className="pricing-label">{t('prospect.rent_range')}</span>
               <span className="pricing-value">
                 {formatCurrency(rentRange.min)} - {formatCurrency(rentRange.max)}
               </span>
             </div>
             <div className="pricing-item">
-              <span className="pricing-label">Available Units:</span>
+              <span className="pricing-label">{t('prospect.available_units')}:</span>
               <span className={`pricing-value ${availability.available > 0 ? 'available' : 'unavailable'}`}>
-                {availability.available > 0 ? `${availability.available} of ${property.totalUnits}` : 'Fully occupied'}
+                {availability.available > 0 ? `${availability.available} of ${property.totalUnits}` : t('prospect.fully_occupied')}
               </span>
             </div>
             <div className="pricing-item">
-              <span className="pricing-label">Occupancy Rate:</span>
+              <span className="pricing-label">{t('prospect.occupancy_rate')}</span>
               <span className="pricing-value">{Math.round((property.occupiedUnits / property.totalUnits) * 100)}%</span>
             </div>
           </div>
@@ -1280,7 +1282,7 @@ function PropertyDetailsPage() {
             className="btn btn-primary btn-large"
             disabled={availability.available === 0}
           >
-            {availability.available > 0 ? 'Apply for Rental' : 'Join Waitlist'}
+            {availability.available > 0 ? t('prospect.apply_for_rental') : t('prospect.join_waitlist')}
           </button>
         </div>
 
@@ -1311,7 +1313,7 @@ function PropertyDetailsPage() {
         {/* Property Description Card */}
         <div className="property-card">
           <div className="property-info">
-            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>About This Property</h3>
+            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.about_property')}</h3>
             <div className="property-description">
               <p>{property.description || 'This is a beautiful property in a prime location with excellent amenities and convenient access to local attractions.'}</p>
             </div>
@@ -1321,7 +1323,7 @@ function PropertyDetailsPage() {
         {/* Amenities Card */}
         <div className="property-card">
           <div className="property-info">
-            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>Amenities</h3>
+            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.amenities')}</h3>
             <div className="property-amenities">
               {property.amenities.map((amenity, index) => (
                 <span key={index} className="amenity-tag">
@@ -1340,14 +1342,14 @@ function PropertyDetailsPage() {
                 onClick={() => globalThis.location.href = '/browse-properties'}
                 className="btn btn-secondary btn-sm"
               >
-                Back to Properties
+                {t('prospect.back_to_properties')}
               </button>
               <button type="button"
                 onClick={handleApplyNow}
                 className="btn btn-primary btn-sm"
                 disabled={availability.available === 0}
               >
-                {availability.available > 0 ? 'Apply Now' : 'Join Waitlist'}
+                {availability.available > 0 ? t('prospect.apply_now') : t('prospect.join_waitlist')}
               </button>
             </div>
           </div>
@@ -1356,7 +1358,7 @@ function PropertyDetailsPage() {
         {units.length > 0 && (
           <div className="property-card">
             <div className="property-info">
-              <h3 style={{ marginBottom: '16px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>Available Units ({units.filter(u => u.status === 'vacant').length})</h3>
+              <h3 style={{ marginBottom: '16px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.available_units')} ({units.filter(u => u.status === 'vacant').length})</h3>
               <div className="units-grid">
                 {units.map((unit, index) => (
                   <div key={unit.id || `unit-${index}`} className="property-card unit-detail-card">
@@ -1364,18 +1366,18 @@ function PropertyDetailsPage() {
                       <div className="unit-header-info">
                         <div className="property-price">{formatCurrency(unit.rent)}/month</div>
                         <div className="property-title">Unit {unit.unitNumber}</div>
-                        <div className="property-location">Floor {unit.floor}</div>
+                        <div className="property-location">{t('prospect.floor')} {unit.floor}</div>
                         
                         <div className="property-details">
-                          <span className="property-type">{unit.bedrooms} bed</span>
-                          <span className="property-units">{unit.bathrooms} bath</span>
-                          <span className="occupancy-rate">{unit.sqft} sqm</span>
+                          <span className="property-type">{unit.bedrooms} {t('prospect.bed')}</span>
+                          <span className="property-units">{unit.bathrooms} {t('prospect.bath')}</span>
+                          <span className="occupancy-rate">{unit.sqft} {t('prospect.sqm')}</span>
                         </div>
 
                         <div className={`availability-badge unit-status-badge ${unit.status === 'vacant' ? 'available' : 'unavailable'}`}>
-                          {unit.status === 'occupied' ? 'Occupied' : 
-                           unit.status === 'vacant' ? 'Available' : 
-                           unit.status === 'maintenance' ? 'Maintenance' : 'Unknown'}
+                          {unit.status === 'occupied' ? t('prospect.occupied') : 
+                           unit.status === 'vacant' ? t('prospect.available') : 
+                           unit.status === 'maintenance' ? t('prospect.maintenance') : 'Unknown'}
                         </div>
                       </div>
 
@@ -1412,7 +1414,7 @@ function PropertyDetailsPage() {
                             className="btn btn-primary btn-sm"
                             style={{ width: '100%' }}
                           >
-                            Apply for This Unit
+                            {t('prospect.apply_for_unit')}
                           </button>
                         </div>
                       )}
@@ -1427,7 +1429,7 @@ function PropertyDetailsPage() {
         {/* Location Card */}
         <div className="property-card">
           <div className="property-info">
-            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>Location</h3>
+            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.location')}</h3>
             <div className="property-location" style={{ fontSize: '16px', marginBottom: '16px' }}>{property.address}</div>
             <div className="location-map-placeholder">
               <div style={{ 
@@ -1438,8 +1440,8 @@ function PropertyDetailsPage() {
                 border: '2px dashed #dee2e6'
               }}>
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>📍</div>
-                <p style={{ color: '#6c757d', margin: '0 0 4px 0', fontWeight: '500' }}>Interactive Map</p>
-                <p style={{ color: '#6c757d', margin: '0', fontSize: '12px' }}>Google Maps integration coming soon</p>
+                <p style={{ color: '#6c757d', margin: '0 0 4px 0', fontWeight: '500' }}>{t('prospect.interactive_map')}</p>
+                <p style={{ color: '#6c757d', margin: '0', fontSize: '12px' }}>{t('prospect.maps_coming_soon')}</p>
               </div>
             </div>
           </div>
@@ -1451,10 +1453,10 @@ function PropertyDetailsPage() {
             <div className="final-action-section">
               <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                 <div className="property-price" style={{ marginBottom: '4px' }}>
-                  {availability.available > 0 ? `${availability.available} units available` : 'Fully occupied'}
+                  {availability.available > 0 ? `${availability.available} ${t('prospect.units_available')}` : t('prospect.fully_occupied')}
                 </div>
                 <div style={{ color: '#6c757d', fontSize: '14px' }}>
-                  Ready to make this your home?
+                  {t('prospect.ready_to_apply')}
                 </div>
               </div>
               <div className="property-actions">
@@ -1462,7 +1464,7 @@ function PropertyDetailsPage() {
                   onClick={handleBack} 
                   className="btn btn-secondary btn-sm"
                 >
-                  Back to Properties
+                  {t('prospect.back_to_properties')}
                 </button>
                 <button 
                   type="button"
@@ -1470,7 +1472,7 @@ function PropertyDetailsPage() {
                   className="btn btn-primary btn-sm"
                   disabled={availability.available === 0}
                 >
-                  {availability.available > 0 ? 'Apply Now' : 'Join Waitlist'}
+                  {availability.available > 0 ? t('prospect.apply_now') : t('prospect.join_waitlist')}
                 </button>
               </div>
             </div>
