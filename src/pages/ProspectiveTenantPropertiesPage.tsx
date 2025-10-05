@@ -247,7 +247,9 @@ function ProspectiveTenantPropertiesPage() {
           {filteredProperties.map((property) => {
             const estimatedRent = calculateEstimatedRent(property);
             const availability = getPropertyAvailability(property);
-            const imageUrl = optimizeImage(`/api/properties/${property.id}/image`, lowBandwidthMode);
+            // Generate property-specific image using external service
+            const seed = parseInt((property.id || 'default').slice(-6), 16) || 123456;
+            const imageUrl = optimizeImage(`https://picsum.photos/seed/${seed}/400/300`, lowBandwidthMode);
 
             return (
               <div key={property.id} className="property-card">

@@ -488,12 +488,16 @@ function PropertyDetailsPage() {
   const getPropertyImages = () => {
     if (!property) return [];
     
+    // Generate property-specific placeholder images using external services
+    const baseId = property.id || 'default';
+    const seed = parseInt(baseId.slice(-6), 16) || 123456; // Use last 6 chars of ID as seed
+    
     const images = [
-      `/api/properties/${property.id}/image/main`,
-      `/api/properties/${property.id}/image/interior1`,
-      `/api/properties/${property.id}/image/interior2`,
-      `/api/properties/${property.id}/image/exterior1`,
-      `/api/properties/${property.id}/image/exterior2`
+      `https://picsum.photos/seed/${seed}/800/600`, // Main image
+      `https://picsum.photos/seed/${seed + 1}/800/600`, // Interior 1
+      `https://picsum.photos/seed/${seed + 2}/800/600`, // Interior 2
+      `https://picsum.photos/seed/${seed + 3}/800/600`, // Exterior 1
+      `https://picsum.photos/seed/${seed + 4}/800/600`, // Exterior 2
     ];
     
     return images.map(img => optimizeImage(img, lowBandwidthMode));
