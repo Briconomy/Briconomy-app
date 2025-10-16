@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
+import { GoogleLogin } from '@react-oauth/google';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
@@ -15,6 +16,7 @@ function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   // Load remembered email on component mount
   useState(() => {
@@ -212,12 +214,51 @@ function LoginPage() {
             {submitting ? t('common.signing_in') : t('auth.sign_in')}
           </button>
           
-          <button 
-            type="button" 
-            className="btn btn-google btn-block"
-          >
-            Continue with Google SSO
-          </button>
+          <div style={{ marginBottom: '10px' }}>
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                setGoogleSubmitting(true);
+                setAuthError('');
+                try {
+                  const result = await googleLogin(credentialResponse);
+                  if (result.success) {
+                    const dashboards = {
+                      admin: '/admin',
+                      manager: '/manager',
+                      tenant: '/tenant',
+                      caretaker: '/caretaker'
+                    };
+                    navigate(dashboards[result.user?.userType as keyof typeof dashboards] || '/tenant');
+                  } else {
+                    setAuthError(result.message);
+                  }
+                } catch (_error) {
+                  setAuthError('Google login failed. Please try again.');
+                } finally {
+                  setGoogleSubmitting(false);
+                }
+              }}
+              onError={() => {
+                setAuthError('Google login failed. Please try again.');
+              }}
+              useOneTap={false}
+              theme="outline"
+              size="large"
+              text="signin_with"
+              shape="rectangular"
+              width="100%"
+            />
+          </div>
+          {googleSubmitting && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '10px',
+              color: '#4285f4',
+              fontSize: '14px'
+            }}>
+              Signing in with Google...
+            </div>
+          )}
           
           <button 
             type="button" 
