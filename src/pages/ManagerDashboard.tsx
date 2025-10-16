@@ -8,6 +8,7 @@ import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
+import Icon from '../components/Icon.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -125,31 +126,31 @@ function ManagerDashboard() {
         <div className="quick-actions">
           <ActionCard
             to="/manager/properties"
-            icon="P"
+            icon={<Icon name="properties" alt="Properties" />}
             title={t('nav.properties')}
             description={t('manager.manage_listings')}
           />
           <ActionCard
             to="/manager/leases"
-            icon="L" 
+            icon={<Icon name="lease" alt="Leases" />}
             title={t('nav.leases')}
             description={t('manager.contracts')}
           />
           <ActionCard
             onClick={() => setShowInvoiceManagement(true)}
-            icon="I"
+            icon={<Icon name="invoice" alt="Invoices" />}
             title={t('manager.invoices')}
             description={t('manager.generate_manage')}
           />
           <ActionCard
             onClick={() => {}}
-            icon="M"
+            icon={<Icon name="payment" alt="Payments" />}
             title={t('nav.payments')}
             description={t('manager.rent_collection')}
           />
           <ActionCard
             to="/manager/maintenance"
-            icon="E"
+            icon={<Icon name="emergency" alt="Issues" />}
             title={t('manager.issues')} 
             description={t('manager.handle_escalations')}
           />
@@ -158,7 +159,7 @@ function ManagerDashboard() {
               console.log('Announcements button clicked');
               setShowAnnouncements(true);
             }}
-            icon="A"
+            icon={<Icon name="announcements" alt="Announcements" />}
             title={t('manager.announcements')}
             description={t('manager.property_updates')}
           />

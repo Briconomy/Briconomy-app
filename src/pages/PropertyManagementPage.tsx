@@ -6,6 +6,7 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { propertiesApi, dashboardApi, formatCurrency as _formatCurrency } from '../services/api.ts';
+import Icon from '../components/Icon.tsx';
 
 function PropertyManagementPage() {
   const [properties, setProperties] = useState([]);
@@ -214,19 +215,19 @@ return (
             <div className="quick-actions">
               <ActionCard
                 to="#"
-                icon="U"
+                icon={<Icon name="unitManagement" alt="Unit Management" />}
                 title="Unit Management"
                 description="Manage individual units"
               />
               <ActionCard
                 to="#"
-                icon="T"
+                icon={<Icon name="propertyAnalytics" alt="Property Analytics" />}
                 title="Property Analytics"
                 description="View performance metrics"
               />
               <ActionCard
                 to="#"
-                icon="M"
+                icon={<Icon name="maintenanceOverview" alt="Maintenance Overview" />}
                 title="Maintenance Overview"
                 description="Track property maintenance"
               />
