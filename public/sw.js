@@ -1,4 +1,4 @@
-const CACHE_NAME = 'briconomy-v2';
+const CACHE_NAME = 'briconomy-v3';
 const STATIC_CACHE = [
   '/',
   '/src/main.tsx',
@@ -65,6 +65,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
    
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+  
+  // Don't cache API requests - they should always be fresh
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
   
