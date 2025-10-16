@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import TopNav from '../components/TopNav.tsx';
+import Icon from '../components/Icon.tsx';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -71,12 +72,89 @@ function LoginPage() {
   };
 
   return (
-    <div className="app-container mobile-only">
-      <TopNav showBackButton />
+    <div style={{
+      maxWidth: '390px',
+      margin: '0 auto',
+      background: '#ffffff',
+      minHeight: '100vh',
+      position: 'relative',
+      boxShadow: '0 0 20px rgba(0,0,0,0.1)'
+    }}>
+      <div style={{
+        background: '#ffffff',
+        borderBottom: '1px solid #e9ecef',
+        padding: '12px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        height: '60px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <a 
+            href="/" 
+            style={{
+              background: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              color: '#495057',
+              width: '32px',
+              height: '32px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              textDecoration: 'none'
+            }}
+          >
+            ←
+          </a>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: '#2c3e50'
+          }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              background: 'transparent',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '16px'
+            }}>
+              <Icon name="logo" alt="Briconomy" size={28} />
+            </div>
+            <span>Briconomy</span>
+          </div>
+        </div>
+      </div>
       
-      <div className="main-content">
-        <div className="login-card">
-          <h2 className="login-title">
+      <div style={{ padding: '20px 16px' }}>
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '24px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ 
+            textAlign: 'center', 
+            marginBottom: '24px', 
+            color: '#2c3e50', 
+            fontSize: '20px' 
+          }}>
             {t('auth.sign_in')}
           </h2>
           
