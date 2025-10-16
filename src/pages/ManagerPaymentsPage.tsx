@@ -7,6 +7,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
+import Icon from '../components/Icon.tsx';
 
 // Simple error boundary for chart rendering
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -215,19 +216,19 @@ function ManagerPaymentsPage() {
         <div className="quick-actions">
           <ActionCard
             to="#"
-            icon="R"
+            icon={<Icon name="notifications" alt="Send Reminders" />}
             title="Send Reminders"
             description="Notify tenants"
           />
           <ActionCard
             to="#"
-            icon="G"
+            icon={<Icon name="report" alt="Generate Report" />}
             title="Generate Report"
             description="Payment summary"
           />
           <ActionCard
             to="#"
-            icon="E"
+            icon={<Icon name="archive" alt="Export Data" />}
             title="Export Data"
             description="Download CSV"
             onClick={() => {
