@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import TopNav from '../components/TopNav.tsx';
 import Icon from '../components/Icon.tsx';
 
 function LoginPage() {

@@ -435,6 +435,20 @@ body {
     color: #162F1B;
 }
 
+.landing-logo:has(img),
+.landing-logo:has(.icon) {
+    background: transparent;
+    padding: 0;
+}
+
+.landing-logo img,
+.landing-logo .icon {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    display: block;
+}
+
 .landing-title {
     font-size: 32px;
     font-weight: bold;
