@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { authApi } from '../services/api.ts';
+import { googleLogout } from '@react-oauth/google';
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ interface AuthContextType {
   updateUser: (userData: Partial<User>) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  googleLogin: (credentialResponse: unknown) => Promise<{ success: boolean; message: string; user?: User }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -157,9 +159,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
+    // Call Google's logout helper to clear any Google session state
+  try { googleLogout(); } catch (_e) { /* ignore if googleLogout is unavailable */ }
+
     setUser(null);
     localStorage.removeItem('briconomy_user');
     localStorage.removeItem('briconomy_token');
+  };
+
+  const googleLogin = (_credentialResponse: unknown) => {
+    try {
+      const mockGoogleUser = {
+        id: 'google_' + Date.now(),
+        fullName: 'Google User',
+        email: 'user@gmail.com',
+        phone: '',
+        userType: 'tenant' as const,
+        avatar: 'GU',
+        joinDate: new Date().toISOString().split('T')[0],
+        lastLogin: new Date().toISOString(),
+        unit: 'N/A',
+        property: 'N/A',
+        rent: 0,
+        leaseStart: new Date().toISOString().split('T')[0],
+        leaseEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        emergencyContact: { name: '', relationship: '', phone: '' }
+      };
+
+      setUser(mockGoogleUser);
+      localStorage.setItem('briconomy_user', JSON.stringify(mockGoogleUser));
+      localStorage.setItem('briconomy_token', 'google-token-' + Date.now());
+
+      return Promise.resolve({ success: true, message: 'Google login successful', user: mockGoogleUser });
+    } catch (error) {
+      console.error('Google login error:', error);
+      return Promise.resolve({ success: false, message: 'Google login failed. Please try again.' });
+    }
   };
 
   const value = {
@@ -169,6 +204,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     updateUser,
     logout,
+    googleLogin,
     isAuthenticated: !!user,
   };
 
