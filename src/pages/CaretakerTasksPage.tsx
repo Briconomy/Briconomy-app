@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import Icon from '../components/Icon.tsx';
 
 function CaretakerTasksPage() {
   const [tasks, setTasks] = useState([
@@ -204,19 +205,19 @@ function CaretakerTasksPage() {
         <div className="quick-actions">
           <ActionCard
             onClick={() => {}}
-            icon="I"
+            icon={<Icon name="properties" alt="Property Inspections" />}
             title="Property Inspections"
             description="Schedule and conduct inspections"
           />
           <ActionCard
             onClick={() => {}}
-            icon="M"
+            icon={<Icon name="maintenance" alt="Maintenance Logs" />}
             title="Maintenance Logs"
             description="View maintenance history"
           />
           <ActionCard
             onClick={() => {}}
-            icon="R"
+            icon={<Icon name="report" alt="Reports" />}
             title="Reports"
             description="Generate activity reports"
           />
