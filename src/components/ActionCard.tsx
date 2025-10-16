@@ -1,8 +1,8 @@
-import React from 'react';
+import { ReactNode } from 'react';
 
 export interface ActionCardProps {
   to?: string;
-  icon: string;
+  icon: string | ReactNode;
   title: string;
   description?: string;
   onClick?: () => void;
@@ -15,9 +15,17 @@ function ActionCard({ to = '#', icon, title, description = '', onClick }: Action
       onClick();
     }
   };
+
+  const renderIcon = () => {
+    if (typeof icon === 'string') {
+      return icon;
+    }
+    return icon;
+  };
+
   return (
     <a href={to} className="action-card" onClick={handleClick}>
-      <div className="action-icon">{icon}</div>
+      <div className="action-icon">{renderIcon()}</div>
       <div className="action-title">{title}</div>
       <div className="action-desc">{description}</div>
     </a>
