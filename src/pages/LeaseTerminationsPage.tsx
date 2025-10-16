@@ -8,6 +8,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Modal from '../components/Modal.tsx';
+import Icon from '../components/Icon.tsx';
 import { terminationsApi, formatCurrency, formatDate } from '../services/api.ts';
 
 interface Termination {
@@ -510,25 +511,25 @@ const LeaseTerminationsPage: React.FC = () => {
         <div className="quick-actions">
           <ActionCard
             onClick={handleInitiateTermination}
-            icon="T"
+            icon={<Icon name="terminations" alt="Initiate Termination" />}
             title="Initiate Termination"
             description="Start new termination process"
           />
           <ActionCard
             onClick={handleCalculateSettlement}
-            icon="C"
+            icon={<Icon name="calculateSettlement" alt="Calculate Settlement" />}
             title="Calculate Settlement"
             description="Penalties and refunds"
           />
           <ActionCard
             onClick={handleGenerateDocuments}
-            icon="D"
+            icon={<Icon name="downloadDocSettlement" alt="Generate Documents" />}
             title="Generate Documents"
             description="Termination paperwork"
           />
           <ActionCard
             onClick={handleGenerateReport}
-            icon="R"
+            icon={<Icon name="terminationReport" alt="Termination Report" />}
             title="Termination Report"
             description="Summary and analytics"
           />

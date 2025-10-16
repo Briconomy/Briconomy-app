@@ -202,11 +202,13 @@ body {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    display: block;
 }
 
 .logo-icon:has(img),
 .logo-icon:has(.icon) {
-    background: transparent;
+    background: transparent !important;
+    border: none;
 }
 
 .logout-btn {
@@ -375,12 +377,14 @@ body {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    display: block;
 }
 
 .action-icon:has(img),
 .action-icon:has(.icon) {
-    background: transparent;
+    background: transparent !important;
     padding: 0;
+    border: none;
 }
 
 .action-title {

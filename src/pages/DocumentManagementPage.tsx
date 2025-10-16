@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
+import Icon from '../components/Icon.tsx';
 
 function DocumentManagementPage() {
   const [documents, setDocuments] = useState([
@@ -244,25 +245,25 @@ function DocumentManagementPage() {
         <div className="quick-actions">
           <ActionCard
             onClick={() => {}}
-            icon="U"
+            icon={<Icon name="uploadDoc" alt="Upload Documents" />}
             title="Upload Documents"
             description="Add new files"
           />
           <ActionCard
             onClick={() => {}}
-            icon="T"
+            icon={<Icon name="template" alt="Templates" />}
             title="Templates"
             description="Document templates"
           />
           <ActionCard
             onClick={() => {}}
-            icon="S"
+            icon={<Icon name="signDocs" alt="Sign Documents" />}
             title="Sign Documents"
             description="E-signature portal"
           />
           <ActionCard
             onClick={() => {}}
-            icon="A"
+            icon={<Icon name="archive" alt="Archive" />}
             title="Archive"
             description="Document archive"
           />
