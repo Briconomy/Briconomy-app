@@ -44,6 +44,7 @@ import AddPaymentMethodPage from './pages/AddPaymentMethodPage.tsx';
 import EditPaymentMethodPage from './pages/EditPaymentMethodPage.tsx';
 import { AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ProspectiveTenantProvider } from './contexts/ProspectiveTenantContext.tsx';
 import InitiateTerminationPage from './pages/InitiateTerminationPage.tsx';
 import SettlementCalculatorPage from './pages/SettlementCalculatorPage.tsx';
@@ -51,10 +52,15 @@ import DocumentGeneratorPage from './pages/DocumentGeneratorPage.tsx';
 import TerminationReportPage from './pages/TerminationReportPage.tsx';
 
 function App() {
+  // Use runtime-injected env object when available (dev-server injects __BRICONOMY_ENV__)
+  const runtimeEnv = (globalThis as any).__BRICONOMY_ENV__ || {};
+  const googleClientId = runtimeEnv.VITE_GOOGLE_CLIENT_ID || '471516393144-mb8903q4kvefqrl89na1ntevhq17t8h1.apps.googleusercontent.com';
+
   return (
     <div className="app">
       <AuthProvider>
         <ProspectiveTenantProvider>
+          <GoogleOAuthProvider clientId={googleClientId}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -114,6 +120,7 @@ function App() {
               <Route path="/apply/undefined" element={<Navigate to="/create-account" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+          </GoogleOAuthProvider>
         </ProspectiveTenantProvider>
       </AuthProvider>
     </div>
