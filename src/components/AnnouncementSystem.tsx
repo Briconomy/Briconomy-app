@@ -248,15 +248,26 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
         index === self.findIndex(a => a._id === announcement._id)
       );
       
-      console.log('Normalized announcements with IDs:', uniqueAnnouncements.map(a => ({ 
+      // Filter announcements based on user role
+      // Managers and Admins only see their own announcements
+      let filteredAnnouncements = uniqueAnnouncements;
+      if ((currentUserRole === 'manager' || currentUserRole === 'admin') && user?.id) {
+        filteredAnnouncements = uniqueAnnouncements.filter(
+          announcement => announcement.createdBy === user.id
+        );
+        console.log(`Filtered to ${filteredAnnouncements.length} announcements created by current user (${user.id})`);
+      }
+      
+      console.log('Normalized announcements with IDs:', filteredAnnouncements.map(a => ({ 
         title: a.title, 
         _id: a._id, 
         id: a.id,
+        createdBy: a.createdBy,
         hasId: !!a._id 
       })));
       
-      console.log(`Setting ${uniqueAnnouncements.length} unique announcements (filtered from ${data.length})`);
-      setAnnouncements(uniqueAnnouncements);
+      console.log(`Setting ${filteredAnnouncements.length} unique announcements (filtered from ${data.length})`);
+      setAnnouncements(filteredAnnouncements);
     } catch (_err) {
       console.error('Error fetching announcements:', _err);
       setError(_err instanceof Error ? _err.message : 'An error occurred');
