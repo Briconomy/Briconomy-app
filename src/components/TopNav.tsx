@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { LanguageSwitcher, useLanguage } from '../contexts/LanguageContext.tsx';
+import Icon from './Icon.tsx';
 
 interface TopNavProps {
   showBackButton?: boolean;
@@ -33,7 +34,9 @@ function TopNav({ showBackButton = false, backLink: _backLink = '/', showLogout 
           <button type="button" onClick={handleBack} className="back-btn">←</button>
         )}
         <div className="logo">
-          <div className="logo-icon">B</div>
+          <div className="logo-icon">
+            <Icon name="logo" alt="Briconomy" />
+          </div>
           <span>Briconomy</span>
         </div>
       </div>

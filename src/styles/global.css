@@ -197,6 +197,18 @@ body {
     font-size: 16px;
 }
 
+.logo-icon img,
+.logo-icon .icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.logo-icon:has(img),
+.logo-icon:has(.icon) {
+    background: transparent;
+}
+
 .logout-btn {
     background: #FF894D;
     color: white;
@@ -355,6 +367,19 @@ body {
 
 .action-card:nth-child(even) .action-icon {
     background: #FF894D;
+}
+
+.action-icon img,
+.action-icon .icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.action-icon:has(img),
+.action-icon:has(.icon) {
+    background: transparent;
+    padding: 0;
 }
 
 .action-title {

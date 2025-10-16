@@ -8,6 +8,7 @@ import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import AIButton from '../components/AIButton.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import Icon from '../components/Icon.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 
 function AdminDashboard() {
@@ -83,7 +84,9 @@ function AdminDashboard() {
             to="/admin/users" 
             className="action-card"
           >
-            <div className="action-icon">U</div>
+            <div className="action-icon">
+              <Icon name="users" alt="Users" />
+            </div>
             <div className="action-title">{t('nav.users')}</div>
             <div className="action-desc">{t('dashboard.manage_users')}</div>
           </Link>
@@ -92,7 +95,9 @@ function AdminDashboard() {
             to="/admin/security" 
             className="action-card"
           >
-            <div className="action-icon">S</div>
+            <div className="action-icon">
+              <Icon name="security" alt="Security" />
+            </div>
             <div className="action-title">{t('nav.security')}</div>
             <div className="action-desc">{t('dashboard.system_security')}</div>
           </Link>
@@ -101,7 +106,9 @@ function AdminDashboard() {
             to="/admin/operations" 
             className="action-card"
           >
-            <div className="action-icon">O</div>
+            <div className="action-icon">
+              <Icon name="manage" alt="Operations" />
+            </div>
             <div className="action-title">Operations</div>
             <div className="action-desc">{t('dashboard.performance_health')}</div>
           </Link>
@@ -110,7 +117,9 @@ function AdminDashboard() {
             to="/admin/reports" 
             className="action-card"
           >
-            <div className="action-icon">R</div>
+            <div className="action-icon">
+              <Icon name="report" alt="Reports" />
+            </div>
             <div className="action-title">{t('nav.reports')}</div>
             <div className="action-desc">{t('dashboard.analytics_insights')}</div>
           </Link>
@@ -121,7 +130,9 @@ function AdminDashboard() {
             className="action-card"
             style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0, width: '100%' }}
           >
-            <div className="action-icon">A</div>
+            <div className="action-icon">
+              <Icon name="announcements" alt="Announcements" />
+            </div>
             <div className="action-title">Announcements</div>
             <div className="action-desc">System-wide notifications</div>
           </button>
