@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import Icon from './Icon.tsx';
 
 interface NotificationItem {
   id: string;
@@ -363,7 +364,7 @@ const NotificationWidget: React.FC = () => {
               }}
               title="Refresh notifications"
             >
-              🔄
+              <Icon name="refresh" size={16} />
             </button>
             <span 
               style={{
@@ -482,7 +483,7 @@ const NotificationWidget: React.FC = () => {
                           }}
                           title="Delete notification"
                         >
-                          🗑️
+                          <Icon name="trash" size={20} />
                         </button>
                         {!notification.read && (
                           <div 
