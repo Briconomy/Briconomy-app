@@ -213,8 +213,8 @@ const NotificationWidget: React.FC = () => {
           return newSet;
         });
         console.log('Notification deleted successfully from database and UI');
-      } else if (response.status === 500) {
-        // Notification doesn't exist in database (ghost notification)
+      } else if (response.status === 404) {
+        // Notification doesn't exist in database (404 Not Found) - it's a ghost
         // Remove from UI anyway since it's not in the database and mark as deleted
         setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
         setDeletedNotificationIds(prev => {
@@ -223,6 +223,10 @@ const NotificationWidget: React.FC = () => {
           return newSet;
         });
         console.log('Ghost notification removed from UI (was not in database)');
+      } else if (response.status === 500) {
+        // Server error - don't mark as deleted, just show error
+        console.error('Server error deleting notification - not marking as ghost');
+        throw new Error(`Server error deleting notification: ${response.status}`);
       } else {
         throw new Error(`Failed to delete notification: ${response.status}`);
       }

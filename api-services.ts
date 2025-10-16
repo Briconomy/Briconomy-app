@@ -20,8 +20,20 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
     "caretakerId",
     "userId",
   ]);
+  
+  // Keys to exclude from database queries (cache-busting, metadata, etc.)
+  const excludeKeys = new Set([
+    "_t",     // timestamp cache-busting parameter
+    "_cache", // cache control parameters
+    "_ts",    // alternative timestamp parameter
+  ]);
+  
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(filters)) {
+    // Skip excluded keys
+    if (excludeKeys.has(k)) {
+      continue;
+    }
     out[k] = idKeys.has(k) ? toId(v) : v;
   }
   return out;
@@ -401,8 +413,15 @@ export async function getNotifications(userId: string) {
   try {
     await connectToMongoDB();
     const notifications = getCollection("notifications");
-  const rows = await notifications.find({ userId: new ObjectId(userId) }).toArray();
-  return mapDocs(rows);
+    console.log(`[getNotifications] Querying for userId: ${userId}`);
+    const userObjectId = new ObjectId(userId);
+    console.log(`[getNotifications] Converted to ObjectId: ${userObjectId}`);
+    const rows = await notifications.find({ userId: userObjectId }).toArray();
+    console.log(`[getNotifications] Found ${rows.length} notifications in database`);
+    console.log(`[getNotifications] Raw notifications:`, rows.map(r => ({ _id: r._id, userId: r.userId, title: r.title })));
+    const mapped = mapDocs(rows);
+    console.log(`[getNotifications] Returning ${mapped.length} mapped notifications`);
+    return mapped;
   } catch (error) {
     console.error("Error fetching notifications:", error);
     throw error;
@@ -421,14 +440,17 @@ export async function createNotification(
     // If this is an announcement notification, send to multiple users based on targetAudience
     if (notificationData.type === 'announcement' && notificationData.targetAudience) {
       const targetUserTypes = notificationData.targetAudience === 'all' 
-        ? ['manager', 'tenant', 'caretaker']
+        ? ['manager', 'tenant', 'caretaker', 'admin']
         : [notificationData.targetAudience];
       
       const targetUsers = await users.find({ 
         userType: { $in: targetUserTypes } 
       }).toArray();
       
+      console.log(`[createNotification] Creating announcement notifications for ${targetUsers.length} users (target: ${targetUserTypes.join(', ')})`);
+      
       const createdNotifications = [];
+      const userIds = [];
       
       for (const user of targetUsers) {
         const notificationDoc = {
@@ -444,7 +466,8 @@ export async function createNotification(
         
         // Create notification object for broadcasting
         const createdNotification = {
-          _id: result.insertedId,
+          id: String(result.insertedId || result),
+          _id: String(result.insertedId || result),
           userId: String(user._id),
           title: notificationData.title,
           message: notificationData.message,
@@ -454,14 +477,52 @@ export async function createNotification(
         };
         
         createdNotifications.push(createdNotification);
-        
-        // Broadcast to this specific user if broadcaster is available
-        if (broadcaster) {
-          broadcaster.broadcastToUsers([String(user._id)], createdNotification);
+        userIds.push(String(user._id));
+      }
+      
+      // Broadcast to all target users at once if broadcaster is available
+      if (broadcaster && userIds.length > 0) {
+        console.log(`[createNotification] Broadcasting announcement notification to ${userIds.length} users via WebSocket`);
+        // Send to all users - they will receive it and refresh their announcement lists
+        for (let i = 0; i < createdNotifications.length; i++) {
+          broadcaster.broadcastToUsers([userIds[i]], createdNotifications[i]);
         }
+        console.log(`[createNotification] Broadcast complete`);
       }
       
       return { success: true, count: targetUsers.length, notifications: createdNotifications };
+    } else if (notificationData.type === 'announcement_deleted' && notificationData.targetAudience) {
+      // Handle announcement deletion notification - send to all affected users
+      const targetUserTypes = notificationData.targetAudience === 'all' 
+        ? ['manager', 'tenant', 'caretaker', 'admin']
+        : [notificationData.targetAudience];
+      
+      const targetUsers = await users.find({ 
+        userType: { $in: targetUserTypes } 
+      }).toArray();
+      
+      console.log(`[createNotification] Broadcasting announcement deletion to ${targetUsers.length} users`);
+      
+      // Don't store deletion notifications, just broadcast them
+      if (broadcaster) {
+        const deletionNotification = {
+          id: `deletion-${Date.now()}`,
+          _id: `deletion-${Date.now()}`,
+          userId: 'all',
+          title: notificationData.title,
+          message: notificationData.message,
+          type: notificationData.type,
+          originalTitle: notificationData.originalTitle,
+          announcementId: notificationData.announcementId,
+          read: false,
+          createdAt: new Date().toISOString()
+        };
+        
+        const userIds = targetUsers.map(u => String(u._id));
+        broadcaster.broadcastToUsers(userIds, deletionNotification);
+      }
+      
+      return { success: true, count: targetUsers.length, message: 'Deletion broadcast sent' };
     } else {
       // Single user notification
       const notificationDoc = { 
@@ -473,7 +534,8 @@ export async function createNotification(
       const result = await notifications.insertOne(notificationDoc);
       
       const createdNotification = {
-        _id: result.insertedId,
+        id: String(result.insertedId || result),
+        _id: String(result.insertedId || result),
         ...notificationDoc,
         userId: String(notificationData.userId),
         createdAt: notificationDoc.createdAt.toISOString()

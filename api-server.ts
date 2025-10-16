@@ -57,7 +57,7 @@ import {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, expires',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
@@ -66,8 +66,9 @@ const connectedUsers = new Map<string, WebSocket>();
 
 // Broadcast notification to specific users
 function broadcastToUsers(userIds: string[], notification: unknown) {
-  console.log(`Broadcasting notification to users: ${userIds.join(', ')}`);
-  console.log(`Connected users: ${Array.from(connectedUsers.keys()).join(', ')}`);
+  console.log(`[WebSocket Broadcast] Broadcasting to ${userIds.length} users: ${userIds.join(', ')}`);
+  console.log(`[WebSocket Broadcast] Connected users: ${Array.from(connectedUsers.keys()).join(', ')}`);
+  console.log(`[WebSocket Broadcast] Notification type:`, (notification as Record<string, unknown>)?.type);
   
   const message = JSON.stringify({
     type: 'notification',
@@ -83,20 +84,20 @@ function broadcastToUsers(userIds: string[], notification: unknown) {
       try {
         socket.send(message);
         successCount++;
-        console.log(`Message sent to user ${userId}`);
+        console.log(`[WebSocket Broadcast] ✓ Message sent to user ${userId}`);
       } catch (error) {
         failCount++;
-        console.error(`Failed to send message to user ${userId}:`, error);
+        console.error(`[WebSocket Broadcast] ✗ Failed to send message to user ${userId}:`, error);
         // Remove dead connection
         connectedUsers.delete(userId);
       }
     } else {
       failCount++;
-      console.log(`User ${userId} not connected or socket not ready`);
+      console.log(`[WebSocket Broadcast] ✗ User ${userId} not connected or socket not ready (state: ${socket?.readyState})`);
     }
   });
   
-  console.log(`Broadcast complete: ${successCount} success, ${failCount} failed`);
+  console.log(`[WebSocket Broadcast] Complete: ${successCount} success, ${failCount} failed`);
 }
 
 // Broadcast to all connected users
@@ -437,7 +438,13 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
+        console.log('[API] POST /api/announcements - Creating announcement:', {
+          title: body.title,
+          targetAudience: body.targetAudience,
+          status: body.status
+        });
         const announcement = await createAnnouncement(body);
+        console.log('[API] Announcement created successfully:', { id: announcement.id, title: announcement.title });
         return new Response(JSON.stringify(announcement), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
@@ -561,8 +568,14 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
+        console.log('[API] POST /api/notifications - Creating notification:', {
+          type: body.type,
+          title: body.title,
+          targetAudience: body.targetAudience
+        });
         const broadcaster = { broadcastToUsers };
         const notification = await createNotification(body, broadcaster);
+        console.log('[API] Notification created successfully:', notification);
         return new Response(JSON.stringify(notification), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201

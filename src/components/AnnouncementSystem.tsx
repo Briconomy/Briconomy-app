@@ -29,6 +29,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
   const [showQuickOptions, setShowQuickOptions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -136,17 +137,102 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
 
   const quickAnnouncementTemplates = getQuickAnnouncementTemplates();
 
+  // Fetch announcements effect - triggers on mount and when refreshTrigger changes
+  useEffect(() => {
+    console.log('AnnouncementSystem fetching announcements (trigger:', refreshTrigger, ')');
+    fetchAnnouncements();
+  }, [refreshTrigger]);
+
+  // WebSocket connection effect
   useEffect(() => {
     console.log('AnnouncementSystem mounted, current user role:', currentUserRole);
-    fetchAnnouncements();
-  }, []);
+    
+    // Set up WebSocket connection for real-time announcement updates
+    if (!user?.id) {
+      console.log('[AnnouncementSystem] No user ID, skipping WebSocket setup');
+      return;
+    }
+    
+    const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
+    const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
+    
+    console.log(`[AnnouncementSystem] Connecting WebSocket for user ${user.id} at ${wsUrl}`);
+    
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: number | null = null;
+    let isClosed = false;
+    
+    const connect = () => {
+      if (isClosed) return;
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log(`[AnnouncementSystem] ✅ WebSocket connected for user ${user.id}`);
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log(`[AnnouncementSystem] 📨 WebSocket message received:`, data);
+          
+          if (data.type === 'notification' && data.data.type === 'announcement') {
+            console.log(`[AnnouncementSystem] 🔔 New announcement notification received, triggering refresh after short delay`);
+            // Add a small delay to ensure database write completes before fetching
+            setTimeout(() => {
+              setRefreshTrigger(prev => prev + 1);
+            }, 300);
+          }
+        } catch (error) {
+          console.error('[AnnouncementSystem] ❌ Error parsing WebSocket message:', error);
+        }
+      };
+      
+      ws.onclose = () => {
+        console.log(`[AnnouncementSystem] ⚠️ WebSocket disconnected for user ${user.id}`);
+        // Don't reconnect if we're intentionally closing
+        if (!isClosed) {
+          console.log('[AnnouncementSystem] 🔄 Reconnecting in 2 seconds...');
+          reconnectTimeout = setTimeout(connect, 2000) as unknown as number;
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error(`[AnnouncementSystem] ❌ WebSocket error:`, error);
+      };
+    };
+    
+    connect();
+    
+    // Cleanup on unmount
+    return () => {
+      console.log(`[AnnouncementSystem] 🔌 Closing WebSocket connection`);
+      isClosed = true;
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [user?.id]);
 
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
       const API_BASE_URL = getApiBaseUrl();
-      console.log('Fetching announcements from:', `${API_BASE_URL}/api/announcements`);
-      const response = await fetch(`${API_BASE_URL}/api/announcements`);
+      // Add cache-busting parameter to prevent browser/service worker caching
+      const timestamp = Date.now();
+      console.log('Fetching announcements from:', `${API_BASE_URL}/api/announcements?_t=${timestamp}`);
+      const response = await fetch(`${API_BASE_URL}/api/announcements?_t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch announcements');
       const data = await response.json();
       console.log('Fetched announcements:', data);
@@ -241,23 +327,29 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
       
       // Send immediate notification if not scheduled
       if (!formData.scheduledFor) {
+        console.log('[AnnouncementSystem] Sending notifications for new announcement');
         try {
           await notificationService.sendAnnouncement(formData.title, formData.message);
+          console.log('[AnnouncementSystem] Browser notification sent');
         } catch (error) {
-          console.warn('Browser notification failed:', error);
+          console.warn('[AnnouncementSystem] Browser notification failed:', error);
         }
         try {
+          console.log('[AnnouncementSystem] Sending server notification to users');
           await sendNotificationToUsers(normalizedAnnouncement);
+          console.log('[AnnouncementSystem] Server notification sent successfully');
         } catch (error) {
-          console.warn('Server notification failed:', error);
+          console.warn('[AnnouncementSystem] Server notification failed:', error);
         }
       }
 
       // Refresh announcements from server instead of adding to state to avoid duplicates
+      console.log('[AnnouncementSystem] Refreshing announcements list after creation');
       try {
         await fetchAnnouncements();
+        console.log('[AnnouncementSystem] Announcements refreshed successfully');
       } catch (fetchError) {
-        console.warn('Failed to refresh announcements after creation:', fetchError);
+        console.warn('[AnnouncementSystem] Failed to refresh announcements after creation:', fetchError);
         // Still close the form even if refresh fails
       }
       
