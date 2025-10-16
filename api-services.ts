@@ -439,15 +439,22 @@ export async function createNotification(
     
     // If this is an announcement notification, send to multiple users based on targetAudience
     if (notificationData.type === 'announcement' && notificationData.targetAudience) {
-      const targetUserTypes = notificationData.targetAudience === 'all' 
-        ? ['manager', 'tenant', 'caretaker', 'admin']
-        : [notificationData.targetAudience];
+      // Convert plural forms to singular (frontend sends 'tenants'/'caretakers'/'managers', DB has 'tenant'/'caretaker'/'manager')
+      const normalizeAudience = (audience: string): string[] => {
+        if (audience === 'all') return ['manager', 'tenant', 'caretaker', 'admin'];
+        if (audience === 'tenants') return ['tenant'];
+        if (audience === 'caretakers') return ['caretaker'];
+        if (audience === 'managers') return ['manager'];
+        return [audience]; // fallback for singular forms or unknown values
+      };
+      
+      const targetUserTypes = normalizeAudience(String(notificationData.targetAudience));
       
       const targetUsers = await users.find({ 
         userType: { $in: targetUserTypes } 
       }).toArray();
       
-      console.log(`[createNotification] Creating announcement notifications for ${targetUsers.length} users (target: ${targetUserTypes.join(', ')})`);
+      console.log(`[createNotification] Creating announcement notifications for ${targetUsers.length} users (target: ${targetUserTypes.join(', ')}, original: ${notificationData.targetAudience})`);
       
       const createdNotifications = [];
       const userIds = [];
@@ -493,15 +500,22 @@ export async function createNotification(
       return { success: true, count: targetUsers.length, notifications: createdNotifications };
     } else if (notificationData.type === 'announcement_deleted' && notificationData.targetAudience) {
       // Handle announcement deletion notification - send to all affected users
-      const targetUserTypes = notificationData.targetAudience === 'all' 
-        ? ['manager', 'tenant', 'caretaker', 'admin']
-        : [notificationData.targetAudience];
+      // Convert plural forms to singular (same as above)
+      const normalizeAudience = (audience: string): string[] => {
+        if (audience === 'all') return ['manager', 'tenant', 'caretaker', 'admin'];
+        if (audience === 'tenants') return ['tenant'];
+        if (audience === 'caretakers') return ['caretaker'];
+        if (audience === 'managers') return ['manager'];
+        return [audience];
+      };
+      
+      const targetUserTypes = normalizeAudience(String(notificationData.targetAudience));
       
       const targetUsers = await users.find({ 
         userType: { $in: targetUserTypes } 
       }).toArray();
       
-      console.log(`[createNotification] Broadcasting announcement deletion to ${targetUsers.length} users`);
+      console.log(`[createNotification] Broadcasting announcement deletion to ${targetUsers.length} users (target: ${targetUserTypes.join(', ')}, original: ${notificationData.targetAudience})`);
       
       // Don't store deletion notifications, just broadcast them
       if (broadcaster) {
