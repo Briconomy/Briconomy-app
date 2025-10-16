@@ -165,71 +165,30 @@ const handleCreateUser = async () => {
   };
 
   return (
-    <div style={{
-      maxWidth: '390px',
-      margin: '0 auto',
-      background: '#ffffff',
-      minHeight: '100vh',
-      position: 'relative',
-      boxShadow: '0 0 20px rgba(0,0,0,0.1)'
-    }}>
+    <div className="app-container mobile-only">
       <TopNav showBackButton showLogout />
       
-      <div style={{ padding: '20px 16px' }}>
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '24px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
-<h2 style={{ 
-            textAlign: 'center', 
-            marginBottom: '24px', 
-            color: '#2c3e50', 
-            fontSize: '20px' 
-          }}>
-            Add New User
-          </h2>
-          
+      <div className="main-content">
+        <div className="page-header">
+          <div className="page-title">Add New User</div>
+          <div className="page-subtitle">Create a new user account</div>
+        </div>
+        
+        <div className="form-card">
           {error && (
-            <div style={{
-              background: '#fee',
-              color: '#c00',
-              padding: '12px',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              fontSize: '14px',
-              textAlign: 'center'
-            }}>
+            <div className="error-message">
               {error}
             </div>
           )}
           
           {success && (
-            <div style={{
-              background: '#efe',
-              color: '#060',
-              padding: '12px',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              fontSize: '14px',
-              textAlign: 'center'
-            }}>
+            <div className="success-message">
               {success}
             </div>
           )}
           
-<div style={{ marginBottom: '16px' }}>
-            <label 
-              htmlFor="fullName" 
-              style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontWeight: '600', 
-                color: '#2c3e50', 
-                fontSize: '14px' 
-              }}
-            >
+          <div className="form-group">
+            <label htmlFor="fullName">
               Full Name
             </label>
             <input 
@@ -238,31 +197,11 @@ const handleCreateUser = async () => {
               value={formData.fullName}
               onChange={handleInputChange}
               placeholder="Please enter full name"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                transition: 'all 0.3s ease',
-                boxSizing: 'border-box'
-              }}
             />
           </div>
           
-<div style={{ marginBottom: '16px' }}>
-            <label 
-              htmlFor="email" 
-              style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontWeight: '600', 
-                color: '#2c3e50', 
-                fontSize: '14px' 
-              }}
-            >
+          <div className="form-group">
+            <label htmlFor="email">
               Email Address
             </label>
             <input 

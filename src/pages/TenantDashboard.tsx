@@ -138,7 +138,7 @@ return (
       
       <div className="main-content">
         <div className="page-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="page-title-wrapper">
             <div className="page-title">{t('dashboard.welcome_back')}</div>
             
           </div>
@@ -199,7 +199,7 @@ return (
           </div>
         )}
 
-        <div className="quick-actions" style={{ marginTop: '8px' }}>
+        <div className="quick-actions quick-actions-spaced">
           <ActionCard
             onClick={() => navigate('/tenant/payments')}
             icon={<Icon name="payment" alt="Pay Rent" />}
@@ -225,7 +225,7 @@ return (
             description={t('dashboard.update_info')}
           />
         </div>
-        <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+        <div className="ai-button-container">
         <AIButton 
               userId={user?.id || 'fallback-user'} 
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}

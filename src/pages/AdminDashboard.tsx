@@ -59,7 +59,7 @@ function AdminDashboard() {
       
       <div className="main-content">
         <div className="page-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="page-title-wrapper">
             <div className="page-title">{t('dashboard.admin')}</div>
             
           </div>
@@ -128,7 +128,6 @@ function AdminDashboard() {
             type="button"
             onClick={() => setShowAnnouncements(true)}
             className="action-card"
-            style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0, width: '100%' }}
           >
             <div className="action-icon">
               <Icon name="announcements" alt="Announcements" />
@@ -137,7 +136,7 @@ function AdminDashboard() {
             <div className="action-desc">System-wide notifications</div>
           </button>
         </div>
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <div className="ai-button-container">
         <AIButton 
               userId="admin-user-1" 
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}

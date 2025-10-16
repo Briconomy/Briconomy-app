@@ -307,7 +307,7 @@ if (error) {
               ) : (
                 <p>Try adjusting your search criteria or add a new property.</p>
               )}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+              <div className="action-buttons-group">
                 {searchTerm && (
                   <button
                     type="button"

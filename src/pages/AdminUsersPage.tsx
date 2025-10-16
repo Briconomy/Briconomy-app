@@ -75,7 +75,7 @@ function AdminUsersPage() {
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">{t('admin.user_list')}</div>
-            <a href="/admin/add-user" className="btn-primary">{t('common.add_user')}</a>
+            <a href="/admin/add-user" className="btn btn-primary">{t('common.add_user')}</a>
           </div>
           
           <div className="list-item">

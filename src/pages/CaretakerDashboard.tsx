@@ -141,7 +141,7 @@ return (
       
       <div className="main-content">
         <div className="page-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="page-title-wrapper">
             <div className="page-title">{t('caretaker.tasks')}</div>
             
           </div>
@@ -205,7 +205,7 @@ return (
             </div>
           )}
         </div>
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <div className="ai-button-container">
         <AIButton 
               userId={user?.id || "caretaker-user-1"} 
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
