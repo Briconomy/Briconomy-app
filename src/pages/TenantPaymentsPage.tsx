@@ -8,6 +8,7 @@ import PaymentChart from '../components/PaymentChart.tsx';
 import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
+import Icon from '../components/Icon.tsx';
 
 interface PaymentMethod {
   id: string;
@@ -262,13 +263,13 @@ function TenantPaymentsPage() {
           <div className="quick-actions" style={{ display: 'flex', gap: '12px' }}>
             <ActionCard
               onClick={_handleDownloadStatement}
-              icon="S"
+              icon={<Icon name="document" alt="Download Statement" />}
               title={t('payments.downloadStatement')}
               description={t('payments.paymentHistory')}
             />
             <ActionCard
               onClick={() => setShowPaymentForm(true)}
-              icon="P"
+              icon={<Icon name="payment" alt="Make Payment" />}
               title={t('payments.makePayment')}
               description={t('payments.payRentOnline')}
             />

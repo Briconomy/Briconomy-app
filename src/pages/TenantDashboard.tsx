@@ -8,6 +8,7 @@ import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
+import Icon from '../components/Icon.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
@@ -201,25 +202,25 @@ return (
         <div className="quick-actions" style={{ marginTop: '8px' }}>
           <ActionCard
             onClick={() => navigate('/tenant/payments')}
-            icon="P"
+            icon={<Icon name="payment" alt="Pay Rent" />}
             title={t('dashboard.pay_rent')}
             description={t('dashboard.make_payment')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/requests')}
-            icon="M"
+            icon={<Icon name="maintenance" alt="Maintenance" />}
             title={t('dashboard.maintenance')}
             description={t('dashboard.report_issue')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/messages')}
-            icon="C"
+            icon={<Icon name="contact" alt="Contact" />}
             title={t('dashboard.contact')}
             description={t('dashboard.message_management')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/profile')}
-            icon="U"
+            icon={<Icon name="profile" alt="Profile" />}
             title={t('common.profile')}
             description={t('dashboard.update_info')}
           />

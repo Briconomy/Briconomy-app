@@ -6,6 +6,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
+import Icon from '../components/Icon.tsx';
 
 function UserProfilePage() {
   const navigate = useNavigate();
@@ -188,13 +189,13 @@ function UserProfilePage() {
         <div className="quick-actions">
           <ActionCard
             to="/tenant/documents"
-            icon="D"
+            icon={<Icon name="docs" alt="Documents" />}
             title={t('profile.documents')}
             description={t('profile.viewDocuments')}
           />
           <ActionCard
             to="/tenant/activity"
-            icon="L"
+            icon={<Icon name="activityLog" alt="Activity Log" />}
             title={t('profile.activityLog')}
             description={t('profile.viewActivity')}
           />
