@@ -8,6 +8,7 @@ import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import Icon from '../components/Icon.tsx';
 
 function MaintenanceRequestsPage() {
   const { t } = useLanguage();
@@ -371,25 +372,25 @@ return (
             <div className="quick-actions">
               <ActionCard
                 onClick={() => setShowRequestForm(true)}
-                icon="R"
+                icon={<Icon name="issue" alt="Report Issue" />}
                 title={t('requests.reportIssue')}
                 description={t('requests.createNewRequest')}
               />
               <ActionCard
                 to="/tenant/messages"
-                icon="C"
+                icon={<Icon name="contact" alt="Contact Caretaker" />}
                 title={t('requests.contactCaretaker')}
                 description={t('requests.directCommunication')}
               />
               <ActionCard
                 onClick={() => setActiveTab('help')}
-                icon="E"
+                icon={<Icon name="emergency" alt="Emergency Info" />}
                 title={t('requests.emergencyInfo')}
                 description={t('requests.emergencyContacts')}
               />
               <ActionCard
                 onClick={() => setActiveTab('help')}
-                icon="H"
+                icon={<Icon name="help" alt="Help & Support" />}
                 title="Help & Support"
                 description="FAQs and contact support"
               />

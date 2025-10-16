@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import Icon from '../components/Icon.tsx';
 
 interface User {
   id: string;
@@ -279,10 +280,10 @@ return (
             )}
 
 <div className="quick-actions">
-              <ActionCard onClick={() => setActiveConversation(contacts[0])} icon="M" title="Manager" />
-              <ActionCard onClick={() => setActiveConversation(contacts[1])} icon="T" title="Maintenance" />
-              <ActionCard onClick={() => setActiveConversation(contacts[2])} icon="E" title="Emergency" />
-              <ActionCard to="/tenant/requests" icon="R" title="Request Help" />
+              <ActionCard onClick={() => setActiveConversation(contacts[0])} icon={<Icon name="manage" alt="Manager" />} title="Manager" />
+              <ActionCard onClick={() => setActiveConversation(contacts[1])} icon={<Icon name="maintenance" alt="Maintenance" />} title="Maintenance" />
+              <ActionCard onClick={() => setActiveConversation(contacts[2])} icon={<Icon name="emergency" alt="Emergency" />} title="Emergency" />
+              <ActionCard to="/tenant/requests" icon={<Icon name="help" alt="Request Help" />} title="Request Help" />
             </div>
           </>
         ) : (
