@@ -42,6 +42,8 @@ const iconMap: Record<string, string> = {
   'issue': '/src/Icons/Issue.svg',
   'help': '/src/Icons/Help.svg',
   'document': '/src/Icons/Document.svg',
+  'refresh': '/src/Icons/Refresh.svg',
+  'trash': '/src/Icons/Trash.svg',
 };
 
 function Icon({ name, alt, className = '', size }: IconProps) {
