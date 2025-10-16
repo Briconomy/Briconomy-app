@@ -345,6 +345,7 @@ body {
     transition: transform 0.3s ease;
     text-align: center;
     text-decoration: none;
+    border: none;
 }
 
 .action-card:hover {
@@ -402,16 +403,119 @@ body {
     text-align: center;
 }
 
+.landing-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #162F1B 0%, #2D5A31 100%);
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.landing-content {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.landing-logo {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 30px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #162F1B;
+}
+
 .landing-title {
     font-size: 32px;
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .landing-subtitle {
     font-size: 16px;
     opacity: 0.9;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+.landing-sections {
+    margin-bottom: 30px;
+}
+
+.landing-card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 12px;
     margin-bottom: 20px;
+}
+
+.landing-card-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.landing-card-text {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 15px;
+}
+
+.landing-features-list {
+    list-style: none;
+    padding: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.landing-features-list li {
+    margin-bottom: 8px;
+}
+
+.landing-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: white !important;
+    color: #162F1B !important;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    text-align: center;
+    box-sizing: border-box;
+    border: none;
+}
+
+.landing-btn:hover {
+    background: #f8f9fa !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.landing-browse-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: rgba(255,255,255,0.2) !important;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: all 0.3s ease;
+}
+
+.landing-browse-btn:hover {
+    background: rgba(255,255,255,0.3) !important;
+    border-color: rgba(255,255,255,0.5);
 }
 
 .demo-notice {
@@ -469,6 +573,78 @@ body {
 
 .login-container {
     padding: 20px 16px;
+}
+
+.login-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.login-title {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #2c3e50;
+    font-size: 20px;
+}
+
+.login-options {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.remember-me-label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+.remember-me-label input {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.forgot-password-link {
+    font-size: 14px;
+    color: #162F1B;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.btn-block {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.btn-google {
+    background: #4285f4;
+    color: white;
+    border: none;
+}
+
+.btn-google:hover {
+    background: #357ae8;
+}
+
+.error-message {
+    background: #fee;
+    color: #c00;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    text-align: center;
 }
 
 .login-form {
@@ -1219,4 +1395,31 @@ body {
     color: white;
     padding: 4px 8px;
     border-radius: 12px;
+}
+
+/* Action buttons group */
+.action-buttons-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+/* Page title wrapper */
+.page-title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* AI button container */
+.ai-button-container {
+    margin-top: 16px;
+    text-align: center;
+}
+
+/* Quick actions spacing */
+.quick-actions-spaced {
+    margin-top: 8px;
 }

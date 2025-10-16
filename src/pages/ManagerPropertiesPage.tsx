@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
 import ManagerPropertyCard from '../components/ManagerPropertyCard.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
@@ -92,7 +93,7 @@ function ManagerPropertiesPage() {
     return (
       <div className="app-container mobile-only">
         <TopNav showLogout showBackButton />
-        <div className="main-content" style={{ padding: 16 }}>
+        <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>{t('common.loading')}...</p>
@@ -106,7 +107,7 @@ function ManagerPropertiesPage() {
     return (
       <div className="app-container mobile-only">
         <TopNav showLogout showBackButton />
-        <div className="main-content" style={{ padding: 16 }}>
+        <div className="main-content">
           <div className="error-state">
             <p>{t('manager.error_loading')}: {error}</p>
             <button type="button" onClick={fetchProperties} className="btn btn-primary">{t('common.retry')}</button>
@@ -127,26 +128,26 @@ function ManagerPropertiesPage() {
         </div>
 
         <div className="dashboard-grid">
-          <div className="stat-card">
-            <div className="stat-value">{totalProperties}</div>
-            <div className="stat-label">{t('properties.total')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{totalUnits}</div>
-            <div className="stat-label">{t('manager.total_units')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{occupiedUnits}</div>
-            <div className="stat-label">{t('manager.occupied_units')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{overallOccupancy}%</div>
-            <div className="stat-label">{t('manager.occupancy_rate')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{formatCurrency(estimatedMonthlyRevenue)}</div>
-            <div className="stat-label">{t('manager.est_monthly_revenue')}</div>
-          </div>
+          <StatCard 
+            value={totalProperties.toString()} 
+            label={t('properties.total')} 
+          />
+          <StatCard 
+            value={totalUnits.toString()} 
+            label={t('manager.total_units')} 
+          />
+          <StatCard 
+            value={occupiedUnits.toString()} 
+            label={t('manager.occupied_units')} 
+          />
+          <StatCard 
+            value={`${overallOccupancy}%`} 
+            label={t('manager.occupancy_rate')} 
+          />
+          <StatCard 
+            value={formatCurrency(estimatedMonthlyRevenue)} 
+            label={t('manager.est_monthly_revenue')} 
+          />
         </div>
 
         <div className="manager-actions">

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import TopNav from '../components/TopNav.tsx';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -16,13 +17,13 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Load remembered email on component mount
-  React.useEffect(() => {
+  useState(() => {
     const rememberedEmail = localStorage.getItem('briconomy_remembered_email');
     if (rememberedEmail) {
       setFormData(prev => ({ ...prev, email: rememberedEmail }));
       setRememberMe(true);
     }
-  }, []);
+  });
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -70,117 +71,23 @@ function LoginPage() {
   };
 
   return (
-    <div style={{
-      maxWidth: '390px',
-      margin: '0 auto',
-      background: '#ffffff',
-      minHeight: '100vh',
-      position: 'relative',
-      boxShadow: '0 0 20px rgba(0,0,0,0.1)'
-    }}>
-      <div style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #e9ecef',
-        padding: '12px 16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        height: '60px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <a 
-            href="/" 
-            style={{
-              background: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              color: '#495057',
-              width: '32px',
-              height: '32px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              textDecoration: 'none'
-            }}
-          >
-            ←
-          </a>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#2c3e50'
-          }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              background: '#162F1B',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '16px'
-            }}>
-              B
-            </div>
-            <span>Briconomy</span>
-          </div>
-        </div>
-      </div>
+    <div className="app-container mobile-only">
+      <TopNav showBackButton />
       
-      <div style={{ padding: '20px 16px' }}>
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '24px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ 
-            textAlign: 'center', 
-            marginBottom: '24px', 
-            color: '#2c3e50', 
-            fontSize: '20px' 
-          }}>
+      <div className="main-content">
+        <div className="login-card">
+          <h2 className="login-title">
             {t('auth.sign_in')}
           </h2>
           
           {authError && (
-            <div style={{
-              background: '#fee',
-              color: '#c00',
-              padding: '12px',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              fontSize: '14px',
-              textAlign: 'center'
-            }}>
+            <div className="error-message">
               {authError}
             </div>
           )}
           
-          <div style={{ marginBottom: '16px' }}>
-            <label 
-              htmlFor="email" 
-              style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontWeight: '600', 
-                color: '#2c3e50', 
-                fontSize: '14px' 
-              }}
-            >
+          <div className="form-group">
+            <label htmlFor="email">
               {t('common.email_address')}
             </label>
             <input 
@@ -189,31 +96,11 @@ function LoginPage() {
               value={formData.email}
               onChange={handleInputChange}
               placeholder={t('common.enter_email')}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                transition: 'all 0.3s ease',
-                boxSizing: 'border-box'
-              }}
             />
           </div>
           
-          <div style={{ marginBottom: '16px' }}>
-            <label 
-              htmlFor="password" 
-              style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontWeight: '600', 
-                color: '#2c3e50', 
-                fontSize: '14px' 
-              }}
-            >
+          <div className="form-group">
+            <label htmlFor="password">
               {t('auth.password')}
             </label>
             <input 
@@ -222,55 +109,19 @@ function LoginPage() {
               value={formData.password}
               onChange={handleInputChange}
               placeholder={t('common.enter_password')}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                transition: 'all 0.3s ease',
-                boxSizing: 'border-box'
-              }}
             />
           </div>
 
-          <div style={{ 
-            marginBottom: '16px', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center' 
-          }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              fontSize: '14px', 
-              color: '#2c3e50',
-              cursor: 'pointer'
-            }}>
+          <div className="login-options">
+            <label className="remember-me-label">
               <input 
                 type="checkbox" 
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                style={{ 
-                  marginRight: '8px',
-                  width: '16px',
-                  height: '16px',
-                  cursor: 'pointer'
-                }}
               />
               {t('auth.remember_me') || 'Remember me'}
             </label>
-            <a 
-              href="/forgot-password" 
-              style={{ 
-                fontSize: '14px', 
-                color: '#162F1B', 
-                textDecoration: 'none',
-                fontWeight: '500'
-              }}
-            >
+            <a href="/forgot-password" className="forgot-password-link">
               {t('auth.forgot_password') || 'Forgot password?'}
             </a>
           </div>
@@ -279,59 +130,22 @@ function LoginPage() {
             type="button"
             onClick={handleLogin}
             disabled={submitting}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              marginBottom: '10px',
-              background: submitting ? '#ccc' : '#162F1B',
-              color: 'white',
-              textDecoration: 'none',
-              display: 'inline-block',
-              textAlign: 'center',
-              opacity: submitting ? 0.7 : 1
-            }}
+            className="btn btn-primary btn-block"
           >
             {submitting ? t('common.signing_in') : t('auth.sign_in')}
           </button>
           
-          <button type="button" style={{
-            width: '100%',
-            padding: '12px',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginBottom: '10px',
-            background: '#4285f4',
-            color: 'white',
-            textDecoration: 'none',
-            display: 'inline-block',
-            textAlign: 'center'
-          }}>
+          <button 
+            type="button" 
+            className="btn btn-google btn-block"
+          >
             Continue with Google SSO
           </button>
           
-          <button type="button" style={{
-            width: '100%',
-            padding: '12px',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginBottom: '10px',
-            background: '#6c757d',
-            color: 'white',
-            textDecoration: 'none',
-            display: 'inline-block',
-            textAlign: 'center'
-          }}>
+          <button 
+            type="button" 
+            className="btn btn-secondary btn-block"
+          >
             Biometric Login
           </button>
         </div>

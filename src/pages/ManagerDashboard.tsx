@@ -88,7 +88,7 @@ function ManagerDashboard() {
       
       <div className="main-content">
         <div className="page-header">
-          <div style={{ display: 'flex', alignItems: 'center',justifyContent: 'center', gap: '12px' }}>
+          <div className="page-title-wrapper">
             <div className="page-title">{t('dashboard.manager')}</div>
           </div>
           <div className="page-subtitle">{t('dashboard.listings_leases_payments')}</div>
@@ -163,7 +163,7 @@ function ManagerDashboard() {
             description={t('manager.property_updates')}
           />
         </div>
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+        <div className="ai-button-container">
         <AIButton 
               userId="manager-user-1" 
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}

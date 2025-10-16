@@ -1,4 +1,4 @@
-import _React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate as _useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -108,7 +108,7 @@ function PropertyManagementPage() {
 
 return (
     <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
@@ -129,8 +129,8 @@ return (
         ) : (
           <>
             <div className="dashboard-grid">
-              <StatCard value={totalProperties} label="Properties" />
-              <StatCard value={totalUnits} label="Total Units" />
+              <StatCard value={totalProperties.toString()} label="Properties" />
+              <StatCard value={totalUnits.toString()} label="Total Units" />
               <StatCard value={`${occupancyRate}%`} label="Occupancy" />
               <StatCard value={`R${(totalRevenue / 1000).toFixed(0)}k`} label="Monthly Revenue" />
             </div>
