@@ -6,6 +6,7 @@ import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
+import Icon from '../components/Icon.tsx';
 
 function LeaseRenewalsPage() {
   const [renewals, setRenewals] = useState([
@@ -229,19 +230,19 @@ function LeaseRenewalsPage() {
         <div className="quick-actions">
           <ActionCard
             to="#"
-            icon="S"
+            icon={<Icon name="sendBulkOffers" alt="Send Bulk Offers" />}
             title="Send Bulk Offers"
             description="Multiple tenants"
           />
           <ActionCard
             to="#"
-            icon="T"
+            icon={<Icon name="trackResponses" alt="Track Responses" />}
             title="Track Responses"
             description="View status"
           />
           <ActionCard
             to="#"
-            icon="R"
+            icon={<Icon name="report" alt="Generate Report" />}
             title="Generate Report"
             description="Renewal summary"
           />

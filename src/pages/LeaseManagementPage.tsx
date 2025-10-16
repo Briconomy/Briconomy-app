@@ -8,6 +8,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import { leasesApi, useApi, formatCurrency } from '../services/api.ts';
+import Icon from '../components/Icon.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function LeaseManagementPage() {
@@ -232,25 +233,25 @@ function LeaseManagementPage() {
         <div className="quick-actions">
           <ActionCard
             to="/manager/leases/new"
-            icon="C"
+            icon={<Icon name="createLease" alt="Create Lease" />}
             title="Create Lease"
             description="New lease agreement"
           />  
           <ActionCard
             to="/manager/renewals"
-            icon="R"
+            icon={<Icon name="renewals" alt="Renewals" />}
             title="Renewals"
             description="Manage lease renewals"
           />
           <ActionCard
             onClick={() => navigate('/manager/terminations')}
-            icon="T"
+            icon={<Icon name="terminations" alt="Terminations" />}
             title="Terminations"
             description="Handle lease terminations"
           />
           <ActionCard
             to="/manager/documents"
-            icon="D"
+            icon={<Icon name="docLease" alt="Documents" />}
             title="Documents"
             description="Lease agreements"
           />
