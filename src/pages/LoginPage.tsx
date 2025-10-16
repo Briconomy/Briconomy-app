@@ -11,8 +11,18 @@ function LoginPage() {
     email: '',
     password: ''
   });
+  const [rememberMe, setRememberMe] = useState(false);
   const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Load remembered email on component mount
+  React.useEffect(() => {
+    const rememberedEmail = localStorage.getItem('briconomy_remembered_email');
+    if (rememberedEmail) {
+      setFormData(prev => ({ ...prev, email: rememberedEmail }));
+      setRememberMe(true);
+    }
+  }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -35,6 +45,13 @@ function LoginPage() {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
+        // Handle remember me functionality
+        if (rememberMe) {
+          localStorage.setItem('briconomy_remembered_email', formData.email);
+        } else {
+          localStorage.removeItem('briconomy_remembered_email');
+        }
+        
         const dashboards = {
           admin: '/admin',
           manager: '/manager',
@@ -217,6 +234,45 @@ function LoginPage() {
                 boxSizing: 'border-box'
               }}
             />
+          </div>
+
+          <div style={{ 
+            marginBottom: '16px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center' 
+          }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              fontSize: '14px', 
+              color: '#2c3e50',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ 
+                  marginRight: '8px',
+                  width: '16px',
+                  height: '16px',
+                  cursor: 'pointer'
+                }}
+              />
+              {t('auth.remember_me') || 'Remember me'}
+            </label>
+            <a 
+              href="/forgot-password" 
+              style={{ 
+                fontSize: '14px', 
+                color: '#162F1B', 
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}
+            >
+              {t('auth.forgot_password') || 'Forgot password?'}
+            </a>
           </div>
           
           <button 

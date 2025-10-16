@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../services/api.ts';
 import TopNav from '../components/TopNav.tsx';
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator.tsx';
 
 function AdminAddUserPage() {
   const navigate = useNavigate();
@@ -660,6 +661,7 @@ const handleCreateUser = async () => {
                 boxSizing: 'border-box'
               }}
             />
+            <PasswordStrengthIndicator password={formData.password} />
           </div>
           
 <div style={{ marginBottom: '16px' }}>

@@ -9,6 +9,7 @@ import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
+import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { dashboardApi, propertiesApi, maintenanceApi, leasesApi, formatCurrency, useApi } from '../services/api.ts';
 
@@ -174,6 +175,9 @@ function ManagerDashboard() {
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial />
       
       {/* Offline Indicator */}
       <OfflineIndicator />

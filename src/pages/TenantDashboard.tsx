@@ -7,6 +7,7 @@ import ActionCard from '../components/ActionCard.tsx';
 import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
+import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
@@ -234,6 +235,9 @@ return (
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial />
       
       {/* Offline Indicator */}
       <OfflineIndicator />

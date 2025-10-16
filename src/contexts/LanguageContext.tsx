@@ -283,6 +283,8 @@ const translations: Translations = {
   'auth.email': { en: 'Email', zu: 'I-imeyili' },
   'auth.password': { en: 'Password', zu: 'Iphasiwedi' },
   'auth.sign_in': { en: 'Sign In', zu: 'Ngena' },
+  'auth.remember_me': { en: 'Remember me', zu: 'Ngikhumbule' },
+  'auth.forgot_password': { en: 'Forgot password?', zu: 'Ukhohlwe iphasiwedi?' },
   
   // Common Messages
   'common.loading': { en: 'Loading...', zu: 'Kuyalayishwa...' },
