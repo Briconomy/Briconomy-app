@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx';
 import AdminAddUserPage from './pages/AdminAddUserPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
 import ManagerDashboard from './pages/ManagerDashboard.tsx';
@@ -41,7 +42,7 @@ import TenantActivityPage from './pages/TenantActivityPage.tsx';
 import ApiTestPage from './pages/ApiTestPage.tsx';
 import AddPaymentMethodPage from './pages/AddPaymentMethodPage.tsx';
 import EditPaymentMethodPage from './pages/EditPaymentMethodPage.tsx';
-import { ProtectedRoute, AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
+import { AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './components/ProtectedRoute.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { ProspectiveTenantProvider } from './contexts/ProspectiveTenantContext.tsx';
 import InitiateTerminationPage from './pages/InitiateTerminationPage.tsx';
@@ -57,6 +58,7 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/admin/add-user" element={<AdminRoute><AdminAddUserPage /></AdminRoute>} />
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />

@@ -6,6 +6,7 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import AIButton from '../components/AIButton.tsx';
+import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 
@@ -135,6 +136,9 @@ function AdminDashboard() {
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial />
       
       {/* Announcement System Modal */}
       {showAnnouncements && (

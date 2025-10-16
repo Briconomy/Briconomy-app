@@ -7,6 +7,51 @@ const STATIC_CACHE = [
   '/manifest.json'
 ];
 
+// Handle push notifications
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Push Received:', event);
+  
+  let data = {
+    title: 'Briconomy Notification',
+    body: 'You have a new notification',
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    tag: 'default',
+    requireInteraction: false
+  };
+  
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch (_e) {
+      data.body = event.data.text();
+    }
+  }
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: data.badge,
+      tag: data.tag,
+      requireInteraction: data.requireInteraction,
+      vibrate: [200, 100, 200],
+      data: data.data || {}
+    })
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Notification click received:', event.notification.tag);
+  
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url || '/')
+  );
+});
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)

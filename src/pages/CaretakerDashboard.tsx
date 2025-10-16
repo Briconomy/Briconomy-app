@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import AIButton from '../components/AIButton.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
+import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { tasksApi, useApi } from '../services/api.ts';
 import '../utils/chart-registration.ts';
@@ -216,6 +217,9 @@ return (
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial />
     </div>
   );
 }
