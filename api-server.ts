@@ -562,7 +562,9 @@ serve(async (req) => {
     // Notifications endpoints
     if (path[0] === 'api' && path[1] === 'notifications') {
       if (req.method === 'GET' && path[2]) {
+        console.log(`[API] GET /api/notifications/${path[2]} - Fetching notifications for user:`, path[2]);
         const notifications = await getNotifications(path[2]);
+        console.log(`[API] Returning ${Array.isArray(notifications) ? notifications.length : 'unknown'} notifications`);
         return new Response(JSON.stringify(notifications), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
