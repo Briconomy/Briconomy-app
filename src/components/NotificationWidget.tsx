@@ -306,16 +306,13 @@ const NotificationWidget: React.FC = () => {
                 width: '24px',
                 height: '24px',
                 backgroundColor: '#007bff',
-                color: 'white',
                 borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: 'bold'
+                justifyContent: 'center'
               }}
             >
-              N
+              <Icon name="notifications" alt="Notifications" size={16} />
             </div>
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#333' }}>
               Notifications
