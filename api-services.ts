@@ -34,7 +34,28 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
     if (excludeKeys.has(k)) {
       continue;
     }
-    out[k] = idKeys.has(k) ? toId(v) : v;
+    
+    // Handle ID fields
+    if (idKeys.has(k)) {
+      out[k] = toId(v);
+    }
+    // Handle timestamp/date queries (preserve MongoDB operators like $gte, $lte, etc.)
+    else if (k === 'timestamp' && v && typeof v === 'object' && !Array.isArray(v)) {
+      const dateQuery: Record<string, unknown> = {};
+      for (const [operator, dateValue] of Object.entries(v as Record<string, unknown>)) {
+        if (typeof dateValue === 'string') {
+          // Convert ISO string to Date object for MongoDB
+          dateQuery[operator] = new Date(dateValue);
+        } else {
+          dateQuery[operator] = dateValue;
+        }
+      }
+      out[k] = dateQuery;
+    }
+    // Handle other fields normally
+    else {
+      out[k] = v;
+    }
   }
   return out;
 }
@@ -804,12 +825,50 @@ export async function getUserActivities() {
 export async function getSecurityConfig() {
   try {
     await connectToMongoDB();
-    const securityConfig = getCollection("security_config");
-    const config = await securityConfig.find({}).toArray();
+    const authConfig = getCollection("auth_config");
+    const config = await authConfig.find({}).toArray();
+    
+    console.log("Auth config query result:", config.length, "items");
+    
+    // If no auth config exists, return default configuration
+    if (config.length === 0) {
+      const defaultConfig = [
+        { method: 'Email & Password', description: 'Standard email and password authentication', status: 'enabled' },
+        { method: 'Two-Factor Authentication (2FA)', description: 'SMS or authenticator app verification', status: 'enabled' },
+        { method: 'OAuth (Google)', description: 'Sign in with Google account', status: 'enabled' },
+        { method: 'Biometric Authentication', description: 'Fingerprint or face recognition', status: 'disabled' },
+        { method: 'SSO (Single Sign-On)', description: 'Enterprise single sign-on integration', status: 'disabled' }
+      ];
+      
+      console.log("Initializing auth_config with defaults:", defaultConfig.length, "items");
+      
+      // Try to initialize the auth_config collection with default values
+      try {
+        await authConfig.insertMany(defaultConfig);
+        console.log("Successfully inserted default auth config");
+      } catch (insertError) {
+        console.error("Failed to insert default auth config:", insertError);
+        // Return defaults anyway, even if insertion failed
+      }
+      
+      return defaultConfig;
+    }
+    
+    console.log("Returning existing auth config:", config.length, "items");
     return mapDocs(config);
   } catch (error) {
     console.error("Error fetching security config:", error);
-    throw error;
+    
+    // Return default configuration as fallback if everything fails
+    const fallbackConfig = [
+      { method: 'Email & Password', description: 'Standard email and password authentication', status: 'enabled' },
+      { method: 'Two-Factor Authentication (2FA)', description: 'SMS or authenticator app verification', status: 'enabled' },
+      { method: 'OAuth (Google)', description: 'Sign in with Google account', status: 'enabled' },
+      { method: 'Biometric Authentication', description: 'Fingerprint or face recognition', status: 'disabled' },
+      { method: 'SSO (Single Sign-On)', description: 'Enterprise single sign-on integration', status: 'disabled' }
+    ];
+    console.log("Returning fallback config due to error");
+    return fallbackConfig;
   }
 }
 
@@ -905,13 +964,21 @@ export async function getAuditLogs(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const auditLogs = getCollection("audit_logs");
+    
+    console.log("=== AUDIT LOGS QUERY DEBUG ===");
+    console.log("Original filters:", JSON.stringify(filters, null, 2));
+    
     const normalizedFilters = normalizeFilters(filters);
+    console.log("Normalized filters:", JSON.stringify(normalizedFilters, null, 2));
     
     const logs = await auditLogs
       .find(normalizedFilters)
       .sort({ timestamp: -1 })
       .limit(100)
       .toArray();
+    
+    console.log("Query result count:", logs.length);
+    console.log("===============================");
     
     return mapDocs(logs);
   } catch (error) {
@@ -1348,7 +1415,15 @@ export async function updateAuthMethod(method: string, enabled: boolean) {
     const status = enabled ? 'enabled' : 'disabled';
     const result = await authConfig.updateOne(
       { method },
-      { $set: { status, updatedAt: new Date() } },
+      { 
+        $set: { 
+          status, 
+          updatedAt: new Date() 
+        },
+        $setOnInsert: {
+          description: getMethodDescription(method)
+        }
+      },
       { upsert: true }
     );
     
@@ -1357,6 +1432,17 @@ export async function updateAuthMethod(method: string, enabled: boolean) {
     console.error("Error updating auth method:", error);
     throw error;
   }
+}
+
+function getMethodDescription(method: string): string {
+  const descriptions: { [key: string]: string } = {
+    'Email & Password': 'Standard email and password authentication',
+    'Two-Factor Authentication (2FA)': 'SMS or authenticator app verification',
+    'OAuth (Google)': 'Sign in with Google account',
+    'Biometric Authentication': 'Fingerprint or face recognition',
+    'SSO (Single Sign-On)': 'Enterprise single sign-on integration'
+  };
+  return descriptions[method] || 'Authentication method';
 }
 
 export async function clearSecurityAlert(alertId: string) {

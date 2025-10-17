@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -33,14 +33,19 @@ function AdminSecurityPage() {
   console.log('Settings loading:', settingsLoading);
   console.log('Settings error:', settingsError);
   console.log('Using fallback?', !securitySettings || securitySettings.length === 0);
-
-  const getFallbackSecurityConfig = () => [
-    { method: 'Email & Password', description: 'Standard email and password authentication', status: 'enabled' },
-    { method: 'Two-Factor Authentication (2FA)', description: 'SMS or authenticator app verification', status: 'enabled' },
-    { method: 'OAuth (Google)', description: 'Sign in with Google account', status: 'enabled' },
-    { method: 'Biometric Authentication', description: 'Fingerprint or face recognition', status: 'disabled' },
-    { method: 'SSO (Single Sign-On)', description: 'Enterprise single sign-on integration', status: 'disabled' }
-  ];
+  console.log('Security config data:', securityConfig);
+  console.log('Config loading:', configLoading);
+  console.log('Using config fallback?', !securityConfig || securityConfig.length === 0);
+  
+  // More detailed debugging
+  useEffect(() => {
+    console.log('Security config changed:', securityConfig);
+    if (securityConfig) {
+      console.log('Config is array?', Array.isArray(securityConfig));
+      console.log('Config length:', securityConfig.length);
+      console.log('First config item:', securityConfig[0]);
+    }
+  }, [securityConfig]);
 
   const getFallbackSecurityAlerts = () => [
     { id: '1', title: 'Failed Login Attempts', message: 'Multiple failed login attempts detected from IP 192.168.1.100', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
@@ -209,8 +214,15 @@ function AdminSecurityPage() {
     
     setProcessing(true);
     try {
+      console.log('Updating auth method:', selectedAuthMethod.method, 'to', enabled ? 'enabled' : 'disabled');
       await adminApi.updateAuthMethod(selectedAuthMethod.method, enabled);
-      await refetchConfig();
+      
+      // Force refresh of the config data with a small delay to ensure database update
+      setTimeout(async () => {
+        await refetchConfig();
+        console.log('Config refetched after auth method update');
+      }, 100);
+      
       setShowAuthModal(false);
       setSelectedAuthMethod(null);
       alert(`Authentication method ${enabled ? 'enabled' : 'disabled'} successfully`);
@@ -263,8 +275,8 @@ function AdminSecurityPage() {
                 <h4>{t('security.loading_auth')}</h4>
               </div>
             </div>
-          ) : (
-            (securityConfig && securityConfig.length > 0 ? securityConfig : getFallbackSecurityConfig()).map((config: { method: string; description: string; status: string }, index: number) => (
+          ) : securityConfig && securityConfig.length > 0 ? (
+            securityConfig.map((config: { method: string; description: string; status: string }, index: number) => (
               <div key={`auth-${config.method}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{config.method}</h4>
@@ -298,6 +310,31 @@ function AdminSecurityPage() {
                 </div>
               </div>
             ))
+          ) : (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>No authentication methods found</h4>
+                <p>Database connection issue or auth_config collection needs initialization. Check console for details.</p>
+              </div>
+              <button 
+                type="button" 
+                style={{
+                  background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
+                  color: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 3px 10px rgba(74, 144, 226, 0.3)',
+                  transition: 'all 0.3s ease'
+                }}
+                onClick={() => globalThis.location.reload()}
+              >
+                Retry
+              </button>
+            </div>
           )}
         </div>
 
