@@ -55,10 +55,10 @@ function CaretakerTasksPage() {
   const [selectedTask, setSelectedTask] = useState(null);
 
   const navItems = [
-    { path: '/caretaker', label: 'Dashboard', active: false },
-    { path: '/caretaker/tasks', label: 'Tasks', active: true },
-    { path: '/caretaker/maintenance', label: 'Maintenance' },
-    { path: '/caretaker/reports', label: 'Reports' }
+    { path: '/caretaker', label: 'Dashboard', icon: 'issue', active: false },
+    { path: '/caretaker/tasks', label: 'Tasks', icon: 'issue', active: true },
+    { path: '/caretaker/maintenance', label: 'Maintenance', icon: 'maintenance' },
+    { path: '/caretaker/reports', label: 'Reports', icon: 'report' }
   ];
 
   const pendingCount = tasks.filter(t => t.status === 'pending').length;

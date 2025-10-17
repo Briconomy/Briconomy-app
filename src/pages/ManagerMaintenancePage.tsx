@@ -14,10 +14,10 @@ function ManagerMaintenancePage() {
   const [filterProperty, setFilterProperty] = useState('all'); // all properties
   
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/manager/properties', label: 'Properties', active: false },
-    { path: '/manager/leases', label: 'Leases', active: false },
-    { path: '/manager/payments', label: 'Payments', active: false }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties', active: false },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: false },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment', active: false }
   ];
 
   const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi(

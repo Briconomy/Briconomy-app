@@ -11,10 +11,10 @@ function CaretakerHistoryPage() {
   const [filterStatus, setFilterStatus] = useState('all'); // all, completed, in_progress
   
   const navItems = [
-    { path: '/caretaker', label: 'Tasks', active: false },
-    { path: '/caretaker/schedule', label: 'Schedule', active: false },
-    { path: '/caretaker/history', label: 'History', active: true },
-    { path: '/caretaker/profile', label: 'Profile', active: false }
+    { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: 'Schedule', icon: 'report', active: false },
+    { path: '/caretaker/history', label: 'History', icon: 'activityLog', active: true },
+    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(

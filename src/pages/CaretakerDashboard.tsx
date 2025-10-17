@@ -49,10 +49,10 @@ function CaretakerDashboard() {
   const [chartError, setChartError] = useState(null);
   
   const navItems = [
-    { path: '/caretaker', label: t('nav.tasks'), active: true },
-    { path: '/caretaker/schedule', label: t('nav.schedule') },
-    { path: '/caretaker/history', label: t('nav.history') },
-    { path: '/caretaker/profile', label: t('nav.profile') }
+    { path: '/caretaker', label: t('nav.tasks'), icon: 'issue', active: true },
+    { path: '/caretaker/schedule', label: t('nav.schedule'), icon: 'report' },
+    { path: '/caretaker/history', label: t('nav.history'), icon: 'activityLog' },
+    { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(

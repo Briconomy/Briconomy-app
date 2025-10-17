@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import React from 'react';
+import Icon from './Icon.tsx';
 
 interface NavItem {
   path: string;
   label: string;
+  icon?: string;
 }
 
 interface BottomNavProps {
@@ -25,7 +26,11 @@ function BottomNav({ items, responsive = false }: BottomNavProps) {
             to={item.path} 
             className={`nav-item ${isActive ? 'active' : ''}`}
           >
-            <div className="nav-icon"></div>
+            <div className="nav-icon">
+              {item.icon ? (
+                <Icon name={item.icon} alt={item.label} size={24} />
+              ) : null}
+            </div>
             <div className="nav-label">{item.label}</div>
           </Link>
         );

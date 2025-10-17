@@ -27,10 +27,10 @@ function PropertyManagementPage() {
   });
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard' },
-    { path: '/manager/properties', label: 'Properties', active: true },
-    { path: '/manager/leases', label: 'Leases' },
-    { path: '/manager/payments', label: 'Payments' }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics' },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties', active: true },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease' },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
   ];
 
   useEffect(() => {

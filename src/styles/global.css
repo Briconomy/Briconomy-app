@@ -848,12 +848,29 @@ body {
 }
 
 .nav-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: currentColor;
     border-radius: 4px;
     margin-bottom: 4px;
     opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon:has(img),
+.nav-icon:has(.icon) {
+    background: transparent;
+    opacity: 1;
+}
+
+.nav-icon img,
+.nav-icon .icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    display: block;
 }
 
 .nav-label {

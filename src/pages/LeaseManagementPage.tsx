@@ -22,10 +22,10 @@ function LeaseManagementPage() {
   const { data: leases, loading, error, refetch } = useApi(() => leasesApi.getAll(), []);
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard' },
-    { path: '/manager/properties', label: 'Properties' },
-    { path: '/manager/leases', label: 'Leases', active: true },
-    { path: '/manager/payments', label: 'Payments' }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics' },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
   ];
 
   // Filter leases based on search and status

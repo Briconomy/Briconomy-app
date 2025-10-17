@@ -80,10 +80,10 @@ function ManagerPaymentsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/manager/properties', label: 'Properties' },
-    { path: '/manager/leases', label: 'Leases' },
-    { path: '/manager/payments', label: 'Payments', active: true }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease' },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment', active: true }
   ];
 
   const totalRevenue = payments

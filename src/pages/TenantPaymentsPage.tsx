@@ -30,10 +30,10 @@ function TenantPaymentsPage() {
   const [savedPaymentMethods, setSavedPaymentMethods] = useState<PaymentMethod[]>([]);
 
   const navItems = [
-    { path: '/tenant', label: t('nav.home'), active: false },
-    { path: '/tenant/payments', label: t('nav.payments'), active: true },
-    { path: '/tenant/requests', label: t('nav.requests') },
-    { path: '/tenant/profile', label: t('nav.profile') }
+    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
+    { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment', active: true },
+    { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
+    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
   const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi(

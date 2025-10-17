@@ -23,9 +23,9 @@ function ProspectiveTenantPropertiesPage() {
   const navigate = useNavigate();
 
   const navItems = [
-    { path: '/', label: t('nav.home'), active: false },
-    { path: '/browse-properties', label: t('nav.properties'), active: true },
-    { path: '/login', label: t('auth.login'), active: false }
+    { path: '/', label: t('nav.home'), icon: 'logo', active: false },
+    { path: '/browse-properties', label: t('nav.properties'), icon: 'properties', active: true },
+    { path: '/login', label: t('auth.login'), icon: 'profile', active: false }
   ];
 
   useEffect(() => {

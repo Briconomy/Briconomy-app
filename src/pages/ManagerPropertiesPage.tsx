@@ -20,10 +20,10 @@ function ManagerPropertiesPage() {
   const { user } = useAuth();
 
   const navItems = [
-    { path: '/manager', label: t('nav.dashboard') },
-    { path: '/manager/properties', label: t('nav.properties'), active: true },
-    { path: '/manager/leases', label: t('nav.leases') },
-    { path: '/manager/payments', label: t('nav.payments') }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties', active: true },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease' },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
   useEffect(() => {

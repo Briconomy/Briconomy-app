@@ -11,10 +11,10 @@ function CaretakerSchedulePage() {
   const [viewMode, setViewMode] = useState('day'); // day, week, month
   
   const navItems = [
-    { path: '/caretaker', label: 'Tasks', active: false },
-    { path: '/caretaker/schedule', label: 'Schedule', active: true },
-    { path: '/caretaker/history', label: 'History', active: false },
-    { path: '/caretaker/profile', label: 'Profile', active: false }
+    { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: 'Schedule', icon: 'report', active: true },
+    { path: '/caretaker/history', label: 'History', icon: 'activityLog', active: false },
+    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(

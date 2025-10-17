@@ -61,10 +61,10 @@ function LeaseRenewalsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties' },
-    { path: '/manager/leases', label: 'Leases', active: true },
-    { path: '/manager/payments', label: 'Payments' }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/properties', label: 'Properties', icon: 'properties' },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
   ];
 
   const pendingRenewals = renewals.filter(r => r.status === 'pending').length;
