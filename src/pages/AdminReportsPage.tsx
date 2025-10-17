@@ -1,11 +1,21 @@
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+
 function AdminReportsPage() {
   const { t } = useLanguage();
+  const [reportType, setReportType] = useState('financial');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [reportResult, setReportResult] = useState<string | null>(null);
   
   const navItems = [
     { path: '/admin', label: t('nav.dashboard') },
@@ -90,6 +100,61 @@ function AdminReportsPage() {
     }
   };
 
+  const handleGenerateReport = async () => {
+    if (!fromDate || !toDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
+
+    setGenerating(true);
+    setReportResult(null);
+
+    try {
+      const filters = {
+        reportType,
+        fromDate,
+        toDate,
+        generatedAt: new Date().toISOString()
+      };
+      
+      const result = await adminApi.generateReport(reportType, filters);
+      setReportResult('Report generated successfully!');
+      setSelectedReport(result.reportId || 'new-report');
+      alert('Report generated successfully! You can now export it.');
+    } catch (error) {
+      setReportResult(`Failed to generate report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert('Failed to generate report');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleExportReport = async (format: string) => {
+    if (!selectedReport) {
+      alert('No report selected');
+      return;
+    }
+
+    try {
+      const result = await adminApi.exportReport(selectedReport, format);
+      
+      const blob = new Blob([JSON.stringify(result)], { type: 'application/json' });
+      const url = globalThis.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report_${selectedReport}_${new Date().getTime()}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      globalThis.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      alert(`Report exported as ${format.toUpperCase()}`);
+      setShowExportModal(false);
+    } catch (error) {
+      alert(`Failed to export report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const stats = getFinancialStatsData();
 
   return (
@@ -139,7 +204,19 @@ function AdminReportsPage() {
                   <h4>{report.title}</h4>
                   <p>{report.description}</p>
                 </div>
-                <span className={`status-badge status-${report.status}`}>{report.status}</span>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span className={`status-badge status-${report.status}`}>{report.status}</span>
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    onClick={() => {
+                      setSelectedReport(report.title);
+                      setShowExportModal(true);
+                    }}
+                  >
+                    Export
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -147,32 +224,63 @@ function AdminReportsPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">{t('reports.generate')}</div>
+            <div className="table-title">{t('reports.generate')} New Report</div>
           </div>
           
-          <div className="form-group">
+          <div className="form-group" style={{ padding: '15px' }}>
             <label className="form-label">{t('reports.type')}</label>
-            <select className="form-select">
-              <option>{t('reports.financial')}</option>
-              <option>{t('reports.occupancy')}</option>
-              <option>{t('reports.maintenance')}</option>
-              <option>{t('reports.performance')}</option>
-              <option>{t('reports.custom')}</option>
+            <select 
+              className="form-select"
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+              style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
+            >
+              <option value="financial">{t('reports.financial')}</option>
+              <option value="occupancy">{t('reports.occupancy')}</option>
+              <option value="maintenance">{t('reports.maintenance')}</option>
+              <option value="performance">{t('reports.performance')}</option>
+              <option value="custom">{t('reports.custom')}</option>
             </select>
-          </div>
           
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">{t('common.from_date')}</label>
-              <input type="date" className="form-input" />
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              <div style={{ flex: 1 }}>
+                <label className="form-label">{t('common.from_date')}</label>
+                <input 
+                  type="date" 
+                  className="form-input"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  style={{ width: '100%', padding: '8px' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="form-label">{t('common.to_date')}</label>
+                <input 
+                  type="date" 
+                  className="form-input"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  style={{ width: '100%', padding: '8px' }}
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">{t('common.to_date')}</label>
-              <input type="date" className="form-input" />
-            </div>
-          </div>
+            
+            {reportResult && (
+              <div className={`alert ${reportResult.includes('Failed') ? 'alert-error' : 'alert-success'}`} style={{ marginBottom: '15px' }}>
+                {reportResult}
+              </div>
+            )}
           
-          <button type="button" className="btn-primary btn-block">{t('reports.generate')}</button>
+            <button 
+              type="button" 
+              className="btn-primary" 
+              style={{ width: '100%' }}
+              onClick={handleGenerateReport}
+              disabled={generating}
+            >
+              {generating ? 'Generating...' : t('reports.generate')}
+            </button>
+          </div>
         </div>
 
         <div className="data-table">
@@ -199,6 +307,42 @@ function AdminReportsPage() {
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {showExportModal && (
+        <Modal isOpen={showExportModal} onClose={() => setShowExportModal(false)} title="Export Report">
+          <p>Select export format for: <strong>{selectedReport}</strong></p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={() => handleExportReport('pdf')}
+            >
+              Export as PDF
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={() => handleExportReport('csv')}
+            >
+              Export as CSV
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={() => handleExportReport('xlsx')}
+            >
+              Export as Excel (XLSX)
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={() => handleExportReport('json')}
+            >
+              Export as JSON
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

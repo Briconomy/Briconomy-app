@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 
 function AdminSecurityPage() {
+  const [selectedSetting, setSelectedSetting] = useState<any>(null);
+  const [showSettingModal, setShowSettingModal] = useState(false);
+  const [selectedAuthMethod, setSelectedAuthMethod] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [settingValue, setSettingValue] = useState('');
+  const [processing, setProcessing] = useState(false);
+  
   const navItems = [
     { path: '/admin', label: 'Dashboard' },
     { path: '/admin/users', label: 'Users' },
@@ -13,10 +21,10 @@ function AdminSecurityPage() {
     { path: '/admin/reports', label: 'Reports' }
   ];
 
-  const { data: securityStats, loading: statsLoading } = useApi(() => adminApi.getSecurityStats());
-  const { data: securityConfig, loading: configLoading } = useApi(() => adminApi.getSecurityConfig());
-  const { data: securityAlerts, loading: alertsLoading } = useApi(() => adminApi.getSecurityAlerts());
-  const { data: securitySettings, loading: settingsLoading } = useApi(() => adminApi.getSecuritySettings());
+  const { data: securityStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSecurityStats());
+  const { data: securityConfig, loading: configLoading, refetch: refetchConfig } = useApi(() => adminApi.getSecurityConfig());
+  const { data: securityAlerts, loading: alertsLoading, refetch: refetchAlerts } = useApi(() => adminApi.getSecurityAlerts());
+  const { data: securitySettings, loading: settingsLoading, refetch: refetchSettings } = useApi(() => adminApi.getSecuritySettings());
 
   const getSecurityStatsData = () => {
     if (statsLoading || !securityStats) {
@@ -53,6 +61,64 @@ function AdminSecurityPage() {
     }
   };
 
+  const handleConfigureSetting = (setting: any) => {
+    setSelectedSetting(setting);
+    setSettingValue(setting.value || '');
+    setShowSettingModal(true);
+  };
+
+  const handleUpdateSetting = async () => {
+    if (!selectedSetting) return;
+    
+    setProcessing(true);
+    try {
+      await adminApi.updateSecuritySetting(selectedSetting.setting, settingValue);
+      await refetchSettings();
+      setShowSettingModal(false);
+      setSelectedSetting(null);
+      alert('Security setting updated successfully');
+    } catch (error) {
+      console.error('Failed to update setting:', error);
+      alert('Failed to update security setting');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleToggleAuthMethod = (method: any) => {
+    setSelectedAuthMethod(method);
+    setShowAuthModal(true);
+  };
+
+  const handleUpdateAuthMethod = async (enabled: boolean) => {
+    if (!selectedAuthMethod) return;
+    
+    setProcessing(true);
+    try {
+      await adminApi.updateAuthMethod(selectedAuthMethod.method, enabled);
+      await refetchConfig();
+      setShowAuthModal(false);
+      setSelectedAuthMethod(null);
+      alert(`Authentication method ${enabled ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      console.error('Failed to update auth method:', error);
+      alert('Failed to update authentication method');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleClearAlert = async (alertId: string) => {
+    try {
+      await adminApi.clearSecurityAlert(alertId);
+      await refetchAlerts();
+      alert('Security alert cleared');
+    } catch (error) {
+      console.error('Failed to clear alert:', error);
+      alert('Failed to clear security alert');
+    }
+  };
+
   const stats = getSecurityStatsData();
 
   return (
@@ -84,13 +150,22 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            securityConfig?.map((config: any, index: number) => (
-              <div key={index} className="list-item">
+            securityConfig?.map((config: { method: string; description: string; status: string }, index: number) => (
+              <div key={`auth-${config.method}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{config.method}</h4>
                   <p>{config.description}</p>
                 </div>
-                <span className={`status-badge status-${config.status}`}>{config.status}</span>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span className={`status-badge status-${config.status}`}>{config.status}</span>
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    onClick={() => handleToggleAuthMethod(config)}
+                  >
+                    {config.status === 'enabled' ? 'Disable' : 'Enable'}
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -107,12 +182,19 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            securityAlerts?.map((alert: any, index: number) => (
-              <div key={index} className="list-item">
+            securityAlerts?.map((alert: { id: string; title: string; message: string; timestamp: string }, index: number) => (
+              <div key={`alert-${alert.id || index}`} className="list-item">
                 <div className="item-info">
                   <h4>{alert.title}</h4>
                   <p>{formatAlertTime(alert.timestamp)} - {alert.message}</p>
                 </div>
+                <button 
+                  type="button" 
+                  className="btn-secondary"
+                  onClick={() => handleClearAlert(alert.id)}
+                >
+                  Clear
+                </button>
               </div>
             ))
           )}
@@ -135,13 +217,21 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            securitySettings?.map((setting: any, index: number) => (
-              <div key={index} className="list-item">
+            securitySettings?.map((setting: { setting: string; value: string; configurable: boolean }, index: number) => (
+              <div key={`setting-${setting.setting}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{setting.setting}</h4>
                   <p>{setting.value}</p>
                 </div>
-                {setting.configurable && <button type="button" className="btn-secondary">Configure</button>}
+                {setting.configurable && (
+                  <button 
+                    type="button" 
+                    className="btn-secondary"
+                    onClick={() => handleConfigureSetting(setting)}
+                  >
+                    Configure
+                  </button>
+                )}
               </div>
             ))
           )}
@@ -149,6 +239,63 @@ function AdminSecurityPage() {
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+      
+      {showAuthModal && selectedAuthMethod && (
+        <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} title="Update Authentication Method">
+          <p>Do you want to {selectedAuthMethod.status === 'enabled' ? 'disable' : 'enable'} the authentication method: <strong>{selectedAuthMethod.method}</strong>?</p>
+          <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={() => setShowAuthModal(false)}
+              disabled={processing}
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={() => handleUpdateAuthMethod(selectedAuthMethod.status !== 'enabled')}
+              disabled={processing}
+            >
+              {processing ? 'Processing...' : 'Confirm'}
+            </button>
+          </div>
+        </Modal>
+      )}
+      
+      {showSettingModal && selectedSetting && (
+        <Modal isOpen={showSettingModal} onClose={() => setShowSettingModal(false)} title="Configure Security Setting">
+          <div className="form-group">
+            <label>{selectedSetting.setting}</label>
+            <input
+              type="text"
+              className="form-control"
+              value={settingValue}
+              onChange={(e) => setSettingValue(e.target.value)}
+              placeholder="Enter new value"
+            />
+          </div>
+          <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={() => setShowSettingModal(false)}
+              disabled={processing}
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              className="btn-primary"
+              onClick={handleUpdateSetting}
+              disabled={processing}
+            >
+              {processing ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

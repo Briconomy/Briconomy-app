@@ -52,7 +52,13 @@ import {
   getAnnouncements,
   updateAnnouncementStatus,
   deleteAnnouncement,
-  deleteAnnouncementByContent
+  deleteAnnouncementByContent,
+  updateSecuritySetting,
+  updateAuthMethod,
+  clearSecurityAlert,
+  triggerSystemAction,
+  generateReport,
+  exportReport
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -709,6 +715,61 @@ serve(async (req) => {
         return new Response(JSON.stringify(user), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
+        });
+      }
+      
+      // Update security setting
+      if (path[1] === 'security-settings' && req.method === 'PUT') {
+        const body = await req.json();
+        const result = await updateSecuritySetting(body.setting, body.value);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Update auth method
+      if (path[1] === 'auth-methods' && req.method === 'PUT') {
+        const body = await req.json();
+        const result = await updateAuthMethod(body.method, body.enabled);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Clear security alert
+      if (path[1] === 'security-alerts' && path[2] && req.method === 'DELETE') {
+        const alertId = path[2];
+        const result = await clearSecurityAlert(alertId);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Trigger system action
+      if (path[1] === 'system-actions' && req.method === 'POST') {
+        const body = await req.json();
+        const result = await triggerSystemAction(body.action, body.parameters);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Generate report
+      if (path[1] === 'generate-report' && req.method === 'POST') {
+        const body = await req.json();
+        const result = await generateReport(body.reportType, body.filters);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Export report
+      if (path[1] === 'export-report' && path[2] && path[3] && req.method === 'GET') {
+        const reportId = path[2];
+        const format = path[3];
+        const result = await exportReport(reportId, format);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     }

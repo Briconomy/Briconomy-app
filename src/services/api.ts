@@ -181,6 +181,28 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
+  updateSecuritySetting: (settingName: string, value: string) => apiRequest('/admin/security-settings', {
+    method: 'PUT',
+    body: JSON.stringify({ setting: settingName, value }),
+  }),
+  updateAuthMethod: (method: string, enabled: boolean) => apiRequest('/admin/auth-methods', {
+    method: 'PUT',
+    body: JSON.stringify({ method, enabled }),
+  }),
+  clearSecurityAlert: (alertId: string) => apiRequest(`/admin/security-alerts/${alertId}`, {
+    method: 'DELETE',
+  }),
+  triggerSystemAction: (action: string, parameters?: Record<string, unknown>) => apiRequest('/admin/system-actions', {
+    method: 'POST',
+    body: JSON.stringify({ action, parameters }),
+  }),
+  generateReport: (reportType: string, filters: Record<string, unknown>) => apiRequest('/admin/generate-report', {
+    method: 'POST',
+    body: JSON.stringify({ reportType, filters }),
+  }),
+  exportReport: (reportId: string, format: string) => apiRequest(`/admin/export-report/${reportId}/${format}`, {
+    method: 'GET',
+  }),
 };
 
 export const authApi = {
