@@ -14,9 +14,9 @@
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
     "react-router-dom": "https://esm.sh/react-router-dom@6.8.1",
     "chart.js": "https://esm.sh/chart.js@4.2.1",
-    "react-chartjs-2": "https://esm.sh/react-chartjs-2@5.2.0"
-  ,
-  "@react-oauth/google": "https://esm.sh/@react-oauth/google@0.12.2"
+    "react-chartjs-2": "https://esm.sh/react-chartjs-2@5.2.0",
+    "xlsx": "https://esm.sh/xlsx@0.18.5",
+    "@react-oauth/google": "https://esm.sh/@react-oauth/google@0.12.2"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

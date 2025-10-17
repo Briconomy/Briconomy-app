@@ -1,4 +1,5 @@
-// Export Utilities for CSV and PDF generation
+// Export Utilities for CSV, PDF, and XLSX generation
+import { createSimpleXLSX } from './simple-xlsx.ts';
 
 export interface ExportColumn {
   key: string;
@@ -42,6 +43,79 @@ export class ExportService {
     // Create and download blob
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     this.downloadBlob(blob, `${filename}.csv`);
+  }
+
+  // Export data to XLSX (Excel format) - Use robust Simple Excel XML format
+  async exportToXLSX(data: Record<string, unknown>[], columns: ExportColumn[], filename: string, sheetName = 'Report'): Promise<void> {
+    if (!data || data.length === 0) {
+      console.warn('No data to export');
+      return;
+    }
+
+    console.log('Starting XLSX export...', { dataCount: data.length, columns: columns.length });
+
+    // Use simple Excel XML format as primary method (more reliable)
+    try {
+      console.log('Using Simple Excel XML format (most reliable)');
+      const simpleColumns = columns.map(col => ({ key: col.key, label: col.label }));
+      const blob = createSimpleXLSX(data, simpleColumns, sheetName);
+      this.downloadBlob(blob, `${filename}.xlsx`);
+      console.log('XLSX export completed successfully using Simple Excel XML');
+      return;
+    } catch (xmlError) {
+      console.error('Simple Excel XML export failed:', xmlError);
+    }
+
+    // Fallback: Try the full XLSX library (may have dependency issues)
+    try {
+      console.log('Trying full XLSX library as fallback...');
+      const XLSX = await import('xlsx');
+      console.log('XLSX library loaded successfully');
+      
+      const workbook = XLSX.utils.book_new();
+      const worksheetData = data.map(item => {
+        const row: Record<string, unknown> = {};
+        columns.forEach(col => {
+          const value = item[col.key];
+          row[col.label] = col.format ? col.format(value) : value;
+        });
+        return row;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const colWidths = columns.map(col => ({ wch: Math.max(col.label.length, 15) }));
+      worksheet['!cols'] = colWidths;
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      
+      this.downloadBlob(blob, `${filename}.xlsx`);
+      console.log('XLSX export completed using full XLSX library');
+      return;
+    } catch (xlsxError) {
+      console.error('Full XLSX library also failed:', xlsxError);
+    }
+
+    // Final fallback: Excel-compatible TSV
+    console.warn('Using final fallback: Excel-compatible TSV');
+    const BOM = '\uFEFF';
+    const headers = columns.map(col => col.label).join('\t');
+    const rows = data.map(item => {
+      return columns.map(col => {
+        const value = item[col.key];
+        const formattedValue = col.format ? col.format(value) : String(value ?? '');
+        return String(formattedValue).replace(/"/g, '""');
+      }).join('\t');
+    });
+
+    const tsvContent = BOM + [headers, ...rows].join('\r\n');
+    const blob = new Blob([tsvContent], { 
+      type: 'application/vnd.ms-excel;charset=utf-8' 
+    });
+    
+    this.downloadBlob(blob, `${filename}.xls`);
+    console.log('⚠️ Final fallback: Excel-compatible TSV file (.xls)');
   }
 
   // Export data to PDF (Simple text-based PDF)
