@@ -5,8 +5,10 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function AdminSecurityPage() {
+  const { t } = useLanguage();
   const [selectedSetting, setSelectedSetting] = useState<any>(null);
   const [showSettingModal, setShowSettingModal] = useState(false);
   const [selectedAuthMethod, setSelectedAuthMethod] = useState<any>(null);
@@ -15,10 +17,10 @@ function AdminSecurityPage() {
   const [processing, setProcessing] = useState(false);
   
   const navItems = [
-    { path: '/admin', label: 'Dashboard', icon: 'performanceAnalytics' },
-    { path: '/admin/users', label: 'Users', icon: 'users' },
-    { path: '/admin/security', label: 'Security', icon: 'security', active: true },
-    { path: '/admin/reports', label: 'Reports', icon: 'report' }
+    { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+    { path: '/admin/users', label: t('nav.users'), icon: 'users' },
+    { path: '/admin/security', label: t('nav.security'), icon: 'security', active: true },
+    { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
   ];
 
   const { data: securityStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSecurityStats());
@@ -150,26 +152,26 @@ function AdminSecurityPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Security Management</div>
-          <div className="page-subtitle">Monitor and configure system security</div>
+          <div className="page-title">{t('security.page_title')}</div>
+          <div className="page-subtitle">{t('security.page_subtitle')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.secureStatus} label="Secure" />
-          <StatCard value={stats.threats} label="Threats" />
-          <StatCard value={stats.monitoring} label="Monitoring" />
-          <StatCard value={stats.twoFactorEnabled} label="Enabled" />
+          <StatCard value={stats.secureStatus} label={t('security.secure')} />
+          <StatCard value={stats.threats} label={t('security.threats')} />
+          <StatCard value={stats.monitoring} label={t('security.monitoring')} />
+          <StatCard value={stats.twoFactorEnabled} label={t('security.enabled')} />
         </div>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Authentication Methods</div>
+            <div className="table-title">{t('security.auth_methods')}</div>
           </div>
           
           {configLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading authentication methods...</h4>
+                <h4>{t('security.loading_auth')}</h4>
               </div>
             </div>
           ) : (
@@ -202,7 +204,7 @@ function AdminSecurityPage() {
                     }}
                     onClick={() => handleToggleAuthMethod(config)}
                   >
-                    {config.status === 'enabled' ? 'Disable' : 'Enable'}
+                    {config.status === 'enabled' ? t('security.disable') : t('security.enable')}
                   </button>
                 </div>
               </div>
@@ -212,12 +214,12 @@ function AdminSecurityPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Security Alerts</div>
+            <div className="table-title">{t('security.alerts')}</div>
           </div>
           {alertsLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading security alerts...</h4>
+                <h4>{t('security.loading_alerts')}</h4>
               </div>
             </div>
           ) : (
@@ -244,14 +246,14 @@ function AdminSecurityPage() {
                   }}
                   onClick={() => handleClearAlert(alert.id)}
                 >
-                  Clear
+                  {t('common.clear')}
                 </button>
               </div>
             ))
           )}
         </div>
 
-        <ChartCard title="Access Logs">
+        <ChartCard title={t('security.access_logs')}>
           <div className="chart-placeholder">
             Chart.js Access Analytics
           </div>
@@ -259,12 +261,12 @@ function AdminSecurityPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Security Settings</div>
+            <div className="table-title">{t('security.settings')}</div>
           </div>
           {settingsLoading ? (
             <div className="list-item">
               <div className="item-info">
-                <h4>Loading security settings...</h4>
+                <h4>{t('security.loading_settings')}</h4>
               </div>
             </div>
           ) : (
@@ -292,7 +294,7 @@ function AdminSecurityPage() {
                     }}
                     onClick={() => handleConfigureSetting(setting)}
                   >
-                    Configure
+                    {t('security.configure')}
                   </button>
                 )}
               </div>
@@ -304,8 +306,8 @@ function AdminSecurityPage() {
       <BottomNav items={navItems} responsive={false} />
       
       {showAuthModal && selectedAuthMethod && (
-        <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} title="Update Authentication Method">
-          <p>Do you want to {selectedAuthMethod.status === 'enabled' ? 'disable' : 'enable'} the authentication method: <strong>{selectedAuthMethod.method}</strong>?</p>
+        <Modal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} title={t('security.update_auth_method')}>
+          <p>{t('security.confirm_auth_change')} <strong>{selectedAuthMethod.method}</strong>?</p>
           <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button 
               type="button" 
@@ -323,7 +325,7 @@ function AdminSecurityPage() {
               onClick={() => setShowAuthModal(false)}
               disabled={processing}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button 
               type="button" 
@@ -344,7 +346,7 @@ function AdminSecurityPage() {
               onClick={() => handleUpdateAuthMethod(selectedAuthMethod.status !== 'enabled')}
               disabled={processing}
             >
-              {processing ? 'Processing...' : 'Confirm'}
+              {processing ? t('common.processing') : t('common.confirm')}
             </button>
           </div>
         </Modal>
