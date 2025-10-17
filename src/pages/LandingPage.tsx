@@ -5,7 +5,7 @@ function LandingPage() {
     <div className="landing-container">
       <div className="landing-content">
         <div className="landing-logo">
-          <Icon name="logo" alt="Briconomy" size={60} />
+          <Icon name="logo" alt="Briconomy" size={120} />
         </div>
 
         <h1 className="landing-title">
@@ -42,9 +42,12 @@ function LandingPage() {
             for your next home - all without creating an account until you're
             ready to apply!
           </p>
+          <p className="landing-card-note">
+            No Login Required
+          </p>
 
           <a href="/browse-properties" className="btn btn-secondary landing-browse-btn">
-            Browse Properties (No Login Required)
+            Browse Properties
           </a>
         </div>
       </div>

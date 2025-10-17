@@ -1,0 +1,91 @@
+:root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  --primary: #2c3e50;
+  --secondary: #3498db;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --info: #16a085;
+
+  --brand-primary: #162F1B;
+  --brand-accent: #FF894D;
+
+  --background: #f8f9fa;
+  --surface: #ffffff;
+  --surface-hover: #f0f4ff;
+  --text-primary: #2c3e50;
+  --text-secondary: #6c757d;
+  --border: #e9ecef;
+  --border-focus: #3498db;
+
+  --status-active: #27ae60;
+  --status-pending: #f39c12;
+  --status-inactive: #95a5a6;
+  --status-overdue: #e74c3c;
+  --status-paid: #27ae60;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+
+  --height-input: 40px;
+  --height-button-sm: 32px;
+  --height-button-md: 40px;
+  --height-button-lg: 48px;
+  --height-nav: 64px;
+  --height-header: 60px;
+
+  --icon-xs: 16px;
+  --icon-sm: 20px;
+  --icon-md: 24px;
+  --icon-lg: 32px;
+  --icon-xl: 48px;
+
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
