@@ -46,7 +46,12 @@ function mapDoc<T extends { _id?: ObjectId }>(doc: T | null): (Omit<T, "_id"> & 
 }
 
 function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> & { id: string }> {
-  return docs.map((d) => mapDoc(d)!).filter(Boolean) as Array<Omit<T, "_id"> & { id: string }>;
+  console.log('mapDocs input:', docs);
+  const mapped = docs.map((d) => mapDoc(d)!);
+  console.log('mapDocs mapped:', mapped);
+  const filtered = mapped.filter(Boolean);
+  console.log('mapDocs filtered:', filtered);
+  return filtered as Array<Omit<T, "_id"> & { id: string }>;
 }
 
 // Authentication API
@@ -772,7 +777,11 @@ export async function getSecuritySettings() {
     await connectToMongoDB();
     const securitySettings = getCollection("security_settings");
     const settings = await securitySettings.find({}).toArray();
-    return mapDocs(settings);
+    console.log('Raw security settings from DB:', settings);
+    console.log('Count of settings:', settings.length);
+    const mapped = mapDocs(settings);
+    console.log('Mapped security settings:', mapped);
+    return mapped;
   } catch (error) {
     console.error("Error fetching security settings:", error);
     throw error;

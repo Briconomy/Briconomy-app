@@ -589,18 +589,33 @@ db.security_settings.drop();
 db.security_settings.insertMany([
   {
     setting: 'Session Timeout',
-    value: '30 minutes of inactivity',
+    value: '30 minutes',
     configurable: true
   },
   {
-    setting: 'Login Attempts',
-    value: '5 failed attempts before lockout',
+    setting: 'Password Expiry',
+    value: '90 days',
     configurable: true
   },
   {
-    setting: 'IP Whitelisting',
-    value: 'Restricted access from approved IPs',
+    setting: 'Max Login Attempts',
+    value: '5 attempts',
     configurable: true
+  },
+  {
+    setting: 'IP Whitelist',
+    value: 'Disabled',
+    configurable: true
+  },
+  {
+    setting: 'Audit Logging',
+    value: 'Enabled',
+    configurable: false
+  },
+  {
+    setting: 'Encryption Standard',
+    value: 'AES-256',
+    configurable: false
   }
 ]);
 

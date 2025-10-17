@@ -26,7 +26,13 @@ function AdminSecurityPage() {
   const { data: securityStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSecurityStats());
   const { data: securityConfig, loading: configLoading, refetch: refetchConfig } = useApi(() => adminApi.getSecurityConfig());
   const { data: securityAlerts, loading: alertsLoading, refetch: refetchAlerts } = useApi(() => adminApi.getSecurityAlerts());
-  const { data: securitySettings, loading: settingsLoading, refetch: refetchSettings } = useApi(() => adminApi.getSecuritySettings());
+  const { data: securitySettings, loading: settingsLoading, error: settingsError, refetch: refetchSettings } = useApi(() => adminApi.getSecuritySettings());
+
+  // Debug logging
+  console.log('Security settings data:', securitySettings);
+  console.log('Settings loading:', settingsLoading);
+  console.log('Settings error:', settingsError);
+  console.log('Using fallback?', !securitySettings || securitySettings.length === 0);
 
   const getFallbackSecurityConfig = () => [
     { method: 'Email & Password', description: 'Standard email and password authentication', status: 'enabled' },
@@ -88,23 +94,106 @@ function AdminSecurityPage() {
 
   const handleConfigureSetting = (setting: any) => {
     setSelectedSetting(setting);
-    setSettingValue(setting.value || '');
+    
+    // Extract numeric values from formatted strings
+    let currentValue = setting.value || '';
+    if (setting.setting.toLowerCase().includes('timeout') && currentValue.includes('minutes')) {
+      currentValue = currentValue.replace(/[^\d]/g, '');
+    } else if (setting.setting.toLowerCase().includes('expiry') && currentValue.includes('days')) {
+      currentValue = currentValue.replace(/[^\d]/g, '');
+    } else if (setting.setting.toLowerCase().includes('attempts') && currentValue.includes('attempts')) {
+      currentValue = currentValue.replace(/[^\d]/g, '');
+    }
+    
+    setSettingValue(currentValue);
     setShowSettingModal(true);
+  };
+
+  const getInputType = (settingName: string) => {
+    if (settingName.toLowerCase().includes('timeout') || settingName.toLowerCase().includes('expiry')) {
+      return 'number';
+    }
+    if (settingName.toLowerCase().includes('attempts')) {
+      return 'number';
+    }
+    return 'text';
+  };
+
+  const getPlaceholder = (settingName: string) => {
+    if (settingName.toLowerCase().includes('timeout')) {
+      return 'Enter timeout in minutes';
+    }
+    if (settingName.toLowerCase().includes('expiry')) {
+      return 'Enter days until expiry';
+    }
+    if (settingName.toLowerCase().includes('attempts')) {
+      return 'Enter maximum attempts';
+    }
+    if (settingName.toLowerCase().includes('whitelist')) {
+      return 'Enter IP addresses (comma separated)';
+    }
+    return 'Enter new value';
   };
 
   const handleUpdateSetting = async () => {
     if (!selectedSetting) return;
     
+    console.log('Updating setting:', selectedSetting.setting, 'with value:', settingValue);
+    
+    // Basic validation
+    if (!settingValue || settingValue.trim() === '') {
+      alert('Please enter a valid value');
+      return;
+    }
+
+    // Validate numeric settings
+    if (getInputType(selectedSetting.setting) === 'number') {
+      const numValue = parseInt(settingValue);
+      if (isNaN(numValue) || numValue < 0) {
+        alert('Please enter a valid positive number');
+        return;
+      }
+      if (selectedSetting.setting.toLowerCase().includes('timeout') && numValue > 1440) {
+        alert('Session timeout cannot exceed 24 hours (1440 minutes)');
+        return;
+      }
+      if (selectedSetting.setting.toLowerCase().includes('expiry') && numValue > 365) {
+        alert('Password expiry cannot exceed 365 days');
+        return;
+      }
+      if (selectedSetting.setting.toLowerCase().includes('attempts') && (numValue < 1 || numValue > 10)) {
+        alert('Login attempts must be between 1 and 10');
+        return;
+      }
+    }
+    
     setProcessing(true);
     try {
-      await adminApi.updateSecuritySetting(selectedSetting.setting, settingValue);
+      // Format the value appropriately
+      let formattedValue = settingValue;
+      if (selectedSetting.setting.toLowerCase().includes('timeout')) {
+        formattedValue = `${settingValue} minutes`;
+      } else if (selectedSetting.setting.toLowerCase().includes('expiry')) {
+        formattedValue = `${settingValue} days`;
+      } else if (selectedSetting.setting.toLowerCase().includes('attempts')) {
+        formattedValue = `${settingValue} attempts`;
+      }
+
+      console.log('Sending API request with formatted value:', formattedValue);
+      
+      const result = await adminApi.updateSecuritySetting(selectedSetting.setting, formattedValue);
+      console.log('API response:', result);
+      
+      console.log('Refetching settings...');
       await refetchSettings();
+      
       setShowSettingModal(false);
       setSelectedSetting(null);
       alert('Security setting updated successfully');
     } catch (error) {
       console.error('Failed to update setting:', error);
-      alert('Failed to update security setting');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to update security setting: ${errorMessage}`);
     } finally {
       setProcessing(false);
     }
@@ -261,7 +350,13 @@ function AdminSecurityPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">{t('security.settings')}</div>
+            <div className="table-title">
+              {t('security.settings')} 
+              {securitySettings && securitySettings.length > 0 ? 
+                <span style={{ color: 'green', fontSize: '12px', marginLeft: '8px' }}>(Live Data)</span> : 
+                <span style={{ color: 'orange', fontSize: '12px', marginLeft: '8px' }}>(Fallback Data)</span>
+              }
+            </div>
           </div>
           {settingsLoading ? (
             <div className="list-item">
@@ -270,13 +365,20 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            (securitySettings && securitySettings.length > 0 ? securitySettings : getFallbackSecuritySettings()).map((setting: { setting: string; value: string; configurable: boolean }, index: number) => (
+            (() => {
+              console.log('Rendering settings, securitySettings:', securitySettings);
+              console.log('Is array?', Array.isArray(securitySettings));
+              console.log('Length:', securitySettings?.length);
+              const useRealData = securitySettings && securitySettings.length > 0;
+              console.log('Using real data?', useRealData);
+              return useRealData ? securitySettings : getFallbackSecuritySettings();
+            })().map((setting: { setting: string; value: string; configurable: boolean }, index: number) => (
               <div key={`setting-${setting.setting}-${index}`} className="list-item">
                 <div className="item-info">
-                  <h4>{setting.setting}</h4>
+                  <h4>{setting.setting} {!setting.configurable && <span style={{ color: '#999', fontSize: '12px' }}>(Read-only)</span>}</h4>
                   <p>{setting.value}</p>
                 </div>
-                {setting.configurable && (
+                {setting.configurable ? (
                   <button 
                     type="button" 
                     style={{
@@ -296,6 +398,15 @@ function AdminSecurityPage() {
                   >
                     {t('security.configure')}
                   </button>
+                ) : (
+                  <span style={{ 
+                    color: '#999', 
+                    fontSize: '12px', 
+                    fontStyle: 'italic',
+                    padding: '10px 20px'
+                  }}>
+                    System Managed
+                  </span>
                 )}
               </div>
             ))
@@ -353,16 +464,46 @@ function AdminSecurityPage() {
       )}
       
       {showSettingModal && selectedSetting && (
-        <Modal isOpen={showSettingModal} onClose={() => setShowSettingModal(false)} title="Configure Security Setting">
+        <Modal isOpen={showSettingModal} onClose={() => setShowSettingModal(false)} title={`Configure ${selectedSetting.setting}`}>
           <div className="form-group">
             <label>{selectedSetting.setting}</label>
-            <input
-              type="text"
-              className="form-control"
-              value={settingValue}
-              onChange={(e) => setSettingValue(e.target.value)}
-              placeholder="Enter new value"
-            />
+            <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
+              Current value: <strong>{selectedSetting.value}</strong>
+            </p>
+            {selectedSetting.setting.toLowerCase().includes('whitelist') && selectedSetting.value.toLowerCase() === 'disabled' ? (
+              <select
+                className="form-control"
+                value={settingValue}
+                onChange={(e) => setSettingValue(e.target.value)}
+                style={{ marginBottom: '10px' }}
+              >
+                <option value="Disabled">Disabled</option>
+                <option value="Enabled">Enabled</option>
+              </select>
+            ) : (
+              <input
+                type={getInputType(selectedSetting.setting)}
+                className="form-control"
+                value={settingValue}
+                onChange={(e) => setSettingValue(e.target.value)}
+                placeholder={getPlaceholder(selectedSetting.setting)}
+              />
+            )}
+            {selectedSetting.setting.toLowerCase().includes('timeout') && (
+              <small style={{ color: '#666', fontSize: '11px' }}>
+                Enter the number of minutes before session expires
+              </small>
+            )}
+            {selectedSetting.setting.toLowerCase().includes('expiry') && (
+              <small style={{ color: '#666', fontSize: '11px' }}>
+                Enter the number of days before password expires
+              </small>
+            )}
+            {selectedSetting.setting.toLowerCase().includes('attempts') && (
+              <small style={{ color: '#666', fontSize: '11px' }}>
+                Enter the maximum number of failed login attempts allowed
+              </small>
+            )}
           </div>
           <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button 

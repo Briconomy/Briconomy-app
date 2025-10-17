@@ -6,7 +6,7 @@ function resolveApiBase(): string {
     const protocol = loc.protocol || 'http:';
   const hostname = loc.hostname || 'localhost';
   const port = loc.port || '';
-  if (port === '5173') return `${protocol}//${hostname}:8816`;
+  if (port === '5173' || port === '1173') return `${protocol}//${hostname}:8816`;
   return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
   } catch (_) {
     return 'http://localhost:8816';
@@ -31,6 +31,17 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   try {
     const response = await fetch(url, config);
+    
+    if (endpoint.includes('security-settings')) {
+      const responseText = await response.clone().text();
+      console.log('=== SECURITY SETTINGS DEBUG ===');
+      console.log('Full URL called:', url);
+      console.log('Method:', config.method || 'GET');
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Raw response text:', responseText);
+      console.log('================================');
+    }
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
