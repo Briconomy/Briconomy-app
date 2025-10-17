@@ -76,10 +76,10 @@ function DocumentManagementPage() {
   const [typeFilter, setTypeFilter] = useState('all');
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties' },
-    { path: '/manager/documents', label: 'Documents', active: true },
-    { path: '/manager/reports', label: 'Reports' }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/properties', label: 'Properties', icon: 'properties' },
+    { path: '/manager/documents', label: 'Documents', icon: 'docs', active: true },
+    { path: '/manager/reports', label: 'Reports', icon: 'report' }
   ];
 
   const totalDocuments = documents.length;

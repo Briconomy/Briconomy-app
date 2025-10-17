@@ -128,10 +128,10 @@ function MaintenanceRequestsPage() {
   };
 
   const navItems = [
-    { path: '/tenant', label: t('nav.home'), active: false },
-    { path: '/tenant/payments', label: t('nav.payments') },
-    { path: '/tenant/requests', label: t('nav.requests'), active: true },
-    { path: '/tenant/profile', label: t('nav.profile') }
+    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
+    { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
+    { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance', active: true },
+    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
   const { data: requests, loading: requestsLoading, refetch: refetchRequests } = useApi(

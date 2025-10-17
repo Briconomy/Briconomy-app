@@ -45,14 +45,15 @@ const CommunicationPage: React.FC = () => {
   interface NavItem {
   path: string;
   label: string;
+  icon?: string;
   active?: boolean;
 }
 
 const navItems: NavItem[] = [
-    { path: '/tenant', label: t('nav.home'), active: false },
-    { path: '/tenant/payments', label: t('nav.payments') },
-    { path: '/tenant/requests', label: t('nav.requests') },
-    { path: '/tenant/messages', label: t('nav.communication'), active: true }
+    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
+    { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
+    { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
+    { path: '/tenant/messages', label: t('nav.communication'), icon: 'contact', active: true }
   ];
 
   const { data: notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(

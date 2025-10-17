@@ -16,10 +16,10 @@ function AdminDashboard() {
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   
   const navItems = [
-    { path: '/admin', label: t('nav.dashboard'), active: true },
-    { path: '/admin/users', label: t('nav.users') },
-    { path: '/admin/security', label: t('nav.security') },
-    { path: '/admin/reports', label: t('nav.reports') }
+    { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: true },
+    { path: '/admin/users', label: t('nav.users'), icon: 'users' },
+    { path: '/admin/security', label: t('nav.security'), icon: 'security' },
+    { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
   ];
 
   const { data: systemStats, loading: statsLoading } = useApi(() => adminApi.getSystemStats());

@@ -9,10 +9,10 @@ function AdminUsersPage() {
   const { t } = useLanguage();
   
   const navItems = [
-    { path: '/admin', label: t('nav.dashboard') },
-    { path: '/admin/users', label: t('nav.users'), active: true },
-    { path: '/admin/security', label: t('nav.security') },
-    { path: '/admin/reports', label: t('nav.reports') }
+    { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+    { path: '/admin/users', label: t('nav.users'), icon: 'users', active: true },
+    { path: '/admin/security', label: t('nav.security'), icon: 'security' },
+    { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
   ];
 
   const { data: userStats, loading: statsLoading } = useApi(() => adminApi.getUserStats());

@@ -21,10 +21,10 @@ function TenantDashboard() {
   const [userLoaded, setUserLoaded] = useState(false);
   
   const navItems = [
-    { path: '/tenant', label: t('nav.home'), active: true },
-    { path: '/tenant/payments', label: t('nav.payments') },
-    { path: '/tenant/requests', label: t('nav.requests') },
-    { path: '/tenant/profile', label: t('nav.profile') }
+    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: true },
+    { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
+    { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
+    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
   // Only make API calls after user is loaded

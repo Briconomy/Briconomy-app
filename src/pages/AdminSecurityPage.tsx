@@ -15,10 +15,10 @@ function AdminSecurityPage() {
   const [processing, setProcessing] = useState(false);
   
   const navItems = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/security', label: 'Security', active: true },
-    { path: '/admin/reports', label: 'Reports' }
+    { path: '/admin', label: 'Dashboard', icon: 'performanceAnalytics' },
+    { path: '/admin/users', label: 'Users', icon: 'users' },
+    { path: '/admin/security', label: 'Security', icon: 'security', active: true },
+    { path: '/admin/reports', label: 'Reports', icon: 'report' }
   ];
 
   const { data: securityStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSecurityStats());

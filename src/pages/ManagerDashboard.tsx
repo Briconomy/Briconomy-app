@@ -59,10 +59,10 @@ function ManagerDashboard() {
   };
   
   const navItems = [
-    { path: '/manager', label: t('nav.dashboard'), active: true },
-    { path: '/manager/properties', label: t('nav.properties') },
-    { path: '/manager/leases', label: t('nav.leases') },
-    { path: '/manager/payments', label: t('nav.payments') }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: true },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease' },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
   const isLoading = !userLoaded || statsLoading || propertiesLoading || maintenanceLoading;

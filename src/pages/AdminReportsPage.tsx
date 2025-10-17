@@ -29,10 +29,10 @@ function AdminReportsPage() {
   const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>([]);
   
   const navItems = [
-    { path: '/admin', label: t('nav.dashboard') },
-    { path: '/admin/users', label: t('nav.users') },
-    { path: '/admin/security', label: t('nav.security') },
-    { path: '/admin/reports', label: t('nav.reports'), active: true }
+    { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+    { path: '/admin/users', label: t('nav.users'), icon: 'users' },
+    { path: '/admin/security', label: t('nav.security'), icon: 'security' },
+    { path: '/admin/reports', label: t('nav.reports'), icon: 'report', active: true }
   ];
 
   const { data: financialStats, loading: statsLoading, error: statsError } = useApi(() => adminApi.getFinancialStats());
