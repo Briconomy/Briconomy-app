@@ -1299,11 +1299,17 @@ export async function generateReport(reportType: string, filters: Record<string,
       data: await getReportData(reportType, filters)
     };
     
+    console.log("About to insert report data...");
     const result = await reports.insertOne(reportData as Record<string, unknown>);
+    console.log("Insert completed, result:", result);
+    
+    // Use the same pattern as other functions in this file
+    const reportId = String(result);
+    console.log("Generated report ID:", reportId);
     
     return { 
       success: true, 
-      reportId: String(result.insertedId),
+      reportId,
       reportType,
       generatedAt: reportData.generatedAt
     };
@@ -1313,7 +1319,7 @@ export async function generateReport(reportType: string, filters: Record<string,
   }
 }
 
-async function getReportData(reportType: string, filters: Record<string, unknown>) {
+function getReportData(reportType: string, filters: Record<string, unknown>) {
   const fromDate = filters.fromDate ? new Date(String(filters.fromDate)) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const toDate = filters.toDate ? new Date(String(filters.toDate)) : new Date();
   
@@ -1370,7 +1376,13 @@ export async function exportReport(reportId: string, format: string) {
     const report = await reports.findOne({ _id: toId(reportId) });
     
     if (!report) {
-      throw new Error('Report not found');
+      return {
+        success: false,
+        error: 'Report not found',
+        message: `No report found with ID: ${reportId}`,
+        reportId,
+        format
+      };
     }
     
     return {
@@ -1382,6 +1394,12 @@ export async function exportReport(reportId: string, format: string) {
     };
   } catch (error) {
     console.error("Error exporting report:", error);
-    throw error;
+    return {
+      success: false,
+      error: 'Export failed',
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+      reportId,
+      format
+    };
   }
 }
