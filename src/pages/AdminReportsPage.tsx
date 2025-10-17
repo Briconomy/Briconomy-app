@@ -6,6 +6,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { exportService, ExportColumn } from '../utils/export-utils.ts';
 
 interface GeneratedReport {
   reportId: string;
@@ -162,22 +163,105 @@ function AdminReportsPage() {
     try {
       const result = await adminApi.exportReport(selectedReport, format);
       
-      const blob = new Blob([JSON.stringify(result)], { type: 'application/json' });
-      const url = globalThis.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `report_${selectedReport}_${new Date().getTime()}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      globalThis.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      if (!result.success) {
+        alert(`Failed to export report: ${result.message || result.error || 'Unknown error'}`);
+        return;
+      }
+
+      // Find the report data - either from generatedReports or result.data
+      let reportData = result.data;
+      if (!reportData && generatedReports.length > 0) {
+        const foundReport = generatedReports.find(r => r.reportId === selectedReport);
+        if (foundReport) {
+          reportData = foundReport.summary || foundReport;
+        }
+      }
+
+      // Prepare data for export
+      const exportData = prepareReportDataForExport(reportData, selectedReport);
+      const filename = `report_${selectedReport}_${new Date().toISOString().split('T')[0]}`;
+
+      // Export based on format
+      switch (format.toLowerCase()) {
+        case 'csv': {
+          exportService.exportToCSV(exportData.data, exportData.columns, filename);
+          break;
+        }
+        case 'pdf': {
+          exportService.exportToPDF(exportData.data, exportData.columns, exportData.title, filename);
+          break;
+        }
+        case 'xlsx': {
+          console.log('Starting XLSX export from AdminReportsPage');
+          console.log('Export data:', { dataCount: exportData.data.length, columnsCount: exportData.columns.length, filename });
+          await exportService.exportToXLSX(exportData.data, exportData.columns, filename);
+          console.log('XLSX export completed from AdminReportsPage');
+          break;
+        }
+        case 'json': {
+          const jsonBlob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(jsonBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${filename}.json`;
+          document.body.appendChild(a);
+          a.click();
+          URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          break;
+        }
+        default: {
+          alert(`Unsupported export format: ${format}`);
+          return;
+        }
+      }
       
-      alert(`Report exported as ${format.toUpperCase()}`);
+      alert(`Report exported successfully as ${format.toUpperCase()}`);
       setShowExportModal(false);
     } catch (error) {
+      console.error('Export error:', error);
       alert(`Failed to export report: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
+
+  const prepareReportDataForExport = (reportData: unknown, reportId: string) => {
+    // Default columns for basic report structure
+    const defaultColumns: ExportColumn[] = [
+      { key: 'metric', label: 'Metric' },
+      { key: 'value', label: 'Value' },
+      { key: 'description', label: 'Description' }
+    ];
+
+    let data: Record<string, unknown>[] = [];
+    const title = `Report: ${reportId}`;
+    const columns = defaultColumns;
+
+    if (!reportData || (typeof reportData === 'object' && Object.keys(reportData as object).length === 0)) {
+      // Fallback data
+      data = [
+        { metric: 'Report ID', value: reportId, description: 'Generated report identifier' },
+        { metric: 'Generated Date', value: new Date().toLocaleDateString(), description: 'Date when report was generated' },
+        { metric: 'Status', value: 'Complete', description: 'Report generation status' }
+      ];
+    } else if (typeof reportData === 'object' && reportData !== null) {
+      // Convert object properties to rows
+      const reportObj = reportData as Record<string, unknown>;
+      data = Object.entries(reportObj).map(([key, value]) => ({
+        metric: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+        value: typeof value === 'object' ? JSON.stringify(value) : String(value ?? ''),
+        description: `${key} data from report`
+      }));
+    } else {
+      // Simple value
+      data = [
+        { metric: 'Report Data', value: String(reportData), description: 'Report content' }
+      ];
+    }
+
+    return { data, columns, title };
+  };
+
+
 
   const stats = getFinancialStatsData();
 
