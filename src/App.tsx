@@ -39,6 +39,7 @@ import UserProfilePage from './pages/UserProfilePage.tsx';
 import TenantProfileEditPage from './pages/TenantProfileEditPage.tsx';
 import TenantDocumentsPage from './pages/TenantDocumentsPage.tsx';
 import TenantActivityPage from './pages/TenantActivityPage.tsx';
+import AccessLogsPage from './pages/AccessLogsPage.tsx';
 import ApiTestPage from './pages/ApiTestPage.tsx';
 import AddPaymentMethodPage from './pages/AddPaymentMethodPage.tsx';
 import EditPaymentMethodPage from './pages/EditPaymentMethodPage.tsx';
@@ -71,6 +72,7 @@ function App() {
               <Route path="/admin/security" element={<AdminRoute><AdminSecurityPage /></AdminRoute>} />
               <Route path="/admin/operations" element={<AdminRoute><AdminOperationsPage /></AdminRoute>} />
               <Route path="/admin/reports" element={<AdminRoute><AdminReportsPage /></AdminRoute>} />
+              <Route path="/admin/access-logs" element={<AdminRoute><AccessLogsPage /></AdminRoute>} />
               <Route path="/manager" element={<ManagerRoute><ManagerDashboard /></ManagerRoute>} />
               <Route path="/caretaker" element={<CaretakerRoute><CaretakerDashboard /></CaretakerRoute>} />
               <Route path="/tenant" element={<TenantRoute><TenantDashboard /></TenantRoute>} />
@@ -103,6 +105,7 @@ function App() {
               <Route path="/tenant/messages" element={<TenantRoute><CommunicationPage /></TenantRoute>} />
               <Route path="/manager/documents" element={<ManagerRoute><DocumentManagementPage /></ManagerRoute>} />
               <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />
+              <Route path="/manager/access-logs" element={<ManagerRoute><AccessLogsPage /></ManagerRoute>} />
               <Route path="/manager/terminations" element={<ManagerRoute><LeaseTerminationsPage /></ManagerRoute>} />
               <Route path="/manager/terminations/initiate" element={<ManagerRoute><InitiateTerminationPage /></ManagerRoute>} />
               <Route path="/manager/terminations/settlement" element={<ManagerRoute><SettlementCalculatorPage /></ManagerRoute>} />
@@ -112,6 +115,8 @@ function App() {
               <Route path="/tenant/profile/edit" element={<TenantRoute><TenantProfileEditPage /></TenantRoute>} />
               <Route path="/tenant/documents" element={<TenantRoute><TenantDocumentsPage /></TenantRoute>} />
               <Route path="/tenant/activity" element={<TenantRoute><TenantActivityPage /></TenantRoute>} />
+              <Route path="/tenant/access-logs" element={<TenantRoute><AccessLogsPage /></TenantRoute>} />
+              <Route path="/caretaker/access-logs" element={<CaretakerRoute><AccessLogsPage /></CaretakerRoute>} />
               <Route path="/tenant/profile/payment-methods" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/documents" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
               <Route path="/tenant/profile/help" element={<TenantRoute><UserProfilePage /></TenantRoute>} />
