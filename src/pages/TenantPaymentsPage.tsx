@@ -184,16 +184,16 @@ function TenantPaymentsPage() {
   };
 
   return (
-    <div className="app-container mobile-only" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div className="app-container mobile-only">
       <TopNav showLogout showBackButton={true} />
-      <div className="main-content" style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }}>
-        <div className="page-header" style={{ marginBottom: '16px' }}>
+      <div className="main-content">
+        <div className="page-header">
           <div className="page-title">{t('nav.payments')}</div>
           <div className="page-subtitle">{t('payments.subtitle')}</div>
         </div>
 
         {currentLease && (
-          <div className="lease-summary-card" style={{ marginBottom: '16px' }}>
+          <div className="lease-summary-card">
             <h3>{t('payments.currentLease')}</h3>
             <div className="lease-summary">
               <div className="lease-item">
@@ -212,7 +212,7 @@ function TenantPaymentsPage() {
           </div>
         )}
 
-        <div className="dashboard-grid" style={{ marginBottom: '16px', gap: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
+        <div className="dashboard-grid">
           <StatCard value={formatCurrency(totalDue)} label={t('payments.totalDue')} />
           <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label={t('payments.nextPayment')} />
           <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label={t('payments.daysUntilDue')} />
@@ -220,7 +220,7 @@ function TenantPaymentsPage() {
         </div>
 
         {nextPayment && (
-          <div className="payment-reminder-card" style={{ marginBottom: '16px' }}>
+          <div className="payment-reminder-card">
             <div className="reminder-content">
               <div className="reminder-icon">{t('payments.reminder')}</div>
               <div className="reminder-text">
@@ -241,14 +241,13 @@ function TenantPaymentsPage() {
 
         {renderPaymentChart()}
 
-        <div className="payment-methods-section" style={{ marginBottom: '16px' }}>
-          <div className="section-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+        <div className="payment-methods-section">
+          <div className="section-header">
             <h3>{t('payments.paymentMethods')}</h3>
             <button 
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => navigate('/tenant/manage-payment-methods')}
-              style={{ marginTop: '4px' }}
             >
               {t('payments.managePaymentMethods')}
             </button>
@@ -258,9 +257,9 @@ function TenantPaymentsPage() {
           </div>
         </div>
 
-        <div className="payment-actions-section" style={{ marginBottom: '16px' }}>
+        <div className="payment-actions-section">
           <h3>{t('payments.quickActions')}</h3>
-          <div className="quick-actions" style={{ display: 'flex', gap: '12px' }}>
+          <div className="quick-actions">
             <ActionCard
               onClick={_handleDownloadStatement}
               icon={<Icon name="document" alt="Download Statement" />}
