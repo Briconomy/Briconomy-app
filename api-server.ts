@@ -39,6 +39,8 @@ import {
   getDatabaseHealth,
   getApiEndpoints,
   getSystemAlerts,
+  getAuditLogs,
+  createAuditLog,
   createUser,
   createInvoice,
   getInvoices,
@@ -180,7 +182,17 @@ serve(async (req) => {
     if (path[0] === 'api' && path[1] === 'auth') {
       if (path[2] === 'login' && req.method === 'POST') {
         const data = await req.json();
-        const result = await loginUser(data.email, data.password);
+        
+        // Extract client information
+        const clientInfo = {
+          ip: req.headers.get('x-forwarded-for') || 
+              req.headers.get('x-real-ip') || 
+              req.headers.get('cf-connecting-ip') ||
+              'unknown',
+          userAgent: req.headers.get('user-agent') || 'unknown'
+        };
+        
+        const result = await loginUser(data.email, data.password, clientInfo);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -705,6 +717,26 @@ serve(async (req) => {
         const alerts = await getSystemAlerts();
         return new Response(JSON.stringify(alerts), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Audit logs - GET
+      if (path[1] === 'audit-logs' && req.method === 'GET') {
+        const url = new URL(req.url);
+        const filters = Object.fromEntries(url.searchParams.entries());
+        const logs = await getAuditLogs(filters);
+        return new Response(JSON.stringify(logs), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Audit logs - POST
+      if (path[1] === 'audit-logs' && req.method === 'POST') {
+        const body = await req.json();
+        const result = await createAuditLog(body);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
         });
       }
       

@@ -55,7 +55,7 @@ function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> 
 }
 
 // Authentication API
-export async function loginUser(email: string, password: string) {
+export async function loginUser(email: string, password: string, clientInfo?: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const users = getCollection("users");
@@ -63,6 +63,18 @@ export async function loginUser(email: string, password: string) {
   const user = await users.findOne({ email });
     
     if (!user) {
+      // Log failed login attempt
+      await createAuditLog({
+        userId: null,
+        action: 'user_login_failed',
+        resource: 'authentication',
+        details: {
+          email,
+          reason: 'user_not_found',
+          ip: clientInfo?.ip || 'unknown',
+          userAgent: clientInfo?.userAgent || 'unknown'
+        }
+      });
       return { success: false, message: "User not found" };
     }
     
@@ -72,11 +84,37 @@ export async function loginUser(email: string, password: string) {
       .join('');
     
     if ((user as Record<string, unknown>).password !== hashedPasswordHex) {
+      // Log failed login attempt
+      await createAuditLog({
+        userId: String((user as Record<string, unknown>)._id),
+        action: 'user_login_failed',
+        resource: 'authentication',
+        details: {
+          email,
+          reason: 'invalid_password',
+          ip: clientInfo?.ip || 'unknown',
+          userAgent: clientInfo?.userAgent || 'unknown'
+        }
+      });
       return { success: false, message: "Invalid password" };
     }
     
     const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
     const mappedUser = { id: String(rest._id ?? ""), ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id")) };
+
+    // Log successful login
+    await createAuditLog({
+      userId: mappedUser.id,
+      action: 'user_login',
+      resource: 'authentication',
+      details: {
+        email,
+        role: (mappedUser as Record<string, unknown>).role || 'unknown',
+        ip: clientInfo?.ip || 'unknown',
+        userAgent: clientInfo?.userAgent || 'unknown',
+        success: true
+      }
+    });
 
     return {
       success: true,
@@ -261,11 +299,26 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
   }
 }
 
-export async function createPayment(paymentData: Record<string, unknown>) {
+export async function createPayment(paymentData: Record<string, unknown>, clientInfo?: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const payments = getCollection("payments");
-  const result = await payments.insertOne({ ...(paymentData as Record<string, unknown>), createdAt: new Date() });
+    const result = await payments.insertOne({ ...(paymentData as Record<string, unknown>), createdAt: new Date() });
+    
+    // Log payment creation
+    await logApiAccess(
+      'payment_created',
+      'payments',
+      String(paymentData.tenantId || paymentData.userId),
+      {
+        paymentId: String(result),
+        amount: paymentData.amount,
+        method: paymentData.method,
+        propertyId: paymentData.propertyId
+      },
+      clientInfo
+    );
+    
     return result;
   } catch (error) {
     console.error("Error creating payment:", error);
@@ -845,6 +898,75 @@ export async function getSystemAlerts() {
   } catch (error) {
     console.error("Error fetching system alerts:", error);
     throw error;
+  }
+}
+
+export async function getAuditLogs(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const auditLogs = getCollection("audit_logs");
+    const normalizedFilters = normalizeFilters(filters);
+    
+    const logs = await auditLogs
+      .find(normalizedFilters)
+      .sort({ timestamp: -1 })
+      .limit(100)
+      .toArray();
+    
+    return mapDocs(logs);
+  } catch (error) {
+    console.error("Error fetching audit logs:", error);
+    throw error;
+  }
+}
+
+export async function createAuditLog(logData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const auditLogs = getCollection("audit_logs");
+    
+    const auditLogEntry = {
+      userId: toId(logData.userId),
+      action: logData.action,
+      resource: logData.resource,
+      details: logData.details || {},
+      timestamp: new Date(),
+      ...logData
+    };
+    
+    const result = await auditLogs.insertOne(auditLogEntry);
+    return { 
+      success: true, 
+      id: String(result),
+      message: "Audit log created successfully" 
+    };
+  } catch (error) {
+    console.error("Error creating audit log:", error);
+    throw error;
+  }
+}
+
+export async function logApiAccess(
+  action: string, 
+  resource: string, 
+  userId?: string, 
+  details?: Record<string, unknown>,
+  clientInfo?: Record<string, unknown>
+) {
+  try {
+    await createAuditLog({
+      userId: userId || null,
+      action,
+      resource,
+      details: {
+        ...details,
+        ip: clientInfo?.ip || 'unknown',
+        userAgent: clientInfo?.userAgent || 'unknown',
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error("Error logging API access:", error);
   }
 }
 

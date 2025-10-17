@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
+import AccessLogs from '../components/AccessLogs.tsx';
 import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -342,11 +342,9 @@ function AdminSecurityPage() {
           )}
         </div>
 
-        <ChartCard title={t('security.access_logs')}>
-          <div className="chart-placeholder">
-            Chart.js Access Analytics
-          </div>
-        </ChartCard>
+        <div className="data-table">
+          <AccessLogs maxItems={10} showFilters />
+        </div>
 
         <div className="data-table">
           <div className="table-header">

@@ -214,6 +214,22 @@ export const adminApi = {
   exportReport: (reportId: string, format: string) => apiRequest(`/admin/export-report/${reportId}/${format}`, {
     method: 'GET',
   }),
+  getAuditLogs: (filters?: Record<string, unknown>) => {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      });
+    }
+    const url = params.toString() ? `/admin/audit-logs?${params.toString()}` : '/admin/audit-logs';
+    return apiRequest(url);
+  },
+  createAuditLog: (logData: Record<string, unknown>) => apiRequest('/admin/audit-logs', {
+    method: 'POST',
+    body: JSON.stringify(logData),
+  }),
 };
 
 export const authApi = {
