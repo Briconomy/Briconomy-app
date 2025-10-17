@@ -22,10 +22,10 @@ function LeaseManagementPage() {
   const { data: leases, loading, error, refetch } = useApi(() => leasesApi.getAll(), []);
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics' },
-    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
-    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
-    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
   // Filter leases based on search and status
@@ -84,43 +84,43 @@ function LeaseManagementPage() {
   };
 
   const handleDeleteLease = async (leaseId) => {
-    if (!confirm('Are you sure you want to delete this lease?')) return;
+    if (!confirm(t('message.confirm_delete'))) return;
     
     try {
       // Note: Need to implement delete method in leasesApi
       console.log('Delete lease:', leaseId);
       refetch(); // Refresh the data
-      alert('Lease deleted successfully');
+      alert(t('message.deleted_successfully'));
     } catch (error) {
       console.error('Error deleting lease:', error);
-      alert('Failed to delete lease');
+      alert(t('message.failed_to_delete'));
     }
   };
 
   const leaseColumns = [
     { 
       key: 'propertyId', 
-      label: 'Property',
+      label: t('lease.property'),
       render: (value) => value?.name || 'N/A'
     },
     { 
       key: 'unitId', 
-      label: 'Unit',
+      label: t('lease.unit'),
       render: (value) => value?.unitNumber || 'N/A'
     },
     { 
       key: 'monthlyRent', 
-      label: 'Rent',
+      label: t('lease.monthly_rent'),
       render: (value) => `R${(value || 0).toLocaleString()}`
     },
     { 
       key: 'endDate', 
-      label: 'End Date',
+      label: t('lease.end_date'),
       render: (value) => value ? new Date(value).toLocaleDateString() : 'N/A'
     },
     { 
       key: 'status', 
-      label: 'Status',
+      label: t('common.status'),
       render: (value) => (
         <span className={`status-badge ${
           value === 'active' ? 'status-paid' : 
@@ -137,10 +137,10 @@ function LeaseManagementPage() {
       key: 'status',
       value: statusFilter,
       options: [
-        { value: 'all', label: 'All Statuses' },
-        { value: 'active', label: 'Active' },
-        { value: 'expired', label: 'Expired' },
-        { value: 'terminated', label: 'Terminated' }
+        { value: 'all', label: t('common.all_statuses') },
+        { value: 'active', label: t('status.active') },
+        { value: 'expired', label: t('status.expired') },
+        { value: 'terminated', label: t('status.terminated') }
       ]
     }
   ];
@@ -152,7 +152,7 @@ function LeaseManagementPage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading...</p>
+            <p>{t('common.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -166,9 +166,9 @@ function LeaseManagementPage() {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="error-state">
-            <p>Error: {error}</p>
+            <p>{t('common.error')}: {error}</p>
             <button type="button" onClick={refetch} className="btn btn-primary">
-              Retry
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -183,49 +183,49 @@ function LeaseManagementPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Lease Management</div>
-          <div className="page-subtitle">Manage tenant leases and agreements</div>
+          <div className="page-title">{t('lease.management')}</div>
+          <div className="page-subtitle">{t('lease.manage_tenant_leases')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.active} label="Active Leases" />
-          <StatCard value={stats.expired} label="Expired" />
-          <StatCard value={`R${(stats.totalRevenue / 1000).toFixed(0)}k`} label="Monthly Revenue" />
-          <StatCard value={stats.expiringSoon} label="Expiring Soon" />
+          <StatCard value={stats.active} label={t('lease.active_leases')} />
+          <StatCard value={stats.expired} label={t('status.expired')} />
+          <StatCard value={`R${(stats.totalRevenue / 1000).toFixed(0)}k`} label={t('lease.monthly_revenue')} />
+          <StatCard value={stats.expiringSoon} label={t('lease.expiring_soon')} />
         </div>
 
         <SearchFilter
-          placeholder="Search leases..."
+          placeholder={t('lease.search_placeholder')}
           onSearch={handleSearch}
           filters={filters}
           onFilterChange={handleFilterChange}
         />
 
         <DataTable
-          title="Lease Portfolio"
+          title={t('lease.portfolio')}
           data={filteredLeases}
           columns={leaseColumns}
           actions={null}
           onRowClick={(_lease) => navigate(`/manager/leases/${_lease.id}`)}
         />
 
-        <ChartCard title="Lease Overview">
+        <ChartCard title={t('lease.overview')}>
           <div className="lease-stats">
             <div className="stat-item">
               <div className="stat-value">{stats.active}</div>
-              <div className="stat-label">Active</div>
+              <div className="stat-label">{t('status.active')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{stats.expired}</div>
-              <div className="stat-label">Expired</div>
+              <div className="stat-label">{t('status.expired')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{stats.expiringSoon}</div>
-              <div className="stat-label">Expiring Soon</div>
+              <div className="stat-label">{t('lease.expiring_soon')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{leases ? leases.length : 0}</div>
-              <div className="stat-label">Total</div>
+              <div className="stat-label">{t('common.total')}</div>
             </div>
           </div>
         </ChartCard>
@@ -233,27 +233,27 @@ function LeaseManagementPage() {
         <div className="quick-actions">
           <ActionCard
             to="/manager/leases/new"
-            icon={<Icon name="createLease" alt="Create Lease" />}
-            title="Create Lease"
-            description="New lease agreement"
+            icon={<Icon name="createLease" alt={t('lease.create_lease')} />}
+            title={t('lease.create_lease')}
+            description={t('lease.new_lease_agreement')}
           />  
           <ActionCard
             to="/manager/renewals"
-            icon={<Icon name="renewals" alt="Renewals" />}
-            title="Renewals"
-            description="Manage lease renewals"
+            icon={<Icon name="renewals" alt={t('lease.renewals')} />}
+            title={t('lease.renewals')}
+            description={t('lease.manage_renewals')}
           />
           <ActionCard
             onClick={() => navigate('/manager/terminations')}
-            icon={<Icon name="terminations" alt="Terminations" />}
-            title="Terminations"
-            description="Handle lease terminations"
+            icon={<Icon name="terminations" alt={t('lease.terminations')} />}
+            title={t('lease.terminations')}
+            description={t('lease.handle_terminations')}
           />
           <ActionCard
             to="/manager/documents"
-            icon={<Icon name="docLease" alt="Documents" />}
-            title="Documents"
-            description="Lease agreements"
+            icon={<Icon name="docLease" alt={t('common.documents')} />}
+            title={t('common.documents')}
+            description={t('lease.agreements')}
           />
         </div>
       </div>

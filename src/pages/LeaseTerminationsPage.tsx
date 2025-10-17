@@ -10,6 +10,7 @@ import SearchFilter from '../components/SearchFilter.tsx';
 import Modal from '../components/Modal.tsx';
 import Icon from '../components/Icon.tsx';
 import { terminationsApi, formatCurrency, formatDate } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 interface Termination {
   _id: string;
@@ -40,6 +41,7 @@ interface TerminationFilters {
 
 const LeaseTerminationsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   const [terminations, setTerminations] = useState<Termination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,11 +101,11 @@ const LeaseTerminationsPage: React.FC = () => {
   ];
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics' },
-    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
-    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
-    { path: '/manager/payments', label: 'Payments', icon: 'payment' },
-    { path: '/manager/terminations', label: 'Terminations', icon: 'terminations', active: true }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' },
+    { path: '/manager/terminations', label: t('terminations.nav'), icon: 'terminations', active: true }
   ];
 
   useEffect(() => {
@@ -354,12 +356,12 @@ const LeaseTerminationsPage: React.FC = () => {
   };
 
   const terminationColumns = [
-    { key: 'tenantName', label: 'Tenant' },
-    { key: 'unitNumber', label: 'Unit' },
-    { key: 'propertyName', label: 'Property' },
+    { key: 'tenantName', label: t('lease.tenant') },
+    { key: 'unitNumber', label: t('lease.unit') },
+    { key: 'propertyName', label: t('lease.property') },
     { 
       key: 'reason', 
-      label: 'Reason',
+      label: t('terminations.reason'),
       render: (value) => (
         <span className="reason-text" title={value}>
           {value.length > 20 ? value.substring(0, 20) + '...' : value}
@@ -368,12 +370,12 @@ const LeaseTerminationsPage: React.FC = () => {
     },
     { 
       key: 'terminationDate', 
-      label: 'Termination Date',
+      label: t('terminations.termination_date'),
       render: (value) => new Date(value).toLocaleDateString()
     },
     { 
       key: 'status', 
-      label: 'Status',
+      label: t('common.status'),
       render: (value) => (
         <span className={`status-badge ${getStatusBadge(value)}`}>
           {value.toUpperCase()}
@@ -382,14 +384,14 @@ const LeaseTerminationsPage: React.FC = () => {
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('common.actions'),
       render: (value, row) => (
         <div className="action-buttons">
           <button type="button"
             className="btn btn-secondary btn-sm"
             onClick={() => viewTermination(row)}
           >
-            View
+            {t('common.view')}
           </button>
           {row.status === 'pending' && (
             <>
@@ -398,14 +400,14 @@ const LeaseTerminationsPage: React.FC = () => {
                 onClick={() => handleTerminationAction(row._id, 'approve')}
                 disabled={actionLoading === row._id}
               >
-                {actionLoading === row._id ? 'Processing...' : 'Approve'}
+                {actionLoading === row._id ? t('common.processing') : t('common.approve')}
               </button>
               <button type="button"
                 className="btn btn-danger btn-sm"
                 onClick={() => handleTerminationAction(row._id, 'reject')}
                 disabled={actionLoading === row._id}
               >
-                {actionLoading === row._id ? 'Processing...' : 'Reject'}
+                {actionLoading === row._id ? t('common.processing') : t('common.reject')}
               </button>
             </>
           )}
@@ -430,11 +432,11 @@ const LeaseTerminationsPage: React.FC = () => {
       key: 'status',
       value: filters.status,
       options: [
-        { value: '', label: 'All Statuses' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'approved', label: 'Approved' },
-        { value: 'rejected', label: 'Rejected' },
-        { value: 'completed', label: 'Completed' }
+        { value: '', label: t('common.all_statuses') },
+        { value: 'pending', label: t('status.pending') },
+        { value: 'approved', label: t('status.approved') },
+        { value: 'rejected', label: t('status.rejected') },
+        { value: 'completed', label: t('status.completed') }
       ]
     }
   ];
@@ -445,10 +447,10 @@ const LeaseTerminationsPage: React.FC = () => {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
-            <div className="page-title">Lease Terminations</div>
-            <div className="page-subtitle">Manage lease termination requests and processes</div>
+            <div className="page-title">{t('terminations.page_title')}</div>
+            <div className="page-subtitle">{t('terminations.page_subtitle')}</div>
           </div>
-          <div className="loading">Loading terminations...</div>
+          <div className="loading">{t('terminations.loading')}</div>
         </div>
         <BottomNav items={navItems} responsive={false} />
       </div>
@@ -461,49 +463,49 @@ const LeaseTerminationsPage: React.FC = () => {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Lease Terminations</div>
-          <div className="page-subtitle">Manage lease termination requests and processes</div>
+          <div className="page-title">{t('terminations.page_title')}</div>
+          <div className="page-subtitle">{t('terminations.page_subtitle')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={stats.pending} label="Pending" />
-          <StatCard value={stats.approved} label="Approved" />
-          <StatCard value={stats.completed} label="Completed" />
-          <StatCard value={stats.total} label="Total Requests" />
+          <StatCard value={stats.pending} label={t('status.pending')} />
+          <StatCard value={stats.approved} label={t('status.approved')} />
+          <StatCard value={stats.completed} label={t('status.completed')} />
+          <StatCard value={stats.total} label={t('terminations.total_requests')} />
         </div>
 
         <SearchFilter
-          placeholder="Search terminations..."
+          placeholder={t('terminations.search_placeholder')}
           onSearch={(term) => handleFilterChange('search', term)}
           filters={filtersConfig}
           onFilterChange={(key, value) => handleFilterChange(key as keyof TerminationFilters, value)}
         />
 
         <DataTable
-          title="Termination Requests"
+          title={t('terminations.requests')}
           data={tableData}
           columns={terminationColumns}
           actions={null}
           onRowClick={(termination) => viewTermination(termination)}
         />
 
-        <ChartCard title="Termination Overview">
+        <ChartCard title={t('terminations.overview')}>
           <div className="termination-stats">
             <div className="stat-item">
               <div className="stat-value">{stats.pending}</div>
-              <div className="stat-label">Pending Review</div>
+              <div className="stat-label">{t('terminations.pending_review')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{stats.approved}</div>
-              <div className="stat-label">Approved</div>
+              <div className="stat-label">{t('status.approved')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{stats.completed}</div>
-              <div className="stat-label">Completed</div>
+              <div className="stat-label">{t('status.completed')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{stats.total}</div>
-              <div className="stat-label">Total Requests</div>
+              <div className="stat-label">{t('terminations.total_requests')}</div>
             </div>
           </div>
         </ChartCard>
@@ -511,27 +513,27 @@ const LeaseTerminationsPage: React.FC = () => {
         <div className="quick-actions">
           <ActionCard
             onClick={handleInitiateTermination}
-            icon={<Icon name="terminations" alt="Initiate Termination" />}
-            title="Initiate Termination"
-            description="Start new termination process"
+            icon={<Icon name="terminations" alt={t('terminations.initiate')} />}
+            title={t('terminations.initiate')}
+            description={t('terminations.start_new')}
           />
           <ActionCard
             onClick={handleCalculateSettlement}
-            icon={<Icon name="calculateSettlement" alt="Calculate Settlement" />}
-            title="Calculate Settlement"
-            description="Penalties and refunds"
+            icon={<Icon name="calculateSettlement" alt={t('terminations.calculate_settlement')} />}
+            title={t('terminations.calculate_settlement')}
+            description={t('terminations.penalties_refunds')}
           />
           <ActionCard
             onClick={handleGenerateDocuments}
-            icon={<Icon name="downloadDocSettlement" alt="Generate Documents" />}
-            title="Generate Documents"
-            description="Termination paperwork"
+            icon={<Icon name="downloadDocSettlement" alt={t('terminations.generate_documents')} />}
+            title={t('terminations.generate_documents')}
+            description={t('terminations.termination_paperwork')}
           />
           <ActionCard
             onClick={handleGenerateReport}
-            icon={<Icon name="terminationReport" alt="Termination Report" />}
-            title="Termination Report"
-            description="Summary and analytics"
+            icon={<Icon name="terminationReport" alt={t('terminations.report')} />}
+            title={t('terminations.report')}
+            description={t('terminations.summary_analytics')}
           />
         </div>
       </div>

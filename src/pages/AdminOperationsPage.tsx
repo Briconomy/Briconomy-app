@@ -135,13 +135,13 @@ function AdminOperationsPage() {
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">System Actions</div>
+            <div className="table-title">{t('operations.system_actions')}</div>
           </div>
           
           <div className="list-item">
             <div className="item-info">
-              <h4>Clear Cache</h4>
-              <p>Clear all system caches to improve performance</p>
+              <h4>{t('operations.clear_cache')}</h4>
+              <p>{t('operations.clear_cache_desc')}</p>
             </div>
             <button 
               type="button" 
@@ -160,14 +160,14 @@ function AdminOperationsPage() {
               }}
               onClick={() => handleSystemAction('clear-cache')}
             >
-              Execute
+              {t('common.execute')}
             </button>
           </div>
           
           <div className="list-item">
             <div className="item-info">
-              <h4>Optimize Database</h4>
-              <p>Run database optimization and indexing</p>
+              <h4>{t('operations.optimize_database')}</h4>
+              <p>{t('operations.optimize_database_desc')}</p>
             </div>
             <button 
               type="button" 
@@ -186,14 +186,14 @@ function AdminOperationsPage() {
               }}
               onClick={() => handleSystemAction('optimize-db')}
             >
-              Execute
+              {t('common.execute')}
             </button>
           </div>
           
           <div className="list-item">
             <div className="item-info">
-              <h4>Backup System</h4>
-              <p>Create a full system backup</p>
+              <h4>{t('operations.backup_system')}</h4>
+              <p>{t('operations.backup_system_desc')}</p>
             </div>
             <button 
               type="button" 
@@ -212,14 +212,14 @@ function AdminOperationsPage() {
               }}
               onClick={() => handleSystemAction('backup-system')}
             >
-              Execute
+              {t('common.execute')}
             </button>
           </div>
           
           <div className="list-item">
             <div className="item-info">
-              <h4>Restart Services</h4>
-              <p>Restart all background services</p>
+              <h4>{t('operations.restart_services')}</h4>
+              <p>{t('operations.restart_services_desc')}</p>
             </div>
             <button 
               type="button" 
@@ -238,14 +238,14 @@ function AdminOperationsPage() {
               }}
               onClick={() => handleSystemAction('restart-services')}
             >
-              Execute
+              {t('common.execute')}
             </button>
           </div>
           
           <div className="list-item">
             <div className="item-info">
-              <h4>Generate Health Report</h4>
-              <p>Generate comprehensive system health report</p>
+              <h4>{t('operations.generate_health_report')}</h4>
+              <p>{t('operations.generate_health_report_desc')}</p>
             </div>
             <button 
               type="button" 
@@ -264,7 +264,7 @@ function AdminOperationsPage() {
               }}
               onClick={() => handleSystemAction('health-report')}
             >
-              Execute
+              {t('common.execute')}
             </button>
           </div>
         </div>
@@ -347,7 +347,7 @@ function AdminOperationsPage() {
       <BottomNav items={navItems} responsive={false} />
       
       {showActionModal && (
-        <Modal isOpen={showActionModal} onClose={() => setShowActionModal(false)} title="Execute System Action">
+        <Modal isOpen={showActionModal} onClose={() => setShowActionModal(false)} title={t('operations.execute_action')}>
           <p>Are you sure you want to execute: <strong>{selectedAction}</strong>?</p>
           {actionResult && (
             <div className={`alert ${actionResult.includes('Failed') ? 'alert-error' : 'alert-success'}`} style={{ marginTop: '15px' }}>

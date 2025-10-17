@@ -7,8 +7,10 @@ import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Icon from '../components/Icon.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function LeaseRenewalsPage() {
+  const { t } = useLanguage();
   const [renewals, setRenewals] = useState([
     {
       id: '1',
@@ -61,10 +63,10 @@ function LeaseRenewalsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
-    { path: '/properties', label: 'Properties', icon: 'properties' },
-    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
-    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
+    { path: '/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
   const pendingRenewals = renewals.filter(r => r.status === 'pending').length;
@@ -109,17 +111,17 @@ function LeaseRenewalsPage() {
   };
 
   const renewalColumns = [
-    { key: 'tenantName', label: 'Tenant' },
-    { key: 'unitNumber', label: 'Unit' },
-    { key: 'propertyName', label: 'Property' },
+    { key: 'tenantName', label: t('lease.tenant') },
+    { key: 'unitNumber', label: t('lease.unit') },
+    { key: 'propertyName', label: t('lease.property') },
     { 
       key: 'currentEndDate', 
-      label: 'Current End Date',
+      label: t('renewals.current_end_date'),
       render: (value) => new Date(value).toLocaleDateString()
     },
     { 
       key: 'daysUntilExpiry', 
-      label: 'Days Left',
+      label: t('renewals.days_left'),
       render: (value) => (
         <span className={value <= 30 ? 'urgent' : 'normal'}>
           {value} days
@@ -128,21 +130,21 @@ function LeaseRenewalsPage() {
     },
     { 
       key: 'status', 
-      label: 'Status',
+      label: t('common.status'),
       render: (value, row) => (
         <span className={`status-badge ${
           value === 'accepted' ? 'status-paid' : 
           value === 'offer_sent' ? 'status-pending' : 'status-overdue'
         }`}>
-          {value === 'pending' ? 'Pending' :
-           value === 'offer_sent' ? 'Offer Sent' :
-           value === 'accepted' ? 'Accepted' : 'Declined'}
+          {value === 'pending' ? t('renewals.status_pending') :
+           value === 'offer_sent' ? t('renewals.status_offer_sent') :
+           value === 'accepted' ? t('renewals.status_accepted') : t('renewals.status_declined')}
         </span>
       )
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('common.actions'),
       render: (value, row) => (
         <div className="action-buttons">
           {!row.renewalOfferSent && (
@@ -150,11 +152,11 @@ function LeaseRenewalsPage() {
               className="btn btn-primary btn-sm"
               onClick={() => handleSendRenewalOffer(row.id)}
             >
-              Send Offer
+              {t('renewals.send_offer')}
             </button>
           )}
           {row.tenantResponse === 'pending' && (
-            <span className="response-pending">Awaiting Response</span>
+            <span className="response-pending">{t('renewals.awaiting_response')}</span>
           )}
         </div>
       )
@@ -166,10 +168,10 @@ function LeaseRenewalsPage() {
       key: 'status',
       value: statusFilter,
       options: [
-        { value: 'all', label: 'All Statuses' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'offer_sent', label: 'Offer Sent' },
-        { value: 'accepted', label: 'Accepted' }
+        { value: 'all', label: t('common.all_statuses') },
+        { value: 'pending', label: t('renewals.status_pending') },
+        { value: 'offer_sent', label: t('renewals.status_offer_sent') },
+        { value: 'accepted', label: t('renewals.status_accepted') }
       ]
     }
   ];
@@ -180,49 +182,49 @@ function LeaseRenewalsPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Lease Renewals</div>
-          <div className="page-subtitle">Manage lease renewal requests and offers</div>
+          <div className="page-title">{t('renewals.page_title')}</div>
+          <div className="page-subtitle">{t('renewals.page_subtitle')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={pendingRenewals} label="Pending" />
-          <StatCard value={offersSent} label="Offers Sent" />
-          <StatCard value={acceptedRenewals} label="Accepted" />
-          <StatCard value={expiringSoon} label="Expiring Soon" />
+          <StatCard value={pendingRenewals} label={t('renewals.pending')} />
+          <StatCard value={offersSent} label={t('renewals.offers_sent')} />
+          <StatCard value={acceptedRenewals} label={t('renewals.accepted')} />
+          <StatCard value={expiringSoon} label={t('renewals.expiring_soon')} />
         </div>
 
         <SearchFilter
-          placeholder="Search renewals..."
+          placeholder={t('renewals.search_placeholder')}
           onSearch={handleSearch}
           filters={filters}
           onFilterChange={handleFilterChange}
         />
 
         <DataTable
-          title="Renewal Overview"
+          title={t('renewals.overview')}
           data={filteredRenewals}
           columns={renewalColumns}
           actions={null}
           onRowClick={(renewal) => {}}
         />
 
-        <ChartCard title="Renewal Process">
+        <ChartCard title={t('renewals.process')}>
           <div className="renewal-stats">
             <div className="stat-item">
               <div className="stat-value">{pendingRenewals}</div>
-              <div className="stat-label">Pending Action</div>
+              <div className="stat-label">{t('renewals.pending_action')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{offersSent}</div>
-              <div className="stat-label">Offers Sent</div>
+              <div className="stat-label">{t('renewals.offers_sent')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{acceptedRenewals}</div>
-              <div className="stat-label">Accepted</div>
+              <div className="stat-label">{t('renewals.accepted')}</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">{renewals.length}</div>
-              <div className="stat-label">Total Renewals</div>
+              <div className="stat-label">{t('renewals.total')}</div>
             </div>
           </div>
         </ChartCard>
@@ -230,21 +232,21 @@ function LeaseRenewalsPage() {
         <div className="quick-actions">
           <ActionCard
             to="#"
-            icon={<Icon name="sendBulkOffers" alt="Send Bulk Offers" />}
-            title="Send Bulk Offers"
-            description="Multiple tenants"
+            icon={<Icon name="sendBulkOffers" alt={t('renewals.bulk_offers')} />}
+            title={t('renewals.bulk_offers')}
+            description={t('renewals.multiple_tenants')}
           />
           <ActionCard
             to="#"
-            icon={<Icon name="trackResponses" alt="Track Responses" />}
-            title="Track Responses"
-            description="View status"
+            icon={<Icon name="trackResponses" alt={t('renewals.track_responses')} />}
+            title={t('renewals.track_responses')}
+            description={t('renewals.view_status')}
           />
           <ActionCard
             to="#"
-            icon={<Icon name="report" alt="Generate Report" />}
-            title="Generate Report"
-            description="Renewal summary"
+            icon={<Icon name="report" alt={t('renewals.generate_report')} />}
+            title={t('renewals.generate_report')}
+            description={t('renewals.renewal_summary')}
           />
         </div>
       </div>
