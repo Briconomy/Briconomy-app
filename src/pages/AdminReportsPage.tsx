@@ -7,6 +7,16 @@ import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
+interface GeneratedReport {
+  reportId: string;
+  reportType: string;
+  fromDate: string;
+  toDate: string;
+  generatedAt: string;
+  status: string;
+  summary?: Record<string, unknown>;
+}
+
 function AdminReportsPage() {
   const { t } = useLanguage();
   const [reportType, setReportType] = useState('financial');
@@ -16,6 +26,7 @@ function AdminReportsPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [reportResult, setReportResult] = useState<string | null>(null);
+  const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>([]);
   
   const navItems = [
     { path: '/admin', label: t('nav.dashboard') },
@@ -120,7 +131,20 @@ function AdminReportsPage() {
       const result = await adminApi.generateReport(reportType, filters);
       setReportResult('Report generated successfully!');
       setSelectedReport(result.reportId || 'new-report');
-      alert('Report generated successfully! You can now export it.');
+      
+      // Add to generated reports list
+      const newReport: GeneratedReport = {
+        reportId: result.reportId || `report-${Date.now()}`,
+        reportType,
+        fromDate,
+        toDate,
+        generatedAt: new Date().toISOString(),
+        status: 'ready',
+        summary: result.data
+      };
+      setGeneratedReports(prev => [newReport, ...prev]);
+      
+      alert('Report generated successfully! You can now export it or view it below.');
     } catch (error) {
       setReportResult(`Failed to generate report: ${error instanceof Error ? error.message : 'Unknown error'}`);
       alert('Failed to generate report');
@@ -208,7 +232,18 @@ function AdminReportsPage() {
                   <span className={`status-badge status-${report.status}`}>{report.status}</span>
                   <button 
                     type="button" 
-                    className="btn-secondary"
+                    style={{
+                      background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
+                      color: 'white',
+                      padding: '10px 18px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      boxShadow: '0 3px 10px rgba(74, 144, 226, 0.3)',
+                      transition: 'all 0.3s ease'
+                    }}
                     onClick={() => {
                       setSelectedReport(report.title);
                       setShowExportModal(true);
@@ -274,14 +309,104 @@ function AdminReportsPage() {
             <button 
               type="button" 
               className="btn-primary" 
-              style={{ width: '100%' }}
+              style={{ 
+                width: '100%',
+                background: 'linear-gradient(135deg, #162F1B 0%, #1a4d2e 100%)',
+                padding: '14px',
+                borderRadius: '10px',
+                fontWeight: '600',
+                fontSize: '16px',
+                boxShadow: '0 4px 15px rgba(22, 47, 27, 0.3)',
+                transition: 'all 0.3s ease',
+                border: 'none',
+                cursor: 'pointer'
+              }}
               onClick={handleGenerateReport}
               disabled={generating}
+              onMouseOver={(e) => {
+                if (!generating) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 47, 27, 0.4)';
+                }
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 47, 27, 0.3)';
+              }}
             >
-              {generating ? 'Generating...' : t('reports.generate')}
+              {generating ? 'Generating...' : t('reports.generate') + ' Report'}
             </button>
           </div>
         </div>
+
+        {/* Generated Reports Section */}
+        {generatedReports.length > 0 && (
+          <div className="data-table">
+            <div className="table-header">
+              <div className="table-title">Generated Reports</div>
+            </div>
+            
+            {generatedReports.map((report) => (
+              <div key={report.reportId} className="list-item">
+                <div className="item-info">
+                  <h4>
+                    {report.reportType.charAt(0).toUpperCase() + report.reportType.slice(1)} Report
+                  </h4>
+                  <p>
+                    Generated: {new Date(report.generatedAt).toLocaleString()} • 
+                    Period: {new Date(report.fromDate).toLocaleDateString()} - {new Date(report.toDate).toLocaleDateString()}
+                  </p>
+                  {report.summary && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '12px', 
+                      background: '#f8f9fa', 
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}>
+                      <strong>Summary:</strong>
+                      <div style={{ marginTop: '8px' }}>
+                        {Object.entries(report.summary).map(([key, value]) => (
+                          <div key={key} style={{ marginBottom: '4px' }}>
+                            <span style={{ color: '#6c757d' }}>{key}:</span>{' '}
+                            <span style={{ fontWeight: '600', color: '#162F1B' }}>
+                              {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexDirection: 'column' }}>
+                  <span className={`status-badge status-${report.status}`}>{report.status}</span>
+                  <button 
+                    type="button" 
+                    style={{
+                      background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
+                      color: 'white',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      boxShadow: '0 3px 10px rgba(74, 144, 226, 0.3)',
+                      transition: 'all 0.3s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onClick={() => {
+                      setSelectedReport(report.reportId);
+                      setShowExportModal(true);
+                    }}
+                  >
+                    Export
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="data-table">
           <div className="table-header">
@@ -311,31 +436,75 @@ function AdminReportsPage() {
       {showExportModal && (
         <Modal isOpen={showExportModal} onClose={() => setShowExportModal(false)} title="Export Report">
           <p>Select export format for: <strong>{selectedReport}</strong></p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
             <button 
               type="button" 
-              className="btn-primary"
+              style={{
+                background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                color: 'white',
+                padding: '14px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
               onClick={() => handleExportReport('pdf')}
             >
               Export as PDF
             </button>
             <button 
               type="button" 
-              className="btn-primary"
+              style={{
+                background: 'linear-gradient(135deg, #28a745 0%, #218838 100%)',
+                color: 'white',
+                padding: '14px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
               onClick={() => handleExportReport('csv')}
             >
               Export as CSV
             </button>
             <button 
               type="button" 
-              className="btn-primary"
+              style={{
+                background: 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)',
+                color: 'white',
+                padding: '14px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
               onClick={() => handleExportReport('xlsx')}
             >
               Export as Excel (XLSX)
             </button>
             <button 
               type="button" 
-              className="btn-primary"
+              style={{
+                background: 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)',
+                color: 'white',
+                padding: '14px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(108, 117, 125, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
               onClick={() => handleExportReport('json')}
             >
               Export as JSON
