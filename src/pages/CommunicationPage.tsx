@@ -172,7 +172,7 @@ const handleStartNewMessage = (recipient: Contact) => {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading messages...</p>
+            <p>{t('communication.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -189,22 +189,22 @@ return (
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Messages</div>
+          <div className="page-title">{t('communication.title')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={unreadCount} label="Unread" />
-          <StatCard value={totalMessages} label="Messages" />
-          <StatCard value={contacts.length} label="Contacts" />
-          <StatCard value={pendingRequests.length} label="Active Requests" />
+          <StatCard value={unreadCount} label={t('communication.unread')} />
+          <StatCard value={totalMessages} label={t('communication.messages')} />
+          <StatCard value={contacts.length} label={t('communication.contacts')} />
+          <StatCard value={pendingRequests.length} label={t('communication.active_requests')} />
         </div>
 
 {currentLease && (
           <div className="property-info-card">
-            <h3>Property</h3>
+            <h3>{t('communication.property')}</h3>
             <div className="property-details">
-              <p><strong>Property:</strong> {currentLease.propertyId?.name || 'N/A'}</p>
-              <p><strong>Unit:</strong> {currentLease.unitId?.unitNumber || 'N/A'}</p>
+              <p><strong>{t('communication.property')}:</strong> {currentLease.propertyId?.name || 'N/A'}</p>
+              <p><strong>{t('communication.unit')}:</strong> {currentLease.unitId?.unitNumber || 'N/A'}</p>
             </div>
           </div>
         )}
@@ -213,13 +213,13 @@ return (
           <>
             <div className="data-table">
               <div className="table-header">
-                <div className="table-title">Quick Contacts</div>
+                <div className="table-title">{t('communication.quick_contacts')}</div>
                 <button 
                   type="button"
                   className="btn btn-primary btn-sm"
                   onClick={() => setShowNewMessage(true)}
                 >
-                  New Message
+                  {t('communication.new_message')}
                 </button>
               </div>
               
@@ -245,7 +245,7 @@ return (
                         {contact.role}
                       </span>
                       <span className="conversation-date">
-                        Available
+                        {t('communication.available')}
                       </span>
                     </div>
                   </div>
