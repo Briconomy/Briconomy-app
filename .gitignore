@@ -126,6 +126,12 @@ sw.js.map
 icon-*.png
 favicon.ico
 apple-touch-icon.png
-About The App.md
-Property Management Case Study Final.md
+
+# Ignore all markdown files
+*.md
+# Except these specific ones
+!AGENT.md
+!LayoutAndStructureGuidelines.md
+!README.md
+
 /data
