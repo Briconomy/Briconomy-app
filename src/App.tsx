@@ -47,6 +47,7 @@ import { AdminRoute, ManagerRoute, CaretakerRoute, TenantRoute } from './compone
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ProspectiveTenantProvider } from './contexts/ProspectiveTenantContext.tsx';
+import { ToastProvider } from './contexts/ToastContext.tsx';
 import InitiateTerminationPage from './pages/InitiateTerminationPage.tsx';
 import SettlementCalculatorPage from './pages/SettlementCalculatorPage.tsx';
 import DocumentGeneratorPage from './pages/DocumentGeneratorPage.tsx';
@@ -59,10 +60,11 @@ function App() {
 
   return (
     <div className="app">
-      <AuthProvider>
-        <ProspectiveTenantProvider>
-          <GoogleOAuthProvider clientId={googleClientId}>
-            <Routes>
+      <ToastProvider>
+        <AuthProvider>
+          <ProspectiveTenantProvider>
+            <GoogleOAuthProvider clientId={googleClientId}>
+              <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -124,10 +126,11 @@ function App() {
               <Route path="/admin/api-test" element={<AdminRoute><ApiTestPage /></AdminRoute>} />
               <Route path="/apply/undefined" element={<Navigate to="/create-account" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </GoogleOAuthProvider>
-        </ProspectiveTenantProvider>
-      </AuthProvider>
+              </Routes>
+            </GoogleOAuthProvider>
+          </ProspectiveTenantProvider>
+        </AuthProvider>
+      </ToastProvider>
     </div>
   );
 }

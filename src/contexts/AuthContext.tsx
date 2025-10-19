@@ -57,18 +57,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // Add a small delay to ensure localStorage is accessible
       await new Promise(resolve => setTimeout(resolve, 10));
-      
+
       try {
         const savedUser = localStorage.getItem('briconomy_user');
         const token = localStorage.getItem('briconomy_token');
-        
+
+        console.log('[AuthContext] Initializing auth, savedUser:', !!savedUser, 'token:', !!token);
+
         if (savedUser && token) {
           try {
             const parsedUser = JSON.parse(savedUser);
-            
-            // Ensure extended profile fields exist for tenants
+            console.log('[AuthContext] Restoring user session:', parsedUser.fullName, parsedUser.userType);
+
             if (parsedUser.userType === 'tenant') {
               const enhancedUser = {
                 ...parsedUser,
@@ -92,19 +93,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setUser(parsedUser);
             }
           } catch (error) {
-            console.error('Error parsing saved user:', error);
+            console.error('[AuthContext] Error parsing saved user:', error);
             localStorage.removeItem('briconomy_user');
             localStorage.removeItem('briconomy_token');
           }
+        } else {
+          console.log('[AuthContext] No saved session found');
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('[AuthContext] Auth initialization error:', error);
         setError('Auth initialization failed');
       } finally {
         setLoading(false);
+        console.log('[AuthContext] Auth initialization complete');
       }
     };
-    
+
     initializeAuth();
   }, []);
 
@@ -115,22 +119,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     try {
       const result: { success: boolean; message: string; user?: Record<string, unknown>; token?: string } = await authApi.login(email, password);
-      
+
       if (result.success && result.user) {
         const raw = result.user as Record<string, unknown>;
         const id = String((raw as { _id?: unknown; id?: unknown }).id ?? (raw as { _id?: unknown })._id ?? '');
         const { _id: _ignored, ...rest } = raw as Record<string, unknown> & { _id?: unknown };
         const userWithId = { id, ...(rest as Record<string, unknown>) } as unknown as User;
-        
+
         setUser(userWithId);
         localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
         localStorage.setItem('briconomy_token', result.token || 'mock-token');
+        console.log('[AuthContext] Login successful, saved to localStorage:', userWithId.fullName, userWithId.userType);
         return { success: true, message: result.message, user: userWithId };
       } else {
         return { success: false, message: result.message };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[AuthContext] Login error:', error);
       return { success: false, message: 'Login failed. Please try again.' };
     }
   };
@@ -189,10 +194,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(mockGoogleUser);
       localStorage.setItem('briconomy_user', JSON.stringify(mockGoogleUser));
       localStorage.setItem('briconomy_token', 'google-token-' + Date.now());
+      console.log('[AuthContext] Google login successful, saved to localStorage');
 
       return Promise.resolve({ success: true, message: 'Google login successful', user: mockGoogleUser });
     } catch (error) {
-      console.error('Google login error:', error);
+      console.error('[AuthContext] Google login error:', error);
       return Promise.resolve({ success: false, message: 'Google login failed. Please try again.' });
     }
   };

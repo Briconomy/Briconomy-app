@@ -2,7 +2,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
-import { AuthProvider } from './contexts/AuthContext.tsx';
 import { LanguageProvider } from './contexts/LanguageContext.tsx';
 import './styles/global.css';
 import './utils/chart-registration.ts';
@@ -15,9 +14,7 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <LanguageProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <App />
       </LanguageProvider>
     </BrowserRouter>
   </React.StrictMode>
