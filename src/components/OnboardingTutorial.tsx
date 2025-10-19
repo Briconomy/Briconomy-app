@@ -158,6 +158,7 @@ const OnboardingTutorial = () => {
   };
 
   const handleFinish = () => {
+    localStorage.setItem(`briconomy_tutorial_${user?.id}`, 'true');
     setShowTutorial(false);
   };
 
