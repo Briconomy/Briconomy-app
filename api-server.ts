@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 import { connectToMongoDB, getCollection } from "./db.ts";
+import { bricllmHandler } from "./bricllm-handler.ts";
 import {
   getProperties,
   getPropertyById,
@@ -416,6 +417,30 @@ serve(async (req) => {
         return new Response(JSON.stringify(escalation), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
+        });
+      }
+    }
+
+    if (path[0] === 'api' && path[1] === 'bricllm') {
+      if (path[2] === 'query' && req.method === 'POST') {
+        const body = await req.json();
+        const result = await bricllmHandler.query(body);
+
+        if (result) {
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } else {
+          return new Response(JSON.stringify({ error: 'Bricllm unavailable' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 503
+          });
+        }
+      } else if (path[2] === 'health' && req.method === 'GET') {
+        const isHealthy = await bricllmHandler.healthCheck();
+        return new Response(JSON.stringify({ healthy: isHealthy }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: isHealthy ? 200 : 503
         });
       }
     }

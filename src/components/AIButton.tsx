@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { chatbotService } from '../services/chatbot.ts';
 import { notificationService } from '../services/notifications.ts';
 
@@ -8,6 +9,10 @@ interface ChatMessage {
   sender: 'user' | 'bot';
   timestamp: Date;
   type?: 'text' | 'escalation';
+  action?: {
+    label: string;
+    route: string;
+  };
 }
 
 interface AIButtonProps {
@@ -18,6 +23,7 @@ interface AIButtonProps {
 }
 
 const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole = 'tenant', onEscalate }) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -81,30 +87,25 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
     setInputText('');
     setIsLoading(true);
 
-    // Save user message
     await chatbotService.saveMessage(userMessage, userId);
 
-    // Process with chatbot
-    const botResponse = chatbotService.processMessage(inputText, language, userRole);
-    
-    // Add bot response after short delay
+    const botResponse = await chatbotService.processMessage(inputText, language, userRole);
+
     setTimeout(async () => {
       setMessages(prev => [...prev, botResponse]);
       await chatbotService.saveMessage(botResponse, userId);
-      
-      // Handle escalation
+
       if (botResponse.type === 'escalation') {
         await chatbotService.escalateToHuman(userId, inputText);
         if (onEscalate) {
           onEscalate();
         }
-        // Send notification to managers
         await notificationService.sendEscalation(
           'Chat Support Request',
           `User needs human assistance with: "${inputText}"`
         );
       }
-      
+
       setIsLoading(false);
     }, 1000);
   };
@@ -189,6 +190,15 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
           >
             <div className={`ai-message-bubble ${message.sender} ${message.type === 'escalation' ? 'escalation' : ''}`}>
               <p className="ai-message-text">{message.text}</p>
+              {message.action && message.sender === 'bot' && (
+                <button
+                  type="button"
+                  onClick={() => navigate(message.action!.route)}
+                  className="ai-action-button"
+                >
+                  {message.action.label}
+                </button>
+              )}
               <p className="ai-message-time">
                 {formatTime(message.timestamp)}
               </p>
