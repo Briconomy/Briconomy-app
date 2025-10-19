@@ -131,6 +131,12 @@ function ManagerDashboard() {
             description={t('manager.manage_listings')}
           />
           <ActionCard
+            to="/manager/applications"
+            icon={<Icon name="users" alt="Applications" />}
+            title="Applications"
+            description="Review tenant applications"
+          />
+          <ActionCard
             to="/manager/leases"
             icon={<Icon name="lease" alt="Leases" />}
             title={t('nav.leases')}

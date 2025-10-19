@@ -300,6 +300,145 @@ export async function declinePendingUser(userId: string) {
   }
 }
 
+export async function getPendingApplicationsForManager(managerId: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const properties = getCollection("properties");
+    
+    // First, get all properties managed by this manager
+    const managerProperties = await properties.find({ managerId: new ObjectId(managerId) }).toArray();
+    const propertyIds = managerProperties.map(p => p._id.toString());
+    
+    if (propertyIds.length === 0) {
+      return []; // Manager has no properties, so no applications
+    }
+    
+    // Get pending applications for those properties
+    const applications = await pendingUsers.find({ 
+      status: 'pending',
+      appliedPropertyId: { $in: propertyIds }
+    }).sort({ appliedAt: -1 }).toArray();
+    
+    // Enrich applications with property details
+    const enrichedApplications = applications.map(app => {
+      const property = managerProperties.find(p => p._id.toString() === app.appliedPropertyId);
+      return {
+        ...mapDoc(app),
+        property: property ? { id: property._id.toString(), name: property.name, address: property.address } : null
+      };
+    });
+    
+    return enrichedApplications;
+  } catch (error) {
+    console.error("Error fetching pending applications for manager:", error);
+    throw error;
+  }
+}
+
+export async function approveApplicationByManager(userId: string, managerId: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const users = getCollection("users");
+    const properties = getCollection("properties");
+    
+    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    
+    if (!pendingUser) {
+      throw new Error("Application not found");
+    }
+    
+    // Verify the manager has permission to approve this application
+    const property = await properties.findOne({ 
+      _id: new ObjectId(pendingUser.appliedPropertyId),
+      managerId: new ObjectId(managerId)
+    });
+    
+    if (!property) {
+      throw new Error("Unauthorized: You can only approve applications for your properties");
+    }
+    
+    const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+    
+    const newUser = {
+      ...userDataToInsert,
+      userType: 'tenant',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      approvedBy: managerId,
+      approvedAt: new Date()
+    };
+    
+    await users.insertOne(newUser);
+    
+    await pendingUsers.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { 
+        status: 'approved', 
+        approvedAt: new Date(),
+        approvedBy: managerId
+      } }
+    );
+    
+    return {
+      success: true,
+      message: "Application approved successfully",
+      user: mapDoc(await users.findOne({ email: pendingUser.email }))
+    };
+  } catch (error) {
+    console.error("Error approving application:", error);
+    throw error;
+  }
+}
+
+export async function rejectApplicationByManager(userId: string, managerId: string, reason?: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const properties = getCollection("properties");
+    
+    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    
+    if (!pendingUser) {
+      throw new Error("Application not found");
+    }
+    
+    // Verify the manager has permission to reject this application
+    const property = await properties.findOne({ 
+      _id: new ObjectId(pendingUser.appliedPropertyId),
+      managerId: new ObjectId(managerId)
+    });
+    
+    if (!property) {
+      throw new Error("Unauthorized: You can only reject applications for your properties");
+    }
+    
+    const result = await pendingUsers.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { 
+        status: 'rejected', 
+        rejectedAt: new Date(),
+        rejectedBy: managerId,
+        rejectionReason: reason || 'No reason provided'
+      } }
+    );
+    
+    if (result.modifiedCount === 0) {
+      throw new Error("Application not found or already processed");
+    }
+    
+    return {
+      success: true,
+      message: "Application rejected successfully"
+    };
+  } catch (error) {
+    console.error("Error rejecting application:", error);
+    throw error;
+  }
+}
+
 // Properties API
 export async function getProperties(filters: Record<string, unknown> = {}) {
   try {

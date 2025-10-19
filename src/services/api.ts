@@ -247,6 +247,21 @@ export const adminApi = {
   }),
 };
 
+export const managerApi = {
+  getPendingApplications: (managerId: string) => apiRequest('/api/manager/applications', {
+    headers: { 'x-manager-id': managerId },
+  }),
+  approveApplication: (userId: string, managerId: string) => apiRequest(`/api/manager/applications/${userId}/approve`, {
+    method: 'POST',
+    headers: { 'x-manager-id': managerId },
+  }),
+  rejectApplication: (userId: string, managerId: string, reason?: string) => apiRequest(`/api/manager/applications/${userId}/reject`, {
+    method: 'POST',
+    headers: { 'x-manager-id': managerId },
+    body: JSON.stringify({ reason }),
+  }),
+};
+
 export const authApi = {
   login: (email: string, password: string) => apiRequest('/api/auth/login', {
     method: 'POST',

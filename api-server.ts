@@ -66,12 +66,15 @@ import {
   registerPendingTenant,
   getPendingUsers,
   approvePendingUser,
-  declinePendingUser
+  declinePendingUser,
+  getPendingApplicationsForManager,
+  approveApplicationByManager,
+  rejectApplicationByManager
 } from "./api-services.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, expires',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, expires, x-manager-id',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
@@ -864,6 +867,82 @@ serve(async (req) => {
           return new Response(JSON.stringify({ 
             success: false, 
             message: error instanceof Error ? error.message : 'Failed to decline user' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+      }
+    }
+
+    // Manager endpoints
+    if (path[0] === 'api' && path[1] === 'manager') {
+      const managerId = req.headers.get('x-manager-id');
+      
+      if (!managerId) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          message: 'Manager ID required' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        });
+      }
+
+      // Get pending applications for manager
+      if (path[2] === 'applications' && req.method === 'GET') {
+        try {
+          const applications = await getPendingApplicationsForManager(managerId);
+          return new Response(JSON.stringify(applications), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to fetch applications' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
+      }
+
+      // Approve application by manager
+      if (path[2] === 'applications' && path[3] && path[4] === 'approve' && req.method === 'POST') {
+        const userId = path[3];
+        
+        try {
+          const result = await approveApplicationByManager(userId, managerId);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to approve application' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+      }
+
+      // Reject application by manager
+      if (path[2] === 'applications' && path[3] && path[4] === 'reject' && req.method === 'POST') {
+        const userId = path[3];
+        
+        try {
+          const data = await req.json().catch(() => ({}));
+          const reason = data.reason || 'No reason provided';
+          
+          const result = await rejectApplicationByManager(userId, managerId, reason);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to reject application' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400
