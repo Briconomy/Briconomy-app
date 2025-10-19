@@ -1,3 +1,18 @@
+function resolveApiBase(): string {
+  try {
+    const loc = globalThis.location;
+    const protocol = loc.protocol || 'http:';
+    const hostname = loc.hostname || 'localhost';
+    const port = loc.port || '';
+    if (port === '5173' || port === '1173') return `${protocol}//${hostname}:8816`;
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+  } catch (_) {
+    return 'http://localhost:8816';
+  }
+}
+
+const API_BASE_URL = resolveApiBase();
+
 interface BricllmResponse {
   response: string;
   confidence?: number;
@@ -15,10 +30,8 @@ interface BricllmQuery {
 
 export class BricllmService {
   private static instance: BricllmService;
-  private apiEndpoint: string;
 
   private constructor() {
-    this.apiEndpoint = '/api/bricllm/query';
   }
 
   static getInstance(): BricllmService {
@@ -30,7 +43,7 @@ export class BricllmService {
 
   async query(params: BricllmQuery): Promise<BricllmResponse | null> {
     try {
-      const response = await fetch(this.apiEndpoint, {
+      const response = await fetch(`${API_BASE_URL}/api/bricllm/query`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +67,7 @@ export class BricllmService {
 
   async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch('/api/bricllm/health', {
+      const response = await fetch(`${API_BASE_URL}/api/bricllm/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(2000)
       });
