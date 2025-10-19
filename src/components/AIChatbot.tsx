@@ -84,30 +84,25 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
     setInputText('');
     setIsLoading(true);
 
-    // Save user message
     await chatbotService.saveMessage(userMessage, userId);
 
-    // Process with chatbot
-    const botResponse = chatbotService.processMessage(inputText, language, userRole);
-    
-    // Add bot response after short delay
+    const botResponse = await chatbotService.processMessage(inputText, language, userRole);
+
     setTimeout(async () => {
       setMessages(prev => [...prev, botResponse]);
       await chatbotService.saveMessage(botResponse, userId);
-      
-      // Handle escalation
+
       if (botResponse.type === 'escalation') {
         await chatbotService.escalateToHuman(userId, inputText);
         if (onEscalate) {
           onEscalate();
         }
-        // Send notification to managers
         await notificationService.sendEscalation(
           'Chat Support Request',
           `User needs human assistance with: "${inputText}"`
         );
       }
-      
+
       setIsLoading(false);
     }, 1000);
   };
