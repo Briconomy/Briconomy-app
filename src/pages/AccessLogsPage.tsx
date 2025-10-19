@@ -8,43 +8,40 @@ function AccessLogsPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  // #COMPLETION_DRIVE: Assuming user role determines navigation items
-  // #SUGGEST_VERIFY: Check actual user roles and navigation requirements
-  const getNavItems = () => {
-    switch (user?.userType) {
-      case 'admin':
-        return [
-          { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
-          { path: '/admin/users', label: t('nav.users'), icon: 'users' },
-          { path: '/admin/security', label: t('nav.security'), icon: 'security' },
-          { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
-        ];
-      case 'manager':
-        return [
-          { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
-          { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
-          { path: '/manager/leases', label: t('nav.leases'), icon: 'lease' },
-          { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
-        ];
-      case 'caretaker':
-        return [
-          { path: '/caretaker', label: t('nav.tasks'), icon: 'tasks' },
-          { path: '/caretaker/schedule', label: t('nav.schedule'), icon: 'schedule' },
-          { path: '/caretaker/history', label: t('nav.history'), icon: 'history' },
-          { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile' }
-        ];
-      default:
-        return [
-          { path: '/tenant', label: t('nav.home'), icon: 'properties' },
-          { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
-          { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
-          { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
-        ];
-    }
+  const supportedRoles = new Set(['admin', 'manager', 'caretaker', 'tenant']);
+  const resolvedRole = supportedRoles.has(user?.userType ?? '') ? (user?.userType as 'admin' | 'manager' | 'caretaker' | 'tenant') : 'tenant';
+
+  const navItemsByRole: Record<'admin' | 'manager' | 'caretaker' | 'tenant', { path: string; label: string; icon: string }[]> = {
+    admin: [
+      { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+      { path: '/admin/users', label: t('nav.users'), icon: 'users' },
+      { path: '/admin/security', label: t('nav.security'), icon: 'security' },
+      { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
+    ],
+    manager: [
+      { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
+      { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+      { path: '/manager/leases', label: t('nav.leases'), icon: 'lease' },
+      { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
+    ],
+    caretaker: [
+      { path: '/caretaker', label: t('nav.tasks'), icon: 'tasks' },
+      { path: '/caretaker/schedule', label: t('nav.schedule'), icon: 'schedule' },
+      { path: '/caretaker/history', label: t('nav.history'), icon: 'history' },
+      { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile' }
+    ],
+    tenant: [
+      { path: '/tenant', label: t('nav.home'), icon: 'properties' },
+      { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
+      { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
+      { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
+    ]
   };
 
+  const getNavItems = () => navItemsByRole[resolvedRole];
+
   const getBackLink = () => {
-    switch (user?.userType) {
+    switch (resolvedRole) {
       case 'admin':
         return '/admin/security';
       case 'manager':
@@ -61,7 +58,7 @@ function AccessLogsPage() {
   };
 
   const getPageSubtitle = () => {
-    switch (user?.userType) {
+    switch (resolvedRole) {
       case 'admin':
         return 'System-wide access logs and audit trail';
       case 'manager':
@@ -75,7 +72,7 @@ function AccessLogsPage() {
 
   // For non-admin users, filter logs to their user ID only
   const getUserFilter = () => {
-    if (user?.userType === 'admin') {
+    if (resolvedRole === 'admin') {
       return undefined; // Show all logs for admin
     }
     return user?.id; // Filter to current user only
