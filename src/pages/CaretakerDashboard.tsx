@@ -68,7 +68,6 @@ function CaretakerDashboard() {
     try {
       await maintenanceApi.update(requestId, { status: newStatus });
       await refetchTasks();
-      console.log(`[CaretakerDashboard] Updated request ${requestId} status to ${newStatus}`);
     } catch (error) {
       console.error('[CaretakerDashboard] Error updating status:', error);
       alert('Failed to update status. Please try again.');
@@ -83,7 +82,6 @@ function CaretakerDashboard() {
     try {
       await maintenanceApi.delete(requestId);
       await refetchTasks();
-      console.log(`[CaretakerDashboard] Deleted request ${requestId}`);
     } catch (error) {
       console.error('[CaretakerDashboard] Error deleting request:', error);
       alert('Failed to delete request. Please try again.');
@@ -92,7 +90,7 @@ function CaretakerDashboard() {
 
   useEffect(() => {
     try {
-      console.log('CaretakerDashboard mounted');
+      // Dashboard initialization
     } catch (err) {
       console.error('Dashboard error:', err);
       setChartError('Dashboard initialization failed');
@@ -115,10 +113,7 @@ function CaretakerDashboard() {
   
   // Log when data changes
   useEffect(() => {
-    console.log('[CaretakerDashboard] Maintenance requests updated:', {
-      count: tasksData.length,
-      requests: tasksData
-    });
+    // Update dashboard when maintenance requests change
   }, [tasksData.length]);
   
   const isLoading = tasksLoading;

@@ -80,10 +80,6 @@ const connectedUsers = new Map<string, WebSocket>();
 
 // Broadcast notification to specific users
 function broadcastToUsers(userIds: string[], notification: unknown) {
-  console.log(`[WebSocket Broadcast] Broadcasting to ${userIds.length} users: ${userIds.join(', ')}`);
-  console.log(`[WebSocket Broadcast] Connected users: ${Array.from(connectedUsers.keys()).join(', ')}`);
-  console.log(`[WebSocket Broadcast] Notification type:`, (notification as Record<string, unknown>)?.type);
-  
   const message = JSON.stringify({
     type: 'notification',
     data: notification
@@ -98,20 +94,16 @@ function broadcastToUsers(userIds: string[], notification: unknown) {
       try {
         socket.send(message);
         successCount++;
-        console.log(`[WebSocket Broadcast] ✓ Message sent to user ${userId}`);
       } catch (error) {
         failCount++;
-        console.error(`[WebSocket Broadcast] ✗ Failed to send message to user ${userId}:`, error);
+        console.error(`[WebSocket] Failed to send message to user ${userId}:`, error);
         // Remove dead connection
         connectedUsers.delete(userId);
       }
     } else {
       failCount++;
-      console.log(`[WebSocket Broadcast] ✗ User ${userId} not connected or socket not ready (state: ${socket?.readyState})`);
     }
   });
-  
-  console.log(`[WebSocket Broadcast] Complete: ${successCount} success, ${failCount} failed`);
 }
 
 // Broadcast to all connected users
@@ -137,34 +129,31 @@ function broadcastToAll(notification: any) {
 }
 
 serve(async (req) => {
+  // Basic request logging for monitoring
   const requestUrl = new URL(req.url);
-  const requestPath = requestUrl.pathname.split('/').filter(p => p);
-  console.log(`${req.method} ${requestUrl.pathname} - Path parts: [${requestPath.join(', ')}]`);
+  if (!requestUrl.pathname.includes('/ws') && !requestUrl.pathname.includes('/favicon')) {
+    console.log(`${req.method} ${requestUrl.pathname}`);
+  }
   
   // Handle WebSocket upgrade
   if (req.headers.get("upgrade") === "websocket") {
     const url = new URL(req.url);
     const userId = url.searchParams.get("userId");
     
-    console.log(`🔌 WebSocket upgrade request received for userId: ${userId}`);
-    
     if (!userId) {
-      console.log("WebSocket upgrade rejected: Missing userId parameter");
       return new Response("Missing userId parameter", { status: 400 });
     }
     
     const { socket, response } = Deno.upgradeWebSocket(req);
     
     socket.onopen = () => {
-      console.log(`WebSocket connected for user: ${userId}`);
-      console.log(`Total connected users: ${connectedUsers.size + 1}`);
       connectedUsers.set(userId, socket);
+      console.log(`WebSocket: User ${userId} connected (${connectedUsers.size} total)`);
     };
     
     socket.onclose = () => {
-      console.log(`WebSocket disconnected for user: ${userId}`);
       connectedUsers.delete(userId);
-      console.log(`Total connected users: ${connectedUsers.size}`);
+      console.log(`WebSocket: User ${userId} disconnected (${connectedUsers.size} total)`);
     };
     
     socket.onerror = (error) => {
@@ -476,12 +465,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'GET') {
-        console.log("=== ANNOUNCEMENT GET REQUEST ===");
         const filters = Object.fromEntries(url.searchParams);
-        console.log("Request filters:", filters);
         const announcements = await getAnnouncements(filters);
-        console.log(`API returning ${announcements.length} announcements to client`);
-        console.log("Final announcements being returned:", announcements.map(a => ({ id: a.id, title: a.title })));
         return new Response(JSON.stringify(announcements), {
           headers: { 
             ...corsHeaders, 
@@ -493,13 +478,7 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
-        console.log('[API] POST /api/announcements - Creating announcement:', {
-          title: body.title,
-          targetAudience: body.targetAudience,
-          status: body.status
-        });
         const announcement = await createAnnouncement(body);
-        console.log('[API] Announcement created successfully:', { id: announcement.id, title: announcement.title });
         return new Response(JSON.stringify(announcement), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
@@ -539,7 +518,6 @@ serve(async (req) => {
 
     // Maintenance requests endpoints
     if (path[0] === 'api' && path[1] === 'maintenance') {
-      console.log(`[API Server] Maintenance endpoint hit: ${req.method} ${url.pathname}`, { path });
       if (req.method === 'GET') {
         const filters = Object.fromEntries(url.searchParams);
         const requests = await getMaintenanceRequests(filters);
@@ -562,10 +540,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'DELETE' && path[2]) {
-        console.log(`[API Server] DELETE maintenance request: ${path[2]}`);
         const broadcaster = { broadcastToUsers };
         const result = await deleteMaintenanceRequest(path[2], broadcaster);
-        console.log('[API Server] Delete result:', result);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200
@@ -629,22 +605,14 @@ serve(async (req) => {
     // Notifications endpoints
     if (path[0] === 'api' && path[1] === 'notifications') {
       if (req.method === 'GET' && path[2]) {
-        console.log(`[API] GET /api/notifications/${path[2]} - Fetching notifications for user:`, path[2]);
         const notifications = await getNotifications(path[2]);
-        console.log(`[API] Returning ${Array.isArray(notifications) ? notifications.length : 'unknown'} notifications`);
         return new Response(JSON.stringify(notifications), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
-        console.log('[API] POST /api/notifications - Creating notification:', {
-          type: body.type,
-          title: body.title,
-          targetAudience: body.targetAudience
-        });
         const broadcaster = { broadcastToUsers };
         const notification = await createNotification(body, broadcaster);
-        console.log('[API] Notification created successfully:', notification);
         return new Response(JSON.stringify(notification), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
@@ -939,7 +907,6 @@ serve(async (req) => {
 
         // Send to all connected users
         const allUserIds = Array.from(connectedUsers.keys());
-        console.log(`🧪 Test notification - targeting users: ${allUserIds.join(', ')}`);
         
         broadcastToUsers(allUserIds, testNotification);
         

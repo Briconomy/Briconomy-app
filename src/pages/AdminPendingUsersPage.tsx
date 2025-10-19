@@ -45,9 +45,7 @@ function AdminPendingUsersPage() {
   const fetchPendingUsers = async () => {
     try {
       setLoading(true);
-      console.log('Fetching pending users...');
       const users = await adminApi.getPendingUsers();
-      console.log('Pending users received:', users);
       setPendingUsers(users);
     } catch (err) {
       setError('Failed to load pending users');

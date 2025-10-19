@@ -532,7 +532,6 @@ function PropertyDetailsPage() {
   ];
 
   useEffect(() => {
-    console.log('PropertyDetailsPage mounted with propertyId:', propertyId);
     if (propertyId) {
       fetchPropertyDetails();
     } else {
@@ -547,22 +546,16 @@ function PropertyDetailsPage() {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching property details for ID:', propertyId);
-      
       const [propertyResponse, unitsData] = await Promise.all([
         propertiesApi.getById(propertyId),
         unitsApi.getAll(propertyId)
       ]);
-      
-      console.log('Property response received:', propertyResponse);
-      console.log('Units data received:', unitsData);
       
       // Handle both single property object and array response
       let propertyData;
       if (Array.isArray(propertyResponse)) {
         // API is returning array, find the specific property
         propertyData = propertyResponse.find(p => p.id === propertyId);
-        console.log('Found property in array:', propertyData);
       } else {
         // API returned single property object
         propertyData = propertyResponse;
@@ -583,7 +576,6 @@ function PropertyDetailsPage() {
       // Try to use mock data as fallback
       const mockProperty = mockProperties[propertyId];
       if (mockProperty) {
-        console.log('Using mock property data as fallback:', mockProperty);
         setProperty(mockProperty);
         setUnits([]); // Empty units for mock data
         setError(null); // Clear error since we have fallback data
