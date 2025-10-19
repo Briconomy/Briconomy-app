@@ -1,6 +1,37 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import Icon from '../components/Icon.tsx';
 
 function LandingPage() {
+  const { isAuthenticated, user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      const dashboards = {
+        admin: '/admin',
+        manager: '/manager',
+        tenant: '/tenant',
+        caretaker: '/caretaker'
+      };
+      navigate(dashboards[user.userType] || '/tenant', { replace: true });
+    }
+  }, [isAuthenticated, user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="landing-container">
       <div className="landing-content">
