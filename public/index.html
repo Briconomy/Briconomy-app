@@ -22,9 +22,28 @@
     <script type="module">
         async function loadApp() {
             try {
-                // #COMPLETION_DRIVE: Assuming absolute path import works correctly for SPA routing
-                // #SUGGEST_VERIFY: Test import resolution from different nested routes
-                const module = await import('/src/main.tsx');
+                const candidates = [
+                    new URL('/src/main.tsx', window.location.origin).href,
+                    new URL('./src/main.tsx', window.location.href).href
+                ];
+
+                const attempted = [];
+                let lastError = null;
+
+                for (const candidate of [...new Set(candidates)]) {
+                    try {
+                        await import(candidate);
+                        return;
+                    } catch (importError) {
+                        attempted.push(candidate);
+                        lastError = importError;
+                        console.warn(`Module load attempt failed for ${candidate}`, importError);
+                    }
+                }
+
+                const summary = attempted.length > 0 ? `Attempted paths: ${attempted.join(', ')}` : 'No module paths attempted.';
+                const detail = lastError ? lastError.message : 'Unknown module load failure';
+                throw new Error(`${summary}. Last error: ${detail}`);
             } catch (error) {
                 console.error('Module load failed:', error);
                 document.getElementById('root').innerHTML = 
