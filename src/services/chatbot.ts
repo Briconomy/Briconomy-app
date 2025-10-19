@@ -1,11 +1,30 @@
 import { bricllmService } from './bricllm.ts';
 
+function resolveApiBase(): string {
+  try {
+    const loc = globalThis.location;
+    const protocol = loc.protocol || 'http:';
+    const hostname = loc.hostname || 'localhost';
+    const port = loc.port || '';
+    if (port === '5173' || port === '1173') return `${protocol}//${hostname}:8816`;
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+  } catch (_) {
+    return 'http://localhost:8816';
+  }
+}
+
+const API_BASE_URL = resolveApiBase();
+
 interface ChatMessage {
   id: string;
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
   type?: 'text' | 'escalation';
+  action?: {
+    label: string;
+    route: string;
+  };
 }
 
 interface FAQItem {
@@ -14,6 +33,10 @@ interface FAQItem {
   category: 'rent' | 'maintenance' | 'lease' | 'general' | 'tasks' | 'schedule';
   language: 'en' | 'zu';
   userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' | 'all';
+  action?: {
+    label: string;
+    route: string;
+  };
 }
 
 export class ChatbotService {
@@ -33,10 +56,14 @@ export class ChatbotService {
     // English FAQs for Tenants
     {
       keywords: ['rent', 'payment', 'pay', 'due', 'when', 'how much', 'cost', 'money', 'bill'],
-      response: 'Your monthly rent is due on the 1st of each month. You can check your exact amount and due date in the Payments section of your dashboard.',
+      response: 'Your monthly rent is due on the 1st of each month. You can check your exact amount and due date in the Payments section.',
       category: 'rent',
       language: 'en',
-      userRole: 'tenant'
+      userRole: 'tenant',
+      action: {
+        label: 'Go to Payments',
+        route: '/tenant/payments'
+      }
     },
     {
       keywords: ['late', 'overdue', 'penalty', 'fee', 'missed', 'behind'],
@@ -50,7 +77,11 @@ export class ChatbotService {
       response: 'You can report maintenance issues through the Maintenance Requests page. Include photos and describe the problem in detail for faster resolution.',
       category: 'maintenance',
       language: 'en',
-      userRole: 'tenant'
+      userRole: 'tenant',
+      action: {
+        label: 'Report Issue',
+        route: '/tenant/requests'
+      }
     },
     {
       keywords: ['lease', 'contract', 'agreement', 'end', 'renewal', 'extend', 'terminate'],
@@ -64,7 +95,11 @@ export class ChatbotService {
       response: 'You can contact your property manager through the Communication page or call the property management office during business hours.',
       category: 'general',
       language: 'en',
-      userRole: 'tenant'
+      userRole: 'tenant',
+      action: {
+        label: 'Send Message',
+        route: '/tenant/messages'
+      }
     },
     {
       keywords: ['emergency', 'urgent', 'water', 'electricity', 'gas', 'leak', 'fire'],
@@ -87,7 +122,11 @@ export class ChatbotService {
       response: 'You can view your assigned tasks on the Tasks page. Check your schedule and mark tasks as completed when finished.',
       category: 'tasks',
       language: 'en',
-      userRole: 'caretaker'
+      userRole: 'caretaker',
+      action: {
+        label: 'View Tasks',
+        route: '/caretaker/tasks'
+      }
     },
     {
       keywords: ['maintenance', 'repair', 'broken', 'issue', 'problem', 'fix', 'not working', 'damaged'],
@@ -297,7 +336,7 @@ export class ChatbotService {
     }
   ];
 
-  findResponse(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant'): string | null {
+  findResponse(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant'): { response: string; action?: { label: string; route: string } } | null {
     const normalizedMessage = userMessage.toLowerCase();
     
     // First try exact keyword matching
@@ -310,33 +349,32 @@ export class ChatbotService {
       );
       
       if (keywordMatch) {
-        this.failedReplies = 0; // Reset failed replies on successful match
-        return faq.response;
+        this.failedReplies = 0;
+        return { response: faq.response, action: faq.action };
       }
     }
-    
-    // If no exact match, try fuzzy matching with similarity scoring
+
     let bestMatch: { faq: FAQItem; score: number } | null = null;
-    const threshold = 0.3; // Minimum similarity threshold
-    
+    const threshold = 0.3;
+
     for (const faq of this.faqs) {
       if (faq.language !== language) continue;
       if (faq.userRole !== userRole && faq.userRole !== 'all') continue;
-      
+
       for (const keyword of faq.keywords) {
         const similarity = this.calculateSimilarity(normalizedMessage, keyword.toLowerCase());
-        
+
         if (similarity >= threshold && (!bestMatch || similarity > bestMatch.score)) {
           bestMatch = { faq, score: similarity };
         }
       }
     }
-    
+
     if (bestMatch) {
-      this.failedReplies = 0; // Reset failed replies on successful match
-      return bestMatch.faq.response;
+      this.failedReplies = 0;
+      return { response: bestMatch.faq.response, action: bestMatch.faq.action };
     }
-    
+
     this.failedReplies++;
     return null;
   }
@@ -399,7 +437,8 @@ export class ChatbotService {
   }
 
   async processMessage(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant', route?: string): Promise<ChatMessage> {
-    let response: string | null = null;
+    let responseText: string | null = null;
+    let action: { label: string; route: string } | undefined = undefined;
 
     if (this.useBricllm) {
       const bricllmResult = await bricllmService.query({
@@ -410,22 +449,31 @@ export class ChatbotService {
       });
 
       if (bricllmResult && bricllmResult.response) {
-        response = bricllmResult.response;
+        responseText = bricllmResult.response;
         this.failedReplies = 0;
       } else {
-        response = this.findResponse(userMessage, language, userRole);
+        const faqResult = this.findResponse(userMessage, language, userRole);
+        if (faqResult) {
+          responseText = faqResult.response;
+          action = faqResult.action;
+        }
       }
     } else {
-      response = this.findResponse(userMessage, language, userRole);
+      const faqResult = this.findResponse(userMessage, language, userRole);
+      if (faqResult) {
+        responseText = faqResult.response;
+        action = faqResult.action;
+      }
     }
 
-    if (response) {
+    if (responseText) {
       return {
         id: Date.now().toString(),
-        text: response,
+        text: responseText,
         sender: 'bot',
         timestamp: new Date(),
-        type: 'text'
+        type: 'text',
+        action: action
       };
     }
     
@@ -494,7 +542,7 @@ export class ChatbotService {
         type: message.type || 'text'
       };
 
-      await fetch('/api/chat-messages', {
+      await fetch(`${API_BASE_URL}/api/chat-messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -508,9 +556,9 @@ export class ChatbotService {
 
   async getChatHistory(userId: string): Promise<ChatMessage[]> {
     try {
-      const response = await fetch(`/api/chat-messages?userId=${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/chat-messages?userId=${userId}`);
       if (!response.ok) return [];
-      
+
       const messages = await response.json();
       return messages.map((msg: { messageId: string; text: string; sender: string; timestamp: string; type: string }) => ({
         id: msg.messageId,
@@ -527,7 +575,7 @@ export class ChatbotService {
 
   async escalateToHuman(userId: string, userMessage: string): Promise<void> {
     try {
-      await fetch('/api/chat-escalations', {
+      await fetch(`${API_BASE_URL}/api/chat-escalations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
