@@ -1,53 +1,98 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "REPO_URL=https://github.com/Briconomy/Bricllm.git"
-set "BUILD_DIR=bricllm-build"
+set "RELEASE_TAG=Master"
+set "PREFERRED_ASSET_NAME=bricllm"
 set "INSTALL_DIR=bricllm"
 set "BINARY_NAME=bricllm.exe"
+set "DOWNLOAD_URL=https://github.com/Briconomy/Bricllm/releases/download/%RELEASE_TAG%/%PREFERRED_ASSET_NAME%"
+set "RELEASE_API_URL=https://api.github.com/repos/Briconomy/Bricllm/releases/tags/%RELEASE_TAG%"
+set "TEMP_DIR=%TEMP%\bricllm_%RANDOM%_%RANDOM%"
+
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+
+set "TEMP_FILE=%TEMP_DIR%\%PREFERRED_ASSET_NAME%"
+
+set "DOWNLOADED_FILE="
 
 echo ========================================
 echo   Bricllm Update Script
 echo ========================================
 echo.
 
-if not exist "%BUILD_DIR%" (
-    echo [1/5] Cloning Bricllm repository...
-    git clone "%REPO_URL%" "%BUILD_DIR%"
-) else (
-    echo [1/5] Updating Bricllm repository...
-    cd "%BUILD_DIR%"
-    git fetch origin
-    git reset --hard origin/main
-    cd ..
-)
-
-echo.
-echo [2/5] Building Bricllm...
-cd "%BUILD_DIR%"
-
-if not exist "Makefile" (
-    echo Error: Makefile not found in repository
+echo [1/5] Downloading Bricllm release binary...
+where powershell >nul 2>&1
+if errorlevel 1 (
+    echo Error: PowerShell is required to download the release asset
+    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
     exit /b 1
 )
 
-make clean 2>nul
-make
+for /f "usebackq tokens=* delims=" %%I in (`powershell -NoProfile -Command "
+$ErrorActionPreference = 'Stop'
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+$primaryUrl = '%DOWNLOAD_URL%'
+$releaseApi = '%RELEASE_API_URL%'
+$downloadDir = '%TEMP_DIR%'
+$preferredName = '%PREFERRED_ASSET_NAME%'
+$targetPath = Join-Path $downloadDir $preferredName
+try {
+    Invoke-WebRequest -Uri $primaryUrl -OutFile $targetPath
+} catch {
+    [Console]::Error.WriteLine('Primary asset download failed. Attempting release asset discovery...')
+    $release = Invoke-RestMethod -Uri $releaseApi
+    if (-not $release.assets -or $release.assets.Count -eq 0) {
+        throw 'No release assets available.'
+    }
+    $candidate = $release.assets | Where-Object { $_.name -eq $preferredName -and $_.browser_download_url }
+    if (-not $candidate) {
+        $candidate = $release.assets | Where-Object { $_.browser_download_url }
+    }
+    $candidate = $candidate | Select-Object -First 1
+    if (-not $candidate) {
+        throw 'No downloadable asset found in release.'
+    }
+    $targetPath = Join-Path $downloadDir $candidate.name
+    Invoke-WebRequest -Uri $candidate.browser_download_url -OutFile $targetPath
+}
+Write-Output $targetPath
+"`) do set "DOWNLOADED_FILE=%%I"
 
-if not exist "%BINARY_NAME%" (
-    echo Error: Build failed - binary not found
+if errorlevel 1 (
+    echo Error: Unable to download release asset
+    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
     exit /b 1
 )
 
-cd ..
+if not defined DOWNLOADED_FILE (
+    echo Error: Downloaded file path not returned
+    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
+    exit /b 1
+)
+
+if not exist "%DOWNLOADED_FILE%" (
+    echo Error: Downloaded file not found
+    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
+    exit /b 1
+)
+
+for %%A in ("%DOWNLOADED_FILE%") do if %%~zA lss 1 (
+    echo Error: Downloaded file is empty
+    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
+    exit /b 1
+)
 
 echo.
-echo [3/5] Creating installation directory...
+echo [2/5] Creating installation directory...
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 echo.
-echo [4/5] Installing binary...
-copy /Y "%BUILD_DIR%\%BINARY_NAME%" "%INSTALL_DIR%\%BINARY_NAME%" >nul
+echo [3/5] Installing binary...
+copy /Y "%DOWNLOADED_FILE%" "%INSTALL_DIR%\%BINARY_NAME%" >nul
+
+echo.
+echo [4/5] Cleaning up...
+rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
 
 echo.
 echo [5/5] Verifying installation...
