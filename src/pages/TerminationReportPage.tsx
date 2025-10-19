@@ -70,11 +70,10 @@ const TerminationReportPage: React.FC = () => {
   });
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard' },
-    { path: '/manager/properties', label: 'Properties' },
-    { path: '/manager/leases', label: 'Leases', active: true },
-    { path: '/manager/payments', label: 'Payments' },
-    { path: '/manager/terminations', label: 'Terminations', active: true }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics' },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
   ];
 
   useEffect(() => {

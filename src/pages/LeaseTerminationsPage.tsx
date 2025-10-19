@@ -104,8 +104,7 @@ const LeaseTerminationsPage: React.FC = () => {
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
     { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
     { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
-    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' },
-    { path: '/manager/terminations', label: t('terminations.nav'), icon: 'terminations', active: true }
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
   useEffect(() => {
