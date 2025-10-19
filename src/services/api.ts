@@ -230,6 +230,13 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(logData),
   }),
+  getPendingUsers: () => apiRequest('/api/admin/pending-users'),
+  approvePendingUser: (userId: string) => apiRequest(`/api/admin/pending-users/${userId}/approve`, {
+    method: 'POST',
+  }),
+  declinePendingUser: (userId: string) => apiRequest(`/api/admin/pending-users/${userId}/decline`, {
+    method: 'POST',
+  }),
 };
 
 export const authApi = {
@@ -238,6 +245,10 @@ export const authApi = {
     body: JSON.stringify({ email, password }),
   }),
   register: (userData: Record<string, unknown>) => apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  registerPendingTenant: (userData: Record<string, unknown>) => apiRequest('/api/auth/register-pending', {
     method: 'POST',
     body: JSON.stringify(userData),
   }),

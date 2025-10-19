@@ -184,6 +184,131 @@ export async function registerUser(userData: Record<string, unknown>) {
   }
 }
 
+export async function registerPendingTenant(userData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const users = getCollection("users");
+    
+    const existingUser = await users.findOne({ email: userData.email });
+    if (existingUser) {
+      return { success: false, message: "User with this email already exists" };
+    }
+    
+    const existingPending = await pendingUsers.findOne({ email: userData.email });
+    if (existingPending) {
+      return { success: false, message: "Application with this email already pending" };
+    }
+    
+    const password = String(userData.password ?? "");
+    const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+    const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    const toInsert = {
+      ...userData,
+      password: hashedPasswordHex,
+      status: 'pending',
+      appliedAt: new Date(),
+      createdAt: new Date()
+    };
+    
+    await pendingUsers.insertOne(toInsert);
+    
+    return {
+      success: true,
+      message: "Application submitted successfully. Awaiting admin approval."
+    };
+  } catch (error) {
+    console.error("Error registering pending tenant:", error);
+    throw error;
+  }
+}
+
+export async function getPendingUsers() {
+  try {
+    console.log('getPendingUsers: Starting...');
+    await connectToMongoDB();
+    console.log('getPendingUsers: Connected to MongoDB');
+    const pendingUsers = getCollection("pending_users");
+    console.log('getPendingUsers: Got collection');
+    const users = await pendingUsers.find({ status: 'pending' }).sort({ appliedAt: -1 }).toArray();
+    console.log('getPendingUsers: Found users:', users.length);
+    console.log('getPendingUsers: Users data:', JSON.stringify(users, null, 2));
+    const mapped = mapDocs(users);
+    console.log('getPendingUsers: Mapped result:', mapped);
+    return mapped;
+  } catch (error) {
+    console.error("Error fetching pending users:", error);
+    throw error;
+  }
+}
+
+export async function approvePendingUser(userId: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const users = getCollection("users");
+    
+    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    
+    if (!pendingUser) {
+      throw new Error("Pending user not found");
+    }
+    
+    const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+    
+    const newUser = {
+      ...userDataToInsert,
+      userType: 'tenant',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await users.insertOne(newUser);
+    
+    await pendingUsers.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { status: 'approved', approvedAt: new Date() } }
+    );
+    
+    return {
+      success: true,
+      message: "User approved and account created successfully",
+      user: mapDoc(await users.findOne({ email: pendingUser.email }))
+    };
+  } catch (error) {
+    console.error("Error approving pending user:", error);
+    throw error;
+  }
+}
+
+export async function declinePendingUser(userId: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    
+    const result = await pendingUsers.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { status: 'declined', declinedAt: new Date() } }
+    );
+    
+    if (result.modifiedCount === 0) {
+      throw new Error("Pending user not found or already processed");
+    }
+    
+    return {
+      success: true,
+      message: "User application declined"
+    };
+  } catch (error) {
+    console.error("Error declining pending user:", error);
+    throw error;
+  }
+}
+
 // Properties API
 export async function getProperties(filters: Record<string, unknown> = {}) {
   try {

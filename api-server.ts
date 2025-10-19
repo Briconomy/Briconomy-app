@@ -60,7 +60,11 @@ import {
   clearSecurityAlert,
   triggerSystemAction,
   generateReport,
-  exportReport
+  exportReport,
+  registerPendingTenant,
+  getPendingUsers,
+  approvePendingUser,
+  declinePendingUser
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -206,6 +210,13 @@ serve(async (req) => {
       } else if (path[2] === 'logout' && req.method === 'POST') {
         return new Response(JSON.stringify({ success: true, message: 'Logged out successfully' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'register-pending' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await registerPendingTenant(data);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: result.success ? 201 : 400
         });
       }
     }
@@ -615,9 +626,12 @@ serve(async (req) => {
     }
 
     // Admin endpoints
-    if (path[0] === 'admin') {
+    if (path[0] === 'admin' || (path[0] === 'api' && path[1] === 'admin')) {
+      const adminPathOffset = path[0] === 'api' ? 2 : 1;
+      const adminSubpath = path[adminPathOffset];
+      
       // System stats
-      if (path[1] === 'system-stats' && req.method === 'GET') {
+      if (adminSubpath === 'system-stats' && req.method === 'GET') {
         const stats = await getSystemStats();
         return new Response(JSON.stringify(stats), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -625,7 +639,7 @@ serve(async (req) => {
       }
       
       // User stats
-      if (path[1] === 'user-stats' && req.method === 'GET') {
+      if (adminSubpath === 'user-stats' && req.method === 'GET') {
         const stats = await getUserStats();
         return new Response(JSON.stringify(stats), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -633,7 +647,7 @@ serve(async (req) => {
       }
       
       // Security stats
-      if (path[1] === 'security-stats' && req.method === 'GET') {
+      if (adminSubpath === 'security-stats' && req.method === 'GET') {
         const stats = await getSecurityStats();
         return new Response(JSON.stringify(stats), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -803,6 +817,52 @@ serve(async (req) => {
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+      
+      // Get pending users
+      if (adminSubpath === 'pending-users' && req.method === 'GET') {
+        const pendingUsers = await getPendingUsers();
+        return new Response(JSON.stringify(pendingUsers), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Approve pending user
+      if (adminSubpath === 'pending-users' && path[adminPathOffset + 1] && path[adminPathOffset + 2] === 'approve' && req.method === 'POST') {
+        const userId = path[adminPathOffset + 1];
+        try {
+          const result = await approvePendingUser(userId);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to approve user' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+      }
+      
+      // Decline pending user
+      if (adminSubpath === 'pending-users' && path[adminPathOffset + 1] && path[adminPathOffset + 2] === 'decline' && req.method === 'POST') {
+        const userId = path[adminPathOffset + 1];
+        try {
+          const result = await declinePendingUser(userId);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to decline user' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
       }
     }
 

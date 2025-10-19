@@ -51,6 +51,9 @@ import InitiateTerminationPage from './pages/InitiateTerminationPage.tsx';
 import SettlementCalculatorPage from './pages/SettlementCalculatorPage.tsx';
 import DocumentGeneratorPage from './pages/DocumentGeneratorPage.tsx';
 import TerminationReportPage from './pages/TerminationReportPage.tsx';
+import ProspectiveTenantRegisterPage from './pages/ProspectiveTenantRegisterPage.tsx';
+import PendingApprovalPage from './pages/PendingApprovalPage.tsx';
+import AdminPendingUsersPage from './pages/AdminPendingUsersPage.tsx';
 
 function App() {
   // Use runtime-injected env object when available (dev-server injects __BRICONOMY_ENV__)
@@ -66,9 +69,12 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/register" element={<ProspectiveTenantRegisterPage />} />
+              <Route path="/pending-approval" element={<PendingApprovalPage />} />
               <Route path="/admin/add-user" element={<AdminRoute><AdminAddUserPage /></AdminRoute>} />
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+              <Route path="/admin/pending-users" element={<AdminRoute><AdminPendingUsersPage /></AdminRoute>} />
               <Route path="/admin/security" element={<AdminRoute><AdminSecurityPage /></AdminRoute>} />
               <Route path="/admin/operations" element={<AdminRoute><AdminOperationsPage /></AdminRoute>} />
               <Route path="/admin/reports" element={<AdminRoute><AdminReportsPage /></AdminRoute>} />
