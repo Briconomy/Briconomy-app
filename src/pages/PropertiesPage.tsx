@@ -6,6 +6,7 @@ import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 function PropertiesPage() {
   const [properties, setProperties] = useState([]);
@@ -19,7 +20,8 @@ function PropertiesPage() {
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
   const { user } = useAuth();
-  const { session, updateSearchPreferences, addViewedProperty, isActive } = useProspectiveTenant();
+  const { session: _session, updateSearchPreferences, addViewedProperty, isActive: _isActive } = useProspectiveTenant();
+  const navigate = useNavigate();
 
   const isManager = user?.userType === 'manager';
   const isTenant = user?.userType === 'tenant';
@@ -157,7 +159,24 @@ function PropertiesPage() {
       alert('Unable to apply for this property. Please select a valid property.');
       return;
     }
-    globalThis.location.href = `/apply/${propertyId}`;
+
+    // Get property name for registration
+    const property = properties.find(p => p.id === propertyId || p._id === propertyId);
+    const propertyName = property?.name || 'Selected Property';
+
+    // Check if user is logged in
+    if (!user) {
+      // Not logged in - redirect to registration with property info
+      navigate('/register', { 
+        state: { 
+          propertyId: propertyId,
+          propertyName: propertyName
+        } 
+      });
+    } else {
+      // Logged in - go to rental application
+      navigate(`/apply/${propertyId}`);
+    }
   };
 
   const handleEditProperty = (propertyId) => {

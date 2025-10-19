@@ -6,6 +6,7 @@ import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function ProspectiveTenantPropertiesPage() {
   const [properties, setProperties] = useState([]);
@@ -21,6 +22,7 @@ function ProspectiveTenantPropertiesPage() {
   const { t } = useLanguage();
   const { session: _session, updateSearchPreferences, addViewedProperty, isActive: _isActive } = useProspectiveTenant();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const navItems = [
     { path: '/', label: t('nav.home'), icon: 'logo', active: false },
@@ -137,14 +139,29 @@ function ProspectiveTenantPropertiesPage() {
   };
 
   const handleApplyNow = (propertyId) => {
-    // If propertyId is missing or invalid, send the user to create account so they can register
+    // If propertyId is missing or invalid, alert user
     if (!propertyId || typeof propertyId !== 'string' || propertyId.trim() === '') {
-      navigate('/create-account');
+      alert('Unable to apply for this property. Please try again.');
       return;
     }
 
-    // If we have a valid id, go to the apply page
-    globalThis.location.href = `/apply/${propertyId}`;
+    // Get property name for registration
+    const property = properties.find(p => p.id === propertyId);
+    const propertyName = property?.name || 'Selected Property';
+
+    // Check if user is logged in
+    if (!user) {
+      // Not logged in - redirect to registration with property info
+      navigate('/register', { 
+        state: { 
+          propertyId: propertyId,
+          propertyName: propertyName
+        } 
+      });
+    } else {
+      // Logged in - go to rental application
+      navigate(`/apply/${propertyId}`);
+    }
   };
 
   const getPropertyImage = (property: any) => {

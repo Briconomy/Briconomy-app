@@ -1408,11 +1408,25 @@ function PropertyDetailsPage() {
                           <button 
                             type="button"
                             onClick={() => {
-                              if (propertyId) {
-                                navigate(`/apply/${propertyId}?unit=${unit.id || unit.unitNumber}`);
-                              } else {
+                              if (!propertyId) {
                                 console.error('Property ID is undefined');
                                 navigate('/properties');
+                                return;
+                              }
+
+                              // Check if user is logged in
+                              if (!user) {
+                                // Not logged in - redirect to registration
+                                navigate('/register', { 
+                                  state: { 
+                                    propertyId: propertyId,
+                                    propertyName: property?.name || 'Selected Property',
+                                    unitNumber: unit.unitNumber
+                                  } 
+                                });
+                              } else {
+                                // Logged in - go to rental application
+                                navigate(`/apply/${propertyId}?unit=${unit.id || unit.unitNumber}`);
                               }
                             }}
                             className="btn btn-primary btn-sm"
