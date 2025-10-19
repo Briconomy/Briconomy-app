@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -7,7 +7,7 @@ import AIButton from '../components/AIButton.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import { tasksApi, useApi } from '../services/api.ts';
+import { maintenanceApi, useApi } from '../services/api.ts';
 import '../utils/chart-registration.ts';
 
 // Lazy load TaskChart to prevent import errors from crashing the app
@@ -56,7 +56,7 @@ function CaretakerDashboard() {
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
-    () => tasksApi.getAll(user?.id ? { caretakerId: user.id } : {}),
+    () => maintenanceApi.getAll({}),
     [user?.id]
   );
 
@@ -84,41 +84,37 @@ function CaretakerDashboard() {
     }
   };
 
-  const getMockTasks = () => {
-    return [
-      {
-        id: '1',
-        title: 'Plumbing Unit 2A',
-        description: 'Kitchen sink repair',
-        dueDate: new Date().toISOString(),
-        status: 'in_progress',
-        priority: 'high'
-      },
-      {
-        id: '2',
-        title: 'Electrical Unit 5C',
-        description: 'Outlet replacement',
-        dueDate: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
-        status: 'pending',
-        priority: 'medium'
-      }
-    ];
-  };
-
-  // Use real data from API - no more mock fallback
-  const tasksData = Array.isArray(tasks) ? tasks : [];
+  // Use real maintenance request data from API - memoized to prevent unnecessary re-renders
+  const tasksData = useMemo(() => Array.isArray(tasks) ? tasks : [], [tasks]);
+  
+  // Log when data changes
+  useEffect(() => {
+    console.log('[CaretakerDashboard] Maintenance requests updated:', {
+      count: tasksData.length,
+      requests: tasksData
+    });
+  }, [tasksData.length]);
   
   const isLoading = tasksLoading;
   const hasError = tasksError || error;
   
-  const assignedTasks = tasksData.length;
-  const todayTasks = tasksData.filter(task => {
-    const taskDate = new Date(task.dueDate).toDateString();
-    const today = new Date().toDateString();
-    return taskDate === today;
-  }).length;
-  const priorityTasks = tasksData.filter(task => task.priority === 'high' || task.priority === 'urgent').length;
-  const completionRate = tasksData.length > 0 ? Math.round((tasksData.filter(task => task.status === 'completed').length / tasksData.length) * 100) : 0;
+  // Memoize calculations to prevent recalculating on every render
+  const stats = useMemo(() => {
+    const assignedTasks = tasksData.length;
+    const todayTasks = tasksData.filter(task => {
+      const taskDate = new Date(task.createdAt || task.dueDate).toDateString();
+      const today = new Date().toDateString();
+      return taskDate === today;
+    }).length;
+    const priorityTasks = tasksData.filter(task => task.priority === 'high' || task.priority === 'urgent').length;
+    const completionRate = tasksData.length > 0 
+      ? Math.round((tasksData.filter(task => task.status === 'completed').length / tasksData.length) * 100) 
+      : 0;
+    
+    return { assignedTasks, todayTasks, priorityTasks, completionRate };
+  }, [tasksData]);
+  
+  const { assignedTasks, todayTasks, priorityTasks, completionRate } = stats;
 
   if (isLoading) {
     return (
@@ -189,7 +185,9 @@ return (
           {tasksData.slice(0, 5).map((task) => (
             <div key={task.id} className="list-item">
               <div className="item-info">
-                <h4>{new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {task.title}</h4>
+                <h4>
+                  {new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {task.title}
+                </h4>
                 <p>{task.description}</p>
               </div>
               <span className={`status-badge status-${task.status}`}>
@@ -213,7 +211,7 @@ return (
             />
         </div>
         
-        <NotificationWidget />
+        <NotificationWidget key="notification-widget-stable" />
       </div>
       
       <BottomNav items={navItems} responsive={false} />

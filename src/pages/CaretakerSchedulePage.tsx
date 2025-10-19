@@ -3,7 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
-import { tasksApi, useApi } from '../services/api.ts';
+import { maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerSchedulePage() {
   const [user, setUser] = useState(null);
@@ -18,7 +18,7 @@ function CaretakerSchedulePage() {
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
-    () => tasksApi.getAll(user?.id ? { caretakerId: user.id } : {}),
+    () => maintenanceApi.getAll({}),
     [user?.id]
   );
 
@@ -91,9 +91,8 @@ function CaretakerSchedulePage() {
     ];
   };
 
-  const useMockData = tasksError || !tasks;
-  const mockTasks = getMockTasks();
-  const tasksData = Array.isArray(tasks) ? tasks : (useMockData ? mockTasks : []);
+  // Use real maintenance request data from API
+  const tasksData = Array.isArray(tasks) ? tasks : [];
 
   // Filter tasks based on selected date and view mode
   const getFilteredTasks = () => {

@@ -28,7 +28,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; message: string; user?: User }>;
   register: (userData: Record<string, unknown>) => Promise<{ success: boolean; message: string }>;
   updateUser: (userData: Partial<User>) => void;
   logout: () => void;
@@ -60,8 +60,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await new Promise(resolve => setTimeout(resolve, 10));
 
       try {
-        const savedUser = localStorage.getItem('briconomy_user');
-        const token = localStorage.getItem('briconomy_token');
+        // Check localStorage first (Remember Me), then sessionStorage (current session)
+        const savedUser = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
+        const token = localStorage.getItem('briconomy_token') || sessionStorage.getItem('briconomy_token');
 
         console.log('[AuthContext] Initializing auth, savedUser:', !!savedUser, 'token:', !!token);
 
@@ -88,7 +89,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
               };
               setUser(enhancedUser);
-              localStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
+              
+              // Update in whichever storage is being used
+              if (localStorage.getItem('briconomy_user')) {
+                localStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
+              } else if (sessionStorage.getItem('briconomy_user')) {
+                sessionStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
+              }
             } else {
               setUser(parsedUser);
             }
@@ -116,7 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.warn('AuthProvider error:', error);
   }
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe = false) => {
     try {
       const result: { success: boolean; message: string; user?: Record<string, unknown>; token?: string } = await authApi.login(email, password);
 
@@ -127,9 +134,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const userWithId = { id, ...(rest as Record<string, unknown>) } as unknown as User;
 
         setUser(userWithId);
-        localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
-        localStorage.setItem('briconomy_token', result.token || 'mock-token');
-        console.log('[AuthContext] Login successful, saved to localStorage:', userWithId.fullName, userWithId.userType);
+        
+        // Only save to localStorage if rememberMe is true
+        if (rememberMe) {
+          localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
+          localStorage.setItem('briconomy_token', result.token || 'mock-token');
+          console.log('[AuthContext] Login successful, saved to localStorage (Remember Me):', userWithId.fullName, userWithId.userType);
+        } else {
+          // Use sessionStorage for non-persistent sessions
+          sessionStorage.setItem('briconomy_user', JSON.stringify(userWithId));
+          sessionStorage.setItem('briconomy_token', result.token || 'mock-token');
+          console.log('[AuthContext] Login successful, saved to sessionStorage (current session only):', userWithId.fullName, userWithId.userType);
+        }
+        
         return { success: true, message: result.message, user: userWithId };
       } else {
         return { success: false, message: result.message };
@@ -159,7 +176,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      localStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+      
+      // Update in whichever storage is being used
+      if (localStorage.getItem('briconomy_user')) {
+        localStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+      } else if (sessionStorage.getItem('briconomy_user')) {
+        sessionStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+      }
     }
   };
 
@@ -170,6 +193,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     localStorage.removeItem('briconomy_user');
     localStorage.removeItem('briconomy_token');
+    sessionStorage.removeItem('briconomy_user');
+    sessionStorage.removeItem('briconomy_token');
   };
 
   const googleLogin = (_credentialResponse: unknown) => {

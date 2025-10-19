@@ -58,7 +58,7 @@ function LoginPage() {
     }
     
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, rememberMe);
       
       if (result.success) {
         if (rememberMe) {
