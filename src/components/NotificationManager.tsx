@@ -41,7 +41,7 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({ userId, userR
     <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 z-50 shadow-lg">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <span className="text-xl">🔔</span>
+          <span className="text-xl"></span>
           <div>
             <p className="font-semibold">Enable Notifications</p>
             <p className="text-sm opacity-90">

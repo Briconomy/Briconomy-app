@@ -90,12 +90,23 @@ function AdminUsersPage() {
                   border: 'none',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: '14px'
+                  fontSize: '12px'
                 }}
               >
                 Pending ({stats.pendingUsers})
               </button>
-              <a href="/admin/add-user" className="btn btn-primary">{t('common.add_user')}</a>
+              <a href="/admin/add-user" className="btn btn-primary">
+                {t('common.add_user')}
+                <span style={{
+                  padding: '10px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '6px'
+                }}>
+                </span>
+              </a>
             </div>
           </div>
           

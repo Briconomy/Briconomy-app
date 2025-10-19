@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import Icon from './Icon.tsx';
 
@@ -19,110 +19,107 @@ const NotificationWidget: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
   const wsRef = React.useRef<WebSocket | null>(null);
   const userIdRef = React.useRef<string | null>(null);
+  const reconnectTimeoutRef = React.useRef<number | null>(null);
 
-  // Separate effect for WebSocket connection - runs only when user.id changes
+  // WebSocket connection with improved error handling
   useEffect(() => {
     if (!user?.id) return;
-    
+
     // Don't reconnect if it's the same user and connection is good
-    if (userIdRef.current === user.id && 
+    if (userIdRef.current === user.id &&
         wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log(`[NotificationWidget] ✅ WebSocket already connected for user ${user.id}, skipping reconnection`);
       return;
     }
-    
-    // Close existing connection if switching users or connection is dead
-    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
-      console.log('[NotificationWidget] Closing previous WebSocket connection');
+
+    // Close existing connection if switching users
+    if (wsRef.current) {
       wsRef.current.close();
+      wsRef.current = null;
     }
-    
+
+    // Clear any pending reconnection attempts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
     userIdRef.current = user.id;
-    
-    // Set up WebSocket connection for real-time notifications
-    const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
-    const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
-    
-    console.log(`[NotificationWidget] 🔌 Connecting WebSocket for user ${user.id}`);
-    
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-    
-    ws.onopen = () => {
-      console.log(`[NotificationWidget] ✅ WebSocket CONNECTED for user ${user.id} (readyState: ${ws.readyState})`);
-    };
-    
-    ws.onmessage = (event) => {
+
+    const connectWebSocket = () => {
+      const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
+      const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
+
       try {
-        console.log(`[NotificationWidget] 📨 Message received:`, event.data);
-        const data = JSON.parse(event.data);
-        if (data.type === 'notification') {
-          console.log(`[NotificationWidget] Processing notification:`, data.data);
-          
-          // Check if this is an announcement deletion notification
-          if (data.data.type === 'announcement_deleted') {
-            console.log(`[NotificationWidget] Announcement deleted: ${data.data.originalTitle}`);
-            setNotifications(prev => {
-              const filtered = prev.filter(n => 
-                !(n.type === 'announcement' && n.title.includes(data.data.originalTitle))
-              );
-              if (filtered.length !== prev.length) {
-                console.log(`[NotificationWidget] Removed ${prev.length - filtered.length} related notifications`);
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'notification') {
+              // Check if this is an announcement deletion notification
+              if (data.data.type === 'announcement_deleted') {
+                setNotifications(prev =>
+                  prev.filter(n => !(n.type === 'announcement' && n.title.includes(data.data.originalTitle)))
+                );
+                return;
               }
-              return filtered;
-            });
-            return;
-          }
-          
-          // Add new notification
-          setNotifications(prev => {
-            const newNotification = {
-              id: String(data.data.id || data.data._id),
-              userId: data.data.userId,
-              title: data.data.title,
-              message: data.data.message,
-              type: data.data.type,
-              read: data.data.read,
-              createdAt: data.data.createdAt
-            };
-            
-            const exists = prev.some(n => n.id === newNotification.id);
-            if (exists) {
-              console.log(`[NotificationWidget] Duplicate ignored: ${newNotification.id}`);
-              return prev;
+
+              // Add new notification
+              setNotifications(prev => {
+                const newNotification = {
+                  id: String(data.data.id || data.data._id),
+                  userId: data.data.userId,
+                  title: data.data.title,
+                  message: data.data.message,
+                  type: data.data.type,
+                  read: data.data.read,
+                  createdAt: data.data.createdAt
+                };
+
+                // Prevent duplicates
+                if (prev.some(n => n.id === newNotification.id)) return prev;
+
+                return [newNotification, ...prev.slice(0, 9)];
+              });
             }
-            
-            console.log(`[NotificationWidget] ➕ New notification: ${newNotification.title}`);
-            return [newNotification, ...prev.slice(0, 9)];
-          });
-        }
+          } catch (error) {
+            console.error('[NotificationWidget] Error parsing message:', error);
+          }
+        };
+
+        ws.onerror = () => {
+          // Silently handle error - will attempt reconnect on close
+        };
+
+        ws.onclose = () => {
+          wsRef.current = null;
+          // Only attempt reconnect if user is still the same
+          if (userIdRef.current === user.id) {
+            reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+          }
+        };
       } catch (error) {
-        console.error('[NotificationWidget] Error parsing WebSocket message:', error);
+        console.error('[NotificationWidget] Connection failed:', error);
       }
     };
-    
-    ws.onclose = () => {
-      console.log(`[NotificationWidget] ❌ WebSocket DISCONNECTED for user ${user.id}`);
-    };
-    
-    ws.onerror = (error) => {
-      console.error(`[NotificationWidget] ⚠️ WebSocket ERROR for user ${user.id}:`, error);
-    };
-    
-    // Cleanup only on unmount or user change
+
+    connectWebSocket();
+
+    // Cleanup
     return () => {
-      // Add a small delay to handle React StrictMode double-mounting in dev
-      setTimeout(() => {
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-          console.log(`[NotificationWidget] 🧹 Closing WebSocket for user ${user.id}`);
-          ws.close();
-        }
-      }, 100);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
   }, [user?.id]);
 
-  const getApiBaseUrl = () => {
+  const getApiBaseUrl = useCallback(() => {
     try {
       const loc = globalThis.location;
       const protocol = loc.protocol || 'http:';
@@ -133,10 +130,9 @@ const NotificationWidget: React.FC = () => {
     } catch (_) {
       return 'http://localhost:8816';
     }
-  };
+  }, []);
 
   // Keep track of notifications we know are deleted (ghost notifications)
-  // Load from localStorage to persist across page reloads
   const [deletedNotificationIds, setDeletedNotificationIds] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem('deletedNotificationIds');
@@ -146,41 +142,30 @@ const NotificationWidget: React.FC = () => {
     }
   });
 
-  const fetchNotifications = React.useCallback(async () => {
-    if (!user?.id) {
-      console.warn('Cannot fetch notifications: user.id is undefined');
-      return;
-    }
-    
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
       setLoading(true);
       const API_BASE_URL = getApiBaseUrl();
-      console.log(`Fetching notifications for user ${user.id} from ${API_BASE_URL}/api/notifications/${user.id}`);
       const response = await fetch(`${API_BASE_URL}/api/notifications/${user.id}`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
       const data = await response.json();
-      console.log('Fetched notifications raw data:', data);
-      
-      // Filter out notifications we know are deleted (ghost notifications)
-      // Access the Set directly in the callback to avoid dependency issues
-      const deletedIds = deletedNotificationIds;
-      const filteredData = data.filter(notification => 
-        !deletedIds.has(notification.id)
+
+      // Filter out known deleted notifications
+      const filteredData = data.filter(notification =>
+        !deletedNotificationIds.has(notification.id)
       );
-      
-      if (filteredData.length !== data.length) {
-        console.log(`Filtered out ${data.length - filteredData.length} known ghost notifications`);
-      }
-      
+
       setNotifications(filteredData.slice(0, 10));
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]); // Remove deletedNotificationIds from dependencies
+  }, [user?.id, getApiBaseUrl, deletedNotificationIds]);
 
   // Fetch notifications when user changes
   useEffect(() => {
@@ -189,85 +174,61 @@ const NotificationWidget: React.FC = () => {
     }
   }, [user?.id, fetchNotifications]);
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = useCallback(async (notificationId: string) => {
     try {
       const API_BASE_URL = getApiBaseUrl();
       await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ read: true })
       });
-      
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === notificationId 
-            ? { ...notif, read: true }
-            : notif
+
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.id === notificationId ? { ...notif, read: true } : notif
         )
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  };
+  }, [getApiBaseUrl]);
 
-  const deleteNotification = async (notificationId: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent triggering the read action
-    
-    console.log('Delete notification called for ID:', notificationId);
-    
+  const deleteNotification = useCallback(async (notificationId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+
     try {
       const API_BASE_URL = getApiBaseUrl();
-      
-      // Delete the notification from the server
       const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE',
       });
-      
-      if (response.ok) {
-        // Successfully deleted from database - remove from UI and mark as deleted
+
+      if (response.ok || response.status === 404) {
+        // Successfully deleted or already gone - remove from UI
         setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
         setDeletedNotificationIds(prev => {
           const newSet = new Set([...prev, notificationId]);
           localStorage.setItem('deletedNotificationIds', JSON.stringify([...newSet]));
           return newSet;
         });
-        console.log('Notification deleted successfully from database and UI');
-      } else if (response.status === 404) {
-        // Notification doesn't exist in database (404 Not Found) - it's a ghost
-        // Remove from UI anyway since it's not in the database and mark as deleted
-        setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-        setDeletedNotificationIds(prev => {
-          const newSet = new Set([...prev, notificationId]);
-          localStorage.setItem('deletedNotificationIds', JSON.stringify([...newSet]));
-          return newSet;
-        });
-        console.log('Ghost notification removed from UI (was not in database)');
-      } else if (response.status === 500) {
-        // Server error - don't mark as deleted, just show error
-        console.error('Server error deleting notification - not marking as ghost');
-        throw new Error(`Server error deleting notification: ${response.status}`);
-      } else {
+      } else if (response.status !== 500) {
         throw new Error(`Failed to delete notification: ${response.status}`);
       }
     } catch (error) {
       console.error('Error deleting notification:', error);
-      // For network errors, don't remove from UI - let user try again
     }
-  };
+  }, [getApiBaseUrl]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const displayNotifications = expanded ? notifications.slice(0, 10) : notifications.slice(0, 3);
-  
-  console.log('NotificationWidget render:', { 
-    total: notifications.length, 
-    unread: unreadCount, 
-    expanded, 
-    displaying: displayNotifications.length 
-  });
+  const unreadCount = useMemo(() =>
+    notifications.filter(n => !n.read).length,
+    [notifications]
+  );
 
-  const getNotificationIcon = (type: string) => {
+  const displayNotifications = useMemo(() =>
+    expanded ? notifications.slice(0, 10) : notifications.slice(0, 3),
+    [expanded, notifications]
+  );
+
+  const getNotificationIcon = useCallback((type: string) => {
     switch (type) {
       case 'announcement': return 'A';
       case 'payment_reminder': return 'P';
@@ -275,16 +236,16 @@ const NotificationWidget: React.FC = () => {
       case 'lease_renewal': return 'L';
       default: return 'N';
     }
-  };
+  }, []);
 
-  const formatTimeAgo = (dateString: string) => {
+  const formatTimeAgo = useCallback((dateString: string) => {
     const now = new Date();
     const notificationTime = new Date(dateString);
     const diffMs = now.getTime() - notificationTime.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffMins < 60) {
       return `${diffMins}m ago`;
     } else if (diffHours < 24) {
@@ -292,13 +253,13 @@ const NotificationWidget: React.FC = () => {
     } else {
       return `${diffDays}d ago`;
     }
-  };
+  }, []);
 
   if (!user || user.userType === 'admin') return null;
 
   return (
     <div style={{ marginTop: '16px', padding: '0 16px' }}>
-      <div 
+      <div
         style={{
           backgroundColor: '#f8f9fa',
           border: '1px solid #e9ecef',
@@ -307,7 +268,7 @@ const NotificationWidget: React.FC = () => {
           maxWidth: '100%'
         }}
       >
-        <div 
+        <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -315,13 +276,10 @@ const NotificationWidget: React.FC = () => {
             marginBottom: '12px',
             cursor: 'pointer'
           }}
-          onClick={() => {
-            console.log('Header clicked, toggling expanded from', expanded, 'to', !expanded);
-            setExpanded(!expanded);
-          }}
+          onClick={() => setExpanded(!expanded)}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div 
+            <div
               style={{
                 width: '24px',
                 height: '24px',
@@ -338,7 +296,7 @@ const NotificationWidget: React.FC = () => {
               Notifications
             </h3>
             {unreadCount > 0 && (
-              <span 
+              <span
                 style={{
                   backgroundColor: '#dc3545',
                   color: 'white',
@@ -383,7 +341,7 @@ const NotificationWidget: React.FC = () => {
             >
               <Icon name="refresh" size={16} />
             </button>
-            <span 
+            <span
               style={{
                 fontSize: '18px',
                 color: '#6c757d',
@@ -420,7 +378,7 @@ const NotificationWidget: React.FC = () => {
                 onClick={() => !notification.read && markAsRead(notification.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <div 
+                  <div
                     style={{
                       width: '20px',
                       height: '20px',
@@ -431,7 +389,7 @@ const NotificationWidget: React.FC = () => {
                       fontSize: '10px',
                       fontWeight: 'bold',
                       color: 'white',
-                      backgroundColor: 
+                      backgroundColor:
                         notification.type === 'announcement' ? '#007bff' :
                         notification.type === 'payment_reminder' ? '#ffc107' :
                         notification.type === 'maintenance_update' ? '#28a745' :
@@ -442,7 +400,7 @@ const NotificationWidget: React.FC = () => {
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 
+                    <h4
                       style={{
                         margin: '0 0 4px 0',
                         fontSize: '14px',
@@ -453,7 +411,7 @@ const NotificationWidget: React.FC = () => {
                     >
                       {notification.title}
                     </h4>
-                    <p 
+                    <p
                       style={{
                         margin: '0 0 6px 0',
                         fontSize: '12px',
@@ -503,7 +461,7 @@ const NotificationWidget: React.FC = () => {
                           <Icon name="trash" size={20} />
                         </button>
                         {!notification.read && (
-                          <div 
+                          <div
                             style={{
                               width: '6px',
                               height: '6px',

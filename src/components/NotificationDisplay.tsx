@@ -85,7 +85,7 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
   };
 
   const deleteNotification = async (notificationId: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent triggering the read action
+    event.stopPropagation(); 
     
     try {
       const API_BASE_URL = getApiBaseUrl();
@@ -95,7 +95,6 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
       
       if (!response.ok) throw new Error('Failed to delete notification');
       
-      // Remove the notification from the local state
       setNotifications(prev => 
         prev.filter(notif => notif._id !== notificationId)
       );
@@ -190,10 +189,10 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                         <button
                           type="button"
                           onClick={(e) => deleteNotification(notification._id, e)}
-                          className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity"
+                          className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity text-xs font-medium"
                           title="Delete notification"
                         >
-                          🗑️
+                          Delete
                         </button>
                         {!notification.read && (
                           <span className="text-xs text-blue-600 font-medium">New</span>
@@ -237,7 +236,6 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                 onClick={() => setShowDropdown(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                ×
               </button>
             </div>
           </div>
@@ -285,10 +283,10 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                           <button
                             type="button"
                             onClick={(e) => deleteNotification(notification._id, e)}
-                            className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity text-xs"
+                            className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity text-xs font-medium"
                             title="Delete notification"
                           >
-                            🗑️
+                            Delete
                           </button>
                           {!notification.read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
