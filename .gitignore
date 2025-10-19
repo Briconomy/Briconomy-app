@@ -141,3 +141,5 @@ apple-touch-icon.png
 
 bricllm/
 bricllm-build/
+.env.client
+.env.server
