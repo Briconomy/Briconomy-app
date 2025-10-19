@@ -232,29 +232,47 @@ function ManagerPaymentsPage() {
             title="Export Data"
             description="Download CSV"
             onClick={() => {
-              // #COMPLETION_DRIVE: Assuming filteredPayments contains the correct data to export
-              // #SUGGEST_VERIFY: Download and open CSV to confirm correct data
-              const csvRows = [];
-              const headers = ["Tenant","Property","Unit","Amount","Due Date","Status"];
-              csvRows.push(headers.join(","));
-              filteredPayments.forEach(p => {
+              const exportRows = Array.isArray(filteredPayments) && filteredPayments.length > 0
+                ? filteredPayments
+                : Array.isArray(payments)
+                  ? payments
+                  : [];
+
+              if (exportRows.length === 0) {
+                window.alert('No payment data available to export.');
+                return;
+              }
+
+              const headers = ["Tenant", "Property", "Unit", "Amount", "Due Date", "Status"];
+              const csvRows = [headers.join(",")];
+              const wrap = (value: unknown) => {
+                if (value === null || value === undefined) {
+                  return '""';
+                }
+                const normalized = String(value).replace(/"/g, '""');
+                return `"${normalized}"`;
+              };
+
+              exportRows.forEach((p) => {
                 csvRows.push([
-                  p.tenantName,
-                  p.propertyName,
-                  p.unitNumber,
-                  p.amount,
-                  p.dueDate,
-                  p.status
-                ].map(v => `"${v ?? ''}"`).join(","));
+                  wrap(p?.tenantName ?? ''),
+                  wrap(p?.propertyName ?? ''),
+                  wrap(p?.unitNumber ?? ''),
+                  wrap(p?.amount ?? ''),
+                  wrap(p?.dueDate ?? ''),
+                  wrap(p?.status ?? '')
+                ].join(","));
               });
-              const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-              const encodedUri = encodeURI(csvContent);
+
+              const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
               const link = document.createElement("a");
-              link.setAttribute("href", encodedUri);
-              link.setAttribute("download", "payments.csv");
+              link.href = url;
+              link.download = "payments.csv";
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
+              URL.revokeObjectURL(url);
             }}
           />
   </div>
