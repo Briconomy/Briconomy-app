@@ -10,7 +10,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| find ":8816" ^| find "LISTENING"') do
 
 REM Kill any remaining Deno processes
 echo Killing Deno processes...
-taskkill /f /im deno.exe >nul 2>&1
+taskkill F IM deno.exe
 
 REM Kill any remaining Node processes
 echo Killing Node processes...

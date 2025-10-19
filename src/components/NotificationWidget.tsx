@@ -17,98 +17,109 @@ const NotificationWidget: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const wsRef = React.useRef<WebSocket | null>(null);
+  const userIdRef = React.useRef<string | null>(null);
 
+  // Separate effect for WebSocket connection - runs only when user.id changes
   useEffect(() => {
-    if (user?.id) {
-      fetchNotifications();
-      
-      // Set up WebSocket connection for real-time notifications
-      const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
-      const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
-      
-      console.log(`Attempting WebSocket connection for user ${user.id} at ${wsUrl}`);
-      
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        console.log(`WebSocket connected for notifications - User: ${user.id}`);
-      };
-      
-      ws.onmessage = (event) => {
-        try {
-          console.log(`WebSocket message received for user ${user.id}:`, event.data);
-          const data = JSON.parse(event.data);
-          if (data.type === 'notification') {
-            console.log(`Processing notification:`, data.data);
+    if (!user?.id) return;
+    
+    // Don't reconnect if it's the same user and connection is good
+    if (userIdRef.current === user.id && 
+        wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log(`[NotificationWidget] ✅ WebSocket already connected for user ${user.id}, skipping reconnection`);
+      return;
+    }
+    
+    // Close existing connection if switching users or connection is dead
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      console.log('[NotificationWidget] Closing previous WebSocket connection');
+      wsRef.current.close();
+    }
+    
+    userIdRef.current = user.id;
+    
+    // Set up WebSocket connection for real-time notifications
+    const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
+    const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
+    
+    console.log(`[NotificationWidget] 🔌 Connecting WebSocket for user ${user.id}`);
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+    
+    ws.onopen = () => {
+      console.log(`[NotificationWidget] ✅ WebSocket CONNECTED for user ${user.id} (readyState: ${ws.readyState})`);
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        console.log(`[NotificationWidget] 📨 Message received:`, event.data);
+        const data = JSON.parse(event.data);
+        if (data.type === 'notification') {
+          console.log(`[NotificationWidget] Processing notification:`, data.data);
+          
+          // Check if this is an announcement deletion notification
+          if (data.data.type === 'announcement_deleted') {
+            console.log(`[NotificationWidget] Announcement deleted: ${data.data.originalTitle}`);
+            setNotifications(prev => {
+              const filtered = prev.filter(n => 
+                !(n.type === 'announcement' && n.title.includes(data.data.originalTitle))
+              );
+              if (filtered.length !== prev.length) {
+                console.log(`[NotificationWidget] Removed ${prev.length - filtered.length} related notifications`);
+              }
+              return filtered;
+            });
+            return;
+          }
+          
+          // Add new notification
+          setNotifications(prev => {
+            const newNotification = {
+              id: String(data.data.id || data.data._id),
+              userId: data.data.userId,
+              title: data.data.title,
+              message: data.data.message,
+              type: data.data.type,
+              read: data.data.read,
+              createdAt: data.data.createdAt
+            };
             
-            // Check if this is an announcement deletion notification
-            if (data.data.type === 'announcement_deleted') {
-              console.log(`Received announcement deletion notice: ${data.data.originalTitle}`);
-              // Remove any notifications related to this announcement
-              setNotifications(prev => {
-                const filtered = prev.filter(n => 
-                  !(n.type === 'announcement' && n.title.includes(data.data.originalTitle))
-                );
-                if (filtered.length !== prev.length) {
-                  console.log(`Removed ${prev.length - filtered.length} notifications related to deleted announcement`);
-                }
-                return filtered;
-              });
-              // Don't add the deletion notification to the list - just use it to clean up
-              return;
+            const exists = prev.some(n => n.id === newNotification.id);
+            if (exists) {
+              console.log(`[NotificationWidget] Duplicate ignored: ${newNotification.id}`);
+              return prev;
             }
             
-            // Add new notification to the top of the list
-            setNotifications(prev => {
-              const newNotification = {
-                id: String(data.data.id || data.data._id),
-                userId: data.data.userId,
-                title: data.data.title,
-                message: data.data.message,
-                type: data.data.type,
-                read: data.data.read,
-                createdAt: data.data.createdAt
-              };
-              
-              // Avoid duplicates by checking if notification already exists
-              const exists = prev.some(n => n.id === newNotification.id);
-              if (exists) {
-                console.log(`Duplicate notification ignored: ${newNotification.id}`);
-                return prev;
-              }
-              
-              console.log(`New notification added: ${newNotification.title}`);
-              return [newNotification, ...prev.slice(0, 9)]; // Keep only latest 10
-            });
-          }
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+            console.log(`[NotificationWidget] ➕ New notification: ${newNotification.title}`);
+            return [newNotification, ...prev.slice(0, 9)];
+          });
         }
-      };
-      
-      ws.onclose = () => {
-        console.log(`WebSocket disconnected for user ${user.id}`);
-      };
-      
-      ws.onerror = (error) => {
-        console.error(`WebSocket error for user ${user.id}:`, error);
-      };
-      
-      // Refresh notifications when user returns to tab (fallback)
-      const handleVisibilityChange = () => {
-        if (!document.hidden) {
-          fetchNotifications();
+      } catch (error) {
+        console.error('[NotificationWidget] Error parsing WebSocket message:', error);
+      }
+    };
+    
+    ws.onclose = () => {
+      console.log(`[NotificationWidget] ❌ WebSocket DISCONNECTED for user ${user.id}`);
+    };
+    
+    ws.onerror = (error) => {
+      console.error(`[NotificationWidget] ⚠️ WebSocket ERROR for user ${user.id}:`, error);
+    };
+    
+    // Cleanup only on unmount or user change
+    return () => {
+      // Add a small delay to handle React StrictMode double-mounting in dev
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          console.log(`[NotificationWidget] 🧹 Closing WebSocket for user ${user.id}`);
+          ws.close();
         }
-      };
-      
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      
-      return () => {
-        ws.close();
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
-    }
+      }, 100);
+    };
   }, [user?.id]);
 
   const getApiBaseUrl = () => {
@@ -135,7 +146,7 @@ const NotificationWidget: React.FC = () => {
     }
   });
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = React.useCallback(async () => {
     if (!user?.id) {
       console.warn('Cannot fetch notifications: user.id is undefined');
       return;
@@ -167,7 +178,14 @@ const NotificationWidget: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, deletedNotificationIds]);
+
+  // Fetch notifications when user changes
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotifications();
+    }
+  }, [user?.id, fetchNotifications]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -295,7 +313,7 @@ const NotificationWidget: React.FC = () => {
             marginBottom: '12px',
             cursor: 'pointer'
           }}
-          onClick={(e) => {
+          onClick={() => {
             console.log('Header clicked, toggling expanded from', expanded, 'to', !expanded);
             setExpanded(!expanded);
           }}

@@ -520,27 +520,177 @@ export async function getMaintenanceRequests(filters: Record<string, unknown> = 
   }
 }
 
-export async function createMaintenanceRequest(requestData: Record<string, unknown>) {
+export async function createMaintenanceRequest(requestData: Record<string, unknown>, broadcaster?: { broadcastToUsers: (userIds: string[], notification: unknown) => void }) {
   try {
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
-  const result = await requests.insertOne({ ...(requestData as Record<string, unknown>), status: 'pending', createdAt: new Date(), updatedAt: new Date() });
-    return result;
+    const users = getCollection("users");
+    
+    const requestDoc = { 
+      ...requestData, 
+      status: 'pending', 
+      createdAt: new Date(), 
+      updatedAt: new Date() 
+    };
+    
+    const result = await requests.insertOne(requestDoc);
+    const requestId = String(result.insertedId || result);
+    
+    const createdRequest = await requests.findOne({ _id: new ObjectId(requestId) });
+    
+    const caretakers = await users.find({ userType: 'caretaker' }).toArray();
+    const managers = await users.find({ userType: 'manager' }).toArray();
+    
+    console.log(`[createMaintenanceRequest] New request created: ${requestData.title}, notifying ${caretakers.length} caretakers and ${managers.length} managers`);
+    
+    const allRecipients = [...caretakers, ...managers];
+    
+    if (allRecipients.length > 0) {
+      const notifications = getCollection("notifications");
+      const createdNotifications = [];
+      const userIds = [];
+      
+      for (const user of allRecipients) {
+        const notificationDoc = {
+          userId: user._id,
+          title: 'New Maintenance Request',
+          message: `${requestData.title} - Priority: ${requestData.priority}`,
+          type: 'maintenance_update',
+          requestId: requestId,
+          read: false,
+          createdAt: new Date()
+        };
+        
+        const notifResult = await notifications.insertOne(notificationDoc);
+        
+        const createdNotification = {
+          id: String(notifResult.insertedId || notifResult),
+          _id: String(notifResult.insertedId || notifResult),
+          userId: String(user._id),
+          title: notificationDoc.title,
+          message: notificationDoc.message,
+          type: notificationDoc.type,
+          requestId: requestId,
+          read: false,
+          createdAt: notificationDoc.createdAt.toISOString()
+        };
+        
+        createdNotifications.push(createdNotification);
+        userIds.push(String(user._id));
+      }
+      
+      if (broadcaster && userIds.length > 0) {
+        console.log(`[createMaintenanceRequest] Broadcasting to ${userIds.length} users via WebSocket`);
+        for (let i = 0; i < createdNotifications.length; i++) {
+          broadcaster.broadcastToUsers([userIds[i]], createdNotifications[i]);
+        }
+      }
+    }
+    
+    return mapDoc(createdRequest);
   } catch (error) {
     console.error("Error creating maintenance request:", error);
     throw error;
   }
 }
 
-export async function updateMaintenanceRequest(id: string, updateData: Record<string, unknown>) {
+export async function updateMaintenanceRequest(id: string, updateData: Record<string, unknown>, broadcaster?: { broadcastToUsers: (userIds: string[], notification: unknown) => void }) {
   try {
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
-    const result = await requests.updateOne(
+    const notifications = getCollection("notifications");
+    
+    const existingRequest = await requests.findOne({ _id: new ObjectId(id) });
+    
+    if (!existingRequest) {
+      throw new Error('Maintenance request not found');
+    }
+    
+    const updateDoc = { 
+      ...updateData, 
+      updatedAt: new Date() 
+    };
+    
+    if (updateData.status === 'completed' && !existingRequest.completedAt) {
+      updateDoc.completedAt = new Date();
+    }
+    
+    await requests.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { ...(updateData as Record<string, unknown>), updatedAt: new Date() } }
+      { $set: updateDoc }
     );
-    return result;
+    
+    const updatedRequest = await requests.findOne({ _id: new ObjectId(id) });
+    
+    const statusChanged = updateData.status && updateData.status !== existingRequest.status;
+    const assignmentChanged = updateData.assignedTo && updateData.assignedTo !== existingRequest.assignedTo;
+    
+    if (statusChanged || assignmentChanged) {
+      const tenantId = String(existingRequest.tenantId);
+      const managerId = String(existingRequest.managerId || '');
+      
+      const recipientIds = [tenantId];
+      if (managerId) recipientIds.push(managerId);
+      
+      let notificationTitle = 'Maintenance Request Updated';
+      let notificationMessage = `Your request "${existingRequest.title}" has been updated`;
+      
+      if (statusChanged) {
+        if (updateData.status === 'in_progress') {
+          notificationTitle = 'Work Started';
+          notificationMessage = `Work has started on your request: ${existingRequest.title}`;
+        } else if (updateData.status === 'completed') {
+          notificationTitle = 'Request Completed';
+          notificationMessage = `Your maintenance request has been completed: ${existingRequest.title}`;
+        }
+      } else if (assignmentChanged) {
+        notificationTitle = 'Caretaker Assigned';
+        notificationMessage = `A caretaker has been assigned to: ${existingRequest.title}`;
+      }
+      
+      console.log(`[updateMaintenanceRequest] Status/assignment changed for request ${id}, notifying tenant and manager`);
+      
+      const createdNotifications = [];
+      
+      for (const userId of recipientIds) {
+        if (!userId || userId === 'undefined') continue;
+        
+        const notificationDoc = {
+          userId: new ObjectId(userId),
+          title: notificationTitle,
+          message: notificationMessage,
+          type: 'maintenance_update',
+          requestId: id,
+          read: false,
+          createdAt: new Date()
+        };
+        
+        const notifResult = await notifications.insertOne(notificationDoc);
+        
+        const createdNotification = {
+          id: String(notifResult.insertedId || notifResult),
+          _id: String(notifResult.insertedId || notifResult),
+          userId: userId,
+          title: notificationDoc.title,
+          message: notificationDoc.message,
+          type: notificationDoc.type,
+          requestId: id,
+          read: false,
+          createdAt: notificationDoc.createdAt.toISOString()
+        };
+        
+        createdNotifications.push(createdNotification);
+      }
+      
+      if (broadcaster && createdNotifications.length > 0) {
+        console.log(`[updateMaintenanceRequest] Broadcasting to ${createdNotifications.length} users via WebSocket`);
+        for (const notification of createdNotifications) {
+          broadcaster.broadcastToUsers([notification.userId], notification);
+        }
+      }
+    }
+    
+    return mapDoc(updatedRequest);
   } catch (error) {
     console.error("Error updating maintenance request:", error);
     throw error;

@@ -1,58 +1,47 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import Icon from '../components/Icon.tsx';
+import { maintenanceApi, useApi, formatDate } from '../services/api.ts';
 
 function CaretakerTasksPage() {
-  const [tasks, setTasks] = useState([
-    {
-      id: '1',
-      title: 'Weekly property inspection',
-      description: 'Routine inspection of common areas and exterior',
-      property: 'Blue Hills Apartments',
-      priority: 'medium',
-      status: 'pending',
-      dueDate: '2024-09-10',
-      createdAt: '2024-09-03'
-    },
-    {
-      id: '2',
-      title: 'AC repair - Unit 2A',
-      description: 'Air conditioning not working properly, making strange noises',
-      property: 'Blue Hills Apartments',
-      priority: 'high',
-      status: 'in_progress',
-      dueDate: '2024-09-05',
-      createdAt: '2024-08-25'
-    },
-    {
-      id: '3',
-      title: 'Pool cleaning',
-      description: 'Weekly pool maintenance and chemical balancing',
-      property: 'Blue Hills Apartments',
-      priority: 'medium',
-      status: 'pending',
-      dueDate: '2024-09-04',
-      createdAt: '2024-09-02'
-    },
-    {
-      id: '4',
-      title: 'Garden maintenance',
-      description: 'Trim hedges, water plants, and general landscaping',
-      property: 'Green Valley Complex',
-      priority: 'low',
-      status: 'completed',
-      dueDate: '2024-09-01',
-      createdAt: '2024-08-28',
-      completedAt: '2024-09-01'
-    }
-  ]);
+  const [user, setUser] = useState<{ id?: string; fullName?: string; userType?: string } | null>(null);
 
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const { data: tasks, loading: tasksLoading, refetch: refetchTasks } = useApi(
+    () => maintenanceApi.getAll({}),
+    []
+  );
+
+  // Refetch tasks every 5 seconds to catch new maintenance requests
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      console.log('[CaretakerTasksPage] Auto-refreshing tasks...');
+      refetchTasks();
+    }, 5000); // Refresh every 5 seconds
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refetchTasks]);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = () => {
+    try {
+      const userRaw = localStorage.getItem('briconomy_user');
+      const userData = userRaw ? JSON.parse(userRaw) : null;
+      setUser(userData);
+    } catch (err) {
+      console.error('Error loading user data:', err);
+    }
+  };
+
+  const tasksList = Array.isArray(tasks) ? tasks : [];
 
   const navItems = [
     { path: '/caretaker', label: 'Dashboard', icon: 'issue', active: false },
@@ -61,21 +50,34 @@ function CaretakerTasksPage() {
     { path: '/caretaker/reports', label: 'Reports', icon: 'report' }
   ];
 
-  const pendingCount = tasks.filter(t => t.status === 'pending').length;
-  const inProgressCount = tasks.filter(t => t.status === 'in_progress').length;
-  const completedCount = tasks.filter(t => t.status === 'completed').length;
-  const overdueCount = tasks.filter(t => t.status === 'pending' && new Date(t.dueDate) < new Date()).length;
+  const pendingCount = tasksList.filter((t: { status: string }) => t.status === 'pending').length;
+  const inProgressCount = tasksList.filter((t: { status: string }) => t.status === 'in_progress').length;
+  const completedCount = tasksList.filter((t: { status: string }) => t.status === 'completed').length;
+  const overdueCount = tasksList.filter((t: { status: string; createdAt: string }) => 
+    t.status === 'pending' && 
+    new Date(t.createdAt) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  ).length;
 
-  const handleStatusChange = (taskId, newStatus) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { 
-            ...task, 
-            status: newStatus,
-            completedAt: newStatus === 'completed' ? new Date().toISOString().split('T')[0] : undefined
-          }
-        : task
-    ));
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      const updateData: Record<string, unknown> = { 
+        status: newStatus
+      };
+      
+      if (user?.id) {
+        updateData.assignedTo = user.id;
+      }
+      
+      if (newStatus === 'completed') {
+        updateData.completedAt = new Date().toISOString();
+      }
+      
+      await maintenanceApi.update(taskId, updateData);
+      await refetchTasks();
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      alert('Failed to update task status. Please try again.');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -97,9 +99,24 @@ function CaretakerTasksPage() {
     }
   };
 
-  const isOverdue = (dueDate) => {
-    return new Date(dueDate) < new Date();
+  const isOverdue = (createdAt: string) => {
+    return new Date(createdAt) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   };
+
+  if (tasksLoading) {
+    return (
+      <div className="app-container mobile-only">
+        <TopNav showLogout showBackButton/>
+        <div className="main-content">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading tasks...</p>
+          </div>
+        </div>
+        <BottomNav items={navItems} responsive={false} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container mobile-only">
@@ -107,78 +124,94 @@ function CaretakerTasksPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">My Tasks</div>
-          <div className="page-subtitle">Property maintenance and inspections</div>
+          <div className="page-title">Maintenance Requests</div>
+          <div className="page-subtitle">Property maintenance tasks</div>
         </div>
         
         <div className="dashboard-grid">
           <StatCard value={pendingCount} label="Pending" />
           <StatCard value={inProgressCount} label="In Progress" />
           <StatCard value={completedCount} label="Completed" />
-          <StatCard value={overdueCount} label="Overdue" />
+          <StatCard value={overdueCount} label="Overdue (>7 days)" />
         </div>
 
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Assigned Tasks</div>
-            <button type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowTaskForm(true)}
-            >
-              New Task
-            </button>
+            <div className="table-title">All Maintenance Requests</div>
           </div>
           
-          {tasks.map((task) => (
-            <div key={task.id} className="list-item">
-              <div className="item-info">
-                <h4>{task.title}</h4>
-                <p className="text-sm text-gray-600">{task.description}</p>
-                <div className="task-meta">
-                  <span className={`text-xs ${getPriorityColor(task.priority)}`}>
-                    {task.priority.toUpperCase()}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {task.property}
-                  </span>
-                  <span className={`text-xs ${isOverdue(task.dueDate) && task.status === 'pending' ? 'text-red-600' : 'text-gray-500'}`}>
-                    Due: {new Date(task.dueDate).toLocaleDateString()}
-                  </span>
+          {tasksList.length === 0 ? (
+            <div className="empty-state">
+              <p>No maintenance requests found</p>
+            </div>
+          ) : (
+            tasksList.map((task: {
+              id: string;
+              title: string;
+              description: string;
+              property?: string;
+              priority: string;
+              status: string;
+              createdAt: string;
+              completedAt?: string;
+            }) => (
+              <div key={task.id} className="list-item">
+                <div className="item-info">
+                  <h4>{task.title}</h4>
+                  <p className="text-sm text-gray-600">{task.description}</p>
+                  <div className="task-meta">
+                    <span className={`text-xs ${getPriorityColor(task.priority)}`}>
+                      {task.priority.toUpperCase()} PRIORITY
+                    </span>
+                    {task.property && (
+                      <span className="text-xs text-gray-500">
+                        {task.property}
+                      </span>
+                    )}
+                    <span className={`text-xs ${isOverdue(task.createdAt) && task.status === 'pending' ? 'text-red-600' : 'text-gray-500'}`}>
+                      Created: {formatDate(task.createdAt)}
+                    </span>
+                    {task.completedAt && (
+                      <span className="text-xs text-green-600">
+                        Completed: {formatDate(task.completedAt)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="item-actions">
-                <span className={`status-badge ${getStatusColor(task.status)}`}>
-                  {task.status.replace('_', ' ').toUpperCase()}
-                </span>
-                <div className="task-actions">
-                  {task.status === 'pending' && (
-                    <>
-                      <button type="button"
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => handleStatusChange(task.id, 'in_progress')}
-                      >
-                        Start
-                      </button>
+                <div className="item-actions">
+                  <span className={`status-badge ${getStatusColor(task.status)}`}>
+                    {task.status.replace('_', ' ').toUpperCase()}
+                  </span>
+                  <div className="task-actions">
+                    {task.status === 'pending' && (
+                      <>
+                        <button type="button"
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => handleStatusChange(task.id, 'in_progress')}
+                        >
+                          Start Work
+                        </button>
+                        <button type="button"
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleStatusChange(task.id, 'completed')}
+                        >
+                          Mark Complete
+                        </button>
+                      </>
+                    )}
+                    {task.status === 'in_progress' && (
                       <button type="button"
                         className="btn btn-sm btn-primary"
                         onClick={() => handleStatusChange(task.id, 'completed')}
                       >
-                        Complete
+                        Mark Complete
                       </button>
-                    </>
-                  )}
-                  {task.status === 'in_progress' && (
-                    <button type="button"
-                      className="btn btn-sm btn-primary"
-                      onClick={() => handleStatusChange(task.id, 'completed')}
-                    >
-                      Complete
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <ChartCard title="Task Overview">
