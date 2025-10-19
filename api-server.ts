@@ -26,6 +26,7 @@ import {
   deleteNotification,
   getDashboardStats,
   loginUser,
+  loginWithGoogle,
   registerUser,
   getSystemStats,
   getUserStats,
@@ -67,6 +68,40 @@ import {
   approvePendingUser,
   declinePendingUser
 } from "./api-services.ts";
+
+async function loadEnvFile(filePath: string): Promise<Record<string, string>> {
+  try {
+    const content = await Deno.readTextFile(filePath);
+    const env: Record<string, string> = {};
+    
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      
+      const equalIndex = trimmed.indexOf('=');
+      if (equalIndex === -1) continue;
+      
+      const key = trimmed.substring(0, equalIndex).trim();
+      const value = trimmed.substring(equalIndex + 1).trim();
+      env[key] = value;
+    }
+    
+    return env;
+  } catch (error) {
+    console.warn(`Could not load ${filePath}:`, error);
+    return {};
+  }
+}
+
+const serverEnv = await loadEnvFile('.env.server');
+
+for (const [key, value] of Object.entries(serverEnv)) {
+  if (!Deno.env.get(key)) {
+    Deno.env.set(key, value);
+  }
+}
+
+console.log('Server environment loaded. Google Client ID set:', !!Deno.env.get('GOOGLE_CLIENT_ID'));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -198,6 +233,21 @@ serve(async (req) => {
         };
         
         const result = await loginUser(data.email, data.password, clientInfo);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'google' && req.method === 'POST') {
+        const data = await req.json();
+        
+        const clientInfo = {
+          ip: req.headers.get('x-forwarded-for') || 
+              req.headers.get('x-real-ip') || 
+              req.headers.get('cf-connecting-ip') ||
+              'unknown',
+          userAgent: req.headers.get('user-agent') || 'unknown'
+        };
+        
+        const result = await loginWithGoogle(data.credential, clientInfo);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });

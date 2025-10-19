@@ -59,7 +59,7 @@ import AdminPendingUsersPage from './pages/AdminPendingUsersPage.tsx';
 function App() {
   // Use runtime-injected env object when available (dev-server injects __BRICONOMY_ENV__)
   const runtimeEnv = (globalThis as any).__BRICONOMY_ENV__ || {};
-  const googleClientId = runtimeEnv.VITE_GOOGLE_CLIENT_ID || '471516393144-mb8903q4kvefqrl89na1ntevhq17t8h1.apps.googleusercontent.com';
+  const googleClientId = runtimeEnv.VITE_GOOGLE_CLIENT_ID || '442301458677-08gm6c0d3mabv52455vpnaduqgm6m8gh.apps.googleusercontent.com';
 
   return (
     <div className="app">

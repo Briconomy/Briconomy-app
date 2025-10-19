@@ -1,6 +1,49 @@
 import { connectToMongoDB, getCollection } from "./db.ts";
 import { ObjectId } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
 
+interface GoogleTokenInfo {
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: string;
+  name?: string;
+  picture?: string;
+  given_name?: string;
+  family_name?: string;
+}
+
+export async function verifyGoogleToken(credential: string): Promise<GoogleTokenInfo | null> {
+  try {
+    const response = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+    );
+    
+    if (!response.ok) {
+      console.error('Google token verification failed:', response.status);
+      return null;
+    }
+    
+    const tokenInfo = await response.json() as GoogleTokenInfo;
+    
+    const expectedClientId = Deno.env.get('GOOGLE_CLIENT_ID') || '442301458677-08gm6c0d3mabv52455vpnaduqgm6m8gh.apps.googleusercontent.com';
+    
+    if (tokenInfo.aud !== expectedClientId) {
+      console.error('Token audience mismatch');
+      return null;
+    }
+    
+    if (tokenInfo.email_verified !== 'true') {
+      console.error('Email not verified');
+      return null;
+    }
+    
+    return tokenInfo;
+  } catch (error) {
+    console.error('Error verifying Google token:', error);
+    return null;
+  }
+}
+
 function toId(id: unknown) {
   try {
     if (typeof id === "string" && id.length === 24) return new ObjectId(id);
@@ -145,6 +188,94 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
     };
   } catch (error) {
     console.error("Error logging in user:", error);
+    throw error;
+  }
+}
+
+export async function loginWithGoogle(credential: string, clientInfo?: Record<string, unknown>) {
+  try {
+    const tokenInfo = await verifyGoogleToken(credential);
+    
+    if (!tokenInfo) {
+      await createAuditLog({
+        userId: null,
+        action: 'google_login_failed',
+        resource: 'authentication',
+        details: {
+          reason: 'invalid_token',
+          ip: clientInfo?.ip || 'unknown',
+          userAgent: clientInfo?.userAgent || 'unknown'
+        }
+      });
+      return { success: false, message: "Invalid Google token" };
+    }
+    
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    let user = await users.findOne({ email: tokenInfo.email });
+    
+    if (!user) {
+      const newUser = {
+        fullName: tokenInfo.name || tokenInfo.email.split('@')[0],
+        email: tokenInfo.email,
+        phone: '',
+        userType: 'tenant',
+        googleId: tokenInfo.sub,
+        googlePicture: tokenInfo.picture,
+        createdAt: new Date(),
+        authMethod: 'google'
+      };
+      
+      await users.insertOne(newUser);
+      user = await users.findOne({ email: tokenInfo.email });
+      
+      await createAuditLog({
+        userId: String((user as Record<string, unknown>)._id),
+        action: 'google_user_created',
+        resource: 'authentication',
+        details: {
+          email: tokenInfo.email,
+          ip: clientInfo?.ip || 'unknown',
+          userAgent: clientInfo?.userAgent || 'unknown'
+        }
+      });
+    } else {
+      await users.updateOne(
+        { _id: (user as Record<string, unknown>)._id as ObjectId },
+        { 
+          $set: { 
+            googleId: tokenInfo.sub,
+            googlePicture: tokenInfo.picture,
+            lastLogin: new Date()
+          } 
+        }
+      );
+    }
+    
+    const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
+    const mappedUser = { id: String(rest._id ?? ""), ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id")) };
+    
+    await createAuditLog({
+      userId: mappedUser.id,
+      action: 'google_login',
+      resource: 'authentication',
+      details: {
+        email: tokenInfo.email,
+        ip: clientInfo?.ip || 'unknown',
+        userAgent: clientInfo?.userAgent || 'unknown',
+        success: true
+      }
+    });
+    
+    return {
+      success: true,
+      message: "Google login successful",
+      user: mappedUser,
+      token: "google-jwt-token-" + Date.now()
+    };
+  } catch (error) {
+    console.error("Error with Google login:", error);
     throw error;
   }
 }

@@ -68,7 +68,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Don't cache API requests - they should always be fresh
+  if (url.origin !== location.origin) {
+    return;
+  }
+  
   if (url.pathname.startsWith('/api/')) {
     return;
   }

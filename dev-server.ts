@@ -3,6 +3,38 @@ import { serveDir } from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as esbuild from "https://deno.land/x/esbuild@v0.19.8/mod.js";
 import { registerUser, loginUser } from "./api.ts";
 
+async function loadEnvFile(filePath: string): Promise<Record<string, string>> {
+  try {
+    const content = await Deno.readTextFile(filePath);
+    const env: Record<string, string> = {};
+    
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      
+      const equalIndex = trimmed.indexOf('=');
+      if (equalIndex === -1) continue;
+      
+      const key = trimmed.substring(0, equalIndex).trim();
+      const value = trimmed.substring(equalIndex + 1).trim();
+      env[key] = value;
+    }
+    
+    return env;
+  } catch (error) {
+    console.warn(`Could not load ${filePath}:`, error);
+    return {};
+  }
+}
+
+const clientEnv = await loadEnvFile('.env.client');
+
+for (const [key, value] of Object.entries(clientEnv)) {
+  if (!Deno.env.get(key)) {
+    Deno.env.set(key, value);
+  }
+}
+
 const PORT = 5173;
 
 async function transpileTypeScript(code: string, filename: string): Promise<string> {
@@ -194,9 +226,8 @@ async function handler(request: Request): Promise<Response> {
   if (pathname === "/" || (!pathname.includes(".") && !pathname.startsWith("/api"))) {
     let indexFile = await Deno.readTextFile("./public/index.html");
 
-    // Build env script for client-side access to VITE variables
     const envVars = {
-      VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || ''
+      VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || '442301458677-08gm6c0d3mabv52455vpnaduqgm6m8gh.apps.googleusercontent.com'
     };
     const envScript = `const __BRICONOMY_ENV__ = ${JSON.stringify(envVars)};`;
 

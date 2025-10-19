@@ -11,6 +11,8 @@ function AdminAddUserPage() {
     email: '',
     phone: '',
     userType: 'tenant',
+    authMethod: 'password',
+    googleEmail: '',
     password: '',
     confirmPassword: '',
     profile: {
@@ -70,13 +72,21 @@ const handleCreateUser = async () => {
     setError('');
     setSuccess('');
     
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
+    if (formData.authMethod === 'password') {
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
+        setLoading(false);
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        setLoading(false);
+        return;
+      }
     }
     
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.userType || !formData.password) {
+    if (!formData.fullName || !formData.email || !formData.phone || !formData.userType) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
@@ -88,8 +98,14 @@ const handleCreateUser = async () => {
       return;
     }
     
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (formData.authMethod === 'password' && !formData.password) {
+      setError('Please enter a password');
+      setLoading(false);
+      return;
+    }
+    
+    if (formData.authMethod === 'google' && !formData.googleEmail) {
+      setError('Please enter the Google email address for this user');
       setLoading(false);
       return;
     }
@@ -146,14 +162,20 @@ const handleCreateUser = async () => {
     }
     
     try {
-      await adminApi.createUser({
+      const userData: Record<string, unknown> = {
         fullName: formData.fullName,
-        email: formData.email,
+        email: formData.authMethod === 'google' ? formData.googleEmail : formData.email,
         phone: formData.phone,
         userType: formData.userType,
-        password: formData.password,
+        authMethod: formData.authMethod,
         profile: profileData
-      });
+      };
+      
+      if (formData.authMethod === 'password') {
+        userData.password = formData.password;
+      }
+      
+      await adminApi.createUser(userData);
       
       setSuccess('User created successfully! Redirecting to users page...');
       setTimeout(() => navigate('/admin/users'), 2000);
@@ -200,7 +222,7 @@ const handleCreateUser = async () => {
             />
           </div>
           
-          <div className="form-group">
+          <div style={{ marginBottom: '16px' }}>
             <label htmlFor="email">
               Email Address
             </label>
@@ -223,6 +245,83 @@ const handleCreateUser = async () => {
               }}
             />
           </div>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <label 
+              htmlFor="authMethod" 
+              style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontWeight: '600', 
+                color: '#2c3e50', 
+                fontSize: '14px' 
+              }}
+            >
+              Authentication Method
+            </label>
+            <select 
+              id="authMethod"
+              value={formData.authMethod}
+              onChange={handleInputChange}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '2px solid #e9ecef',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#f8f9fa',
+                color: '#2c3e50',
+                transition: 'all 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="password">Password</option>
+              <option value="google">Google Account</option>
+            </select>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#6c757d' }}>
+              {formData.authMethod === 'password' 
+                ? 'User will log in with email and password' 
+                : 'User will log in with their Google account'}
+            </div>
+          </div>
+
+          {formData.authMethod === 'google' && (
+            <div style={{ marginBottom: '16px' }}>
+              <label 
+                htmlFor="googleEmail" 
+                style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontWeight: '600', 
+                  color: '#2c3e50', 
+                  fontSize: '14px' 
+                }}
+              >
+                Google Email Address
+              </label>
+              <input 
+                type="email" 
+                id="googleEmail"
+                value={formData.googleEmail}
+                onChange={handleInputChange}
+                placeholder="user@gmail.com"
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  border: '2px solid #e9ecef',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  background: '#f8f9fa',
+                  color: '#2c3e50',
+                  transition: 'all 0.3s ease',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#6c757d' }}>
+                Enter the Google email address this user will use to sign in
+              </div>
+            </div>
+          )}
           
 <div style={{ marginBottom: '16px' }}>
             <label 
@@ -568,73 +667,76 @@ const handleCreateUser = async () => {
               </div>
             </div>
           )}
-          
-<div style={{ marginBottom: '16px' }}>
-            <label 
-              htmlFor="password" 
-              style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontWeight: '600', 
-                color: '#2c3e50', 
-                fontSize: '14px' 
-              }}
-            >
-              Password
-            </label>
-            <input 
-              type="password" 
-              id="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Please enter password"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                transition: 'all 0.3s ease',
-                boxSizing: 'border-box'
-              }}
-            />
-            <PasswordStrengthIndicator password={formData.password} />
-          </div>
-          
-<div style={{ marginBottom: '16px' }}>
-            <label 
-              htmlFor="confirmPassword" 
-              style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontWeight: '600', 
-                color: '#2c3e50', 
-                fontSize: '14px' 
-              }}
-            >
-              Confirm Password
-            </label>
-            <input 
-              type="password" 
-              id="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="Please confirm password"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                transition: 'all 0.3s ease',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
+          {formData.authMethod === 'password' && (
+            <>
+              <div style={{ marginBottom: '16px' }}>
+                <label 
+                  htmlFor="password" 
+                  style={{ 
+                    display: 'block', 
+                    marginBottom: '6px', 
+                    fontWeight: '600', 
+                    color: '#2c3e50', 
+                    fontSize: '14px' 
+                  }}
+                >
+                  Password
+                </label>
+                <input 
+                  type="password" 
+                  id="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Please enter password"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #e9ecef',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    background: '#f8f9fa',
+                    color: '#2c3e50',
+                    transition: 'all 0.3s ease',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <PasswordStrengthIndicator password={formData.password} />
+              </div>
+              
+              <div style={{ marginBottom: '16px' }}>
+                <label 
+                  htmlFor="confirmPassword" 
+                  style={{ 
+                    display: 'block', 
+                    marginBottom: '6px', 
+                    fontWeight: '600', 
+                    color: '#2c3e50', 
+                    fontSize: '14px' 
+                  }}
+                >
+                  Confirm Password
+                </label>
+                <input 
+                  type="password" 
+                  id="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Please confirm password"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #e9ecef',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    background: '#f8f9fa',
+                    color: '#2c3e50',
+                    transition: 'all 0.3s ease',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </>
+          )}
           
 <button 
             type="submit"

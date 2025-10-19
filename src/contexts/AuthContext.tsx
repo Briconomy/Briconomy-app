@@ -33,7 +33,7 @@ interface AuthContextType {
   updateUser: (userData: Partial<User>) => void;
   logout: () => void;
   isAuthenticated: boolean;
-  googleLogin: (credentialResponse: unknown) => Promise<{ success: boolean; message: string; user?: User }>;
+  googleLogin: (credentialResponse: { credential?: string }) => Promise<{ success: boolean; message: string; user?: User }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -187,9 +187,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
-    // Call Google's logout helper to clear any Google session state
-  try { googleLogout(); } catch (_e) { /* ignore if googleLogout is unavailable */ }
-
+    try { googleLogout(); } catch (_e) { /* ignore if googleLogout is unavailable */ }
     setUser(null);
     localStorage.removeItem('briconomy_user');
     localStorage.removeItem('briconomy_token');
@@ -197,31 +195,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
     sessionStorage.removeItem('briconomy_token');
   };
 
-  const googleLogin = (_credentialResponse: unknown) => {
+  const googleLogin = async (credentialResponse: { credential?: string }) => {
     try {
-      const mockGoogleUser = {
-        id: 'google_' + Date.now(),
-        fullName: 'Google User',
-        email: 'user@gmail.com',
-        phone: '',
-        userType: 'tenant' as const,
-        avatar: 'GU',
-        joinDate: new Date().toISOString().split('T')[0],
-        lastLogin: new Date().toISOString(),
-        unit: 'N/A',
-        property: 'N/A',
-        rent: 0,
-        leaseStart: new Date().toISOString().split('T')[0],
-        leaseEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        emergencyContact: { name: '', relationship: '', phone: '' }
-      };
+      if (!credentialResponse.credential) {
+        console.error('[AuthContext] No credential in response');
+        return Promise.resolve({ success: false, message: 'No credential received from Google' });
+      }
 
-      setUser(mockGoogleUser);
-      localStorage.setItem('briconomy_user', JSON.stringify(mockGoogleUser));
-      localStorage.setItem('briconomy_token', 'google-token-' + Date.now());
-      console.log('[AuthContext] Google login successful, saved to localStorage');
+      const response = await fetch('http://localhost:8000/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          credential: credentialResponse.credential 
+        }),
+      });
 
-      return Promise.resolve({ success: true, message: 'Google login successful', user: mockGoogleUser });
+      const result: { success: boolean; message: string; user?: Record<string, unknown>; token?: string } = await response.json();
+
+      if (result.success && result.user) {
+        const raw = result.user as Record<string, unknown>;
+        const id = String((raw as { _id?: unknown; id?: unknown }).id ?? (raw as { _id?: unknown })._id ?? '');
+        const { _id: _ignored, ...rest } = raw as Record<string, unknown> & { _id?: unknown };
+        const userWithId = { id, ...(rest as Record<string, unknown>) } as unknown as User;
+
+        if (userWithId.userType === 'tenant') {
+          const userRecord = userWithId as unknown as Record<string, unknown>;
+          const enhancedUser = {
+            ...userWithId,
+            avatar: (userRecord.googlePicture as string | undefined) || userWithId.fullName?.substring(0, 2).toUpperCase() || 'T',
+            joinDate: (userRecord.createdAt as string | undefined) || new Date().toISOString().split('T')[0],
+            lastLogin: new Date().toISOString(),
+            unit: 'N/A',
+            property: 'N/A',
+            rent: 0,
+            leaseStart: new Date().toISOString().split('T')[0],
+            leaseEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            emergencyContact: { name: '', relationship: '', phone: '' }
+          };
+          setUser(enhancedUser);
+          localStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
+          localStorage.setItem('briconomy_token', result.token || 'google-token');
+        } else {
+          setUser(userWithId);
+          localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
+          localStorage.setItem('briconomy_token', result.token || 'google-token');
+        }
+
+        console.log('[AuthContext] Google login successful, saved to localStorage');
+        return Promise.resolve({ success: true, message: 'Google login successful', user: userWithId });
+      } else {
+        return Promise.resolve({ success: false, message: result.message });
+      }
     } catch (error) {
       console.error('[AuthContext] Google login error:', error);
       return Promise.resolve({ success: false, message: 'Google login failed. Please try again.' });
