@@ -65,7 +65,11 @@ async function handler(request: Request): Promise<Response> {
     try {
       const indexFile = await Deno.readTextFile("./public/index.html");
       return new Response(indexFile, {
-        headers: { "content-type": "text/html" },
+        headers: { 
+          "content-type": "text/html",
+          "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+          "Cross-Origin-Embedder-Policy": "unsafe-none"
+        },
       });
     } catch {
       return new Response("Server Error: index.html not found.", { status: 500 });
