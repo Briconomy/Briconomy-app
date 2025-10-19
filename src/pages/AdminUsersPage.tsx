@@ -4,9 +4,11 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 function AdminUsersPage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   
   const navItems = [
     { path: '/admin', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
@@ -75,7 +77,26 @@ function AdminUsersPage() {
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">{t('admin.user_list')}</div>
-            <a href="/admin/add-user" className="btn btn-primary">{t('common.add_user')}</a>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                type="button"
+                onClick={() => navigate('/admin/pending-users')}
+                className="btn btn-secondary"
+                style={{
+                  background: '#f39c12',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px'
+                }}
+              >
+                Pending ({stats.pendingUsers})
+              </button>
+              <a href="/admin/add-user" className="btn btn-primary">{t('common.add_user')}</a>
+            </div>
           </div>
           
           <div className="list-item">

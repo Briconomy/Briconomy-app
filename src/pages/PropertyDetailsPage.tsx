@@ -597,7 +597,11 @@ function PropertyDetailsPage() {
 
   const handleApplyNow = () => {
     if (propertyId) {
-      navigate(`/apply/${propertyId}`);
+      if (user) {
+        navigate(`/apply/${propertyId}`);
+      } else {
+        navigate('/register', { state: { propertyId, propertyName: property?.name } });
+      }
     } else {
       console.error('Property ID is undefined');
       navigate('/properties');
