@@ -1099,12 +1099,24 @@ export async function getUserStats() {
     // Count unique roles
     const uniqueRoles = await users.distinct("userType");
     
+    // Count users by role for role distribution
+    const adminCount = await users.countDocuments({ userType: 'admin' });
+    const managerCount = await users.countDocuments({ userType: 'manager' });
+    const tenantCount = await users.countDocuments({ userType: 'tenant' });
+    const caretakerCount = await users.countDocuments({ userType: 'caretaker' });
+    
     // Return computed stats
     return [{
       totalUsers,
       activeUsers,
       totalRoles: uniqueRoles.length,
-      pendingUsers: pendingUsersCount
+      pendingUsers: pendingUsersCount,
+      roleDistribution: {
+        admins: adminCount,
+        managers: managerCount,
+        tenants: tenantCount,
+        caretakers: caretakerCount
+      }
     }];
   } catch (error) {
     console.error("Error fetching user stats:", error);
