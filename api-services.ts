@@ -902,9 +902,26 @@ export async function getSystemStats() {
 export async function getUserStats() {
   try {
     await connectToMongoDB();
-    const userStats = getCollection("user_stats");
-    const stats = await userStats.find({}).toArray();
-    return mapDocs(stats);
+    const users = getCollection("users");
+    const pendingUsers = getCollection("pending_users");
+    
+    // Count actual users
+    const totalUsers = await users.countDocuments({});
+    const activeUsers = await users.countDocuments({ isActive: true });
+    
+    // Count pending users
+    const pendingUsersCount = await pendingUsers.countDocuments({ status: 'pending' });
+    
+    // Count unique roles
+    const uniqueRoles = await users.distinct("userType");
+    
+    // Return computed stats
+    return [{
+      totalUsers,
+      activeUsers,
+      totalRoles: uniqueRoles.length,
+      pendingUsers: pendingUsersCount
+    }];
   } catch (error) {
     console.error("Error fetching user stats:", error);
     throw error;
