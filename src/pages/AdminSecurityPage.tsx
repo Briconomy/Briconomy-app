@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -24,28 +24,9 @@ function AdminSecurityPage() {
   ];
 
   const { data: securityStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSecurityStats());
+  const { data: securitySettings, loading: settingsLoading, refetch: refetchSettings } = useApi(() => adminApi.getSecuritySettings());
   const { data: securityConfig, loading: configLoading, refetch: refetchConfig } = useApi(() => adminApi.getSecurityConfig());
   const { data: securityAlerts, loading: alertsLoading, refetch: refetchAlerts } = useApi(() => adminApi.getSecurityAlerts());
-  const { data: securitySettings, loading: settingsLoading, error: settingsError, refetch: refetchSettings } = useApi(() => adminApi.getSecuritySettings());
-
-  // Debug logging
-  console.log('Security settings data:', securitySettings);
-  console.log('Settings loading:', settingsLoading);
-  console.log('Settings error:', settingsError);
-  console.log('Using fallback?', !securitySettings || securitySettings.length === 0);
-  console.log('Security config data:', securityConfig);
-  console.log('Config loading:', configLoading);
-  console.log('Using config fallback?', !securityConfig || securityConfig.length === 0);
-  
-  // More detailed debugging
-  useEffect(() => {
-    console.log('Security config changed:', securityConfig);
-    if (securityConfig) {
-      console.log('Config is array?', Array.isArray(securityConfig));
-      console.log('Config length:', securityConfig.length);
-      console.log('First config item:', securityConfig[0]);
-    }
-  }, [securityConfig]);
 
   const getFallbackSecurityAlerts = () => [
     { id: '1', title: 'Failed Login Attempts', message: 'Multiple failed login attempts detected from IP 192.168.1.100', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
@@ -143,8 +124,6 @@ function AdminSecurityPage() {
   const handleUpdateSetting = async () => {
     if (!selectedSetting) return;
     
-    console.log('Updating setting:', selectedSetting.setting, 'with value:', settingValue);
-    
     // Basic validation
     if (!settingValue || settingValue.trim() === '') {
       alert('Please enter a valid value');
@@ -184,12 +163,8 @@ function AdminSecurityPage() {
         formattedValue = `${settingValue} attempts`;
       }
 
-      console.log('Sending API request with formatted value:', formattedValue);
+      await adminApi.updateSecuritySetting(selectedSetting.setting, formattedValue);
       
-      const result = await adminApi.updateSecuritySetting(selectedSetting.setting, formattedValue);
-      console.log('API response:', result);
-      
-      console.log('Refetching settings...');
       await refetchSettings();
       
       setShowSettingModal(false);
@@ -214,13 +189,11 @@ function AdminSecurityPage() {
     
     setProcessing(true);
     try {
-      console.log('Updating auth method:', selectedAuthMethod.method, 'to', enabled ? 'enabled' : 'disabled');
       await adminApi.updateAuthMethod(selectedAuthMethod.method, enabled);
       
       // Force refresh of the config data with a small delay to ensure database update
       setTimeout(async () => {
         await refetchConfig();
-        console.log('Config refetched after auth method update');
       }, 100);
       
       setShowAuthModal(false);
@@ -401,11 +374,7 @@ function AdminSecurityPage() {
             </div>
           ) : (
             (() => {
-              console.log('Rendering settings, securitySettings:', securitySettings);
-              console.log('Is array?', Array.isArray(securitySettings));
-              console.log('Length:', securitySettings?.length);
               const useRealData = securitySettings && securitySettings.length > 0;
-              console.log('Using real data?', useRealData);
               return useRealData ? securitySettings : getFallbackSecuritySettings();
             })().map((setting: { setting: string; value: string; configurable: boolean }, index: number) => (
               <div key={`setting-${setting.setting}-${index}`} className="list-item">

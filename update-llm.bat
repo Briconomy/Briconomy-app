@@ -28,35 +28,45 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "usebackq tokens=* delims=" %%I in (`powershell -NoProfile -Command "
-$ErrorActionPreference = 'Stop'
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-$primaryUrl = '%DOWNLOAD_URL%'
-$releaseApi = '%RELEASE_API_URL%'
-$downloadDir = '%TEMP_DIR%'
-$preferredName = '%PREFERRED_ASSET_NAME%'
-$targetPath = Join-Path $downloadDir $preferredName
-try {
-    Invoke-WebRequest -Uri $primaryUrl -OutFile $targetPath
-} catch {
-    [Console]::Error.WriteLine('Primary asset download failed. Attempting release asset discovery...')
-    $release = Invoke-RestMethod -Uri $releaseApi
-    if (-not $release.assets -or $release.assets.Count -eq 0) {
-        throw 'No release assets available.'
-    }
-    $candidate = $release.assets | Where-Object { $_.name -eq $preferredName -and $_.browser_download_url }
-    if (-not $candidate) {
-        $candidate = $release.assets | Where-Object { $_.browser_download_url }
-    }
-    $candidate = $candidate | Select-Object -First 1
-    if (-not $candidate) {
-        throw 'No downloadable asset found in release.'
-    }
-    $targetPath = Join-Path $downloadDir $candidate.name
-    Invoke-WebRequest -Uri $candidate.browser_download_url -OutFile $targetPath
-}
-Write-Output $targetPath
-"`) do set "DOWNLOADED_FILE=%%I"
+echo Downloading from: %DOWNLOAD_URL%
+echo Target directory: %TEMP_DIR%
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$ErrorActionPreference = 'Stop'; " ^
+    "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; " ^
+    "$primaryUrl = '%DOWNLOAD_URL%'; " ^
+    "$releaseApi = '%RELEASE_API_URL%'; " ^
+    "$downloadDir = '%TEMP_DIR%'; " ^
+    "$preferredName = '%PREFERRED_ASSET_NAME%'; " ^
+    "$targetPath = Join-Path $downloadDir $preferredName; " ^
+    "try { " ^
+    "    Write-Host 'Attempting primary download...'; " ^
+    "    Invoke-WebRequest -Uri $primaryUrl -OutFile $targetPath -UseBasicParsing; " ^
+    "    Write-Host \"Downloaded to: $targetPath\"; " ^
+    "} catch { " ^
+    "    Write-Host 'Primary download failed. Trying API discovery...'; " ^
+    "    try { " ^
+    "        $release = Invoke-RestMethod -Uri $releaseApi; " ^
+    "        if (-not $release.assets -or $release.assets.Count -eq 0) { " ^
+    "            throw 'No release assets available.'; " ^
+    "        } " ^
+    "        $candidate = $release.assets | Where-Object { $_.name -eq $preferredName -and $_.browser_download_url } | Select-Object -First 1; " ^
+    "        if (-not $candidate) { " ^
+    "            $candidate = $release.assets | Where-Object { $_.browser_download_url } | Select-Object -First 1; " ^
+    "        } " ^
+    "        if (-not $candidate) { " ^
+    "            throw 'No downloadable asset found in release.'; " ^
+    "        } " ^
+    "        $targetPath = Join-Path $downloadDir $candidate.name; " ^
+    "        Write-Host \"Downloading $($candidate.name)...\"; " ^
+    "        Invoke-WebRequest -Uri $candidate.browser_download_url -OutFile $targetPath -UseBasicParsing; " ^
+    "        Write-Host \"Downloaded to: $targetPath\"; " ^
+    "    } catch { " ^
+    "        Write-Host \"Error: $_\"; " ^
+    "        exit 1; " ^
+    "    } " ^
+    "} " ^
+    "Write-Output $targetPath"
 
 if errorlevel 1 (
     echo Error: Unable to download release asset
@@ -64,14 +74,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-if not defined DOWNLOADED_FILE (
-    echo Error: Downloaded file path not returned
-    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
-    exit /b 1
-)
+set "DOWNLOADED_FILE=%TEMP_FILE%"
+
+echo Checking for file: %DOWNLOADED_FILE%
 
 if not exist "%DOWNLOADED_FILE%" (
-    echo Error: Downloaded file not found
+    echo Error: Downloaded file not found at %DOWNLOADED_FILE%
+    echo Checking temp directory contents:
+    dir "%TEMP_DIR%"
     rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
     exit /b 1
 )

@@ -2,6 +2,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import RoleDistributionChart from '../components/RoleDistributionChart.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -26,7 +27,13 @@ function AdminUsersPage() {
         totalUsers: '0',
         activeUsers: '0',
         totalRoles: '0',
-        pendingUsers: '0'
+        pendingUsers: '0',
+        roleDistribution: {
+          admins: 0,
+          managers: 0,
+          tenants: 0,
+          caretakers: 0
+        }
       };
     }
     
@@ -35,7 +42,13 @@ function AdminUsersPage() {
       totalUsers: stats?.totalUsers?.toString() || '0',
       activeUsers: stats?.activeUsers?.toString() || '0',
       totalRoles: stats?.totalRoles?.toString() || '0',
-      pendingUsers: stats?.pendingUsers?.toString() || '0'
+      pendingUsers: stats?.pendingUsers?.toString() || '0',
+      roleDistribution: stats?.roleDistribution || {
+        admins: 0,
+        managers: 0,
+        tenants: 0,
+        caretakers: 0
+      }
     };
   };
 
@@ -136,9 +149,7 @@ function AdminUsersPage() {
         </div>
 
         <ChartCard title={t('admin.role_distribution')}>
-          <div className="chart-placeholder">
-            Chart.js {t('admin.role_distribution')} Chart
-          </div>
+          <RoleDistributionChart data={getUserStatsData().roleDistribution} />
         </ChartCard>
 
         <div className="data-table">

@@ -192,10 +192,7 @@ function AdminReportsPage() {
           break;
         }
         case 'xlsx': {
-          console.log('Starting XLSX export from AdminReportsPage');
-          console.log('Export data:', { dataCount: exportData.data.length, columnsCount: exportData.columns.length, filename });
           await exportService.exportToXLSX(exportData.data, exportData.columns, filename);
-          console.log('XLSX export completed from AdminReportsPage');
           break;
         }
         case 'json': {

@@ -67,11 +67,8 @@ function mapDoc<T extends { _id?: ObjectId }>(doc: T | null): (Omit<T, "_id"> & 
 }
 
 function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> & { id: string }> {
-  console.log('mapDocs input:', docs);
   const mapped = docs.map((d) => mapDoc(d)!);
-  console.log('mapDocs mapped:', mapped);
   const filtered = mapped.filter(Boolean);
-  console.log('mapDocs filtered:', filtered);
   return filtered as Array<Omit<T, "_id"> & { id: string }>;
 }
 
@@ -228,16 +225,10 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
 
 export async function getPendingUsers() {
   try {
-    console.log('getPendingUsers: Starting...');
     await connectToMongoDB();
-    console.log('getPendingUsers: Connected to MongoDB');
     const pendingUsers = getCollection("pending_users");
-    console.log('getPendingUsers: Got collection');
     const users = await pendingUsers.find({ status: 'pending' }).sort({ appliedAt: -1 }).toArray();
-    console.log('getPendingUsers: Found users:', users.length);
-    console.log('getPendingUsers: Users data:', JSON.stringify(users, null, 2));
     const mapped = mapDocs(users);
-    console.log('getPendingUsers: Mapped result:', mapped);
     return mapped;
   } catch (error) {
     console.error("Error fetching pending users:", error);
@@ -541,7 +532,7 @@ export async function createMaintenanceRequest(requestData: Record<string, unkno
     const caretakers = await users.find({ userType: 'caretaker' }).toArray();
     const managers = await users.find({ userType: 'manager' }).toArray();
     
-    console.log(`[createMaintenanceRequest] New request created: ${requestData.title}, notifying ${caretakers.length} caretakers and ${managers.length} managers`);
+    console.log(`Maintenance request created: "${requestData.title}" - notifying ${caretakers.length + managers.length} users`);
     
     const allRecipients = [...caretakers, ...managers];
     
@@ -580,7 +571,6 @@ export async function createMaintenanceRequest(requestData: Record<string, unkno
       }
       
       if (broadcaster && userIds.length > 0) {
-        console.log(`[createMaintenanceRequest] Broadcasting to ${userIds.length} users via WebSocket`);
         for (let i = 0; i < createdNotifications.length; i++) {
           broadcaster.broadcastToUsers([userIds[i]], createdNotifications[i]);
         }
@@ -651,8 +641,6 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
         notificationMessage = `A caretaker has been assigned to: ${existingRequest.title}`;
       }
       
-      console.log(`[updateMaintenanceRequest] Status/assignment changed for request ${id}, notifying tenant and manager`);
-      
       const createdNotifications = [];
       
       for (const userId of recipientIds) {
@@ -686,7 +674,6 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
       }
       
       if (broadcaster && createdNotifications.length > 0) {
-        console.log(`[updateMaintenanceRequest] Broadcasting to ${createdNotifications.length} users via WebSocket`);
         for (const notification of createdNotifications) {
           broadcaster.broadcastToUsers([notification.userId], notification);
         }
@@ -714,7 +701,6 @@ export async function deleteMaintenanceRequest(id: string, broadcaster?: { broad
     }
     
     const result = await maintenanceRequests.deleteOne({ _id: new ObjectId(id) });
-    console.log(`[deleteMaintenanceRequest] Deleted maintenance request ${id}, deletedCount: ${result.deletedCount}`);
     
     // Send notification to tenant about deletion
     if (existingRequest.tenantId) {
@@ -745,7 +731,6 @@ export async function deleteMaintenanceRequest(id: string, broadcaster?: { broad
       };
       
       if (broadcaster) {
-        console.log(`[deleteMaintenanceRequest] Broadcasting deletion notification to tenant ${tenantId}`);
         broadcaster.broadcastToUsers([tenantId], createdNotification);
       }
     }
@@ -827,14 +812,9 @@ export async function getNotifications(userId: string) {
   try {
     await connectToMongoDB();
     const notifications = getCollection("notifications");
-    console.log(`[getNotifications] Querying for userId: ${userId}`);
     const userObjectId = new ObjectId(userId);
-    console.log(`[getNotifications] Converted to ObjectId: ${userObjectId}`);
     const rows = await notifications.find({ userId: userObjectId }).toArray();
-    console.log(`[getNotifications] Found ${rows.length} notifications in database`);
-    console.log(`[getNotifications] Raw notifications:`, rows.map(r => ({ _id: r._id, userId: r.userId, title: r.title })));
     const mapped = mapDocs(rows);
-    console.log(`[getNotifications] Returning ${mapped.length} mapped notifications`);
     return mapped;
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -867,8 +847,6 @@ export async function createNotification(
       const targetUsers = await users.find({ 
         userType: { $in: targetUserTypes } 
       }).toArray();
-      
-      console.log(`[createNotification] Creating announcement notifications for ${targetUsers.length} users (target: ${targetUserTypes.join(', ')}, original: ${notificationData.targetAudience})`);
       
       const createdNotifications = [];
       const userIds = [];
@@ -903,12 +881,10 @@ export async function createNotification(
       
       // Broadcast to all target users at once if broadcaster is available
       if (broadcaster && userIds.length > 0) {
-        console.log(`[createNotification] Broadcasting announcement notification to ${userIds.length} users via WebSocket`);
         // Send to all users - they will receive it and refresh their announcement lists
         for (let i = 0; i < createdNotifications.length; i++) {
           broadcaster.broadcastToUsers([userIds[i]], createdNotifications[i]);
         }
-        console.log(`[createNotification] Broadcast complete`);
       }
       
       return { success: true, count: targetUsers.length, notifications: createdNotifications };
@@ -928,8 +904,6 @@ export async function createNotification(
       const targetUsers = await users.find({ 
         userType: { $in: targetUserTypes } 
       }).toArray();
-      
-      console.log(`[createNotification] Broadcasting announcement deletion to ${targetUsers.length} users (target: ${targetUserTypes.join(', ')}, original: ${notificationData.targetAudience})`);
       
       // Don't store deletion notifications, just broadcast them
       if (broadcaster) {
@@ -1125,12 +1099,24 @@ export async function getUserStats() {
     // Count unique roles
     const uniqueRoles = await users.distinct("userType");
     
+    // Count users by role for role distribution
+    const adminCount = await users.countDocuments({ userType: 'admin' });
+    const managerCount = await users.countDocuments({ userType: 'manager' });
+    const tenantCount = await users.countDocuments({ userType: 'tenant' });
+    const caretakerCount = await users.countDocuments({ userType: 'caretaker' });
+    
     // Return computed stats
     return [{
       totalUsers,
       activeUsers,
       totalRoles: uniqueRoles.length,
-      pendingUsers: pendingUsersCount
+      pendingUsers: pendingUsersCount,
+      roleDistribution: {
+        admins: adminCount,
+        managers: managerCount,
+        tenants: tenantCount,
+        caretakers: caretakerCount
+      }
     }];
   } catch (error) {
     console.error("Error fetching user stats:", error);
@@ -1180,8 +1166,6 @@ export async function getSecurityConfig() {
     const authConfig = getCollection("auth_config");
     const config = await authConfig.find({}).toArray();
     
-    console.log("Auth config query result:", config.length, "items");
-    
     // If no auth config exists, return default configuration
     if (config.length === 0) {
       const defaultConfig = [
@@ -1192,12 +1176,9 @@ export async function getSecurityConfig() {
         { method: 'SSO (Single Sign-On)', description: 'Enterprise single sign-on integration', status: 'disabled' }
       ];
       
-      console.log("Initializing auth_config with defaults:", defaultConfig.length, "items");
-      
       // Try to initialize the auth_config collection with default values
       try {
         await authConfig.insertMany(defaultConfig);
-        console.log("Successfully inserted default auth config");
       } catch (insertError) {
         console.error("Failed to insert default auth config:", insertError);
         // Return defaults anyway, even if insertion failed
@@ -1206,7 +1187,6 @@ export async function getSecurityConfig() {
       return defaultConfig;
     }
     
-    console.log("Returning existing auth config:", config.length, "items");
     return mapDocs(config);
   } catch (error) {
     console.error("Error fetching security config:", error);

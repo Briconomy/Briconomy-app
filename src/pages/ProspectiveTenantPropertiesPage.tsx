@@ -51,17 +51,12 @@ function ProspectiveTenantPropertiesPage() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching properties from API...');
       const data = await propertiesApi.getAll();
-      console.log('Properties data received:', data);
       setProperties(data);
       
       if (!Array.isArray(data)) {
-        console.warn('Properties API did not return an array:', data);
         setError('Invalid data format received from server');
         setProperties([]);
-      } else if (data.length === 0) {
-        console.log('No properties found in the database');
       }
     } catch (err) {
       console.error('Error fetching properties:', err);
