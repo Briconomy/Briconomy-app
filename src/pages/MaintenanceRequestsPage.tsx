@@ -14,7 +14,7 @@ function MaintenanceRequestsPage() {
   const { t } = useLanguage();
   const { isOnline, storeOfflineData, syncNow } = useOffline();
   
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<{ id?: string } | null>(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -147,6 +147,18 @@ function MaintenanceRequestsPage() {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  // Refetch requests every 5 seconds to catch status updates
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      console.log('[MaintenanceRequestsPage] Auto-refreshing requests...');
+      refetchRequests();
+    }, 5000); // Refresh every 5 seconds
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refetchRequests]);
 
   const loadUserData = () => {
     try {

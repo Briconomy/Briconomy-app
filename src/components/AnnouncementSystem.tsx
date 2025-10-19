@@ -143,78 +143,27 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     fetchAnnouncements();
   }, [refreshTrigger]);
 
-  // WebSocket connection effect
+  // Auto-refresh announcements every 10 seconds
+  // Note: Real-time notifications are handled by NotificationWidget
   useEffect(() => {
     console.log('AnnouncementSystem mounted, current user role:', currentUserRole);
     
-    // Set up WebSocket connection for real-time announcement updates
     if (!user?.id) {
-      console.log('[AnnouncementSystem] No user ID, skipping WebSocket setup');
+      console.log('[AnnouncementSystem] No user ID, skipping auto-refresh setup');
       return;
     }
     
-    const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
-    const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
+    console.log(`[AnnouncementSystem] Setting up auto-refresh for user ${user.id}`);
     
-    console.log(`[AnnouncementSystem] Connecting WebSocket for user ${user.id} at ${wsUrl}`);
+    // Refresh announcements every 10 seconds
+    const intervalId = setInterval(() => {
+      console.log('[AnnouncementSystem] Auto-refreshing announcements...');
+      setRefreshTrigger(prev => prev + 1);
+    }, 10000);
     
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: number | null = null;
-    let isClosed = false;
-    
-    const connect = () => {
-      if (isClosed) return;
-      
-      ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        console.log(`[AnnouncementSystem] ✅ WebSocket connected for user ${user.id}`);
-      };
-      
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log(`[AnnouncementSystem] 📨 WebSocket message received:`, data);
-          
-          if (data.type === 'notification' && data.data.type === 'announcement') {
-            console.log(`[AnnouncementSystem] 🔔 New announcement notification received, triggering refresh after short delay`);
-            // Add a small delay to ensure database write completes before fetching
-            setTimeout(() => {
-              setRefreshTrigger(prev => prev + 1);
-            }, 300);
-          }
-        } catch (error) {
-          console.error('[AnnouncementSystem] ❌ Error parsing WebSocket message:', error);
-        }
-      };
-      
-      ws.onclose = () => {
-        console.log(`[AnnouncementSystem] ⚠️ WebSocket disconnected for user ${user.id}`);
-        // Don't reconnect if we're intentionally closing
-        if (!isClosed) {
-          console.log('[AnnouncementSystem] 🔄 Reconnecting in 2 seconds...');
-          reconnectTimeout = setTimeout(connect, 2000) as unknown as number;
-        }
-      };
-      
-      ws.onerror = (error) => {
-        console.error(`[AnnouncementSystem] ❌ WebSocket error:`, error);
-      };
-    };
-    
-    connect();
-    
-    // Cleanup on unmount
     return () => {
-      console.log(`[AnnouncementSystem] 🔌 Closing WebSocket connection`);
-      isClosed = true;
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (ws) {
-        ws.close();
-      }
+      console.log('[AnnouncementSystem] Cleaning up auto-refresh');
+      clearInterval(intervalId);
     };
   }, [user?.id]);
 

@@ -546,14 +546,16 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
-        const request = await createMaintenanceRequest(body);
+        const broadcaster = { broadcastToUsers };
+        const request = await createMaintenanceRequest(body, broadcaster);
         return new Response(JSON.stringify(request), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
         });
       } else if (req.method === 'PUT' && path[2]) {
         const body = await req.json();
-        const request = await updateMaintenanceRequest(path[2], body);
+        const broadcaster = { broadcastToUsers };
+        const request = await updateMaintenanceRequest(path[2], body, broadcaster);
         return new Response(JSON.stringify(request), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
