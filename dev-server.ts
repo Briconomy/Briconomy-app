@@ -231,7 +231,6 @@ async function handler(request: Request): Promise<Response> {
     };
     const envScript = `const __BRICONOMY_ENV__ = ${JSON.stringify(envVars)};`;
 
-    // Inject Google Identity Services script if Google Client ID is available
     const googleClientId = envVars.VITE_GOOGLE_CLIENT_ID;
     let googleScript = '';
     if (googleClientId) {
@@ -244,7 +243,11 @@ async function handler(request: Request): Promise<Response> {
     );
 
     return new Response(indexFile, {
-      headers: { "content-type": "text/html" },
+      headers: { 
+        "content-type": "text/html",
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+        "Cross-Origin-Embedder-Policy": "unsafe-none"
+      },
     });
   }
   
