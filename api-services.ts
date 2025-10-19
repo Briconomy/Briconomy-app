@@ -642,6 +642,9 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
         } else if (updateData.status === 'completed') {
           notificationTitle = 'Request Completed';
           notificationMessage = `Your maintenance request has been completed: ${existingRequest.title}`;
+        } else if (updateData.status === 'pending') {
+          notificationTitle = 'Request Reopened';
+          notificationMessage = `Your maintenance request has been reopened: ${existingRequest.title}`;
         }
       } else if (assignmentChanged) {
         notificationTitle = 'Caretaker Assigned';
@@ -693,6 +696,63 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
     return mapDoc(updatedRequest);
   } catch (error) {
     console.error("Error updating maintenance request:", error);
+    throw error;
+  }
+}
+
+export async function deleteMaintenanceRequest(id: string, broadcaster?: { broadcastToUsers: (userIds: string[], notification: unknown) => void }) {
+  try {
+    await connectToMongoDB();
+    const maintenanceRequests = getCollection("maintenance_requests");
+    const notifications = getCollection("notifications");
+    
+    // Get the request before deleting to send notification
+    const existingRequest = await maintenanceRequests.findOne({ _id: new ObjectId(id) });
+    
+    if (!existingRequest) {
+      throw new Error('Maintenance request not found');
+    }
+    
+    const result = await maintenanceRequests.deleteOne({ _id: new ObjectId(id) });
+    console.log(`[deleteMaintenanceRequest] Deleted maintenance request ${id}, deletedCount: ${result.deletedCount}`);
+    
+    // Send notification to tenant about deletion
+    if (existingRequest.tenantId) {
+      const tenantId = String(existingRequest.tenantId);
+      
+      const notificationDoc = {
+        userId: new ObjectId(tenantId),
+        title: 'Request Cancelled',
+        message: `Your maintenance request has been cancelled: ${existingRequest.title}`,
+        type: 'maintenance_update',
+        requestId: id,
+        read: false,
+        createdAt: new Date()
+      };
+      
+      const notifResult = await notifications.insertOne(notificationDoc);
+      
+      const createdNotification = {
+        id: String(notifResult.insertedId || notifResult),
+        _id: String(notifResult.insertedId || notifResult),
+        userId: tenantId,
+        title: notificationDoc.title,
+        message: notificationDoc.message,
+        type: notificationDoc.type,
+        requestId: id,
+        read: false,
+        createdAt: notificationDoc.createdAt.toISOString()
+      };
+      
+      if (broadcaster) {
+        console.log(`[deleteMaintenanceRequest] Broadcasting deletion notification to tenant ${tenantId}`);
+        broadcaster.broadcastToUsers([tenantId], createdNotification);
+      }
+    }
+    
+    return { success: true, deletedCount: result.deletedCount };
+  } catch (error) {
+    console.error("Error deleting maintenance request:", error);
     throw error;
   }
 }

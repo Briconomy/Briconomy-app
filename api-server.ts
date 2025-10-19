@@ -15,6 +15,7 @@ import {
   getMaintenanceRequests,
   createMaintenanceRequest,
   updateMaintenanceRequest,
+  deleteMaintenanceRequest,
   getCaretakerTasks,
   createCaretakerTask,
   updateCaretakerTask,
@@ -538,6 +539,7 @@ serve(async (req) => {
 
     // Maintenance requests endpoints
     if (path[0] === 'api' && path[1] === 'maintenance') {
+      console.log(`[API Server] Maintenance endpoint hit: ${req.method} ${url.pathname}`, { path });
       if (req.method === 'GET') {
         const filters = Object.fromEntries(url.searchParams);
         const requests = await getMaintenanceRequests(filters);
@@ -558,6 +560,15 @@ serve(async (req) => {
         const request = await updateMaintenanceRequest(path[2], body, broadcaster);
         return new Response(JSON.stringify(request), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'DELETE' && path[2]) {
+        console.log(`[API Server] DELETE maintenance request: ${path[2]}`);
+        const broadcaster = { broadcastToUsers };
+        const result = await deleteMaintenanceRequest(path[2], broadcaster);
+        console.log('[API Server] Delete result:', result);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
         });
       }
     }

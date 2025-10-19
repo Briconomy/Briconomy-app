@@ -29,6 +29,11 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const timeout = setTimeout(() => controller.abort(), 10000);
   (config as unknown as { signal?: AbortSignal }).signal = controller.signal;
 
+  // Debug DELETE requests
+  if (config.method === 'DELETE') {
+    console.log(`[apiRequest] DELETE ${url}`, { endpoint, config });
+  }
+
   try {
     const response = await fetch(url, config);
     
@@ -130,6 +135,9 @@ export const maintenanceApi = {
   update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/maintenance/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
+  }),
+  delete: (id: string) => apiRequest(`/api/maintenance/${id}`, {
+    method: 'DELETE',
   }),
 };
 

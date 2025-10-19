@@ -20,7 +20,7 @@ function ManagerMaintenancePage() {
     { path: '/manager/payments', label: 'Payments', icon: 'payment', active: false }
   ];
 
-  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi(
+  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
     () => maintenanceApi.getAll({}),
     []
   );
@@ -31,110 +31,15 @@ function ManagerMaintenancePage() {
 
   const loadUserData = () => {
     try {
-      const userRaw = localStorage.getItem('briconomy_user');
+      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
     }
   };
-// filler data
-  const getMockMaintenance = () => {
-    return [
-      {
-        id: '1',
-        title: 'AC repair',
-        description: 'Air conditioning not working properly, making strange noises and not cooling effectively',
-        property: 'Blue Hills Apartments',
-        unit: '2A',
-        priority: 'high',
-        status: 'in_progress',
-        assignedTo: 'caretaker1',
-        tenantId: 'tenant1',
-        estimatedCost: 1500,
-        actualCost: null,
-        completedDate: null,
-        images: ['ac_unit_1.jpg', 'ac_unit_2.jpg'],
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Diagnosed compressor issue. Waiting for replacement part.'
-      },
-      {
-        id: '2',
-        title: 'Leaky faucet',
-        description: 'Kitchen sink faucet is dripping continuously, wasting water and increasing utility bills',
-        property: 'Blue Hills Apartments',
-        unit: '3C',
-        priority: 'medium',
-        status: 'pending',
-        assignedTo: null,
-        tenantId: 'tenant2',
-        estimatedCost: 800,
-        actualCost: null,
-        completedDate: null,
-        images: ['faucet_leak.jpg'],
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: ''
-      },
-      {
-        id: '3',
-        title: 'Broken window',
-        description: 'Bedroom window lock is broken, window cannot be closed properly',
-        property: 'Green Valley Complex',
-        unit: 'A1',
-        priority: 'high',
-        status: 'completed',
-        assignedTo: 'caretaker1',
-        tenantId: 'tenant3',
-        estimatedCost: 1200,
-        actualCost: 1150,
-        completedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        images: ['broken_window_before.jpg', 'broken_window_after.jpg'],
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Window lock replaced successfully. Tenant satisfied with the repair.'
-      },
-      {
-        id: '4',
-        title: 'Electrical issue',
-        description: 'Light switch in living room is not working, seems to be a wiring problem',
-        property: 'Green Valley Complex',
-        unit: 'B2',
-        priority: 'high',
-        status: 'in_progress',
-        assignedTo: 'caretaker2',
-        tenantId: 'tenant4',
-        estimatedCost: 2000,
-        actualCost: null,
-        completedDate: null,
-        images: ['light_switch.jpg'],
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Diagnosed wiring issue. Waiting for parts to arrive.'
-      },
-      {
-        id: '5',
-        title: 'Dishwasher not draining',
-        description: 'Dishwasher is not draining properly, water pooling at bottom',
-        property: 'Sunset Towers',
-        unit: 'P1',
-        priority: 'medium',
-        status: 'pending',
-        assignedTo: null,
-        tenantId: 'tenant5',
-        estimatedCost: 1000,
-        actualCost: null,
-        completedDate: null,
-        images: ['dishwasher_issue.jpg'],
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: ''
-      }
-    ];
-  };
 
-  // Use real data from API - no more mock fallback
+  // Use real data from API
   const maintenanceData = Array.isArray(maintenance) ? maintenance : [];
 
   // Get unique properties for filter
@@ -171,15 +76,14 @@ function ManagerMaintenancePage() {
       return sum + (completed - created);
     }, 0) / (completedRequests || 1) || 0;
 
-  const handleAssignRequest = (requestId) => {
-    // In a real app, this would open a modal to assign to a caretaker
-    console.log(`Assigning request ${requestId} to caretaker`);
-    alert('Assignment functionality would be implemented here');
-  };
-
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
     setShowDetails(true);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedRequest(null);
+    setShowDetails(false);
   };
 
   const getPriorityColor = (priority) => {
@@ -206,17 +110,6 @@ function ManagerMaintenancePage() {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
-    });
-  };
-
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-ZA', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
@@ -282,6 +175,14 @@ function ManagerMaintenancePage() {
           <span className={`text-xs ${getPriorityColor(request.priority)}`}>
             {request.priority.toUpperCase()}
           </span>
+          {request.property && (
+            <>
+              <br />
+              <span className="text-xs text-gray-500">
+                {request.property} {request.unit && `- ${request.unit}`}
+              </span>
+            </>
+          )}
           <br />
           <span className="text-xs text-gray-500">
             Created: {formatDate(request.createdAt)}
@@ -296,33 +197,27 @@ function ManagerMaintenancePage() {
               Unassigned
             </span>
           )}
-          <br />
           {request.estimatedCost && (
-            <span className="text-xs text-blue-600">
-              Est: {formatCurrency(request.estimatedCost)}
-            </span>
+            <>
+              <br />
+              <span className="text-xs text-blue-600">
+                Est: {formatCurrency(request.estimatedCost)}
+              </span>
+            </>
           )}
         </div>
-      </div>
-      <div className="item-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', marginTop: '8px' }}>
-        <button 
-          className="btn btn-sm btn-secondary"
-          style={{ minWidth: '110px', fontSize: '1rem' }}
-          onClick={() => handleViewDetails(request)}
-          type="button"
-        >
-          View Details
-        </button>
-        {!request.assignedTo && request.status !== 'completed' && (
-          <button 
-            className="btn btn-sm btn-primary"
-            style={{ minWidth: '110px', fontSize: '1rem' }}
-            onClick={() => handleAssignRequest(request.id)}
+        
+        {/* Action Buttons */}
+        <div style={{ marginTop: '12px' }}>
+          <button
             type="button"
+            className="btn btn-secondary"
+            style={{ fontSize: '13px', padding: '6px 12px' }}
+            onClick={() => handleViewDetails(request)}
           >
-            Assign
+            View Details
           </button>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -348,8 +243,22 @@ function ManagerMaintenancePage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Maintenance Issues</div>
-          <div className="page-subtitle">Manage and track maintenance across all properties</div>
+          <div className="page-title">Maintenance Requests</div>
+          <div className="page-subtitle">
+            Manage and track maintenance across all properties
+            <button 
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                console.log('[ManagerMaintenancePage] Manual refresh triggered');
+                refetchMaintenance();
+              }}
+              style={{ marginLeft: '12px', fontSize: '13px', padding: '4px 10px' }}
+              title="Refresh maintenance requests"
+            >
+              🔄 Refresh
+            </button>
+          </div>
         </div>
         
         <div className="dashboard-grid">
@@ -446,6 +355,90 @@ function ManagerMaintenancePage() {
       </div>
       
       <BottomNav items={navItems} responsive={false} />
+
+      {/* Details Modal */}
+      {showDetails && selectedRequest && (
+        <div className="modal-overlay" onClick={handleCloseDetails}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Maintenance Request Details</h3>
+              <button type="button" className="modal-close" onClick={handleCloseDetails}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="detail-section">
+                <h4>{selectedRequest.title}</h4>
+                <span className={`status-badge ${getStatusColor(selectedRequest.status)}`}>
+                  {formatStatusText(selectedRequest.status)}
+                </span>
+                <span className={`ml-2 text-sm ${getPriorityColor(selectedRequest.priority)}`}>
+                  {selectedRequest.priority.toUpperCase()} Priority
+                </span>
+              </div>
+
+              <div className="detail-section">
+                <label>Description:</label>
+                <p>{selectedRequest.description}</p>
+              </div>
+
+              <div className="detail-section">
+                <label>Property & Unit:</label>
+                <p>{selectedRequest.property} {selectedRequest.unit && `- Unit ${selectedRequest.unit}`}</p>
+              </div>
+
+              <div className="detail-section">
+                <label>Assignment:</label>
+                <p>{selectedRequest.assignedTo ? `Assigned to: ${selectedRequest.assignedTo}` : 'Unassigned'}</p>
+              </div>
+
+              <div className="detail-section">
+                <label>Dates:</label>
+                <p>Created: {formatDate(selectedRequest.createdAt)}</p>
+                <p>Last Updated: {formatDate(selectedRequest.updatedAt)}</p>
+                {selectedRequest.completedDate && (
+                  <p>Completed: {formatDate(selectedRequest.completedDate)}</p>
+                )}
+              </div>
+
+              {(selectedRequest.estimatedCost || selectedRequest.actualCost) && (
+                <div className="detail-section">
+                  <label>Costs:</label>
+                  {selectedRequest.estimatedCost && (
+                    <p>Estimated: {formatCurrency(selectedRequest.estimatedCost)}</p>
+                  )}
+                  {selectedRequest.actualCost && (
+                    <p>Actual: {formatCurrency(selectedRequest.actualCost)}</p>
+                  )}
+                </div>
+              )}
+
+              {selectedRequest.notes && (
+                <div className="detail-section">
+                  <label>Notes:</label>
+                  <p>{selectedRequest.notes}</p>
+                </div>
+              )}
+
+              {selectedRequest.images && selectedRequest.images.length > 0 && (
+                <div className="detail-section">
+                  <label>Images:</label>
+                  <div className="image-list">
+                    {selectedRequest.images.map((image, idx) => (
+                      <div key={idx} className="image-item">{image}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={handleCloseDetails}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

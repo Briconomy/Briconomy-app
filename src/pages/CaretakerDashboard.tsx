@@ -55,7 +55,7 @@ function CaretakerDashboard() {
     { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
-  const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
+  const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
     () => maintenanceApi.getAll({}),
     [user?.id]
   );
@@ -63,6 +63,32 @@ function CaretakerDashboard() {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  const handleStatusChange = async (requestId: string, newStatus: string) => {
+    try {
+      await maintenanceApi.update(requestId, { status: newStatus });
+      await refetchTasks();
+      console.log(`[CaretakerDashboard] Updated request ${requestId} status to ${newStatus}`);
+    } catch (error) {
+      console.error('[CaretakerDashboard] Error updating status:', error);
+      alert('Failed to update status. Please try again.');
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!confirm('Are you sure you want to delete this maintenance request?')) {
+      return;
+    }
+    
+    try {
+      await maintenanceApi.delete(requestId);
+      await refetchTasks();
+      console.log(`[CaretakerDashboard] Deleted request ${requestId}`);
+    } catch (error) {
+      console.error('[CaretakerDashboard] Error deleting request:', error);
+      alert('Failed to delete request. Please try again.');
+    }
+  };
 
   useEffect(() => {
     try {
@@ -75,7 +101,7 @@ function CaretakerDashboard() {
 
   const loadUserData = () => {
     try {
-      const userRaw = localStorage.getItem('briconomy_user');
+      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
     } catch (err) {
@@ -189,12 +215,59 @@ return (
                   {new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {task.title}
                 </h4>
                 <p>{task.description}</p>
+                <span className={`status-badge status-${task.status}`} style={{ marginTop: '8px', display: 'inline-block' }}>
+                  {task.status === 'in_progress' ? t('caretaker.progress') : 
+                   task.status === 'pending' ? t('caretaker.scheduled') :
+                   task.status === 'completed' ? t('status.completed') : task.status}
+                </span>
+                
+                {/* Action Buttons */}
+                <div style={{ 
+                  marginTop: '12px', 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                  gap: '8px' 
+                }}>
+                  {task.status === 'pending' && (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      style={{ fontSize: '13px', padding: '6px 12px' }}
+                      onClick={() => handleStatusChange(task.id, 'in_progress')}
+                    >
+                      Start Work
+                    </button>
+                  )}
+                  {task.status === 'in_progress' && (
+                    <button
+                      type="button"
+                      className="btn btn-success"
+                      style={{ fontSize: '13px', padding: '6px 12px' }}
+                      onClick={() => handleStatusChange(task.id, 'completed')}
+                    >
+                      Complete
+                    </button>
+                  )}
+                  {task.status === 'completed' && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ fontSize: '13px', padding: '6px 12px' }}
+                      onClick={() => handleStatusChange(task.id, 'pending')}
+                    >
+                      Reopen
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    style={{ fontSize: '13px', padding: '6px 12px' }}
+                    onClick={() => handleDeleteRequest(task.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <span className={`status-badge status-${task.status}`}>
-                {task.status === 'in_progress' ? t('caretaker.progress') : 
-                 task.status === 'pending' ? t('caretaker.scheduled') :
-                 task.status === 'completed' ? t('status.completed') : task.status}
-              </span>
             </div>
           ))}
           {tasksData.length === 0 && (

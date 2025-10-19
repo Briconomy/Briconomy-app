@@ -17,7 +17,7 @@ function CaretakerSchedulePage() {
     { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
-  const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
+  const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
     () => maintenanceApi.getAll({}),
     [user?.id]
   );
@@ -28,11 +28,37 @@ function CaretakerSchedulePage() {
 
   const loadUserData = () => {
     try {
-      const userRaw = localStorage.getItem('briconomy_user');
+      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
+    }
+  };
+
+  const handleStatusChange = async (requestId: string, newStatus: string) => {
+    try {
+      await maintenanceApi.update(requestId, { status: newStatus });
+      await refetchTasks();
+      console.log(`[CaretakerSchedulePage] Updated request ${requestId} status to ${newStatus}`);
+    } catch (error) {
+      console.error('[CaretakerSchedulePage] Error updating status:', error);
+      alert('Failed to update status. Please try again.');
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!confirm('Are you sure you want to delete this maintenance request?')) {
+      return;
+    }
+    
+    try {
+      await maintenanceApi.delete(requestId);
+      await refetchTasks();
+      console.log(`[CaretakerSchedulePage] Deleted request ${requestId}`);
+    } catch (error) {
+      console.error('[CaretakerSchedulePage] Error deleting request:', error);
+      alert('Failed to delete request. Please try again.');
     }
   };
 
@@ -286,6 +312,53 @@ function CaretakerSchedulePage() {
                         </span></>
                       )}
                     </div>
+                    
+                    {/* Action Buttons */}
+                    <div style={{ 
+                      marginTop: '12px', 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                      gap: '8px' 
+                    }}>
+                      {task.status === 'pending' && (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(task.id, 'in_progress')}
+                        >
+                          Start Work
+                        </button>
+                      )}
+                      {task.status === 'in_progress' && (
+                        <button
+                          type="button"
+                          className="btn btn-success"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(task.id, 'completed')}
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {task.status === 'completed' && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(task.id, 'pending')}
+                        >
+                          Reopen
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        style={{ fontSize: '13px', padding: '6px 12px' }}
+                        onClick={() => handleDeleteRequest(task.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -327,6 +400,53 @@ function CaretakerSchedulePage() {
                       <span className="text-xs text-gray-500">
                         {formatDate(task.dueDate)} at {formatTime(task.dueDate)}
                       </span>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div style={{ 
+                      marginTop: '12px', 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                      gap: '8px' 
+                    }}>
+                      {task.status === 'pending' && (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(task.id, 'in_progress')}
+                        >
+                          Start Work
+                        </button>
+                      )}
+                      {task.status === 'in_progress' && (
+                        <button
+                          type="button"
+                          className="btn btn-success"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(task.id, 'completed')}
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {task.status === 'completed' && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(task.id, 'pending')}
+                        >
+                          Reopen
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        style={{ fontSize: '13px', padding: '6px 12px' }}
+                        onClick={() => handleDeleteRequest(task.id)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>

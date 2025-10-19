@@ -17,14 +17,10 @@ function CaretakerHistoryPage() {
     { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
-  const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
-    () => tasksApi.getAll(user?.id ? { caretakerId: user.id } : {}),
-    [user?.id]
-  );
-
-  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi(
-    () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
-    [user?.id]
+  // Get ALL maintenance requests (not filtered by user)
+  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
+    () => maintenanceApi.getAll({}),
+    []
   );
 
   useEffect(() => {
@@ -33,11 +29,37 @@ function CaretakerHistoryPage() {
 
   const loadUserData = () => {
     try {
-      const userRaw = localStorage.getItem('briconomy_user');
+      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
       setUser(userData);
     } catch (err) {
       console.error('Error loading user data:', err);
+    }
+  };
+
+  const handleStatusChange = async (requestId: string, newStatus: string) => {
+    try {
+      await maintenanceApi.update(requestId, { status: newStatus });
+      await refetchMaintenance();
+      console.log(`[CaretakerHistoryPage] Updated request ${requestId} status to ${newStatus}`);
+    } catch (error) {
+      console.error('[CaretakerHistoryPage] Error updating status:', error);
+      alert('Failed to update status. Please try again.');
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!confirm('Are you sure you want to delete this maintenance request?')) {
+      return;
+    }
+    
+    try {
+      await maintenanceApi.delete(requestId);
+      await refetchMaintenance();
+      console.log(`[CaretakerHistoryPage] Deleted request ${requestId}`);
+    } catch (error) {
+      console.error('[CaretakerHistoryPage] Error deleting request:', error);
+      alert('Failed to delete request. Please try again.');
     }
   };
 
@@ -163,34 +185,30 @@ function CaretakerHistoryPage() {
     ];
   };
 
-  const useMockTasksData = tasksError || !tasks;
-  const useMockMaintenanceData = maintenanceError || !maintenance;
-  
-  const mockTasks = getMockTasks();
-  const mockMaintenance = getMockMaintenance();
-  
-  const tasksData = Array.isArray(tasks) ? tasks : (useMockTasksData ? mockTasks : []);
-  const maintenanceData = Array.isArray(maintenance) ? maintenance : (useMockMaintenanceData ? mockMaintenance : []);
+  const maintenanceData = Array.isArray(maintenance) ? maintenance : [];
 
-  // Filter data based on selected filters
+  // Filter maintenance data based on selected filters
   const getFilteredData = () => {
     const now = new Date();
-    let dateFilter = (item) => true;
+    let dateFilter = (_item: unknown) => true;
 
     switch (filterPeriod) {
       case 'week': {
         const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        dateFilter = (item) => new Date(item.completedDate || item.createdAt) >= weekStart;
+        dateFilter = (item: { completedDate?: string; createdAt?: string }) => 
+          new Date(item.completedDate || item.createdAt || Date.now()) >= weekStart;
         break;
       }
       case 'month': {
         const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-        dateFilter = (item) => new Date(item.completedDate || item.createdAt) >= monthStart;
+        dateFilter = (item: { completedDate?: string; createdAt?: string }) => 
+          new Date(item.completedDate || item.createdAt || Date.now()) >= monthStart;
         break;
       }
       case 'year': {
         const yearStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-        dateFilter = (item) => new Date(item.completedDate || item.createdAt) >= yearStart;
+        dateFilter = (item: { completedDate?: string; createdAt?: string }) => 
+          new Date(item.completedDate || item.createdAt || Date.now()) >= yearStart;
         break;
       }
       default: {
@@ -198,28 +216,18 @@ function CaretakerHistoryPage() {
       }
     }
 
-    const statusFilter = (item) => filterStatus === 'all' || item.status === filterStatus;
+    const statusFilter = (item: { status: string }) => filterStatus === 'all' || item.status === filterStatus;
 
-    return {
-      tasks: tasksData.filter(task => dateFilter(task) && statusFilter(task)),
-      maintenance: maintenanceData.filter(req => dateFilter(req) && statusFilter(req))
-    };
+    return maintenanceData.filter(req => dateFilter(req) && statusFilter(req));
   };
 
   const filteredData = getFilteredData();
 
   // Calculate statistics
-  const completedTasks = tasksData.filter(task => task.status === 'completed').length;
   const completedMaintenance = maintenanceData.filter(req => req.status === 'completed').length;
-  const totalCompleted = completedTasks + completedMaintenance;
+  const totalCompleted = completedMaintenance;
   
-  const avgCompletionTime = tasksData
-    .filter(task => task.status === 'completed' && task.completedDate && task.dueDate)
-    .reduce((sum, task) => {
-      const due = new Date(task.dueDate).getTime();
-      const completed = new Date(task.completedDate).getTime();
-      return sum + (completed - due);
-    }, 0) / completedTasks || 0;
+  const avgCompletionTime = 0; // TODO: Calculate based on maintenance requests
 
   const totalCost = maintenanceData
     .filter(req => req.status === 'completed' && req.actualCost)
@@ -283,7 +291,7 @@ function CaretakerHistoryPage() {
     }).format(Number(amount) || 0);
   };
 
-  const loading = tasksLoading || maintenanceLoading;
+  const loading = maintenanceLoading;
 
   if (loading) {
     return (
@@ -312,9 +320,9 @@ function CaretakerHistoryPage() {
         
         <div className="dashboard-grid">
           <StatCard value={totalCompleted} label="Completed" />
-          <StatCard value={formatDuration(avgCompletionTime)} label="Avg Time" />
-          <StatCard value={formatCurrency(totalCost)} label="Total Cost" />
-          <StatCard value={`${Math.round((completedTasks / Math.max(completedTasks, 1)) * 100)}%`} label="Success" />
+          <StatCard value={maintenanceData.length} label="Total" />
+          <StatCard value={maintenanceData.filter(r => r.status === 'pending').length} label="Pending" />
+          <StatCard value={maintenanceData.filter(r => r.status === 'in_progress').length} label="In Progress" />
         </div>
 
         {/* Filters */}
@@ -346,77 +354,39 @@ function CaretakerHistoryPage() {
           </div>
         </div>
 
-        {/* Completed Tasks */}
+        {/* All Maintenance Requests */}
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Completed Tasks</div>
+            <div className="table-title">Maintenance Requests</div>
             <div className="text-sm text-gray-500">
-              {filteredData.tasks.length} tasks
+              {filteredData.length} requests
             </div>
           </div>
           
-          {filteredData.tasks.length === 0 ? (
-            <div className="no-results">
-              <p>No completed tasks found</p>
-            </div>
-          ) : (
-            filteredData.tasks
-              .sort((a, b) => new Date(b.completedDate || b.createdAt).getTime() - new Date(a.completedDate || a.createdAt).getTime())
-              .map((task) => (
-                <div key={task.id} className="list-item">
-                  <div className="item-info">
-                    <div className="flex justify-between items-start">
-                      <h4>{task.title}</h4>
-                      <span className={`status-badge ${getStatusColor(task.status)}`}>
-                        {task.status === 'completed' ? 'Completed' : 
-                         task.status === 'in_progress' ? 'In Progress' : task.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                    <div className="task-meta mt-2">
-                      <span className={`text-xs ${getPriorityColor(task.priority)}`}>
-                        {task.priority.toUpperCase()}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {task.property}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        Completed: {task.completedDate ? formatDate(task.completedDate) : 'N/A'}
-                      </span>
-                      {task.estimatedHours && task.actualHours && (
-                        <span className="text-xs text-blue-600">
-                          {task.actualHours}h / {task.estimatedHours}h
-                        </span>
-                      )}
-                    </div>
-                    {task.notes && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                        <strong>Notes:</strong> {task.notes}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-          )}
-        </div>
-
-        {/* Maintenance History */}
-        <div className="data-table">
-          <div className="table-header">
-            <div className="table-title">Maintenance History</div>
-            <div className="text-sm text-gray-500">
-              {filteredData.maintenance.length} requests
-            </div>
-          </div>
-          
-          {filteredData.maintenance.length === 0 ? (
+          {filteredData.length === 0 ? (
             <div className="no-results">
               <p>No maintenance records found</p>
             </div>
           ) : (
-            filteredData.maintenance
-              .sort((a, b) => new Date(b.completedDate || b.createdAt).getTime() - new Date(a.completedDate || a.createdAt).getTime())
-              .map((request) => (
+            filteredData
+              .sort((a: { completedDate?: string; createdAt?: string }, b: { completedDate?: string; createdAt?: string }) => 
+                new Date(b.completedDate || b.createdAt || Date.now()).getTime() - 
+                new Date(a.completedDate || a.createdAt || Date.now()).getTime()
+              )
+              .map((request: {
+                id: string;
+                title: string;
+                description: string;
+                status: string;
+                priority: string;
+                property?: string;
+                unit?: string;
+                createdAt?: string;
+                completedDate?: string;
+                actualCost?: number;
+                notes?: string;
+                images?: string[];
+              }) => (
                 <div key={request.id} className="list-item">
                   <div className="item-info">
                     <div className="flex justify-between items-start">
@@ -457,6 +427,53 @@ function CaretakerHistoryPage() {
                         </span>
                       </div>
                     )}
+                    
+                    {/* Action Buttons */}
+                    <div style={{ 
+                      marginTop: '12px', 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                      gap: '8px' 
+                    }}>
+                      {request.status === 'pending' && (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(request.id, 'in_progress')}
+                        >
+                          Start Work
+                        </button>
+                      )}
+                      {request.status === 'in_progress' && (
+                        <button
+                          type="button"
+                          className="btn btn-success"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(request.id, 'completed')}
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {request.status === 'completed' && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          onClick={() => handleStatusChange(request.id, 'pending')}
+                        >
+                          Reopen
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        style={{ fontSize: '13px', padding: '6px 12px' }}
+                        onClick={() => handleDeleteRequest(request.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -464,28 +481,28 @@ function CaretakerHistoryPage() {
         </div>
 
         {/* Performance Summary */}
-        <ChartCard title="Performance Summary">
+        <ChartCard title="Summary">
           <div className="performance-stats">
             <div className="stat-row">
-              <div className="stat-label">Total Tasks Completed:</div>
-              <div className="stat-value">{completedTasks}</div>
+              <div className="stat-label">Total Requests:</div>
+              <div className="stat-value">{maintenanceData.length}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Maintenance Requests Completed:</div>
+              <div className="stat-label">Completed:</div>
               <div className="stat-value">{completedMaintenance}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Average Completion Time:</div>
-              <div className="stat-value">{formatDuration(avgCompletionTime)}</div>
+              <div className="stat-label">In Progress:</div>
+              <div className="stat-value">{maintenanceData.filter(r => r.status === 'in_progress').length}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Total Maintenance Cost:</div>
-              <div className="stat-value">{formatCurrency(totalCost)}</div>
+              <div className="stat-label">Pending:</div>
+              <div className="stat-value">{maintenanceData.filter(r => r.status === 'pending').length}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Success Rate:</div>
+              <div className="stat-label">Completion Rate:</div>
               <div className="stat-value">
-                {Math.round((completedTasks / Math.max(completedTasks, 1)) * 100)}%
+                {maintenanceData.length > 0 ? Math.round((completedMaintenance / maintenanceData.length) * 100) : 0}%
               </div>
             </div>
           </div>
