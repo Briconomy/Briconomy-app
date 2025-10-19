@@ -202,7 +202,7 @@ export class InvoiceService {
       <html>
       <head>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
+          body { font-family: 'JetBrains Mono', monospace; margin: 20px; }
           .header { text-align: center; margin-bottom: 30px; }
           .company-info { margin-bottom: 20px; }
           .invoice-details { margin-bottom: 20px; }

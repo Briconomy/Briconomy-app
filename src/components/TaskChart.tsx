@@ -53,18 +53,46 @@ function TaskChart({ onError }: TaskChartProps) {
         plugins: {
           legend: {
             position: 'top' as const,
+            labels: {
+              font: {
+                family: "'JetBrains Mono', monospace",
+                size: 12
+              }
+            }
           },
           title: {
             display: false,
           },
+          tooltip: {
+            titleFont: {
+              family: "'JetBrains Mono', monospace",
+              size: 13
+            },
+            bodyFont: {
+              family: "'JetBrains Mono', monospace",
+              size: 12
+            }
+          }
         },
         scales: {
           y: {
             beginAtZero: true,
             type: 'linear' as const,
+            ticks: {
+              font: {
+                family: "'JetBrains Mono', monospace",
+                size: 11
+              }
+            }
           },
           x: {
             type: 'category' as const,
+            ticks: {
+              font: {
+                family: "'JetBrains Mono', monospace",
+                size: 11
+              }
+            }
           },
         },
       };

@@ -146,7 +146,7 @@
   font-weight: var(--font-medium);
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   line-height: 1.2;
 }
 
@@ -171,6 +171,7 @@
 
 .input::placeholder {
   color: var(--text-secondary);
+  font-family: var(--font-family-primary);
 }
 
 .input:disabled {
@@ -183,7 +184,7 @@
   width: 100%;
   padding: var(--space-md);
   font-size: var(--text-base);
-  font-family: inherit;
+  font-family: var(--font-family-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -191,6 +192,10 @@
   transition: all var(--transition-base);
   resize: vertical;
   min-height: 100px;
+}
+
+.textarea::placeholder {
+  font-family: var(--font-family-primary);
 }
 
 .textarea:focus {
@@ -204,13 +209,17 @@
   height: var(--height-input);
   padding: 0 var(--space-md);
   font-size: var(--text-base);
-  font-family: inherit;
+  font-family: var(--font-family-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-base);
+}
+
+.select option {
+  font-family: var(--font-family-primary);
 }
 
 .select:focus {

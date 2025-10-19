@@ -134,7 +134,7 @@ export class ExportService {
   <title>${title}</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'JetBrains Mono', monospace;
       padding: 20px;
       background: white;
     }
