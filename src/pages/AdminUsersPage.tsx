@@ -23,19 +23,19 @@ function AdminUsersPage() {
   const getUserStatsData = () => {
     if (statsLoading || !userStats) {
       return {
-        totalUsers: '10',
-        activeUsers: '8',
-        totalRoles: '5',
-        pendingUsers: '2'
+        totalUsers: '0',
+        activeUsers: '0',
+        totalRoles: '0',
+        pendingUsers: '0'
       };
     }
     
     const stats = userStats[0];
     return {
-      totalUsers: stats?.totalUsers?.toString() || '10',
-      activeUsers: stats?.activeUsers?.toString() || '8',
-      totalRoles: stats?.totalRoles?.toString() || '5',
-      pendingUsers: stats?.pendingUsers?.toString() || '2'
+      totalUsers: stats?.totalUsers?.toString() || '0',
+      activeUsers: stats?.activeUsers?.toString() || '0',
+      totalRoles: stats?.totalRoles?.toString() || '0',
+      pendingUsers: stats?.pendingUsers?.toString() || '0'
     };
   };
 
