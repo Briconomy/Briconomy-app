@@ -1,3 +1,5 @@
+import { bricllmService } from './bricllm.ts';
+
 interface ChatMessage {
   id: string;
   text: string;
@@ -18,6 +20,7 @@ export class ChatbotService {
   private static instance: ChatbotService;
   private failedReplies: number = 0;
   private maxFailedReplies: number = 3;
+  private useBricllm: boolean = true;
 
   static getInstance(): ChatbotService {
     if (!ChatbotService.instance) {
@@ -395,9 +398,27 @@ export class ChatbotService {
     return matrix[str2.length][str1.length];
   }
 
-  processMessage(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant'): ChatMessage {
-    const response = this.findResponse(userMessage, language, userRole);
-    
+  async processMessage(userMessage: string, language: 'en' | 'zu' = 'en', userRole: 'tenant' | 'caretaker' | 'manager' | 'admin' = 'tenant', route?: string): Promise<ChatMessage> {
+    let response: string | null = null;
+
+    if (this.useBricllm) {
+      const bricllmResult = await bricllmService.query({
+        message: userMessage,
+        role: userRole,
+        language: language,
+        route: route
+      });
+
+      if (bricllmResult && bricllmResult.response) {
+        response = bricllmResult.response;
+        this.failedReplies = 0;
+      } else {
+        response = this.findResponse(userMessage, language, userRole);
+      }
+    } else {
+      response = this.findResponse(userMessage, language, userRole);
+    }
+
     if (response) {
       return {
         id: Date.now().toString(),
