@@ -14,8 +14,9 @@ const OnboardingTutorial = () => {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    // Always show tutorial when user is present
-    if (user) {
+    // Check if user has seen the tutorial
+    const hasSeenTutorial = localStorage.getItem(`briconomy_tutorial_${user?.id}`);
+    if (!hasSeenTutorial && user) {
       setShowTutorial(true);
     }
   }, [user]);
