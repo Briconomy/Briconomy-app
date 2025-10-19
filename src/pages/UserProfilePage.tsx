@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { LanguageSwitcher, useLanguage } from '../contexts/LanguageContext.tsx';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -155,6 +155,10 @@ function UserProfilePage() {
             <h3>{t('profile.accountSettings')}</h3>
             <div className="settings-grid">
               <div className="setting-item">
+                <label>Language</label>
+                <LanguageSwitcher />
+              </div>
+              <div className="setting-item">
                 <label>{t('profile.notifications')}</label>
                 <div className="toggle-switch">
                   <input type="checkbox" defaultChecked />
@@ -181,6 +185,8 @@ function UserProfilePage() {
                   <input type="checkbox" />
                   <span className="toggle-slider"></span>
                 </div>
+              </div>
+              <div className="nav-right">
               </div>
             </div>
           </div>

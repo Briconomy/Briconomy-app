@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { LanguageSwitcher, useLanguage } from '../contexts/LanguageContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from './Icon.tsx';
 
 interface TopNavProps {
@@ -40,9 +40,8 @@ function TopNav({ showBackButton = false, backLink: _backLink = '/', showLogout 
           <span>Briconomy</span>
         </div>
       </div>
-      
+
       <div className="nav-right">
-        <LanguageSwitcher />
         {showLogout && (
           <button type="button" onClick={handleLogout} className="logout-btn">{t('nav.logout')}</button>
         )}
