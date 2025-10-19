@@ -57,10 +57,10 @@ function TenantProfileEditPage() {
   };
 
   const navItems = [
-    { path: '/tenant', label: t('nav.home'), active: false },
-    { path: '/tenant/payments', label: t('nav.payments') },
-    { path: '/tenant/requests', label: t('nav.requests') },
-    { path: '/tenant/profile', label: t('nav.profile'), active: true }
+    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
+    { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
+    { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
+    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile', active: true }
   ];
 
   if (isLoading) {
