@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
 import { GoogleLogin } from '@react-oauth/google';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, isAuthenticated, user, loading } = useAuth();
+  const { showToast } = useToast();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
@@ -18,14 +20,25 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
-  // Load remembered email on component mount
-  useState(() => {
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      const dashboards = {
+        admin: '/admin',
+        manager: '/manager',
+        tenant: '/tenant',
+        caretaker: '/caretaker'
+      };
+      navigate(dashboards[user.userType] || '/tenant', { replace: true });
+    }
+  }, [isAuthenticated, user, loading, navigate]);
+
+  useEffect(() => {
     const rememberedEmail = localStorage.getItem('briconomy_remembered_email');
     if (rememberedEmail) {
       setFormData(prev => ({ ...prev, email: rememberedEmail }));
       setRememberMe(true);
     }
-  });
+  }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -48,13 +61,15 @@ function LoginPage() {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        // Handle remember me functionality
         if (rememberMe) {
           localStorage.setItem('briconomy_remembered_email', formData.email);
         } else {
           localStorage.removeItem('briconomy_remembered_email');
         }
-        
+
+        const userName = result.user?.fullName || 'User';
+        showToast(`Welcome back, ${userName}`, 'success', 3000);
+
         const dashboards = {
           admin: '/admin',
           manager: '/manager',
@@ -71,6 +86,19 @@ function LoginPage() {
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div style={{
@@ -222,6 +250,9 @@ function LoginPage() {
                 try {
                   const result = await googleLogin(credentialResponse);
                   if (result.success) {
+                    const userName = result.user?.fullName || 'User';
+                    showToast(`Welcome back, ${userName}`, 'success', 3000);
+
                     const dashboards = {
                       admin: '/admin',
                       manager: '/manager',
