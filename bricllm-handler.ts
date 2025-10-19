@@ -16,6 +16,7 @@ interface BricllmResponse {
 class BricllmHandler {
   private bricllmPath: string;
   private isAvailable: boolean = false;
+  private hasWarned: boolean = false;
 
   constructor() {
     const platform = Deno.build.os;
@@ -29,9 +30,15 @@ class BricllmHandler {
     try {
       const fileInfo = await Deno.stat(this.bricllmPath);
       this.isAvailable = fileInfo.isFile;
+      if (this.isAvailable) {
+        console.log('[Bricllm] AI model loaded successfully');
+      }
     } catch {
       this.isAvailable = false;
-      console.warn('[Bricllm] Binary not found. Run update-llm script to install.');
+      if (!this.hasWarned) {
+        console.warn('[Bricllm] AI model not installed. Using FAQ fallback. Run: deno task update-llm');
+        this.hasWarned = true;
+      }
     }
   }
 
@@ -71,7 +78,25 @@ class BricllmHandler {
       }
 
       const outputText = new TextDecoder().decode(stdout);
-      const jsonResponse = JSON.parse(outputText);
+
+      let jsonResponse;
+      try {
+        jsonResponse = JSON.parse(outputText);
+      } catch (parseError) {
+        console.error('[Bricllm] JSON parse error:', parseError);
+        console.error('[Bricllm] Raw output:', outputText);
+
+        const jsonMatch = outputText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            jsonResponse = JSON.parse(jsonMatch[0]);
+          } catch {
+            return null;
+          }
+        } else {
+          return null;
+        }
+      }
 
       return {
         response: jsonResponse.response || '',
