@@ -157,34 +157,6 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
         onClick={openChat}
         className="ai-button"
         title={language === 'en' ? 'Chat with AI Assistant' : 'Xoxa nomsizi we-AI'}
-        style={{
-          backgroundColor: '#2563eb',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          padding: '8px 12px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          transition: 'all 0.2s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minWidth: '360px',
-          height: '36px'
-          
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#1d4ed8';
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#2563eb';
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-        }}
       >
         AI Assistant
       </button>
@@ -192,105 +164,32 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
   }
 
   return (
-    <div 
-      style={{ 
-        position: 'fixed', 
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '90%',
-        maxWidth: '400px',
-        height: '500px',
-        backgroundColor: 'white',
-        border: '1px solid #e5e7eb',
-        borderRadius: '12px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      {/* Header */}
-      <div style={{
-        backgroundColor: '#2563eb',
-        color: 'white',
-        padding: '16px',
-        borderTopLeftRadius: '12px',
-        borderTopRightRadius: '12px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '12px',
-            height: '12px',
-            backgroundColor: '#10b981',
-            borderRadius: '50%'
-          }}></div>
-          <span style={{ fontWeight: '600' }}>
+    <div className="ai-chatbot-modal">
+      <div className="ai-chatbot-header">
+        <div className="ai-chatbot-header-content">
+          <div className="ai-status-indicator"></div>
+          <span className="ai-chatbot-title">
             {language === 'en' ? 'AI Assistant' : 'Umsizi we-AI'}
           </span>
         </div>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          style={{
-            color: 'white',
-            backgroundColor: 'transparent',
-            border: 'none',
-            fontSize: '18px',
-            cursor: 'pointer',
-            padding: '0',
-            lineHeight: '1'
-          }}
+          className="ai-close-button"
         >
           ✕
         </button>
       </div>
 
-      {/* Messages */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-      }}>
+      <div className="ai-messages-container">
         {messages.map((message) => (
           <div
             key={message.id}
-            style={{
-              display: 'flex',
-              justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start'
-            }}
+            className={`ai-message ${message.sender}`}
           >
-            <div
-              style={{
-                maxWidth: '80%',
-                padding: '8px 12px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                backgroundColor: (() => {
-                  if (message.sender === 'user') return '#2563eb';
-                  if (message.type === 'escalation') return '#fef3c7';
-                  return '#f3f4f6';
-                })(),
-                color: (() => {
-                  if (message.sender === 'user') return 'white';
-                  if (message.type === 'escalation') return '#92400e';
-                  return '#374151';
-                })(),
-                border: message.type === 'escalation' ? '1px solid #f59e0b' : 'none'
-              }}
-            >
-              <p style={{ margin: 0 }}>{message.text}</p>
-              <p style={{
-                fontSize: '11px',
-                margin: '4px 0 0 0',
-                opacity: 0.7
-              }}>
+            <div className={`ai-message-bubble ${message.sender} ${message.type === 'escalation' ? 'escalation' : ''}`}>
+              <p className="ai-message-text">{message.text}</p>
+              <p className="ai-message-time">
                 {formatTime(message.timestamp)}
               </p>
             </div>
@@ -298,119 +197,51 @@ const AIButton: React.FC<AIButtonProps> = ({ userId, language = 'en', userRole =
         ))}
         
         {isLoading && (
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <div style={{
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              padding: '8px 12px',
-              borderRadius: '12px',
-              fontSize: '14px'
-            }}>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#9ca3af',
-                  borderRadius: '50%',
-                  animation: 'bounce 1.4s ease-in-out infinite both'
-                }}></div>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#9ca3af',
-                  borderRadius: '50%',
-                  animation: 'bounce 1.4s ease-in-out 0.16s infinite both'
-                }}></div>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#9ca3af',
-                  borderRadius: '50%',
-                  animation: 'bounce 1.4s ease-in-out 0.32s infinite both'
-                }}></div>
+          <div className="ai-loading-indicator">
+            <div className="ai-loading-bubble">
+              <div className="ai-loading-dots">
+                <div className="ai-loading-dot"></div>
+                <div className="ai-loading-dot"></div>
+                <div className="ai-loading-dot"></div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Quick Replies */}
-      <div style={{ padding: '0 16px 16px', borderTop: '1px solid #e5e7eb' }}>
-        <p style={{ 
-          fontSize: '12px', 
-          color: '#6b7280', 
-          margin: '8px 0 4px 0',
-          fontWeight: '500'
-        }}>
+      <div className="ai-quick-replies-container">
+        <p className="ai-quick-replies-label">
           {language === 'en' ? 'Quick suggestions:' : 'Iziphakamiso ezisheshayo:'}
         </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
-            {quickReplies.map((reply) => (
-              <button
-                key={reply}
-                type="button"
-                onClick={() => handleQuickReply(reply)}
-                style={{
-                  fontSize: '12px',
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e5e7eb';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                }}
-              >
-                {reply}
-              </button>
-            ))}
-          </div>
+        <div className="ai-quick-replies-buttons">
+          {quickReplies.map((reply) => (
+            <button
+              key={reply}
+              type="button"
+              onClick={() => handleQuickReply(reply)}
+              className="ai-quick-reply-button"
+            >
+              {reply}
+            </button>
+          ))}
         </div>
+      </div>
 
-      {/* Input */}
-      <div style={{ padding: '16px', borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="ai-input-container">
+        <div className="ai-input-wrapper">
           <input
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={language === 'en' ? 'Type your message...' : 'Bhala umlayezo wakho...'}
-            style={{
-              flex: 1,
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              fontSize: '14px',
-              outline: 'none'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#2563eb';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#d1d5db';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            className="ai-input"
           />
           <button
             type="button"
             onClick={sendMessage}
             disabled={!inputText.trim() || isLoading}
-            style={{
-              backgroundColor: inputText.trim() && !isLoading ? '#2563eb' : '#9ca3af',
-              color: 'white',
-              padding: '8px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: inputText.trim() && !isLoading ? 'pointer' : 'not-allowed'
-            }}
+            className="ai-send-button"
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

@@ -427,7 +427,7 @@ function AccessLogs({ userId, resourceFilter, maxItems = 50, showFilters = true 
                   padding: '8px 12px',
                   borderRadius: '6px',
                   marginTop: '8px',
-                  fontFamily: 'monospace'
+                  fontFamily: 'JetBrains Mono, monospace'
                 }}>
                   {formatDetails(log.details)}
                 </div>

@@ -36,6 +36,7 @@ const translations: Translations = {
   'dashboard.report_issue': { en: 'Report an issue', zu: 'Bika inkinga' },
   'dashboard.contact': { en: 'Contact', zu: 'Xhumana' },
   'dashboard.message_management': { en: 'Message management', zu: 'Ukuphatha imilayezo' },
+  'dashboard.loading': { en: 'Loading', zu: 'Kuyalayishwa' },
       profile: {
       en: 'Profile',
       zu: 'Iphrofayili'
@@ -350,6 +351,11 @@ const translations: Translations = {
   'common.info': { en: 'Information', zu: 'Ulwazi' },
   'common.from_date': { en: 'From Date', zu: 'Kusukela Kusuku' },
   'common.to_date': { en: 'To Date', zu: 'Kuya Kusuku' },
+  'common.view': { en: 'View', zu: 'Buka' },
+  'common.approve': { en: 'Approve', zu: 'Vumela' },
+  'common.reject': { en: 'Reject', zu: 'Nqaba' },
+  'common.processing': { en: 'Processing...', zu: 'Kuyaphathwa...' },
+  'common.execute': { en: 'Execute', zu: 'Yenza' },
   'payments.monthly_revenue': { en: 'Monthly Revenue', zu: 'Imali Yenyanga' },
   'payments.collection_rate': { en: 'Collection Rate', zu: 'Izinga Lokuqoqa' },
 
@@ -747,11 +753,14 @@ const translations: Translations = {
 
   // Lease Terminations Page
   'terminations.title': { en: 'Lease Terminations', zu: 'Ukuqediswa Kwama-lease' },
+  'terminations.page_title': { en: 'Lease Terminations', zu: 'Ukuqediswa Kwama-lease' },
   'terminations.subtitle': { en: 'Manage lease termination requests and processes', zu: 'Phatha izicelo zokuqediswa kwama-lease' },
-  'terminations.pending': { en: 'Pending', zu: 'Kusalin dile' },
+  'terminations.page_subtitle': { en: 'Manage lease termination requests and processes', zu: 'Phatha izicelo zokuqediswa kwama-lease' },
+  'terminations.pending': { en: 'Pending', zu: 'Kusalindile' },
   'terminations.approved': { en: 'Approved', zu: 'Kuvunyiwe' },
   'terminations.rejected': { en: 'Rejected', zu: 'Kwenqatshiwe' },
   'terminations.completed': { en: 'Completed', zu: 'Kuqediwe' },
+  'terminations.total_requests': { en: 'Total Requests', zu: 'Izicelo Zonke' },
   'terminations.termination_status': { en: 'Termination Status', zu: 'Isimo Sokuqediswa' },
   'terminations.recent_terminations': { en: 'Recent Terminations', zu: 'Ukuqediswa Kwakamuva' },
   'terminations.tenant': { en: 'Tenant', zu: 'Umqashi' },
@@ -765,16 +774,42 @@ const translations: Translations = {
   'terminations.process': { en: 'Process', zu: 'Phatha' },
   'terminations.initiate': { en: 'Initiate Termination', zu: 'Qala Ukuqediswa' },
   'terminations.initiate_new': { en: 'Initiate new termination', zu: 'Qala ukuqediswa okusha' },
+  'terminations.start_new': { en: 'Start new termination request', zu: 'Qala isicelo esisha sokuqediswa' },
   'terminations.settlement': { en: 'Settlement Calculator', zu: 'Isibali Sokuxazulula' },
+  'terminations.calculate_settlement': { en: 'Settlement Calculator', zu: 'Isibali Sokuxazulula' },
   'terminations.calculate_settlements': { en: 'Calculate settlements', zu: 'Bala ukuxazulula' },
+  'terminations.penalties_refunds': { en: 'Calculate penalties and refunds', zu: 'Bala izijeziso nokubuyiselwa' },
   'terminations.documents': { en: 'Generate Documents', zu: 'Khiqiza Amadokhumenti' },
+  'terminations.generate_documents': { en: 'Generate Documents', zu: 'Khiqiza Amadokhumenti' },
   'terminations.termination_documents': { en: 'Termination documents', zu: 'Amadokhumenti okuqediswa' },
+  'terminations.termination_paperwork': { en: 'Generate termination paperwork', zu: 'Khiqiza amaphepha okuqediswa' },
   'terminations.analytics': { en: 'View Analytics', zu: 'Buka Ukuhlaziya' },
+  'terminations.report': { en: 'Termination Report', zu: 'Umbiko Wokuqediswa' },
+  'terminations.summary_analytics': { en: 'View summary and analytics', zu: 'Buka isifinyezo nokuhlaziya' },
   'terminations.reports_analytics': { en: 'Reports & analytics', zu: 'Imibiko nokuhlaziya' },
   'terminations.no_terminations': { en: 'No termination requests found', zu: 'Azikho izicelo zokuqediswa ezitholiwe' },
   'terminations.search_placeholder': { en: 'Search by tenant, unit, or property...', zu: 'Sesha ngomqashi, iyunithi, noma indawo...' },
   'terminations.filter_by_status': { en: 'Filter by Status', zu: 'Hlola Ngesimo' },
   'terminations.all_statuses': { en: 'All Statuses', zu: 'Zonke Izimo' },
+  'terminations.requests': { en: 'Termination Requests', zu: 'Izicelo Zokuqediswa' },
+  'terminations.overview': { en: 'Termination Overview', zu: 'Ukubuka Kokuqediswa' },
+  'terminations.pending_review': { en: 'Pending Review', zu: 'Kusalindwe Ukubuyekezwa' },
+  'terminations.nav': { en: 'Terminations', zu: 'Ukuqediswa' },
+  'terminations.loading': { en: 'Loading terminations...', zu: 'Kulayishwa ukuqediswa...' },
+
+  // Admin Operations Page
+  'operations.system_actions': { en: 'System Actions', zu: 'Izenzo Zohlelo' },
+  'operations.clear_cache': { en: 'Clear Cache', zu: 'Sula Ikheshi' },
+  'operations.clear_cache_desc': { en: 'Clear system cache to improve performance', zu: 'Sula ikheshi yohlelo ukuze kuthuthuke ukusebenza' },
+  'operations.optimize_database': { en: 'Optimize Database', zu: 'Lungisa Idatha' },
+  'operations.optimize_database_desc': { en: 'Optimize database for better performance', zu: 'Lungisa idatha ukuze isebenze kangcono' },
+  'operations.backup_system': { en: 'Backup System', zu: 'Gcina Uhlelo' },
+  'operations.backup_system_desc': { en: 'Create a backup of the entire system', zu: 'Yenza ukugcina kohlelo lonke' },
+  'operations.restart_services': { en: 'Restart Services', zu: 'Qala Kabusha Izinsizakalo' },
+  'operations.restart_services_desc': { en: 'Restart all system services', zu: 'Qala kabusha zonke izinsizakalo zohlelo' },
+  'operations.generate_health_report': { en: 'Generate Health Report', zu: 'Khiqiza Umbiko Wezempilo' },
+  'operations.generate_health_report_desc': { en: 'Generate a comprehensive system health report', zu: 'Khiqiza umbiko ophelele wezempilo yohlelo' },
+  'operations.execute_action': { en: 'Execute Action', zu: 'Yenza Isenzo' },
 
   // Settlement Calculator Page
   'settlement.title': { en: 'Settlement Calculator', zu: 'Isibali Sokuxazulula' },
@@ -946,7 +981,15 @@ const translations: Translations = {
 
   // Communication Page
   'communication.title': { en: 'Communication', zu: 'Ukuxhumana' },
+  'communication.unread': { en: 'Unread', zu: 'Akufundiwe' },
   'communication.messages': { en: 'Messages', zu: 'Imilayezo' },
+  'communication.contacts': { en: 'Contacts', zu: 'Oxhumana Nabo' },
+  'communication.active_requests': { en: 'Active Requests', zu: 'Izicelo Ezisebenzayo' },
+  'communication.quick_contacts': { en: 'Quick Contacts', zu: 'Oxhumana Nabo Ngokushesha' },
+  'communication.new_message': { en: 'New Message', zu: 'Umyalezo Omusha' },
+  'communication.property': { en: 'Property', zu: 'Ipropathi' },
+  'communication.unit': { en: 'Unit', zu: 'Iyunithi' },
+  'communication.available': { en: 'Available', zu: 'Kuyatholakala' },
   'communication.compose': { en: 'Compose Message', zu: 'Bhala Umyalezo' },
   'communication.inbox': { en: 'Inbox', zu: 'Ibhokisi Lokungenayo' },
   'communication.sent': { en: 'Sent', zu: 'Kuthunyelwe' },
@@ -961,7 +1004,6 @@ const translations: Translations = {
   'communication.no_messages': { en: 'No messages', zu: 'Ayikho imilayezo' },
 
   // Maintenance Requests Page (additional)
-  'maintenance.title': { en: 'Maintenance Requests', zu: 'Izicelo Zokulungisa' },
   'maintenance.subtitle': { en: 'Track and manage maintenance requests', zu: 'Landelela futhi uphatha izicelo zokulungisa' },
   'maintenance.submit_request': { en: 'Submit Request', zu: 'Thumela Isicelo' },
   'maintenance.my_requests': { en: 'My Requests', zu: 'Izicelo Zami' },
@@ -1007,7 +1049,6 @@ const translations: Translations = {
   'caretaker.mark_complete': { en: 'Mark as Complete', zu: 'Maka Ukuthi Iqedile' },
   'caretaker.start_task': { en: 'Start Task', zu: 'Qala Umsebenzi' },
   'caretaker.view_details': { en: 'View Details', zu: 'Buka Imininingwane' },
-  'caretaker.no_tasks': { en: 'No tasks assigned', zu: 'Ayikho imisebenzi eyabiwayo' },
 
   // Common Error/Success Messages
   'message.saved_successfully': { en: 'Saved successfully', zu: 'Kulondoloziwe ngempumelelo' },
@@ -1019,7 +1060,6 @@ const translations: Translations = {
   'message.failed_to_delete': { en: 'Failed to delete', zu: 'Kwehlulekile ukususa' },
   'message.failed_to_create': { en: 'Failed to create', zu: 'Kwehlulekile ukwenza' },
   'message.failed_to_load': { en: 'Failed to load data', zu: 'Kwehlulekile ukulayisha idatha' },
-  'message.confirm_delete': { en: 'Are you sure you want to delete this?', zu: 'Uqinisekile ukuthi ufuna ukususa lokhu?' },
   'message.confirm_action': { en: 'Are you sure you want to proceed?', zu: 'Uqinisekile ukuthi ufuna ukuqhubeka?' },
   'message.no_data_available': { en: 'No data available', zu: 'Ayikho idatha etholakalayo' },
   'message.loading_data': { en: 'Loading data...', zu: 'Kulayishwa idatha...' },
@@ -1099,14 +1139,14 @@ export const LanguageSwitcher: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
 
   return (
-    <div className="flex items-center space-x-2">
-      <label className="text-sm font-medium text-gray-700">
+    <div className="language-switcher">
+      <label className="language-label">
         {t('settings.language')}:
       </label>
       <select
         value={language}
         onChange={(e) => setLanguage(e.target.value as 'en' | 'zu')}
-        className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="language-select"
       >
         <option value="en">{t('settings.english')}</option>
         <option value="zu">{t('settings.zulu')}</option>

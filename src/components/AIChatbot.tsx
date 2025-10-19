@@ -142,31 +142,14 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
 
   if (!isOpen) {
     return (
-      <div 
-        className="fixed bottom-4 right-4 z-50"
-        style={{ 
-          position: 'fixed', 
-          bottom: '16px', 
-          right: '16px', 
-          zIndex: 9999 
-        }}
-      >
+      <div className="ai-floating-button-container">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors pulse"
+          className="ai-floating-button"
           title="Chat with AI Assistant"
-          style={{
-            backgroundColor: '#2563eb',
-            color: 'white',
-            padding: '16px',
-            borderRadius: '50%',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-          }}
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </button>
@@ -175,54 +158,32 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
   }
 
   return (
-    <div 
-      className="fixed bottom-4 right-4 w-80 h-96 bg-white border border-gray-300 rounded-lg shadow-xl z-50 flex flex-col"
-      style={{ 
-        position: 'fixed', 
-        bottom: '16px', 
-        right: '16px', 
-        zIndex: 9999,
-        minWidth: '320px',
-        minHeight: '384px'
-      }}
-    >
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-          <span className="font-semibold">
+    <div className="ai-floating-chatbot-modal">
+      <div className="ai-chatbot-header">
+        <div className="ai-chatbot-header-content">
+          <div className="ai-status-indicator"></div>
+          <span className="ai-chatbot-title">
             {language === 'en' ? 'AI Assistant' : 'Umsizi we-AI'}
           </span>
         </div>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="text-white hover:text-gray-200"
+          className="ai-close-button"
         >
           ✕
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="ai-messages-container">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`ai-message ${message.sender}`}
           >
-            <div
-              className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
-                message.sender === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : message.type === 'escalation'
-                  ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              <p>{message.text}</p>
-              <p className={`text-xs mt-1 ${
-                message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-              }`}>
+            <div className={`ai-message-bubble ${message.sender} ${message.type === 'escalation' ? 'escalation' : ''}`}>
+              <p className="ai-message-text">{message.text}</p>
+              <p className="ai-message-time">
                 {formatTime(message.timestamp)}
               </p>
             </div>
@@ -230,12 +191,12 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
         ))}
         
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="ai-loading-indicator">
+            <div className="ai-loading-bubble">
+              <div className="ai-loading-dots">
+                <div className="ai-loading-dot"></div>
+                <div className="ai-loading-dot"></div>
+                <div className="ai-loading-dot"></div>
               </div>
             </div>
           </div>
@@ -244,15 +205,14 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Replies */}
-      <div className="px-3 py-2 border-t border-gray-200">
-        <div className="flex flex-wrap gap-1">
+      <div className="ai-quick-replies-container">
+        <div className="ai-quick-replies-buttons">
           {quickReplies.map((reply, index) => (
             <button
               key={index}
               type="button"
               onClick={() => handleQuickReply(reply)}
-              className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+              className="ai-quick-reply-button"
             >
               {reply}
             </button>
@@ -260,24 +220,23 @@ const AIChatbot: React.FC<ChatbotProps> = ({ userId, language = 'en', userRole =
         </div>
       </div>
 
-      {/* Input */}
-      <div className="p-3 border-t border-gray-200">
-        <div className="flex space-x-2">
+      <div className="ai-input-container">
+        <div className="ai-input-wrapper">
           <input
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={language === 'en' ? 'Type your message...' : 'Bhala umlayezo wakho...'}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="ai-input"
           />
           <button
             type="button"
             onClick={sendMessage}
             disabled={!inputText.trim() || isLoading}
-            className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="ai-send-button"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </button>

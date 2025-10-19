@@ -713,46 +713,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
             <button
               type="button"
               onClick={() => setShowQuickOptions(true)}
-              style={{
-                backgroundColor: '#16a34a',
-                color: 'white',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '500',
-                fontSize: '14px',
-                width: '100%'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#15803d';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#16a34a';
-              }}
+              className="announcement-quick-options-button"
             >
               Quick Options
             </button>
             <button
               type="button"
               onClick={() => setShowCreateForm(true)}
-              style={{
-                backgroundColor: '#2563eb',
-                color: 'white',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '500',
-                fontSize: '14px',
-                width: '100%'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1d4ed8';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#2563eb';
-              }}
+              className="announcement-custom-button"
             >
               Custom Announcement
             </button>
@@ -803,30 +771,11 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
               alignItems: 'center',
               marginBottom: '16px'
             }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                margin: 0
-              }}>Quick Templates</h2>
+              <h2 className="announcement-modal-title">Quick Templates</h2>
               <button
                 type="button"
                 onClick={() => setShowQuickOptions(false)}
-                style={{
-                  color: '#6b7280',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '4px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
+                className="announcement-modal-close"
               >
                 ×
               </button>
@@ -838,24 +787,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                   key={index}
                   type="button"
                   onClick={() => selectTemplate(template)}
-                  style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '16px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f9fafb';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white';
-                    e.currentTarget.style.borderColor = '#d1d5db';
-                  }}
+                  className="announcement-template-button"
                 >
                   <div style={{
                     display: 'flex',
@@ -863,11 +795,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                     alignItems: 'center',
                     marginBottom: '8px'
                   }}>
-                    <h3 style={{
-                      fontWeight: '600',
-                      color: '#111827',
-                      margin: 0
-                    }}>{template.title}</h3>
+                    <h3 className="announcement-template-title">{template.title}</h3>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -877,6 +805,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                         padding: '2px 8px',
                         fontSize: '11px',
                         fontWeight: '600',
+                        fontFamily: 'var(--font-family-primary)',
                         borderRadius: '12px',
                         backgroundColor: template.priority === 'high' ? '#fef2f2' : template.priority === 'medium' ? '#fffbeb' : '#f0fdf4',
                         color: template.priority === 'high' ? '#dc2626' : template.priority === 'medium' ? '#d97706' : '#16a34a'
@@ -885,17 +814,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                       </span>
                       <span style={{
                         fontSize: '12px',
+                        fontFamily: 'var(--font-family-primary)',
                         color: '#6b7280'
                       }}>
                         {template.targetAudience}
                       </span>
                     </div>
                   </div>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#6b7280',
-                    margin: 0,
-                    lineHeight: '1.4',
+                  <p className="announcement-template-message" style={{
                     overflow: 'hidden',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
@@ -971,30 +897,11 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
               alignItems: 'center',
               marginBottom: '16px'
             }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                margin: 0
-              }}>Create Announcement</h2>
+              <h2 className="announcement-modal-title">Create Announcement</h2>
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                style={{
-                  color: '#6b7280',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '4px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
+                className="announcement-modal-close"
               >
                 ×
               </button>
@@ -1002,13 +909,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '4px'
-                }}>
+                <label className="announcement-form-label">
                   Title
                 </label>
                 <input
@@ -1016,34 +917,13 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  className="announcement-form-input"
                   required
                 />
               </div>
 
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '4px'
-                }}>
+                <label className="announcement-form-label">
                   Message
                 </label>
                 <textarea
@@ -1051,60 +931,21 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                   value={formData.message}
                   onChange={handleInputChange}
                   rows={3}
-                  style={{
-                    width: '100%',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    padding: '8px 10px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  className="announcement-form-textarea"
                   required
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#374151',
-                    marginBottom: '4px'
-                  }}>
+                  <label className="announcement-form-label">
                     Category
                   </label>
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    style={{
-                      width: '100%',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      backgroundColor: 'white'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#3b82f6';
-                      e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#d1d5db';
-                      e.target.style.boxShadow = 'none';
-                    }}
+                    className="announcement-form-select"
                   >
                     <option value="general">General</option>
                     <option value="maintenance">Maintenance</option>
@@ -1114,36 +955,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#374151',
-                    marginBottom: '4px'
-                  }}>
+                  <label className="announcement-form-label">
                     Priority
                   </label>
                   <select
                     name="priority"
                     value={formData.priority}
                     onChange={handleInputChange}
-                    style={{
-                      width: '100%',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      backgroundColor: 'white'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#3b82f6';
-                      e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#d1d5db';
-                      e.target.style.boxShadow = 'none';
-                    }}
+                    className="announcement-form-select"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -1153,36 +972,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
               </div>
 
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '4px'
-                }}>
+                <label className="announcement-form-label">
                   Target Audience
                 </label>
                 <select
                   name="targetAudience"
                   value={formData.targetAudience}
                   onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    backgroundColor: 'white'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  className="announcement-form-select"
                 >
                   {currentUserRole === 'manager' ? (
                     <>
@@ -1201,13 +998,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
               </div>
 
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '4px'
-                }}>
+                <label className="announcement-form-label">
                   Schedule For (Optional)
                 </label>
                 <input
@@ -1215,22 +1006,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                   name="scheduledFor"
                   value={formData.scheduledFor}
                   onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  className="announcement-form-input"
                 />
               </div>
 
@@ -1242,51 +1018,14 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{
-                    flex: 1,
-                    backgroundColor: loading ? '#9ca3af' : '#2563eb',
-                    color: 'white',
-                    padding: '8px 14px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontWeight: '500',
-                    fontSize: '14px',
-                    opacity: loading ? 0.5 : 1
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading) {
-                      e.currentTarget.style.backgroundColor = '#1d4ed8';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!loading) {
-                      e.currentTarget.style.backgroundColor = '#2563eb';
-                    }
-                  }}
+                  className="announcement-submit-button"
                 >
                   {formData.scheduledFor ? 'Schedule' : 'Send Now'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#d1d5db',
-                    color: '#374151',
-                    padding: '8px 14px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    fontSize: '14px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#9ca3af';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#d1d5db';
-                  }}
+                  className="announcement-cancel-button"
                 >
                   Cancel
                 </button>

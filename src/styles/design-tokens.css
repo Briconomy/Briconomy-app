@@ -1,4 +1,7 @@
 :root {
+  --font-family-primary: 'JetBrains Mono', monospace;
+  --font-family-mono: 'JetBrains Mono', monospace;
+
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;

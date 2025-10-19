@@ -59,6 +59,7 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
+  font-family: var(--font-family-primary);
   background: white;
 }
 
@@ -81,6 +82,7 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
+  font-family: var(--font-family-primary);
   text-align: center;
 }
 
