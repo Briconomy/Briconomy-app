@@ -15,17 +15,13 @@ function CaretakerTasksPage() {
     []
   );
 
-  // Refetch tasks every 5 seconds to catch new maintenance requests
+  // Log tasks when they change
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      console.log('[CaretakerTasksPage] Auto-refreshing tasks...');
-      refetchTasks();
-    }, 5000); // Refresh every 5 seconds
-    
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [refetchTasks]);
+    console.log('[CaretakerTasksPage] Tasks updated:', {
+      count: Array.isArray(tasks) ? tasks.length : 0,
+      tasks: tasks
+    });
+  }, [tasks]);
 
   useEffect(() => {
     loadUserData();

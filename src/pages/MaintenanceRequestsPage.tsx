@@ -1,4 +1,4 @@
-import _React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -148,18 +148,6 @@ function MaintenanceRequestsPage() {
     loadUserData();
   }, []);
 
-  // Refetch requests every 5 seconds to catch status updates
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      console.log('[MaintenanceRequestsPage] Auto-refreshing requests...');
-      refetchRequests();
-    }, 5000); // Refresh every 5 seconds
-    
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [refetchRequests]);
-
   const loadUserData = () => {
     try {
   const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
@@ -169,9 +157,13 @@ function MaintenanceRequestsPage() {
     }
   };
 
-  const pendingCount = requests?.filter(r => r.status === 'pending').length || 0;
-  const inProgressCount = requests?.filter(r => r.status === 'in_progress').length || 0;
-  const completedCount = requests?.filter(r => r.status === 'completed').length || 0;
+  const requestsData = useMemo(() => Array.isArray(requests) ? requests : [], [requests]);
+  
+  const stats = useMemo(() => ({
+    pendingCount: requestsData.filter(r => r.status === 'pending').length,
+    inProgressCount: requestsData.filter(r => r.status === 'in_progress').length,
+    completedCount: requestsData.filter(r => r.status === 'completed').length
+  }), [requestsData]);
 
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
@@ -276,10 +268,10 @@ return (
         {activeTab === 'requests' && (
           <>
             <div className="dashboard-grid">
-              <StatCard value={pendingCount} label={t('requests.pending')} />
-              <StatCard value={inProgressCount} label={t('requests.inProgress')} />
-              <StatCard value={completedCount} label={t('requests.completed')} />
-              <StatCard value={requests?.length || 0} label={t('requests.total')} />
+              <StatCard value={stats.pendingCount} label={t('requests.pending')} />
+              <StatCard value={stats.inProgressCount} label={t('requests.inProgress')} />
+              <StatCard value={stats.completedCount} label={t('requests.completed')} />
+              <StatCard value={requestsData.length} label={t('requests.total')} />
             </div>
 
             {currentLease && (
@@ -312,17 +304,31 @@ return (
                     </button>
                   )}
                 </div>
-                <button 
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowRequestForm(true)}
-                  style={{ marginTop: '8px' }}
-                >
-                  {t('requests.newRequest')}
-                </button>
+                {requestsData.length > 0 && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <button 
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setShowRequestForm(true)}
+                    >
+                      {t('requests.newRequest')}
+                    </button>
+                    <button 
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        console.log('[MaintenanceRequestsPage] Manual refresh triggered');
+                        refetchRequests();
+                      }}
+                      title="Refresh maintenance requests"
+                    >
+                      🔄
+                    </button>
+                  </div>
+                )}
               </div>
               
-              {requests?.length === 0 ? (
+              {requestsData.length === 0 ? (
                 <div className="empty-state">
                   <p>{t('requests.noRequestsFound')}</p>
                   <button 
@@ -334,7 +340,7 @@ return (
                   </button>
                 </div>
               ) : (
-                requests.map((request) => (
+                requestsData.map((request) => (
                   <div key={request.id} className="list-item">
                     <div className="item-info">
                       <div className="request-header">
@@ -411,15 +417,15 @@ return (
             <ChartCard title={t('requests.statusOverview')}>
               <div className="request-stats">
                 <div className="stat-item">
-                  <div className="stat-value">{pendingCount}</div>
+                  <div className="stat-value">{stats.pendingCount}</div>
                   <div className="stat-label">Pending</div>
                 </div>
                 <div className="stat-item">
-                  <div className="stat-value">{inProgressCount}</div>
+                  <div className="stat-value">{stats.inProgressCount}</div>
                   <div className="stat-label">In Progress</div>
                 </div>
                 <div className="stat-item">
-                  <div className="stat-value">{completedCount}</div>
+                  <div className="stat-value">{stats.completedCount}</div>
                   <div className="stat-label">Completed</div>
                 </div>
               </div>

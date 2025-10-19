@@ -164,8 +164,10 @@ const NotificationWidget: React.FC = () => {
       console.log('Fetched notifications raw data:', data);
       
       // Filter out notifications we know are deleted (ghost notifications)
+      // Access the Set directly in the callback to avoid dependency issues
+      const deletedIds = deletedNotificationIds;
       const filteredData = data.filter(notification => 
-        !deletedNotificationIds.has(notification.id)
+        !deletedIds.has(notification.id)
       );
       
       if (filteredData.length !== data.length) {
@@ -178,7 +180,7 @@ const NotificationWidget: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, deletedNotificationIds]);
+  }, [user?.id]); // Remove deletedNotificationIds from dependencies
 
   // Fetch notifications when user changes
   useEffect(() => {
@@ -544,4 +546,5 @@ const NotificationWidget: React.FC = () => {
   );
 };
 
-export default NotificationWidget;
+// Wrap with React.memo to prevent unnecessary re-renders when parent components update
+export default React.memo(NotificationWidget);
