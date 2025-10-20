@@ -1,8 +1,6 @@
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
-import RoleDistributionChart from '../components/RoleDistributionChart.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +17,6 @@ function AdminUsersPage() {
   ];
 
   const { data: userStats, loading: statsLoading } = useApi(() => adminApi.getUserStats());
-  const { data: userActivities, loading: activitiesLoading } = useApi(() => adminApi.getUserActivities());
 
   const getUserStatsData = () => {
     if (statsLoading || !userStats) {
@@ -42,30 +39,8 @@ function AdminUsersPage() {
       totalUsers: stats?.totalUsers?.toString() || '0',
       activeUsers: stats?.activeUsers?.toString() || '0',
       totalRoles: stats?.totalRoles?.toString() || '0',
-      pendingUsers: stats?.pendingUsers?.toString() || '0',
-      roleDistribution: stats?.roleDistribution || {
-        admins: 0,
-        managers: 0,
-        tenants: 0,
-        caretakers: 0
-      }
+      pendingUsers: stats?.pendingUsers?.toString() || '0'
     };
-  };
-
-  const formatActivityTime = (timestamp: string) => {
-    const now = new Date();
-    const activityTime = new Date(timestamp);
-    const diffMs = now.getTime() - activityTime.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffMins < 60) {
-      return `${diffMins} minutes ago`;
-    } else if (diffHours < 24) {
-      return `${diffHours} hours ago`;
-    } else {
-      return activityTime.toLocaleDateString();
-    }
   };
 
   const stats = getUserStatsData();
@@ -146,32 +121,6 @@ function AdminUsersPage() {
             </div>
             <span className="status-badge status-tenant">{t('admin.tenant')}</span>
           </div>
-        </div>
-
-        <ChartCard title={t('admin.role_distribution')}>
-          <RoleDistributionChart data={getUserStatsData().roleDistribution} />
-        </ChartCard>
-
-        <div className="data-table">
-          <div className="table-header">
-            <div className="table-title">{t('admin.recent_activity')}</div>
-          </div>
-          {activitiesLoading ? (
-            <div className="list-item">
-              <div className="item-info">
-                <h4>{t('common.loading')}...</h4>
-              </div>
-            </div>
-          ) : (
-            userActivities?.map((activity: any, index: number) => (
-              <div key={index} className="list-item">
-                <div className="item-info">
-                  <h4>{activity.action}</h4>
-                  <p>{formatActivityTime(activity.timestamp)}</p>
-                </div>
-              </div>
-            ))
-          )}
         </div>
       </div>
       
