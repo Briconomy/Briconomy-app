@@ -7,8 +7,34 @@ import ChartCard from '../components/ChartCard.tsx';
 import Icon from '../components/Icon.tsx';
 import { maintenanceApi, useApi, formatDate } from '../services/api.ts';
 
+interface MaintenanceTask {
+  id: string;
+  title: string;
+  description: string;
+  property?: string;
+  location?: string;
+  unitNumber?: string;
+  priority: string;
+  status: string;
+  createdAt: string;
+  completedAt?: string;
+  assignedTo?: string;
+  photos?: string[];
+  repairPhotos?: string[];
+  comments?: Array<{
+    author: string;
+    authorId?: string;
+    text: string;
+    timestamp: string;
+  }>;
+}
+
 function CaretakerTasksPage() {
   const [user, setUser] = useState<{ id?: string; fullName?: string; userType?: string } | null>(null);
+  const [selectedTask, setSelectedTask] = useState<MaintenanceTask | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [comment, setComment] = useState('');
+  const [repairPhotos, setRepairPhotos] = useState<File[]>([]);
 
   const { data: tasks, loading: tasksLoading, refetch: refetchTasks } = useApi(
     () => maintenanceApi.getAll({}),
@@ -61,19 +87,77 @@ function CaretakerTasksPage() {
       };
       
       if (user?.id) {
-        updateData.assignedTo = user.id;
+        updateData.assignedTo = user.fullName || user.id;
       }
       
       if (newStatus === 'completed') {
         updateData.completedAt = new Date().toISOString();
+        
+        if (repairPhotos.length > 0) {
+          updateData.repairPhotos = repairPhotos.map(f => f.name);
+        }
+      }
+
+      if (comment.trim()) {
+        const existingComments = selectedTask?.comments || [];
+        updateData.comments = [
+          ...existingComments,
+          {
+            author: user?.fullName || 'Caretaker',
+            authorId: user?.id,
+            text: comment,
+            timestamp: new Date().toISOString()
+          }
+        ];
       }
       
       await maintenanceApi.update(taskId, updateData);
       await refetchTasks();
+      
+      setShowDetailsModal(false);
+      setComment('');
+      setRepairPhotos([]);
+      setSelectedTask(null);
     } catch (error) {
       console.error('Error updating task status:', error);
       alert('Failed to update task status. Please try again.');
     }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm('Are you sure you want to delete this maintenance request? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await maintenanceApi.delete(taskId);
+      await refetchTasks();
+      setShowDetailsModal(false);
+      setSelectedTask(null);
+      alert('Maintenance request deleted successfully');
+    } catch (error) {
+      console.error('Error deleting maintenance request:', error);
+      alert('Failed to delete maintenance request. Please try again.');
+    }
+  };
+
+  const handleRepairPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newPhotos = Array.from(files).slice(0, 5 - repairPhotos.length);
+    setRepairPhotos(prev => [...prev, ...newPhotos]);
+  };
+
+  const removeRepairPhoto = (index: number) => {
+    setRepairPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const openTaskDetails = (task: MaintenanceTask) => {
+    setSelectedTask(task);
+    setShowDetailsModal(true);
+    setComment('');
+    setRepairPhotos([]);
   };
 
   const getStatusColor = (status) => {
@@ -141,16 +225,7 @@ function CaretakerTasksPage() {
               <p>No maintenance requests found</p>
             </div>
           ) : (
-            tasksList.map((task: {
-              id: string;
-              title: string;
-              description: string;
-              property?: string;
-              priority: string;
-              status: string;
-              createdAt: string;
-              completedAt?: string;
-            }) => (
+            tasksList.map((task: MaintenanceTask) => (
               <div key={task.id} className="list-item">
                 <div className="item-info">
                   <h4>{task.title}</h4>
@@ -159,6 +234,14 @@ function CaretakerTasksPage() {
                     <span className={`text-xs ${getPriorityColor(task.priority)}`}>
                       {task.priority.toUpperCase()} PRIORITY
                     </span>
+                    {task.location && (
+                      <>
+                        <br />
+                        <span className="text-xs text-blue-600">
+                           {task.location} {task.unitNumber && `- Unit ${task.unitNumber}`}
+                        </span>
+                      </>
+                    )}
                     {task.property && (
                       <span className="text-xs text-gray-500">
                         {task.property}
@@ -167,6 +250,22 @@ function CaretakerTasksPage() {
                     <span className={`text-xs ${isOverdue(task.createdAt) && task.status === 'pending' ? 'text-red-600' : 'text-gray-500'}`}>
                       Created: {formatDate(task.createdAt)}
                     </span>
+                    {task.assignedTo && (
+                      <>
+                        <br />
+                        <span className="text-xs text-purple-600">
+                           Assigned: {task.assignedTo}
+                        </span>
+                      </>
+                    )}
+                    {task.photos && task.photos.length > 0 && (
+                      <>
+                        <br />
+                        <span className="text-xs text-green-600">
+                           {task.photos.length} photo{task.photos.length > 1 ? 's' : ''}
+                        </span>
+                      </>
+                    )}
                     {task.completedAt && (
                       <span className="text-xs text-green-600">
                         Completed: {formatDate(task.completedAt)}
@@ -179,6 +278,13 @@ function CaretakerTasksPage() {
                     {task.status.replace('_', ' ').toUpperCase()}
                   </span>
                   <div className="task-actions">
+                    <button type="button"
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => openTaskDetails(task)}
+                      style={{ marginTop: '8px' }}
+                    >
+                      View Details
+                    </button>
                     {task.status === 'pending' && (
                       <>
                         <button type="button"
@@ -189,7 +295,10 @@ function CaretakerTasksPage() {
                         </button>
                         <button type="button"
                           className="btn btn-sm btn-primary"
-                          onClick={() => handleStatusChange(task.id, 'completed')}
+                          onClick={() => {
+                            setSelectedTask(task);
+                            setShowDetailsModal(true);
+                          }}
                         >
                           Mark Complete
                         </button>
@@ -198,7 +307,10 @@ function CaretakerTasksPage() {
                     {task.status === 'in_progress' && (
                       <button type="button"
                         className="btn btn-sm btn-primary"
-                        onClick={() => handleStatusChange(task.id, 'completed')}
+                        onClick={() => {
+                          setSelectedTask(task);
+                          setShowDetailsModal(true);
+                        }}
                       >
                         Mark Complete
                       </button>
@@ -252,6 +364,245 @@ function CaretakerTasksPage() {
           />
         </div>
       </div>
+      
+      {showDetailsModal && selectedTask && (
+        <div className="modal-overlay" onClick={() => {
+          setShowDetailsModal(false);
+          setComment('');
+          setRepairPhotos([]);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h3>Task Details</h3>
+              <button type="button" className="modal-close" onClick={() => {
+                setShowDetailsModal(false);
+                setComment('');
+                setRepairPhotos([]);
+              }}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: '20px' }}>
+                <h4>{selectedTask.title}</h4>
+                <p className="text-sm text-gray-600">{selectedTask.description}</p>
+                <div style={{ marginTop: '10px' }}>
+                  <span className={`status-badge ${getStatusColor(selectedTask.status)}`}>
+                    {selectedTask.status.replace('_', ' ').toUpperCase()}
+                  </span>
+                  <span className={`text-xs ${getPriorityColor(selectedTask.priority)}`} style={{ marginLeft: '8px' }}>
+                    {selectedTask.priority.toUpperCase()} PRIORITY
+                  </span>
+                </div>
+                {selectedTask.location && (
+                  <p className="text-sm text-blue-600" style={{ marginTop: '8px' }}>
+                     {selectedTask.location} {selectedTask.unitNumber && `- Unit ${selectedTask.unitNumber}`}
+                  </p>
+                )}
+                {selectedTask.assignedTo && (
+                  <p className="text-sm text-purple-600">
+                     Assigned to: {selectedTask.assignedTo}
+                  </p>
+                )}
+                <p className="text-sm text-gray-500">
+                  Created: {formatDate(selectedTask.createdAt)}
+                </p>
+                {selectedTask.completedAt && (
+                  <p className="text-sm text-green-600">
+                    Completed: {formatDate(selectedTask.completedAt)}
+                  </p>
+                )}
+              </div>
+
+              {selectedTask.photos && selectedTask.photos.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h5>Issue Photos ({selectedTask.photos.length})</h5>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    {selectedTask.photos.map((photo: string, idx: number) => (
+                      <div key={idx} style={{
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        background: '#f9f9f9'
+                      }}>
+                        <span className="text-xs">{photo}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTask.comments && selectedTask.comments.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h5>Comments ({selectedTask.comments.length})</h5>
+                  <div style={{ marginTop: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                    {selectedTask.comments.map((c, idx: number) => (
+                      <div key={idx} style={{
+                        padding: '10px',
+                        marginBottom: '8px',
+                        background: '#f5f5f5',
+                        borderRadius: '4px',
+                        borderLeft: '3px solid #007bff'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <strong className="text-sm">{c.author}</strong>
+                          <span className="text-xs text-gray-500">{formatDate(c.timestamp)}</span>
+                        </div>
+                        <p className="text-sm">{c.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTask.repairPhotos && selectedTask.repairPhotos.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h5>Repair Photos ({selectedTask.repairPhotos.length})</h5>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    {selectedTask.repairPhotos.map((photo: string, idx: number) => (
+                      <div key={idx} style={{
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        background: '#e8f5e9'
+                      }}>
+                        <span className="text-xs"> {photo}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(selectedTask.status === 'in_progress' || selectedTask.status === 'pending') && (
+                <>
+                  <div style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                      Add Comment
+                    </label>
+                    <textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Log work notes, observations, or updates..."
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+
+                  {selectedTask.status === 'in_progress' && (
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Upload Repair Photos (optional, max 5)
+                      </label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleRepairPhotoUpload}
+                        disabled={repairPhotos.length >= 5}
+                        style={{ marginBottom: '10px' }}
+                      />
+                      {repairPhotos.length > 0 && (
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                          {repairPhotos.map((file, idx) => (
+                            <div key={idx} style={{
+                              padding: '8px',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              background: '#e8f5e9',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <span className="text-xs">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeRepairPhoto(idx)}
+                                style={{
+                                  background: 'red',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '50%',
+                                  width: '20px',
+                                  height: '20px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >×</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => handleDeleteTask(selectedTask.id)}
+                style={{ 
+                  background: '#dc3545', 
+                  color: 'white', 
+                  marginRight: 'auto',
+                  whiteSpace: 'nowrap',
+                  fontSize: '14px',
+                  padding: '8px 12px'
+                }}
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setComment('');
+                  setRepairPhotos([]);
+                }}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                Cancel
+              </button>
+              {selectedTask.status === 'pending' && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => handleStatusChange(selectedTask.id, 'in_progress')}
+                  style={{ whiteSpace: 'nowrap', fontSize: '14px' }}
+                >
+                  Start
+                </button>
+              )}
+              {selectedTask.status === 'in_progress' && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => handleStatusChange(selectedTask.id, 'completed')}
+                  style={{ whiteSpace: 'nowrap', fontSize: '14px' }}
+                >
+                  Complete {repairPhotos.length > 0 && `(${repairPhotos.length})`}
+                </button>
+              )}
+              {(selectedTask.status === 'in_progress' || selectedTask.status === 'pending') && comment.trim() && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => handleStatusChange(selectedTask.id, selectedTask.status)}
+                  style={{ background: '#28a745', whiteSpace: 'nowrap', fontSize: '14px' }}
+                >
+                  Save
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
       <BottomNav items={navItems} responsive={false} />
     </div>

@@ -21,8 +21,10 @@ function MaintenanceRequestsPage() {
     title: '',
     description: '',
     priority: 'medium',
-    category: 'general'
+    category: 'general',
+    photos: [] as string[]
   });
+  const [uploadedPhotos, setUploadedPhotos] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState<'requests' | 'help'>('requests');
   
   // Help Support State
@@ -165,6 +167,28 @@ function MaintenanceRequestsPage() {
     completedCount: requestsData.filter(r => r.status === 'completed').length
   }), [requestsData]);
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newPhotos = Array.from(files).slice(0, 5 - uploadedPhotos.length);
+    setUploadedPhotos(prev => [...prev, ...newPhotos]);
+    
+    const photoNames = newPhotos.map(file => file.name);
+    setFormData(prev => ({
+      ...prev,
+      photos: [...prev.photos, ...photoNames]
+    }));
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.description.trim()) return;
@@ -181,22 +205,29 @@ function MaintenanceRequestsPage() {
         tenantId: user?.id || '507f1f77bcf86cd799439012',
         unitId: currentLease?.unitId || null,
         propertyId: currentLease?.propertyId || null,
+        photos: formData.photos,
+        location: currentLease?.propertyId?.address || 'Unknown',
+        unitNumber: currentLease?.unitId?.unitNumber || 'Unknown',
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
       if (isOnline) {
-        // Online: Submit directly to server
         await maintenanceApi.create(requestData);
         await refetchRequests();
       } else {
-        // Offline: Store locally for later sync
         await storeOfflineData('maintenance_request', requestData);
-        // Show confirmation that it will be synced when online
         alert('Request saved offline. It will be submitted when you\'re back online.');
       }
       setShowRequestForm(false);
-      setFormData({ title: '', description: '', priority: 'medium', category: 'general' });
+      setFormData({ 
+        title: '', 
+        description: '', 
+        priority: 'medium', 
+        category: 'general', 
+        photos: []
+      });
+      setUploadedPhotos([]);
     } catch (error) {
       console.error('Error submitting request:', error);
       alert('Failed to submit request. Please try again.');
@@ -300,7 +331,7 @@ return (
                       className="btn btn-secondary btn-xs"
                       title="Sync when back online"
                     >
-                      🔄 Sync
+                       Sync
                     </button>
                   )}
                 </div>
@@ -322,7 +353,7 @@ return (
                       }}
                       title="Refresh maintenance requests"
                     >
-                      🔄
+                       Refresh
                     </button>
                   </div>
                 )}
@@ -355,25 +386,54 @@ return (
                           {formatDate(request.createdAt)} 
                         </span>
                         <br />
+                        {request.location && (
+                          <>
+                            <span className="text-xs text-blue-600">
+                               {request.location} {request.unitNumber && `- Unit ${request.unitNumber}`}
+                            </span>
+                            <br />
+                          </>
+                        )}
                         {request.assignedTo && (
                           <>
                             <span className="text-xs text-blue-600">
-                              Assigned to: {request.assignedTo}
+                               Assigned to: {request.assignedTo}
                             </span>
                             <br />
                           </>
                         )}
                         {request.category && (
                           <span className="text-xs text-purple-600">
-                            Category: {request.category}
+                             Category: {request.category}
                           </span>
+                        )}
+                        {request.photos && request.photos.length > 0 && (
+                          <>
+                            <br />
+                            <span className="text-xs text-green-600">
+                               {request.photos.length} photo{request.photos.length > 1 ? 's' : ''} attached
+                            </span>
+                          </>
+                        )}
+                        {request.comments && request.comments.length > 0 && (
+                          <>
+                            <br />
+                            <span className="text-xs text-orange-600">
+                               {request.comments.length} comment{request.comments.length > 1 ? 's' : ''}
+                            </span>
+                          </>
                         )}
                       </div>
                       {request.status === 'completed' && request.completedAt && (
                         <div className="completion-info">
                           <span className="text-xs text-green-600">
-                            Completed on {formatDate(request.completedAt)}
+                             Completed on {formatDate(request.completedAt)}
                           </span>
+                          {request.repairPhotos && request.repairPhotos.length > 0 && (
+                            <span className="text-xs text-green-600" style={{ marginLeft: '12px' }}>
+                               {request.repairPhotos.length} repair photo{request.repairPhotos.length > 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -707,7 +767,7 @@ return (
           <div className="modal-content">
             <div className="modal-header">
               <h3>New Maintenance Request</h3>
-      <button type="button" className="close-btn" onClick={() => setShowRequestForm(false)}>×</button>
+              <button type="button" className="close-btn" onClick={() => setShowRequestForm(false)}>×</button>
             </div>
             <div className="modal-body">
               <form onSubmit={handleSubmitRequest}>
@@ -756,12 +816,60 @@ return (
                       <option value="plumbing">Plumbing</option>
                       <option value="electrical">Electrical</option>
                       <option value="hvac">HVAC</option>
+                      <option value="appliances">Appliances</option>
                       <option value="general">General</option>
                       <option value="pest">Pest Control</option>
                       <option value="security">Security</option>
                       <option value="other">Other</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Photos (Optional - Max 5)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoUpload}
+                    disabled={uploadedPhotos.length >= 5}
+                    style={{ marginBottom: '8px' }}
+                  />
+                  <p className="text-xs text-gray-500">Upload photos to help us understand the issue better</p>
+                  {uploadedPhotos.length > 0 && (
+                    <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {uploadedPhotos.map((file, index) => (
+                        <div key={`photo-${index}`} style={{ 
+                          position: 'relative', 
+                          display: 'inline-block',
+                          padding: '8px',
+                          background: '#f0f0f0',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}>
+                          <span>{file.name.substring(0, 20)}{file.name.length > 20 ? '...' : ''}</span>
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(index)}
+                            style={{
+                              marginLeft: '8px',
+                              background: '#ff4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '20px',
+                              height: '20px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              lineHeight: '1'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="form-actions">
@@ -776,9 +884,10 @@ return (
                   <button 
                     type="submit"
                     className="btn btn-primary"
-                    disabled={!canSubmitRequest()}
+                    disabled={submitting || !formData.title.trim() || !formData.description.trim()}
+                    style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
-                    {submitting ? 'Submitting...' : 'Submit Request'}
+                    {submitting ? 'Submitting...' : 'Submit'}
                   </button>
                 </div>
               </form>
