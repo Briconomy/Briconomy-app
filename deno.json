@@ -5,7 +5,8 @@
     "preview": "deno run -A server.ts",
     "init-db": "mongo briconomy scripts/init-users-simple.js && mongo briconomy scripts/comprehensive-relational-data.js",
     "api": "deno run -A api-server.ts",
-    "dev-full": "deno run -A dev-server.ts & deno run -A api-server.ts"
+    "dev-full": "deno run -A dev-server.ts & deno run -A api-server.ts",
+    "update-llm": "bash update-llm.sh"
   },
   "imports": {
     "react": "https://esm.sh/react@18.2.0",

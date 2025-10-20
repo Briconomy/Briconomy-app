@@ -2,8 +2,8 @@
 
 set -e
 
-RELEASE_TAG="Master"
-PREFERRED_ASSET_NAME="bricllm"
+RELEASE_TAG="windows_linux"
+PREFERRED_ASSET_NAME="bricllm-v1.0-linux-x86_64.tar.gz"
 INSTALL_DIR="bricllm"
 BINARY_NAME="bricllm"
 RELEASE_API_URL="https://api.github.com/repos/Briconomy/Bricllm/releases/tags/${RELEASE_TAG}"
@@ -178,9 +178,47 @@ echo "[2/5] Preparing installation directory..."
 mkdir -p "$INSTALL_DIR"
 
 echo ""
-echo "[3/5] Installing binary..."
-mv "$TARGET_FILE" "$INSTALL_DIR/$BINARY_NAME"
-chmod +x "$INSTALL_DIR/$BINARY_NAME"
+echo "[3/5] Extracting and installing binary..."
+if [[ "$ASSET_NAME" == *.tar.gz ]]; then
+    tar -xzf "$TARGET_FILE" -C "$INSTALL_DIR"
+    if [ -f "$INSTALL_DIR/$BINARY_NAME" ]; then
+        chmod +x "$INSTALL_DIR/$BINARY_NAME"
+    else
+        extracted_binary=$(find "$INSTALL_DIR" -name "bricllm" -type f 2>/dev/null | head -n 1)
+        if [ -n "$extracted_binary" ] && [ -f "$extracted_binary" ]; then
+            mv "$extracted_binary" "$INSTALL_DIR/$BINARY_NAME"
+            chmod +x "$INSTALL_DIR/$BINARY_NAME"
+        else
+            echo "Error: Binary not found in archive"
+            rm -rf "$TEMP_DIR"
+            exit 1
+        fi
+    fi
+elif [[ "$ASSET_NAME" == *.zip ]]; then
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -q "$TARGET_FILE" -d "$INSTALL_DIR"
+        if [ -f "$INSTALL_DIR/$BINARY_NAME" ]; then
+            chmod +x "$INSTALL_DIR/$BINARY_NAME"
+        else
+            extracted_binary=$(find "$INSTALL_DIR" -name "bricllm" -type f 2>/dev/null | head -n 1)
+            if [ -n "$extracted_binary" ] && [ -f "$extracted_binary" ]; then
+                mv "$extracted_binary" "$INSTALL_DIR/$BINARY_NAME"
+                chmod +x "$INSTALL_DIR/$BINARY_NAME"
+            else
+                echo "Error: Binary not found in archive"
+                rm -rf "$TEMP_DIR"
+                exit 1
+            fi
+        fi
+    else
+        echo "Error: unzip command not found"
+        rm -rf "$TEMP_DIR"
+        exit 1
+    fi
+else
+    mv "$TARGET_FILE" "$INSTALL_DIR/$BINARY_NAME"
+    chmod +x "$INSTALL_DIR/$BINARY_NAME"
+fi
 
 echo ""
 echo "[4/5] Cleaning up..."
