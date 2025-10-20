@@ -262,6 +262,75 @@ export class InvoiceService {
       </html>
     `;
   }
+
+  // Generate JSON export for invoices
+  generateInvoicesJSON(invoices: Invoice[]): string {
+    const exportData = {
+      export_date: new Date().toISOString(),
+      total_invoices: invoices.length,
+      summary: {
+        total_amount: invoices.reduce((sum, inv) => sum + inv.amount, 0),
+        pending_count: invoices.filter(inv => inv.status === 'pending').length,
+        paid_count: invoices.filter(inv => inv.status === 'paid').length,
+        overdue_count: invoices.filter(inv => inv.status === 'overdue').length
+      },
+      invoices: invoices.map(invoice => ({
+        ...invoice,
+        export_timestamp: new Date().toISOString()
+      }))
+    };
+    
+    return JSON.stringify(exportData, null, 2);
+  }
+
+  // Automatically export invoices to JSON file
+  async exportInvoicesToJSON(invoices: Invoice[], filename?: string): Promise<void> {
+    try {
+      const jsonData = this.generateInvoicesJSON(invoices);
+      const defaultFilename = `invoices-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // In a browser environment, trigger download
+      if (typeof window !== 'undefined') {
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename || defaultFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        // In Deno environment, save to file
+        await Deno.writeTextFile(filename || defaultFilename, jsonData);
+        console.log(`📄 Invoices exported to JSON: ${filename || defaultFilename}`);
+      }
+    } catch (error) {
+      console.error('Error exporting invoices to JSON:', error);
+      throw error;
+    }
+  }
+
+  // Generate monthly invoices and automatically export to JSON
+  async generateMonthlyInvoicesWithJSON(): Promise<Invoice[]> {
+    try {
+      // Generate monthly invoices
+      const invoices = await this.generateMonthlyInvoicesForAllTenants();
+      
+      if (invoices.length > 0) {
+        // Automatically export to JSON
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `monthly-invoices-${timestamp}.json`;
+        await this.exportInvoicesToJSON(invoices, filename);
+        console.log(`🎉 Generated ${invoices.length} invoices and exported to ${filename}`);
+      }
+      
+      return invoices;
+    } catch (error) {
+      console.error('Error generating monthly invoices with JSON export:', error);
+      throw error;
+    }
+  }
 }
 
 export const invoiceService = InvoiceService.getInstance();

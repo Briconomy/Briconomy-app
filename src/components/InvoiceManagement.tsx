@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoiceService, Invoice } from '../services/invoices.ts';
 import { notificationService } from '../services/notifications.ts';
+import AutoInvoiceManager from './AutoInvoiceManager.tsx';
 
 interface InvoiceManagementProps {
   onClose: () => void;
@@ -10,6 +11,7 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAutoManager, setShowAutoManager] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -71,6 +73,18 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
       alert(`Processed ${overdueInvoices.length} overdue invoices`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process overdue invoices');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportInvoicesToJSON = async () => {
+    try {
+      setLoading(true);
+      await invoiceService.exportInvoicesToJSON(invoices);
+      alert('Invoices exported to JSON successfully!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export invoices to JSON');
     } finally {
       setLoading(false);
     }
@@ -144,6 +158,24 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
             className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
             Process Overdue Invoices
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowAutoManager(true)}
+            disabled={loading}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+          >
+            🤖 Automation Settings
+          </button>
+
+          <button
+            type="button"
+            onClick={exportInvoicesToJSON}
+            disabled={loading}
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+          >
+            📄 Export to JSON
           </button>
           
           <button
@@ -259,6 +291,13 @@ const InvoiceManagement: React.FC<InvoiceManagementProps> = ({ onClose }) => {
         </div>
         </div>
       </div>
+
+      {/* Auto Invoice Manager Modal */}
+      {showAutoManager && (
+        <AutoInvoiceManager 
+          onClose={() => setShowAutoManager(false)} 
+        />
+      )}
     </div>
   );
 };

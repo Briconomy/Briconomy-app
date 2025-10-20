@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 import { connectToMongoDB, getCollection } from "./db.ts";
 import { bricllmHandler } from "./bricllm-handler.ts";
+import { autoInvoiceRoutes } from "./src/api/autoInvoice.ts";
+import { initializeAutomation } from "./automation-init.ts";
 import {
   getProperties,
   getPropertyById,
@@ -381,6 +383,21 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+    }
+
+    // Auto Invoice Management endpoints
+    if (path[0] === 'api' && path[1] === 'auto-invoice') {
+      if (path[2] === 'status' && req.method === 'GET') {
+        return autoInvoiceRoutes.getStatus(req);
+      } else if (path[2] === 'config' && req.method === 'PUT') {
+        return await autoInvoiceRoutes.updateConfig(req);
+      } else if (path[2] === 'trigger' && req.method === 'POST') {
+        return await autoInvoiceRoutes.manualTrigger(req);
+      } else if (path[2] === 'toggle' && req.method === 'POST') {
+        return autoInvoiceRoutes.toggleTask(req);
+      } else if (path[2] === 'tasks' && req.method === 'GET') {
+        return autoInvoiceRoutes.getTasks(req);
       }
     }
 
@@ -1015,3 +1032,6 @@ serve(async (req) => {
 }, { port: 8816, hostname: "0.0.0.0" });
 
 console.log('API Server running on http://localhost:8816');
+
+// Initialize automation services after server starts
+initializeAutomation();
