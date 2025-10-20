@@ -181,6 +181,7 @@ These are manager-protected routes and typically accessed from Properties/Leases
 - NO emojis in codebase
 - Clean, readable structure
 - Consistent naming conventions
+- NO EDITING THE #AGENT.md FILE
 
 ## Prohibited in ALL Code
 - Emojis in code or UI elements
@@ -188,18 +189,24 @@ These are manager-protected routes and typically accessed from Properties/Leases
 
 ## Required Assumption Tagging Format
 
+```react
+// #COMPLETION_DRIVE: [assumption description]
+// #SUGGEST_VERIFY: [validation method]
+```
+
+#### Assumption Tagging
+
 When writing code, ALWAYS add tagged comments for ANY assumption:
 
-```typescript
+```react
 // #COMPLETION_DRIVE: [what you're assuming]
 // #SUGGEST_VERIFY: [how to fix/validate it]
 ```
 
-**Example:**
-
-```typescript
-// #COMPLETION_DRIVE: Assuming state update completes before navigation
-// #SUGGEST_VERIFY: Use callback or await state update confirmation
-setUserData(newData);
-navigateToProfile(userData.id);
-```
+  Example:
+  ```react
+  // #COMPLETION_DRIVE: Assuming state update completes before navigation
+  // #SUGGEST_VERIFY: Use callback or await state update confirmation
+  setUserData(newData);
+  navigateToProfile(userData.id);
+  ```
