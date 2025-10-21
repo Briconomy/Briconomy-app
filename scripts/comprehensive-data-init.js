@@ -1118,17 +1118,17 @@ db.users.updateMany(
 
 print('Comprehensive database initialization completed successfully!');
 print('Collections created:');
-print('   - users (' + db.users.count() + ' documents)');
-print('   - properties (' + db.properties.count() + ' documents)');
-print('   - units (' + db.units.count() + ' documents)');
-print('   - leases (' + db.leases.count() + ' documents)');
-print('   - payments (' + db.payments.count() + ' documents)');
-print('   - maintenance_requests (' + db.maintenance_requests.count() + ' documents)');
-print('   - caretaker_tasks (' + db.caretaker_tasks.count() + ' documents)');
-print('   - reports (' + db.reports.count() + ' documents)');
-print('   - notifications (' + db.notifications.count() + ' documents)');
-print('   - settings (' + db.settings.count() + ' documents)');
-print('   - audit_logs (' + db.audit_logs.count() + ' documents)');
+print('   - users (' + db.users.countDocuments({}) + ' documents)');
+print('   - properties (' + db.properties.countDocuments({}) + ' documents)');
+print('   - units (' + db.units.countDocuments({}) + ' documents)');
+print('   - leases (' + db.leases.countDocuments({}) + ' documents)');
+print('   - payments (' + db.payments.countDocuments({}) + ' documents)');
+print('   - maintenance_requests (' + db.maintenance_requests.countDocuments({}) + ' documents)');
+print('   - caretaker_tasks (' + db.caretaker_tasks.countDocuments({}) + ' documents)');
+print('   - reports (' + db.reports.countDocuments({}) + ' documents)');
+print('   - notifications (' + db.notifications.countDocuments({}) + ' documents)');
+print('   - settings (' + db.settings.countDocuments({}) + ' documents)');
+print('   - audit_logs (' + db.audit_logs.countDocuments({}) + ' documents)');
 print('');
 print('Data relationships established:');
 print('   - Each tenant has a lease and assigned unit');

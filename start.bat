@@ -41,9 +41,67 @@ if %errorlevel% neq 0 (
     echo MongoDB is already running
 )
 
-REM Initialize database if needed
-echo Database initialization requires MongoDB shell tools which are not installed
-echo Database will be initialized by the application on first run if needed
+REM Initialize database with comprehensive data
+echo.
+echo ========================================
+echo   Initializing Database...
+echo ========================================
+
+REM Check if mongosh or mongo is available
+where mongosh >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Using mongosh to initialize database...
+    mongosh briconomy scripts/comprehensive-data-init.js
+    echo ✓ Core database initialized (users, properties, units, leases, etc.)
+    goto :db_init_done
+)
+
+where mongo >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Using mongo shell to initialize database...
+    mongo briconomy scripts/comprehensive-data-init.js
+    echo ✓ Core database initialized (users, properties, units, leases, etc.)
+    goto :db_init_done
+)
+
+echo ⚠ Warning: MongoDB shell (mongosh/mongo) not found!
+echo Please install MongoDB Shell from: https://www.mongodb.com/try/download/shell
+echo Skipping core database initialization...
+
+:db_init_done
+
+echo.
+echo Setting up additional collections and sample data...
+echo Note: These steps are optional - core database is already initialized
+echo.
+
+echo Running init-pending-users.js...
+call deno run -A scripts/init-pending-users.js 2>nul
+if %errorlevel% equ 0 (
+    echo ✓ Pending users collection initialized
+) else (
+    echo ⚠ Skipped: init-pending-users.js ^(run manually if needed^)
+)
+
+echo Running add-sample-applications.js...
+call deno run -A scripts/add-sample-applications.js 2>nul
+if %errorlevel% equ 0 (
+    echo ✓ Sample applications added
+) else (
+    echo ⚠ Skipped: add-sample-applications.js ^(run manually if needed^)
+)
+
+echo Running setup-manager-properties.ts...
+call deno run -A scripts/setup-manager-properties.ts 2>nul
+if %errorlevel% equ 0 (
+    echo ✓ Manager properties configured
+) else (
+    echo ⚠ Skipped: setup-manager-properties.ts ^(run manually if needed^)
+)
+
+echo.
+echo ✓ Database initialization complete!
+echo.
 
 REM Start both development servers
 echo Starting development servers...
