@@ -48,9 +48,10 @@ const NotificationWidget: React.FC = () => {
     const connectWebSocket = () => {
       const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
-      const wsUrl = `${wsProtocol}//${wsHost}?userId=${user.id}`;
+      const wsUrl = `${wsProtocol}//${wsHost}/ws?userId=${user.id}`;
 
       try {
+        console.log('[NotificationWidget] Connecting to WebSocket:', wsUrl);
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

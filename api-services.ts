@@ -951,8 +951,15 @@ export async function getNotifications(userId: string) {
   try {
     await connectToMongoDB();
     const notifications = getCollection("notifications");
-    const userObjectId = new ObjectId(userId);
-    const rows = await notifications.find({ userId: userObjectId }).toArray();
+    
+    // Query for userId as both string and ObjectId to handle both formats
+    const rows = await notifications.find({ 
+      $or: [
+        { userId: userId },
+        { userId: new ObjectId(userId) }
+      ]
+    }).sort({ createdAt: -1 }).toArray();
+    
     const mapped = mapDocs(rows);
     return mapped;
   } catch (error) {

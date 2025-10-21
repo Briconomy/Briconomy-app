@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { notificationsApi, leasesApi, maintenanceApi, formatDateTime, useApi } from '../services/api.ts';
+import { notificationsApi, leasesApi, maintenanceApi, propertiesApi, formatDateTime, useApi } from '../services/api.ts';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import ActionCard from '../components/ActionCard.tsx';
@@ -108,15 +108,35 @@ const CommunicationPage = () => {
 
     setSending(true);
     try {
+      const currentLease = leases?.[0];
+      
+      if (!currentLease || !currentLease.propertyId) {
+        showToast('Unable to find your property manager. Please contact support.', 'error');
+        setSending(false);
+        return;
+      }
+
+      const propertyId = typeof currentLease.propertyId === 'object' && 'id' in currentLease.propertyId 
+        ? currentLease.propertyId.id 
+        : currentLease.propertyId;
+
+      const property = await propertiesApi.getById(propertyId);
+      
+      if (!property || !property.managerId) {
+        showToast('Unable to find your property manager. Please contact support.', 'error');
+        setSending(false);
+        return;
+      }
+
       await notificationsApi.create({
-        userId: user.id,
-        title: `Property Manager: ${messageSubject}`,
-        message: messageContent,
+        userId: property.managerId,
+        title: `Message from Tenant: ${messageSubject}`,
+        message: `From: ${user.fullName || user.email}\nUnit: ${currentLease.unitId?.unitNumber || 'N/A'}\n\n${messageContent}`,
         type: 'system',
         read: false
       });
 
-      showToast('Message sent successfully!', 'success');
+      showToast('Message sent successfully to your property manager!', 'success');
       setMessageType(null);
       setMessageSubject('');
       setMessageContent('');
