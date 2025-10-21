@@ -7,6 +7,7 @@ import AIButton from '../components/AIButton.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 import '../utils/chart-registration.ts';
 
@@ -44,7 +45,7 @@ function SimpleErrorBoundary({ children, fallback }: { children: React.ReactNode
 
 function CaretakerDashboard() {
   const { t } = useLanguage();
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [error, setError] = useState(null);
   const [chartError, setChartError] = useState(null);
   
@@ -59,10 +60,6 @@ function CaretakerDashboard() {
     () => maintenanceApi.getAll({}),
     [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
@@ -96,17 +93,6 @@ function CaretakerDashboard() {
       setChartError('Dashboard initialization failed');
     }
   }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-      setError('Failed to load user data');
-    }
-  };
 
   // Use real maintenance request data from API - memoized to prevent unnecessary re-renders
   const tasksData = useMemo(() => Array.isArray(tasks) ? tasks : [], [tasks]);

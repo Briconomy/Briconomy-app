@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -7,12 +7,13 @@ import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function MaintenanceRequestsPage() {
   const { t } = useLanguage();
   const { isOnline, storeOfflineData, syncNow } = useOffline();
+  const { user } = useAuth();
   
-  const [user, setUser] = useState<{ id?: string } | null>(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -98,19 +99,6 @@ function MaintenanceRequestsPage() {
     () => leasesApi.getAll({ tenantId: user?.id || '507f1f77bcf86cd799439012' }),
     [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-  const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
 
   const requestsData = useMemo(() => Array.isArray(requests) ? requests : [], [requests]);
   
@@ -481,7 +469,7 @@ return (
                   onClick={() => setShowEmergencyModal(true)}
                   style={{ width: '100%', padding: '12px', fontSize: '14px' }}
                 >
-                  🚨 Emergency Contacts
+                  Emergency Contacts
                 </button>
                 <button
                   type="button"
@@ -494,7 +482,7 @@ return (
                   }}
                   style={{ width: '100%', padding: '12px', fontSize: '14px' }}
                 >
-                  📞 Call Property Manager
+                  Call Property Manager
                 </button>
                 <button
                   type="button"
@@ -502,7 +490,7 @@ return (
                   onClick={() => globalThis.location.href = '/tenant/messages'}
                   style={{ width: '100%', padding: '12px', fontSize: '14px' }}
                 >
-                  ✉️ Send Message
+                  Send Message
                 </button>
               </div>
             </div>
@@ -683,7 +671,7 @@ return (
         <div className="modal-overlay" onClick={() => setShowEmergencyModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <h3>🚨 Emergency Contacts</h3>
+              <h3>Emergency Contacts</h3>
               <button type="button" className="close-btn" onClick={() => setShowEmergencyModal(false)}>×</button>
             </div>
             <div className="modal-body">
@@ -695,7 +683,7 @@ return (
                 marginBottom: '16px',
                 fontSize: '13px'
               }}>
-                <strong>⚠️ Life-threatening emergencies:</strong><br />
+                <strong>WARNING - Life-threatening emergencies:</strong><br />
                 Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
               </div>
               
@@ -735,7 +723,7 @@ return (
                         fontWeight: '600'
                       }}
                     >
-                      📞 {contact.phone}
+                      Call: {contact.phone}
                     </button>
                   </div>
                 ))}

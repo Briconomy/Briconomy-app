@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerProfilePage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [notificationSettings, setNotificationSettings] = useState({
@@ -32,31 +33,6 @@ function CaretakerProfilePage() {
     () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
     [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-      if (userData) {
-        setFormData({
-          fullName: userData.fullName,
-          email: userData.email,
-          phone: userData.phone,
-          department: userData.profile?.department || '',
-          employeeId: userData.profile?.employeeId || '',
-          skills: userData.profile?.skills || [],
-          emergencyContact: userData.profile?.emergencyContact || ''
-        });
-      }
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
 
   const getMockTasks = () => {
     return [

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationsApi, leasesApi, maintenanceApi, formatDateTime, useApi } from '../services/api.ts';
 import TopNav from '../components/TopNav.tsx';
@@ -7,20 +7,13 @@ import ActionCard from '../components/ActionCard.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
-
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  userType: string;
-}
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 const CommunicationPage = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [user, setUser] = useState<User | null>(null);
-  const [userLoaded, setUserLoaded] = useState(false);
+  const { user, loading: authLoading } = useAuth();
   const [messageType, setMessageType] = useState<'manager' | null>(null);
   const [messageSubject, setMessageSubject] = useState('');
   const [messageContent, setMessageContent] = useState('');
@@ -88,34 +81,19 @@ const CommunicationPage = () => {
   ];
 
   const { data: notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(
-    () => userLoaded && user?.id ? notificationsApi.getAll(user.id) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? notificationsApi.getAll(user.id) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: leases, loading: leasesLoading } = useApi(
-    () => userLoaded && user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: requests, loading: requestsLoading } = useApi(
-    () => userLoaded && user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('briconomy_user') || '{}');
-      setUser(userData);
-      setUserLoaded(true);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-      setUserLoaded(true);
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!messageContent.trim() || !messageSubject.trim() || !messageType || sending) {
@@ -124,7 +102,7 @@ const CommunicationPage = () => {
     }
 
     if (!user?.id) {
-      showToast('User not authenticated', 'error');
+      showToast('User not authenticated. Please log in again.', 'error');
       return;
     }
 
@@ -159,7 +137,7 @@ const CommunicationPage = () => {
     setSelectedFAQ(selectedFAQ === id ? null : id);
   };
 
-  const isLoading = !userLoaded || notificationsLoading || leasesLoading || requestsLoading;
+  const isLoading = authLoading || notificationsLoading || leasesLoading || requestsLoading;
 
   if (isLoading) {
     return (
@@ -411,7 +389,7 @@ const CommunicationPage = () => {
         <div className="modal-overlay" onClick={() => setShowEmergencyModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <h3>🚨 Emergency Contacts</h3>
+              <h3>Emergency Contacts</h3>
               <button type="button" className="close-btn" onClick={() => setShowEmergencyModal(false)}>×</button>
             </div>
             <div className="modal-body">
@@ -423,7 +401,7 @@ const CommunicationPage = () => {
                 marginBottom: '16px',
                 fontSize: '13px'
               }}>
-                <strong>⚠️ Life-threatening emergencies:</strong><br />
+                <strong>WARNING - Life-threatening emergencies:</strong><br />
                 Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
               </div>
               
@@ -463,7 +441,7 @@ const CommunicationPage = () => {
                         fontWeight: '600'
                       }}
                     >
-                      📞 {contact.phone}
+                      Call: {contact.phone}
                     </button>
                   </div>
                 ))}
@@ -486,7 +464,7 @@ const CommunicationPage = () => {
         <div className="modal-overlay" onClick={() => setShowHelpModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <h3>❓ Help & Support</h3>
+              <h3>Help & Support</h3>
               <button type="button" className="close-btn" onClick={() => setShowHelpModal(false)}>×</button>
             </div>
             <div className="modal-body">

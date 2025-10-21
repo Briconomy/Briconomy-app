@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import Icon from '../components/Icon.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi, formatDate } from '../services/api.ts';
 
 interface MaintenanceTask {
@@ -30,7 +31,7 @@ interface MaintenanceTask {
 }
 
 function CaretakerTasksPage() {
-  const [user, setUser] = useState<{ id?: string; fullName?: string; userType?: string } | null>(null);
+  const { user } = useAuth();
   const [selectedTask, setSelectedTask] = useState<MaintenanceTask | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [comment, setComment] = useState('');
@@ -48,20 +49,6 @@ function CaretakerTasksPage() {
       tasks: tasks
     });
   }, [tasks]);
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
 
   const tasksList = Array.isArray(tasks) ? tasks : [];
 

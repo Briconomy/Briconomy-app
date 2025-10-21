@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 
 function ManagerMaintenancePage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -27,20 +28,6 @@ function ManagerMaintenancePage() {
     () => maintenanceApi.getAll({}),
     []
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
 
   // Use real data from API
   const maintenanceData = Array.isArray(maintenance) ? maintenance : [];
