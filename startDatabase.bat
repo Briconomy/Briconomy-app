@@ -38,21 +38,45 @@ echo ========================================
 echo   Initializing Database...
 echo ========================================
 
-where mongosh >nul 2>&1
-if %errorlevel% equ 0 (
-    mongosh briconomy scripts/comprehensive-data-init.js
-    echo ✓ Core database initialized
-    goto :db_init_done
+set "MONGO_SHELL="
+
+for /f "delims=" %%i in ('where mongosh 2^>nul') do (
+    set "MONGO_SHELL=%%i"
+    goto :run_core_init
 )
 
-where mongo >nul 2>&1
-if %errorlevel% equ 0 (
-    mongo briconomy scripts/comprehensive-data-init.js
-    echo ✓ Core database initialized
-    goto :db_init_done
+for /f "delims=" %%i in ('where mongo 2^>nul') do (
+    set "MONGO_SHELL=%%i"
+    goto :run_core_init
+)
+
+for /d %%d in ("%ProgramFiles%\MongoDB\Server\*") do (
+    if exist "%%d\bin\mongosh.exe" (
+        set "MONGO_SHELL=%%d\bin\mongosh.exe"
+        goto :run_core_init
+    )
+)
+
+if exist "%ProgramFiles(x86)%\MongoDB\Server" (
+    for /d %%d in ("%ProgramFiles(x86)%\MongoDB\Server\*") do (
+        if exist "%%d\bin\mongosh.exe" (
+            set "MONGO_SHELL=%%d\bin\mongosh.exe"
+            goto :run_core_init
+        )
+    )
 )
 
 echo ⚠ Warning: MongoDB shell not found, skipping core database initialization...
+goto :db_init_done
+
+:run_core_init
+echo Using MongoDB shell at "%MONGO_SHELL%"
+"%MONGO_SHELL%" briconomy scripts/comprehensive-data-init.js
+if %errorlevel% equ 0 (
+    echo ✓ Core database initialized
+) else (
+    echo ⚠ Warning: Core database initialization exited with code %errorlevel%
+)
 
 :db_init_done
 
