@@ -66,65 +66,131 @@ import {
   registerPendingTenant,
   getPendingUsers,
   approvePendingUser,
-  declinePendingUser
+  declinePendingUser,
+  getPendingApplicationsForManager,
+  approveApplicationByManager,
+  rejectApplicationByManager,
+  requestPasswordReset,
+  resetPassword,
+  savePushSubscription,
+  getPushSubscription,
+  deletePushSubscription
 } from "./api-services.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, expires',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, expires, x-manager-id',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
-// WebSocket connection management
-const connectedUsers = new Map<string, WebSocket>();
+interface WebSocketConnection {
+  socket: WebSocket;
+  userId: string;
+  connectedAt: Date;
+  lastPing: Date;
+  isAlive: boolean;
+  messageCount: number;
+}
 
-// Broadcast notification to specific users
+const connections = new Map<string, WebSocketConnection>();
+const MAX_CONNECTIONS = 10000;
+const HEARTBEAT_INTERVAL = 30000;
+const CONNECTION_TIMEOUT = 60000;
+
+const _heartbeatTimer = setInterval(() => {
+  const now = Date.now();
+  
+  connections.forEach((conn, userId) => {
+    if (now - conn.lastPing.getTime() > CONNECTION_TIMEOUT) {
+      console.log(`[WebSocket] Closing stale connection for user ${userId}`);
+      try {
+        conn.socket.close();
+      } catch (error) {
+        console.error(`[WebSocket] Error closing stale connection:`, error);
+      }
+      connections.delete(userId);
+      return;
+    }
+    
+    if (conn.socket.readyState === WebSocket.OPEN) {
+      try {
+        conn.socket.send(JSON.stringify({ type: 'ping', timestamp: now }));
+      } catch (error) {
+        console.error(`[WebSocket] Ping failed for user ${userId}:`, error);
+        connections.delete(userId);
+      }
+    } else {
+      connections.delete(userId);
+    }
+  });
+}, HEARTBEAT_INTERVAL);
+
 function broadcastToUsers(userIds: string[], notification: unknown) {
   const message = JSON.stringify({
     type: 'notification',
     data: notification
   });
   
+  const activeConns = userIds
+    .map(id => connections.get(id))
+    .filter((conn): conn is WebSocketConnection => 
+      conn !== undefined && conn.socket.readyState === WebSocket.OPEN
+    );
+  
   let successCount = 0;
   let failCount = 0;
   
-  userIds.forEach(userId => {
-    const socket = connectedUsers.get(userId);
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      try {
-        socket.send(message);
-        successCount++;
-      } catch (error) {
-        failCount++;
-        console.error(`[WebSocket] Failed to send message to user ${userId}:`, error);
-        // Remove dead connection
-        connectedUsers.delete(userId);
-      }
-    } else {
+  activeConns.forEach(conn => {
+    try {
+      conn.socket.send(message);
+      conn.messageCount++;
+      successCount++;
+    } catch (error) {
       failCount++;
+      console.error(`[WebSocket] Failed to send to user ${conn.userId}:`, error);
+      connections.delete(conn.userId);
     }
   });
+  
+  if (userIds.length > 0) {
+    console.log(`[WebSocket] Broadcast: ${successCount} success, ${failCount} failed of ${userIds.length} targets`);
+  }
 }
 
-// Broadcast to all connected users
-function broadcastToAll(notification: any) {
+function _broadcastToAll(notification: unknown) {
   const message = JSON.stringify({
     type: 'notification',
     data: notification
   });
   
-  connectedUsers.forEach((socket, userId) => {
-    if (socket.readyState === WebSocket.OPEN) {
-      try {
-        socket.send(message);
-      } catch (error) {
-        console.error(`Failed to broadcast to user ${userId}:`, error);
-        connectedUsers.delete(userId);
-      }
-    } else {
-      // Clean up dead connections
-      connectedUsers.delete(userId);
+  const activeConns = Array.from(connections.values()).filter(
+    conn => conn.socket.readyState === WebSocket.OPEN
+  );
+  
+  let successCount = 0;
+  let failCount = 0;
+  
+  activeConns.forEach(conn => {
+    try {
+      conn.socket.send(message);
+      conn.messageCount++;
+      successCount++;
+    } catch (error) {
+      failCount++;
+      console.error(`[WebSocket] Failed to broadcast to user ${conn.userId}:`, error);
+      connections.delete(conn.userId);
     }
+  });
+  
+  console.log(`[WebSocket] Broadcast all: ${successCount} success, ${failCount} failed`);
+}
+
+const connectedUsers = new Map<string, WebSocket>();
+
+function syncLegacyMap() {
+  connectedUsers.clear();
+  connections.forEach((conn, userId) => {
+    connectedUsers.set(userId, conn.socket);
   });
 }
 
@@ -144,21 +210,74 @@ serve(async (req) => {
       return new Response("Missing userId parameter", { status: 400 });
     }
     
-    const { socket, response } = Deno.upgradeWebSocket(req);
+    if (connections.size >= MAX_CONNECTIONS) {
+      console.log(`[WebSocket] Connection limit reached (${MAX_CONNECTIONS})`);
+      return new Response("Server at capacity", { status: 503 });
+    }
+    
+    const existingConn = connections.get(userId);
+    if (existingConn) {
+      console.log(`[WebSocket] Closing existing connection for user ${userId}`);
+      try {
+        existingConn.socket.close();
+      } catch (error) {
+        console.error(`[WebSocket] Error closing existing connection:`, error);
+      }
+      connections.delete(userId);
+    }
+    
+    const { socket, response } = Deno.upgradeWebSocket(req, {
+      idleTimeout: 120
+    });
+    
+    const conn: WebSocketConnection = {
+      socket,
+      userId,
+      connectedAt: new Date(),
+      lastPing: new Date(),
+      isAlive: true,
+      messageCount: 0
+    };
     
     socket.onopen = () => {
-      connectedUsers.set(userId, socket);
-      console.log(`WebSocket: User ${userId} connected (${connectedUsers.size} total)`);
+      connections.set(userId, conn);
+      syncLegacyMap();
+      console.log(`[WebSocket] User ${userId} connected (${connections.size} total)`);
+      
+      try {
+        socket.send(JSON.stringify({
+          type: 'connected',
+          timestamp: new Date().toISOString(),
+          userId: userId
+        }));
+      } catch (error) {
+        console.error(`[WebSocket] Failed to send connection confirmation:`, error);
+      }
+    };
+    
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'pong') {
+          conn.lastPing = new Date();
+          conn.isAlive = true;
+        }
+      } catch (error) {
+        console.error(`[WebSocket] Message parse error for user ${userId}:`, error);
+      }
     };
     
     socket.onclose = () => {
-      connectedUsers.delete(userId);
-      console.log(`WebSocket: User ${userId} disconnected (${connectedUsers.size} total)`);
+      connections.delete(userId);
+      syncLegacyMap();
+      console.log(`[WebSocket] User ${userId} disconnected (${connections.size} total)`);
     };
     
     socket.onerror = (error) => {
-      console.error(`WebSocket error for user ${userId}:`, error);
-      connectedUsers.delete(userId);
+      console.error(`[WebSocket] Error for user ${userId}:`, error);
+      connections.delete(userId);
+      syncLegacyMap();
     };
     
     return response;
@@ -209,6 +328,19 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: result.success ? 201 : 400
         });
+      } else if (path[2] === 'forgot-password' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await requestPasswordReset(data.email);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'reset-password' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await resetPassword(data.token, data.newPassword);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: result.success ? 200 : 400
+        });
       }
     }
 
@@ -237,7 +369,7 @@ serve(async (req) => {
           return new Response(JSON.stringify(sanitizedUsers), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
-        } catch (error) {
+        } catch (_error) {
           return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -602,6 +734,27 @@ serve(async (req) => {
       }
     }
 
+    // Push subscription endpoints
+    if (path[0] === 'api' && path[1] === 'push-subscribe') {
+      if (req.method === 'POST') {
+        const body = await req.json();
+        const result = await savePushSubscription(body.userId, body.subscription);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET' && path[2]) {
+        const subscription = await getPushSubscription(path[2]);
+        return new Response(JSON.stringify(subscription), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'DELETE' && path[2]) {
+        const result = await deletePushSubscription(path[2]);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     // Notifications endpoints
     if (path[0] === 'api' && path[1] === 'notifications') {
       if (req.method === 'GET' && path[2]) {
@@ -864,6 +1017,82 @@ serve(async (req) => {
           return new Response(JSON.stringify({ 
             success: false, 
             message: error instanceof Error ? error.message : 'Failed to decline user' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+      }
+    }
+
+    // Manager endpoints
+    if (path[0] === 'api' && path[1] === 'manager') {
+      const managerId = req.headers.get('x-manager-id');
+      
+      if (!managerId) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          message: 'Manager ID required' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        });
+      }
+
+      // Get pending applications for manager
+      if (path[2] === 'applications' && req.method === 'GET') {
+        try {
+          const applications = await getPendingApplicationsForManager(managerId);
+          return new Response(JSON.stringify(applications), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to fetch applications' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
+      }
+
+      // Approve application by manager
+      if (path[2] === 'applications' && path[3] && path[4] === 'approve' && req.method === 'POST') {
+        const userId = path[3];
+        
+        try {
+          const result = await approveApplicationByManager(userId, managerId);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to approve application' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+      }
+
+      // Reject application by manager
+      if (path[2] === 'applications' && path[3] && path[4] === 'reject' && req.method === 'POST') {
+        const userId = path[3];
+        
+        try {
+          const data = await req.json().catch(() => ({}));
+          const reason = data.reason || 'No reason provided';
+          
+          const result = await rejectApplicationByManager(userId, managerId, reason);
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            message: error instanceof Error ? error.message : 'Failed to reject application' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400

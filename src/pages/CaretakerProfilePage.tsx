@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
 import { LanguageSwitcher } from '../contexts/LanguageContext.tsx';
 
 function CaretakerProfilePage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',

@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "RELEASE_TAG=Master"
-set "PREFERRED_ASSET_NAME=bricllm"
+set "RELEASE_TAG=windows_linux"
+set "PREFERRED_ASSET_NAME=bricllm-v1.0-windows-x86_64.zip"
 set "INSTALL_DIR=bricllm"
 set "BINARY_NAME=bricllm.exe"
 set "DOWNLOAD_URL=https://github.com/Briconomy/Bricllm/releases/download/%RELEASE_TAG%/%PREFERRED_ASSET_NAME%"
@@ -97,8 +97,44 @@ echo [2/5] Creating installation directory...
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 echo.
-echo [3/5] Installing binary...
-copy /Y "%DOWNLOADED_FILE%" "%INSTALL_DIR%\%BINARY_NAME%" >nul
+echo [3/5] Extracting and installing binary...
+
+echo Extracting ZIP file...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$ErrorActionPreference = 'Stop'; " ^
+    "$zipFile = '%DOWNLOADED_FILE%'; " ^
+    "$destDir = '%INSTALL_DIR%'; " ^
+    "Add-Type -AssemblyName System.IO.Compression.FileSystem; " ^
+    "try { " ^
+    "    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipFile, $destDir); " ^
+    "    Write-Host 'Extraction successful'; " ^
+    "} catch { " ^
+    "    Write-Host \"Error extracting: $_\"; " ^
+    "    exit 1; " ^
+    "}"
+
+if errorlevel 1 (
+    echo Error: Failed to extract ZIP file
+    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
+    exit /b 1
+)
+
+if not exist "%INSTALL_DIR%\%BINARY_NAME%" (
+    echo Searching for binary in extracted files...
+    set "BINARY_FOUND="
+    for /r "%INSTALL_DIR%" %%F in (bricllm.exe) do (
+        if exist "%%F" (
+            echo Found binary at: %%F
+            move /Y "%%F" "%INSTALL_DIR%\%BINARY_NAME%" >nul
+            set "BINARY_FOUND=1"
+        )
+    )
+    if not defined BINARY_FOUND (
+        echo Error: Binary not found in extracted files
+        rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
+        exit /b 1
+    )
+)
 
 echo.
 echo [4/5] Cleaning up...

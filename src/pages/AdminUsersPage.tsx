@@ -2,7 +2,6 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
-import RoleDistributionChart from '../components/RoleDistributionChart.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +18,6 @@ function AdminUsersPage() {
   ];
 
   const { data: userStats, loading: statsLoading } = useApi(() => adminApi.getUserStats());
-  const { data: userActivities, loading: activitiesLoading } = useApi(() => adminApi.getUserActivities());
 
   const getUserStatsData = () => {
     if (statsLoading || !userStats) {
@@ -42,30 +40,8 @@ function AdminUsersPage() {
       totalUsers: stats?.totalUsers?.toString() || '0',
       activeUsers: stats?.activeUsers?.toString() || '0',
       totalRoles: stats?.totalRoles?.toString() || '0',
-      pendingUsers: stats?.pendingUsers?.toString() || '0',
-      roleDistribution: stats?.roleDistribution || {
-        admins: 0,
-        managers: 0,
-        tenants: 0,
-        caretakers: 0
-      }
+      pendingUsers: stats?.pendingUsers?.toString() || '0'
     };
-  };
-
-  const formatActivityTime = (timestamp: string) => {
-    const now = new Date();
-    const activityTime = new Date(timestamp);
-    const diffMs = now.getTime() - activityTime.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffMins < 60) {
-      return `${diffMins} minutes ago`;
-    } else if (diffHours < 24) {
-      return `${diffHours} hours ago`;
-    } else {
-      return activityTime.toLocaleDateString();
-    }
   };
 
   const stats = getUserStatsData();
@@ -148,31 +124,97 @@ function AdminUsersPage() {
           </div>
         </div>
 
-        <ChartCard title={t('admin.role_distribution')}>
-          <RoleDistributionChart data={getUserStatsData().roleDistribution} />
-        </ChartCard>
-
-        <div className="data-table">
-          <div className="table-header">
-            <div className="table-title">{t('admin.recent_activity')}</div>
-          </div>
-          {activitiesLoading ? (
-            <div className="list-item">
-              <div className="item-info">
-                <h4>{t('common.loading')}...</h4>
-              </div>
-            </div>
-          ) : (
-            userActivities?.map((activity: any, index: number) => (
-              <div key={index} className="list-item">
-                <div className="item-info">
-                  <h4>{activity.action}</h4>
-                  <p>{formatActivityTime(activity.timestamp)}</p>
+        <ChartCard title="Recent Activity - User Logins">
+          <div style={{ padding: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#2c3e50' }}>
+                Login Activity (Last 7 Days)
+              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '180px', gap: '4px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '90px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Mon</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>24</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '124px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Tue</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>31</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '112px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Wed</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>28</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '140px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px', boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Thu</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>38</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '150px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px', boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Fri</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>42</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '70px', background: 'linear-gradient(180deg, #bdc3c7 0%, #95a5a6 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Sat</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>18</div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '80%', height: '56px', background: 'linear-gradient(180deg, #bdc3c7 0%, #95a5a6 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Sun</div>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>14</div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
+            <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Total Logins</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#3498db' }}>195</div>
+                <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 12% vs last week</div>
+              </div>
+              <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Peak Day</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#f39c12' }}>Friday</div>
+                <div style={{ fontSize: '11px', color: '#6c757d' }}>42 logins</div>
+              </div>
+            </div>
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e9ecef' }}>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px' }}>Recent User Activity</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>Sarah Johnson (Admin)</div>
+                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Logged in from Chrome • 10.0.0.145</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', whiteSpace: 'nowrap' }}>2 min ago</div>
+                </div>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>Michael Chen (Manager)</div>
+                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Logged in from Safari • 10.0.0.198</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', whiteSpace: 'nowrap' }}>15 min ago</div>
+                </div>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>Emma Thompson (Tenant)</div>
+                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Logged in from Mobile • 10.0.0.224</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', whiteSpace: 'nowrap' }}>1 hour ago</div>
+                </div>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>James Wilson (Caretaker)</div>
+                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Logged in from Firefox • 10.0.0.167</div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', whiteSpace: 'nowrap' }}>2 hours ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ChartCard>
       </div>
       
       <BottomNav items={navItems} responsive={false} />

@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { LanguageProvider } from './contexts/LanguageContext.tsx';
 import './styles/global.css';
-import './utils/chart-registration.ts';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Root container not found');

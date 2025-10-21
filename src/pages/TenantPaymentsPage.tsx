@@ -7,6 +7,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
 import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon.tsx';
 
@@ -21,7 +22,7 @@ interface PaymentMethod {
 function TenantPaymentsPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
@@ -46,15 +47,6 @@ function TenantPaymentsPage() {
     [user?.id]
   );
 
-  const loadUserData = () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('briconomy_user') || localStorage.getItem('user') || '{}');
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
-
   const loadSavedPaymentMethods = () => {
     try {
       const saved = localStorage.getItem('briconomy_payment_methods');
@@ -77,7 +69,6 @@ function TenantPaymentsPage() {
   };
 
   useEffect(() => {
-    loadUserData();
     loadSavedPaymentMethods();
   }, []);
 

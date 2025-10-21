@@ -7,6 +7,7 @@ import AIButton from '../components/AIButton.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 import '../utils/chart-registration.ts';
 
@@ -44,7 +45,7 @@ function SimpleErrorBoundary({ children, fallback }: { children: React.ReactNode
 
 function CaretakerDashboard() {
   const { t } = useLanguage();
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [error, setError] = useState(null);
   const [chartError, setChartError] = useState(null);
   
@@ -59,10 +60,6 @@ function CaretakerDashboard() {
     () => maintenanceApi.getAll({}),
     [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
@@ -97,17 +94,6 @@ function CaretakerDashboard() {
     }
   }, []);
 
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-      setError('Failed to load user data');
-    }
-  };
-
   // Use real maintenance request data from API - memoized to prevent unnecessary re-renders
   const tasksData = useMemo(() => Array.isArray(tasks) ? tasks : [], [tasks]);
   
@@ -122,20 +108,24 @@ function CaretakerDashboard() {
   // Memoize calculations to prevent recalculating on every render
   const stats = useMemo(() => {
     const assignedTasks = tasksData.length;
-    const todayTasks = tasksData.filter(task => {
+    
+    // Filter for today's tasks
+    const todayTasksArray = tasksData.filter(task => {
       const taskDate = new Date(task.createdAt || task.dueDate).toDateString();
       const today = new Date().toDateString();
       return taskDate === today;
-    }).length;
+    });
+    
+    const todayTasksCount = todayTasksArray.length;
     const priorityTasks = tasksData.filter(task => task.priority === 'high' || task.priority === 'urgent').length;
     const completionRate = tasksData.length > 0 
       ? Math.round((tasksData.filter(task => task.status === 'completed').length / tasksData.length) * 100) 
       : 0;
     
-    return { assignedTasks, todayTasks, priorityTasks, completionRate };
+    return { assignedTasks, todayTasks: todayTasksCount, todayTasksArray, priorityTasks, completionRate };
   }, [tasksData]);
   
-  const { assignedTasks, todayTasks, priorityTasks, completionRate } = stats;
+  const { assignedTasks, todayTasks, todayTasksArray, priorityTasks, completionRate } = stats;
 
   if (isLoading) {
     return (
@@ -203,7 +193,7 @@ return (
           <div className="table-header">
             <div className="table-title">{t('caretaker.today_tasks')}</div>
           </div>
-          {tasksData.slice(0, 5).map((task) => (
+          {todayTasksArray.slice(0, 5).map((task) => (
             <div key={task.id} className="list-item">
               <div className="item-info">
                 <h4>
@@ -265,9 +255,9 @@ return (
               </div>
             </div>
           ))}
-          {tasksData.length === 0 && (
+          {todayTasksArray.length === 0 && (
             <div className="no-results">
-              <p>{t('caretaker.no_tasks')}</p>
+              <p>{t('caretaker.no_tasks_today')}</p>
             </div>
           )}
         </div>

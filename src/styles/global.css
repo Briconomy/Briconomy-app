@@ -940,6 +940,9 @@ body {
     text-align: center;
     height: var(--height-button-md);
     transition: all var(--transition-base);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn-primary {
@@ -1527,13 +1530,17 @@ body {
 /* Form Actions */
 .form-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     margin-top: 24px;
+    flex-wrap: wrap;
 }
 
 .form-actions .btn {
-    flex: 1;
+    flex: 1 1 auto;
     margin-bottom: 0;
+    min-width: 80px;
+    white-space: nowrap;
+    font-size: 14px;
 }
 
 /* User Form Specific */
@@ -1597,8 +1604,18 @@ body {
 
 .modal-footer {
     padding: 10px 10px 0px 10px;
-    display : flex;
-    gap: 15px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.modal-footer .btn {
+    flex: 1 1 auto;
+    min-width: 70px;
+    white-space: nowrap;
+    font-size: 14px;
+    padding: 8px 12px;
 }
 
 .modal-actions {

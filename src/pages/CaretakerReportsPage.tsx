@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { tasksApi, maintenanceApi, reportsApi, useApi } from '../services/api.ts';
 
 function CaretakerReportsPage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReportDetails, setShowReportDetails] = useState(false);
   const [reportType, setReportType] = useState('all'); // all, performance, maintenance, financial
@@ -33,20 +34,6 @@ function CaretakerReportsPage() {
     () => reportsApi.getAll(user?.id ? { generatedBy: user.id } : {}),
     [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
 
   const getMockTasks = () => {
     return [

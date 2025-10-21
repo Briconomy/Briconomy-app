@@ -223,6 +223,152 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
   }
 }
 
+export async function requestPasswordReset(email: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    const user = await users.findOne({ email: email });
+    if (!user) {
+      return { 
+        success: true, 
+        message: "If an account exists with this email, a reset link will be sent." 
+      };
+    }
+    
+    const resetToken = crypto.randomUUID();
+    const resetExpires = new Date(Date.now() + 3600000);
+    
+    await users.updateOne(
+      { _id: user._id },
+      { 
+        $set: { 
+          resetToken: resetToken,
+          resetExpires: resetExpires 
+        } 
+      }
+    );
+    
+    console.log(`Password reset token generated for user ${email}: ${resetToken}`);
+    
+    return {
+      success: true,
+      message: "If an account exists with this email, a reset link will be sent.",
+      resetToken: resetToken
+    };
+  } catch (error) {
+    console.error("Error requesting password reset:", error);
+    throw error;
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    const user = await users.findOne({ 
+      resetToken: token,
+      resetExpires: { $gt: new Date() }
+    });
+    
+    if (!user) {
+      return { 
+        success: false, 
+        message: "Invalid or expired reset token." 
+      };
+    }
+    
+    const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(newPassword));
+    const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    await users.updateOne(
+      { _id: user._id },
+      { 
+        $set: { password: hashedPasswordHex },
+        $unset: { resetToken: "", resetExpires: "" }
+      }
+    );
+    
+    return {
+      success: true,
+      message: "Password has been reset successfully."
+    };
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    throw error;
+  }
+}
+
+export async function savePushSubscription(userId: string, subscription: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const pushSubscriptions = getCollection("push_subscriptions");
+    
+    await pushSubscriptions.updateOne(
+      { userId: userId },
+      { 
+        $set: { 
+          subscription: subscription,
+          updatedAt: new Date()
+        },
+        $setOnInsert: {
+          userId: userId,
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+    
+    console.log(`Push subscription saved for user ${userId}`);
+    
+    return {
+      success: true,
+      message: "Push subscription saved successfully."
+    };
+  } catch (error) {
+    console.error("Error saving push subscription:", error);
+    throw error;
+  }
+}
+
+export async function getPushSubscription(userId: string) {
+  try {
+    await connectToMongoDB();
+    const pushSubscriptions = getCollection("push_subscriptions");
+    
+    const result = await pushSubscriptions.findOne({ userId: userId });
+    
+    if (!result) {
+      return null;
+    }
+    
+    return result.subscription;
+  } catch (error) {
+    console.error("Error getting push subscription:", error);
+    throw error;
+  }
+}
+
+export async function deletePushSubscription(userId: string) {
+  try {
+    await connectToMongoDB();
+    const pushSubscriptions = getCollection("push_subscriptions");
+    
+    await pushSubscriptions.deleteOne({ userId: userId });
+    
+    return {
+      success: true,
+      message: "Push subscription deleted successfully."
+    };
+  } catch (error) {
+    console.error("Error deleting push subscription:", error);
+    throw error;
+  }
+}
+
 export async function getPendingUsers() {
   try {
     await connectToMongoDB();
@@ -296,6 +442,145 @@ export async function declinePendingUser(userId: string) {
     };
   } catch (error) {
     console.error("Error declining pending user:", error);
+    throw error;
+  }
+}
+
+export async function getPendingApplicationsForManager(managerId: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const properties = getCollection("properties");
+    
+    // First, get all properties managed by this manager
+    const managerProperties = await properties.find({ managerId: new ObjectId(managerId) }).toArray();
+    const propertyIds = managerProperties.map(p => p._id.toString());
+    
+    if (propertyIds.length === 0) {
+      return []; // Manager has no properties, so no applications
+    }
+    
+    // Get pending applications for those properties
+    const applications = await pendingUsers.find({ 
+      status: 'pending',
+      appliedPropertyId: { $in: propertyIds }
+    }).sort({ appliedAt: -1 }).toArray();
+    
+    // Enrich applications with property details
+    const enrichedApplications = applications.map(app => {
+      const property = managerProperties.find(p => p._id.toString() === app.appliedPropertyId);
+      return {
+        ...mapDoc(app),
+        property: property ? { id: property._id.toString(), name: property.name, address: property.address } : null
+      };
+    });
+    
+    return enrichedApplications;
+  } catch (error) {
+    console.error("Error fetching pending applications for manager:", error);
+    throw error;
+  }
+}
+
+export async function approveApplicationByManager(userId: string, managerId: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const users = getCollection("users");
+    const properties = getCollection("properties");
+    
+    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    
+    if (!pendingUser) {
+      throw new Error("Application not found");
+    }
+    
+    // Verify the manager has permission to approve this application
+    const property = await properties.findOne({ 
+      _id: new ObjectId(pendingUser.appliedPropertyId),
+      managerId: new ObjectId(managerId)
+    });
+    
+    if (!property) {
+      throw new Error("Unauthorized: You can only approve applications for your properties");
+    }
+    
+    const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+    
+    const newUser = {
+      ...userDataToInsert,
+      userType: 'tenant',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      approvedBy: managerId,
+      approvedAt: new Date()
+    };
+    
+    await users.insertOne(newUser);
+    
+    await pendingUsers.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { 
+        status: 'approved', 
+        approvedAt: new Date(),
+        approvedBy: managerId
+      } }
+    );
+    
+    return {
+      success: true,
+      message: "Application approved successfully",
+      user: mapDoc(await users.findOne({ email: pendingUser.email }))
+    };
+  } catch (error) {
+    console.error("Error approving application:", error);
+    throw error;
+  }
+}
+
+export async function rejectApplicationByManager(userId: string, managerId: string, reason?: string) {
+  try {
+    await connectToMongoDB();
+    const pendingUsers = getCollection("pending_users");
+    const properties = getCollection("properties");
+    
+    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    
+    if (!pendingUser) {
+      throw new Error("Application not found");
+    }
+    
+    // Verify the manager has permission to reject this application
+    const property = await properties.findOne({ 
+      _id: new ObjectId(pendingUser.appliedPropertyId),
+      managerId: new ObjectId(managerId)
+    });
+    
+    if (!property) {
+      throw new Error("Unauthorized: You can only reject applications for your properties");
+    }
+    
+    const result = await pendingUsers.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { 
+        status: 'rejected', 
+        rejectedAt: new Date(),
+        rejectedBy: managerId,
+        rejectionReason: reason || 'No reason provided'
+      } }
+    );
+    
+    if (result.modifiedCount === 0) {
+      throw new Error("Application not found or already processed");
+    }
+    
+    return {
+      success: true,
+      message: "Application rejected successfully"
+    };
+  } catch (error) {
+    console.error("Error rejecting application:", error);
     throw error;
   }
 }
@@ -812,8 +1097,15 @@ export async function getNotifications(userId: string) {
   try {
     await connectToMongoDB();
     const notifications = getCollection("notifications");
-    const userObjectId = new ObjectId(userId);
-    const rows = await notifications.find({ userId: userObjectId }).toArray();
+    
+    // Query for userId as both string and ObjectId to handle both formats
+    const rows = await notifications.find({ 
+      $or: [
+        { userId: userId },
+        { userId: new ObjectId(userId) }
+      ]
+    }).sort({ createdAt: -1 }).toArray();
+    
     const mapped = mapDocs(rows);
     return mapped;
   } catch (error) {

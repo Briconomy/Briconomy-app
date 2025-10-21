@@ -613,6 +613,7 @@ const translations: Translations = {
   'caretaker.progress': { en: 'Progress', zu: 'Inqubekela' },
   'caretaker.scheduled': { en: 'Scheduled', zu: 'Kuhleliwe' },
   'caretaker.no_tasks': { en: 'No tasks assigned', zu: 'Ayikho imisebenzi eyabiliwe' },
+  'caretaker.no_tasks_today': { en: 'No tasks scheduled for today', zu: 'Ayikho imisebenzi ehleliwe yanamhlanje' },
 
   // Additional Common UI Text
   'common.search': { en: 'Search', zu: 'Sesha' },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from "../components/BottomNav.tsx";
 import StatCard from "../components/StatCard.tsx";
@@ -12,51 +12,35 @@ import Icon from '../components/Icon.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { dashboardApi, propertiesApi, maintenanceApi, leasesApi, formatCurrency, useApi } from '../services/api.ts';
 
 function ManagerDashboard() {
   const { t } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
-  const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
-  const [userLoaded, setUserLoaded] = useState(false);
 
   // API calls for real-time data - FILTERED BY MANAGER ID
   const { data: dashboardStats, loading: statsLoading, error: statsError } = useApi(
-    () => userLoaded && user?.id ? dashboardApi.getStats({ managerId: user.id }) : Promise.resolve(null),
-    [user?.id, userLoaded]
+    () => user?.id ? dashboardApi.getStats({ managerId: user.id }) : Promise.resolve(null),
+    [user?.id]
   );
 
   const { data: properties, loading: propertiesLoading, error: propertiesError } = useApi(
-    () => userLoaded && user?.id ? propertiesApi.getAll({ managerId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? propertiesApi.getAll({ managerId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: maintenanceRequests, loading: maintenanceLoading, error: maintenanceError } = useApi(
-    () => userLoaded && user?.id ? maintenanceApi.getAll({ status: 'pending', managerId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? maintenanceApi.getAll({ status: 'pending', managerId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: leases, loading: leasesLoading } = useApi(
-    () => userLoaded ? leasesApi.getAll() : Promise.resolve([]),
-    [userLoaded]
+    () => user?.id ? leasesApi.getAll() : Promise.resolve([]),
+    [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-      setUserLoaded(true);
-    } catch (err: unknown) {
-      console.error('Error loading user data:', err);
-      setUserLoaded(true);
-    }
-  };
   
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: true },
@@ -65,7 +49,7 @@ function ManagerDashboard() {
     { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
-  const isLoading = !userLoaded || statsLoading || propertiesLoading || maintenanceLoading;
+  const isLoading = authLoading || statsLoading || propertiesLoading || maintenanceLoading;
   const hasError = statsError || propertiesError || maintenanceError;
 
   if (isLoading) {
@@ -129,6 +113,12 @@ function ManagerDashboard() {
             icon={<Icon name="properties" alt="Properties" />}
             title={t('nav.properties')}
             description={t('manager.manage_listings')}
+          />
+          <ActionCard
+            to="/manager/applications"
+            icon={<Icon name="users" alt="Applications" />}
+            title="Applications"
+            description="Review tenant applications"
           />
           <ActionCard
             to="/manager/leases"

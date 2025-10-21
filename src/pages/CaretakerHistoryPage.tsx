@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerHistoryPage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [filterPeriod, setFilterPeriod] = useState('all'); // all, week, month, year
   const [filterStatus, setFilterStatus] = useState('all'); // all, completed, in_progress
   
@@ -22,20 +23,6 @@ function CaretakerHistoryPage() {
     () => maintenanceApi.getAll({}),
     []
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-    } catch (err) {
-      console.error('Error loading user data:', err);
-    }
-  };
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
@@ -223,11 +210,25 @@ function CaretakerHistoryPage() {
 
   const filteredData = getFilteredData();
 
-  // Calculate statistics
   const completedMaintenance = maintenanceData.filter(req => req.status === 'completed').length;
   const totalCompleted = completedMaintenance;
   
-  const avgCompletionTime = 0; // TODO: Calculate based on maintenance requests
+  const avgCompletionTime = (() => {
+    const completed = maintenanceData.filter(req => 
+      req.status === 'completed' && req.createdAt && req.completedDate
+    );
+    
+    if (completed.length === 0) return 0;
+    
+    const totalTime = completed.reduce((sum, req) => {
+      const created = new Date(req.createdAt).getTime();
+      const completedTime = new Date(req.completedDate).getTime();
+      const durationHours = (completedTime - created) / (1000 * 60 * 60);
+      return sum + durationHours;
+    }, 0);
+    
+    return Math.round(totalTime / completed.length);
+  })();
 
   const totalCost = maintenanceData
     .filter(req => req.status === 'completed' && req.actualCost)

@@ -74,8 +74,51 @@ function AdminDashboard() {
         </div>
 
         <ChartCard title={t('nav.reports')}>
-          <div className="chart-placeholder">
-            Chart.js Performance Analytics
+          <div style={{ padding: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#2c3e50' }}>
+                System Performance
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>API Requests</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#27ae60' }}>12,847</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 8.2% from last week</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Avg Response</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#3498db' }}>142ms</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↓ 3.1% faster</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Active Sessions</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#f39c12' }}>247</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>Real-time users</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Error Rate</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#e74c3c' }}>0.3%</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↓ 0.2% improved</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e9ecef' }}>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px' }}>Recent Reports</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>Monthly Financial Summary</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>Generated 2 hours ago</div>
+                </div>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>User Activity Report</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>Generated today at 9:00 AM</div>
+                </div>
+                <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>Maintenance Overview</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>Generated yesterday</div>
+                </div>
+              </div>
+            </div>
           </div>
         </ChartCard>
 

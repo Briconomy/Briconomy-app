@@ -1,12 +1,9 @@
 import { Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
+import { useEffect, useRef } from 'react';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+// Force registration of required elements for Doughnut chart
+ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
 interface RoleDistributionChartProps {
   data: {
@@ -17,7 +14,18 @@ interface RoleDistributionChartProps {
   };
 }
 
+
 function RoleDistributionChart({ data }: RoleDistributionChartProps) {
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
   const chartData = {
     labels: ['Admins', 'Managers', 'Tenants', 'Caretakers'],
     datasets: [
@@ -88,7 +96,12 @@ function RoleDistributionChart({ data }: RoleDistributionChartProps) {
 
   return (
     <div style={{ height: '300px', position: 'relative' }}>
-      <Doughnut data={chartData} options={options} />
+      <Doughnut 
+        ref={chartRef} 
+        data={chartData} 
+        options={options}
+        key="role-distribution-chart"
+      />
       <div style={{
         position: 'absolute',
         top: '50%',

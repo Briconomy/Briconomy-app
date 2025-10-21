@@ -10,15 +10,15 @@ import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import Icon from '../components/Icon.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { paymentsApi, dashboardApi, leasesApi, maintenanceApi, notificationsApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
 
 function TenantDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [_error, _setError] = useState<Error | null>(null);
   const [notifications, setNotifications] = useState<{ id: string; read: boolean }[]>([]);
-  const [userLoaded, setUserLoaded] = useState(false);
   
   const navItems = [
     { path: '/tenant', label: t('nav.home'), icon: 'properties', active: true },
@@ -29,46 +29,30 @@ function TenantDashboard() {
 
   // Only make API calls after user is loaded
   const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(
-    () => userLoaded && user?.id ? paymentsApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? paymentsApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: lease, loading: leaseLoading, error: leaseError } = useApi(
-    () => userLoaded && user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: requests, loading: requestsLoading, error: requestsError } = useApi(
-    () => userLoaded && user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
-    [user?.id, userLoaded]
+    () => user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
+    [user?.id]
   );
 
   const { data: _stats, loading: statsLoading, error: statsError } = useApi(
-    () => userLoaded ? dashboardApi.getStats() : Promise.resolve(null),
-    [userLoaded]
+    () => user?.id ? dashboardApi.getStats() : Promise.resolve(null),
+    [user?.id]
   );
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
 
   useEffect(() => {
     if (user?.id) {
       loadNotifications();
     }
   }, [user?.id]);
-
-  const loadUserData = () => {
-    try {
-      const userRaw = localStorage.getItem('briconomy_user');
-      const userData = userRaw ? JSON.parse(userRaw) : null;
-      setUser(userData);
-      setUserLoaded(true);
-    } catch (err: unknown) {
-      console.error('Error loading user data:', err);
-      setUserLoaded(true); // Set loaded even on error to prevent infinite loading
-    }
-  };
 
   const loadNotifications = async () => {
     try {
@@ -108,7 +92,7 @@ function TenantDashboard() {
   const requestsData = Array.isArray(requests) ? requests : [];
   const notificationsData = notifications || [];
 
-  const isLoading = !userLoaded || paymentsLoading || leaseLoading || requestsLoading || statsLoading;
+  const isLoading = authLoading || paymentsLoading || leaseLoading || requestsLoading || statsLoading;
   const hasError = paymentsError || leaseError || requestsError || statsError;
   
   // Calculate real dashboard metrics
@@ -215,8 +199,8 @@ return (
           <ActionCard
             onClick={() => navigate('/tenant/messages')}
             icon={<Icon name="contact" alt="Contact" />}
-            title={t('dashboard.contact')}
-            description={t('dashboard.message_management')}
+            title="Contact Information"
+            description="Emergency contacts & general help"
           />
           <ActionCard
             onClick={() => navigate('/tenant/profile')}
