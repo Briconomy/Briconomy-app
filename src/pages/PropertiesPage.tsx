@@ -65,14 +65,12 @@ function PropertiesPage() {
       console.log('Properties data received:', data);
       setProperties(data);
       
-      // Debugging: Check if data is empty or invalid
       if (!Array.isArray(data)) {
         console.warn('Properties API did not return an array:', data);
         setError('Invalid data format received from server');
         setProperties([]);
       } else if (data.length === 0) {
         console.log('No properties found in the database');
-        // Don't set error for empty array - this is a valid case
       }
     } catch (err) {
       console.error('Error fetching properties:', err);

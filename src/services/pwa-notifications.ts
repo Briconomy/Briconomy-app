@@ -60,13 +60,18 @@ export class PWANotificationService {
       });
 
       console.log('Subscribed to push notifications:', subscription);
-      
-      // TODO: Send subscription to your server
-      // await fetch('/api/push-subscribe', {
-      //   method: 'POST',
-      //   body: JSON.stringify(subscription),
-      //   headers: { 'Content-Type': 'application/json' }
-      // });
+
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        await fetch('http://localhost:8816/api/push-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: userId,
+            subscription: subscription.toJSON()
+          })
+        });
+      }
 
       return subscription;
     } catch (error) {

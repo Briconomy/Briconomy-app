@@ -28,14 +28,22 @@ function ForgotPasswordPage() {
     }
 
     try {
-      // TODO: Implement actual password reset API call
-      // const response = await authApi.forgotPassword(email);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Password reset requested for:', email);
-      setSuccess(true);
+      const response = await fetch('http://localhost:8816/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('Password reset requested for:', email);
+        setSuccess(true);
+      } else {
+        setError(data.message || 'Failed to send reset link. Please try again.');
+      }
     } catch (_err) {
       setError('Failed to send reset link. Please try again.');
     } finally {
