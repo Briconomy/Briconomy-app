@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import Icon from './Icon.tsx';
+import { WebSocketManager, WebSocketMessage } from '../utils/websocket-manager.ts';
 
 interface NotificationItem {
   id: string;
@@ -17,105 +18,64 @@ const NotificationWidget: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const wsRef = React.useRef<WebSocket | null>(null);
-  const userIdRef = React.useRef<string | null>(null);
-  const reconnectTimeoutRef = React.useRef<number | null>(null);
+  const wsManagerRef = React.useRef<WebSocketManager | null>(null);
 
-  // WebSocket connection with improved error handling
   useEffect(() => {
     if (!user?.id) return;
 
-    // Don't reconnect if it's the same user and connection is good
-    if (userIdRef.current === user.id &&
-        wsRef.current?.readyState === WebSocket.OPEN) {
-      return;
+    if (wsManagerRef.current) {
+      wsManagerRef.current.disconnect();
+      wsManagerRef.current = null;
     }
 
-    // Close existing connection if switching users
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    const handleMessage = (data: WebSocketMessage) => {
+      if (data.type === 'notification' && data.data) {
+        const notifData = data.data as Record<string, unknown>;
+        
+        if (notifData.type === 'announcement_deleted') {
+          setNotifications(prev =>
+            prev.filter(n => !(n.type === 'announcement' && n.title.includes(String(notifData.originalTitle || ''))))
+          );
+          return;
+        }
 
-    // Clear any pending reconnection attempts
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+        setNotifications(prev => {
+          const newNotification: NotificationItem = {
+            id: String(notifData.id || notifData._id || ''),
+            userId: String(notifData.userId || ''),
+            title: String(notifData.title || ''),
+            message: String(notifData.message || ''),
+            type: String(notifData.type || ''),
+            read: Boolean(notifData.read),
+            createdAt: String(notifData.createdAt || new Date().toISOString())
+          };
 
-    userIdRef.current = user.id;
+          if (prev.some(n => n.id === newNotification.id)) return prev;
 
-    const connectWebSocket = () => {
-      const wsProtocol = globalThis.location?.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsHost = globalThis.location?.hostname === 'localhost' ? 'localhost:8816' : globalThis.location?.host;
-      const wsUrl = `${wsProtocol}//${wsHost}/ws?userId=${user.id}`;
-
-      try {
-        console.log('[NotificationWidget] Connecting to WebSocket:', wsUrl);
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'notification') {
-              // Check if this is an announcement deletion notification
-              if (data.data.type === 'announcement_deleted') {
-                setNotifications(prev =>
-                  prev.filter(n => !(n.type === 'announcement' && n.title.includes(data.data.originalTitle)))
-                );
-                return;
-              }
-
-              // Add new notification
-              setNotifications(prev => {
-                const newNotification = {
-                  id: String(data.data.id || data.data._id),
-                  userId: data.data.userId,
-                  title: data.data.title,
-                  message: data.data.message,
-                  type: data.data.type,
-                  read: data.data.read,
-                  createdAt: data.data.createdAt
-                };
-
-                // Prevent duplicates
-                if (prev.some(n => n.id === newNotification.id)) return prev;
-
-                return [newNotification, ...prev.slice(0, 9)];
-              });
-            }
-          } catch (error) {
-            console.error('[NotificationWidget] Error parsing message:', error);
-          }
-        };
-
-        ws.onerror = () => {
-          // Silently handle error - will attempt reconnect on close
-        };
-
-        ws.onclose = () => {
-          wsRef.current = null;
-          // Only attempt reconnect if user is still the same
-          if (userIdRef.current === user.id) {
-            reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
-          }
-        };
-      } catch (error) {
-        console.error('[NotificationWidget] Connection failed:', error);
+          return [newNotification, ...prev.slice(0, 9)];
+        });
       }
     };
 
-    connectWebSocket();
+    wsManagerRef.current = new WebSocketManager({
+      userId: user.id,
+      onMessage: handleMessage,
+      onConnected: () => {
+        console.log('[NotificationWidget] WebSocket connected');
+      },
+      onDisconnected: () => {
+        console.log('[NotificationWidget] WebSocket disconnected');
+      },
+      maxReconnectAttempts: 10,
+      heartbeatInterval: 30000
+    });
 
-    // Cleanup
+    wsManagerRef.current.connect();
+
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+      if (wsManagerRef.current) {
+        wsManagerRef.current.disconnect();
+        wsManagerRef.current = null;
       }
     };
   }, [user?.id]);
