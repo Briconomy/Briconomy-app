@@ -120,7 +120,32 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
     const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
     const mappedUser = { id: String(rest._id ?? ""), ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id")) };
 
-    // Log successful login
+    const userType = (mappedUser as Record<string, unknown>).userType;
+    const managerApprovalStatus = (mappedUser as Record<string, unknown>).managerApprovalStatus;
+    
+    if (userType === 'tenant' && managerApprovalStatus === 'rejected') {
+      await createAuditLog({
+        userId: mappedUser.id,
+        action: 'user_login_restricted',
+        resource: 'authentication',
+        details: {
+          email,
+          reason: 'manager_rejected_application',
+          ip: clientInfo?.ip || 'unknown',
+          userAgent: clientInfo?.userAgent || 'unknown'
+        }
+      });
+      
+      return {
+        success: true,
+        message: "Login successful. Your property application was not approved, but you can browse and apply for other properties.",
+        user: mappedUser,
+        token: "mock-jwt-token",
+        restricted: true,
+        redirectTo: '/browse-properties'
+      };
+    }
+
     await createAuditLog({
       userId: mappedUser.id,
       action: 'user_login',
@@ -183,17 +208,20 @@ export async function registerUser(userData: Record<string, unknown>) {
 
 export async function registerPendingTenant(userData: Record<string, unknown>) {
   try {
+    console.log('[registerPendingTenant] Starting registration for:', userData.email);
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
     
     const existingUser = await users.findOne({ email: userData.email });
     if (existingUser) {
+      console.log('[registerPendingTenant] User already exists');
       return { success: false, message: "User with this email already exists" };
     }
     
     const existingPending = await pendingUsers.findOne({ email: userData.email });
     if (existingPending) {
+      console.log('[registerPendingTenant] Application already pending');
       return { success: false, message: "Application with this email already pending" };
     }
     
@@ -211,15 +239,17 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
       createdAt: new Date()
     };
     
+    console.log('[registerPendingTenant] Inserting into DB...');
     await pendingUsers.insertOne(toInsert);
+    console.log('[registerPendingTenant] Success');
     
     return {
       success: true,
       message: "Application submitted successfully. Awaiting admin approval."
     };
   } catch (error) {
-    console.error("Error registering pending tenant:", error);
-    throw error;
+    console.error("[registerPendingTenant] Error:", error);
+    return { success: false, message: "Failed to submit application. Please try again." };
   }
 }
 
@@ -400,6 +430,9 @@ export async function approvePendingUser(userId: string) {
       ...userDataToInsert,
       userType: 'tenant',
       isActive: true,
+      adminApproved: true,
+      managerApprovalStatus: 'pending',
+      appliedPropertyId: appliedPropertyId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -408,12 +441,16 @@ export async function approvePendingUser(userId: string) {
     
     await pendingUsers.updateOne(
       { _id: new ObjectId(userId) },
-      { $set: { status: 'approved', approvedAt: new Date() } }
+      { $set: { 
+        status: 'admin_approved', 
+        adminApprovedAt: new Date(),
+        managerApprovalStatus: 'pending'
+      } }
     );
     
     return {
       success: true,
-      message: "User approved and account created successfully",
+      message: "User approved by admin. Account created. Awaiting manager approval for property access.",
       user: mapDoc(await users.findOne({ email: pendingUser.email }))
     };
   } catch (error) {
@@ -454,15 +491,19 @@ export async function getPendingApplicationsForManager(managerId: string) {
     
     // First, get all properties managed by this manager
     const managerProperties = await properties.find({ managerId: new ObjectId(managerId) }).toArray();
+    
     const propertyIds = managerProperties.map(p => p._id.toString());
     
     if (propertyIds.length === 0) {
       return []; // Manager has no properties, so no applications
     }
     
-    // Get pending applications for those properties
+    // Get pending applications for those properties - check both pending and admin_approved
     const applications = await pendingUsers.find({ 
-      status: 'pending',
+      $or: [
+        { status: 'pending' },
+        { status: 'admin_approved' }
+      ],
       appliedPropertyId: { $in: propertyIds }
     }).sort({ appliedAt: -1 }).toArray();
     
@@ -495,7 +536,6 @@ export async function approveApplicationByManager(userId: string, managerId: str
       throw new Error("Application not found");
     }
     
-    // Verify the manager has permission to approve this application
     const property = await properties.findOne({ 
       _id: new ObjectId(pendingUser.appliedPropertyId),
       managerId: new ObjectId(managerId)
@@ -505,34 +545,68 @@ export async function approveApplicationByManager(userId: string, managerId: str
       throw new Error("Unauthorized: You can only approve applications for your properties");
     }
     
-    const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+    const existingUser = await users.findOne({ email: pendingUser.email });
     
-    const newUser = {
-      ...userDataToInsert,
-      userType: 'tenant',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      approvedBy: managerId,
-      approvedAt: new Date()
-    };
-    
-    await users.insertOne(newUser);
-    
-    await pendingUsers.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { 
-        status: 'approved', 
-        approvedAt: new Date(),
-        approvedBy: managerId
-      } }
-    );
-    
-    return {
-      success: true,
-      message: "Application approved successfully",
-      user: mapDoc(await users.findOne({ email: pendingUser.email }))
-    };
+    if (existingUser) {
+      await users.updateOne(
+        { _id: existingUser._id },
+        { $set: { 
+          managerApprovalStatus: 'approved',
+          managerApprovedBy: managerId,
+          managerApprovedAt: new Date(),
+          assignedPropertyId: pendingUser.appliedPropertyId,
+          isActive: true,
+          updatedAt: new Date()
+        } }
+      );
+      
+      await pendingUsers.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { 
+          status: 'fully_approved',
+          managerApprovedAt: new Date(),
+          managerApprovedBy: managerId
+        } }
+      );
+      
+      return {
+        success: true,
+        message: "Application approved. Tenant now has full access to the property.",
+        user: mapDoc(await users.findOne({ email: pendingUser.email }))
+      };
+    } else {
+      const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+      
+      const newUser = {
+        ...userDataToInsert,
+        userType: 'tenant',
+        isActive: true,
+        adminApproved: false,
+        managerApprovalStatus: 'approved',
+        managerApprovedBy: managerId,
+        managerApprovedAt: new Date(),
+        assignedPropertyId: appliedPropertyId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await users.insertOne(newUser);
+      
+      await pendingUsers.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { 
+          status: 'approved', 
+          approvedAt: new Date(),
+          approvedBy: managerId
+        } }
+      );
+      
+      return {
+        success: true,
+        message: "Application approved successfully. Account created with full property access.",
+        user: mapDoc(await users.findOne({ email: pendingUser.email }))
+      };
+    }
   } catch (error) {
     console.error("Error approving application:", error);
     throw error;
@@ -543,6 +617,7 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
+    const users = getCollection("users");
     const properties = getCollection("properties");
     
     const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
@@ -551,7 +626,6 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
       throw new Error("Application not found");
     }
     
-    // Verify the manager has permission to reject this application
     const property = await properties.findOne({ 
       _id: new ObjectId(pendingUser.appliedPropertyId),
       managerId: new ObjectId(managerId)
@@ -561,13 +635,29 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
       throw new Error("Unauthorized: You can only reject applications for your properties");
     }
     
+    const existingUser = await users.findOne({ email: pendingUser.email });
+    
+    if (existingUser) {
+      await users.updateOne(
+        { _id: existingUser._id },
+        { $set: { 
+          managerApprovalStatus: 'rejected',
+          managerRejectedBy: managerId,
+          managerRejectedAt: new Date(),
+          managerRejectionReason: reason || 'No reason provided',
+          assignedPropertyId: null,
+          updatedAt: new Date()
+        } }
+      );
+    }
+    
     const result = await pendingUsers.updateOne(
       { _id: new ObjectId(userId) },
       { $set: { 
-        status: 'rejected', 
-        rejectedAt: new Date(),
-        rejectedBy: managerId,
-        rejectionReason: reason || 'No reason provided'
+        status: 'manager_rejected', 
+        managerRejectedAt: new Date(),
+        managerRejectedBy: managerId,
+        managerRejectionReason: reason || 'No reason provided'
       } }
     );
     

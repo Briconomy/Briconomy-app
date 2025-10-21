@@ -200,18 +200,43 @@ function RentalApplicationPage() {
     
     try {
       const applicationData = {
-        propertyId,
-        property: property,
-        ...formData,
-        submittedAt: new Date().toISOString(),
-        status: 'pending'
+        fullName: `${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`,
+        email: formData.personalInfo.email,
+        phone: formData.personalInfo.phone,
+        password: formData.personalInfo.idNumber,
+        userType: 'tenant',
+        appliedPropertyId: propertyId,
+        profile: {
+          property: property?.name,
+          unitNumber: formData.additionalInfo.occupants,
+          occupation: formData.employmentInfo.position,
+          monthlyIncome: formData.employmentInfo.income,
+          emergencyContact: formData.additionalInfo.emergencyContact 
+            ? `${formData.additionalInfo.emergencyContact} (${formData.additionalInfo.emergencyPhone})`
+            : '',
+          moveInDate: formData.additionalInfo.moveInDate,
+          idNumber: formData.personalInfo.idNumber,
+          dateOfBirth: formData.personalInfo.dateOfBirth,
+          nationality: formData.personalInfo.nationality,
+          employer: formData.employmentInfo.employer,
+          employmentDuration: formData.employmentInfo.employmentDuration,
+          currentAddress: formData.rentalHistory.currentAddress,
+          reasonForLeaving: formData.rentalHistory.reasonForLeaving,
+          leaseDuration: formData.additionalInfo.leaseDuration,
+          pets: formData.additionalInfo.pets,
+          petDetails: formData.additionalInfo.petDetails
+        }
       };
 
-      // Simulate API call - in real implementation, this would call applicationsApi.create()
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('[Apply] Submitting for property:', propertyId);
+      const result = await authApi.registerPendingTenant(applicationData);
+      console.log('[Apply] Result:', result.success ? 'Success' : 'Failed');
       
-      console.log('Application submitted:', applicationData);
-      setSubmitted(true);
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        setError(result.message || 'Failed to submit application. Please try again.');
+      }
     } catch (err) {
       setError('Failed to submit application. Please try again.');
       console.error('Error submitting application:', err);

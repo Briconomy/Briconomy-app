@@ -7,6 +7,7 @@ import SearchFilter from '../components/SearchFilter.tsx';
 import Modal from '../components/Modal.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { managerApi } from '../services/api.ts';
 
 interface PendingApplication {
   id: string;
@@ -60,15 +61,31 @@ function ManagerApplicationsPage() {
   ];
 
   useEffect(() => {
-    // Using dummy data for now
-    loadDummyApplications();
-  }, []);
+    if (_user?.id) {
+      loadApplications();
+    }
+  }, [_user?.id]);
 
-  const loadDummyApplications = () => {
+  const loadApplications = async () => {
     setLoading(true);
+    setError('');
     
-    // Simulate API call delay
-    setTimeout(() => {
+    try {
+      if (!_user?.id) {
+        setError('User not authenticated');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('[Manager] Fetching applications...');
+      const data = await managerApi.getPendingApplications(_user.id);
+      console.log('[Manager] Got', data.length, 'applications');
+      setApplications(data);
+      setFilteredApplications(data);
+    } catch (err) {
+      console.error('Error loading applications:', err);
+      setError('Failed to load applications. Using sample data.');
+      
       const dummyData = [
         {
           id: "1",
@@ -134,8 +151,9 @@ function ManagerApplicationsPage() {
       
       setApplications(dummyData);
       setFilteredApplications(dummyData);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleSearch = (term: string) => {
@@ -163,11 +181,16 @@ function ManagerApplicationsPage() {
       setError('');
       setSuccess('');
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!_user?.id) {
+        setError('User not authenticated');
+        return;
+      }
       
-      setSuccess(`${userName} has been approved and account created!`);
+      await managerApi.approveApplication(userId, _user.id);
+      
+      setSuccess(`${userName} has been approved and granted property access!`);
       setApplications(applications.filter(u => u.id !== userId));
+      setFilteredApplications(filteredApplications.filter(u => u.id !== userId));
     } catch (err) {
       setError(`Failed to approve ${userName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -188,11 +211,16 @@ function ManagerApplicationsPage() {
       setError('');
       setSuccess('');
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!_user?.id) {
+        setError('User not authenticated');
+        return;
+      }
       
-      setSuccess(`${rejectingUserName}'s application has been rejected.`);
+      await managerApi.rejectApplication(rejectingUserId, _user.id, rejectionReason);
+      
+      setSuccess(`${rejectingUserName}'s application has been rejected. If they have an account, they can browse and apply for other properties.`);
       setApplications(applications.filter(u => u.id !== rejectingUserId));
+      setFilteredApplications(filteredApplications.filter(u => u.id !== rejectingUserId));
       setShowRejectModal(false);
     } catch (err) {
       setError(`Failed to reject ${rejectingUserName}: ${err instanceof Error ? err.message : 'Unknown error'}`);

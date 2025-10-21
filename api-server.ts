@@ -323,7 +323,9 @@ serve(async (req) => {
         });
       } else if (path[2] === 'register-pending' && req.method === 'POST') {
         const data = await req.json();
+        console.log('[API] register-pending data:', JSON.stringify(data, null, 2));
         const result = await registerPendingTenant(data);
+        console.log('[API] register-pending result:', result);
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: result.success ? 201 : 400
