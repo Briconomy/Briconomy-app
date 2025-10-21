@@ -4,11 +4,20 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
+import { LanguageSwitcher } from '../contexts/LanguageContext.tsx';
 
 function CaretakerProfilePage() {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    department: '',
+    employeeId: '',
+    skills: [],
+    emergencyContact: ''
+  });
   const [notificationSettings, setNotificationSettings] = useState({
     email: true,
     push: true,
@@ -39,14 +48,15 @@ function CaretakerProfilePage() {
 
   const loadUserData = () => {
     try {
-      const userRaw = localStorage.getItem('briconomy_user');
+      const userRaw = localStorage.getItem('briconomy_user') || sessionStorage.getItem('briconomy_user');
       const userData = userRaw ? JSON.parse(userRaw) : null;
+      console.log('CaretakerProfilePage - Loaded user data:', userData);
       setUser(userData);
       if (userData) {
         setFormData({
-          fullName: userData.fullName,
-          email: userData.email,
-          phone: userData.phone,
+          fullName: userData.fullName || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
           department: userData.profile?.department || '',
           employeeId: userData.profile?.employeeId || '',
           skills: userData.profile?.skills || [],
@@ -172,10 +182,33 @@ function CaretakerProfilePage() {
   };
 
   const handleSave = () => {
-    // In a real app, this would save to the backend
-    console.log('Saving profile data:', formData);
+    if (!user) return;
+
+    const updatedUser = {
+      ...user,
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      profile: {
+        ...user.profile,
+        department: formData.department,
+        employeeId: formData.employeeId,
+        skills: formData.skills,
+        emergencyContact: formData.emergencyContact
+      }
+    };
+
+    setUser(updatedUser);
+
+    if (localStorage.getItem('briconomy_user')) {
+      localStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+      console.log('Profile saved to localStorage:', updatedUser);
+    } else if (sessionStorage.getItem('briconomy_user')) {
+      sessionStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+      console.log('Profile saved to sessionStorage:', updatedUser);
+    }
+
     setIsEditing(false);
-    // Show success message
     alert('Profile updated successfully!');
   };
 
@@ -234,7 +267,7 @@ function CaretakerProfilePage() {
           <div className="page-title">My Profile</div>
           <div className="page-subtitle">Personal information and settings</div>
           <button type="button"
-            className={`btn ${isEditing ? 'btn-secondary' : 'btn-primary'} btn-sm`}
+            className={`btn ${isEditing ? 'btn-secondary' : 'btn-primary'} btn-sm caretaker-edit-btn`}
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           >
             {isEditing ? 'Save Changes' : 'Edit Profile'}
@@ -243,88 +276,88 @@ function CaretakerProfilePage() {
 
         {/* Profile Information */}
         <ChartCard title="Personal Information">
-          <div className="profile-info">
-            <div className="profile-field">
-              <label className="field-label">Full Name</label>
+          <div className="caretaker-profile-info">
+            <div className="caretaker-profile-field">
+              <label className="caretaker-field-label">Full Name</label>
               {isEditing ? (
                 <input
                   type="text"
-                  className="field-input"
+                  className="caretaker-field-input"
                   value={formData.fullName || ''}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                 />
               ) : (
-                <div className="field-value">{user?.fullName}</div>
+                <div className="caretaker-field-value">{user?.fullName || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="profile-field">
-              <label className="field-label">Email</label>
+            <div className="caretaker-profile-field">
+              <label className="caretaker-field-label">Email</label>
               {isEditing ? (
                 <input
                   type="email"
-                  className="field-input"
+                  className="caretaker-field-input"
                   value={formData.email || ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                 />
               ) : (
-                <div className="field-value">{user?.email}</div>
+                <div className="caretaker-field-value">{user?.email || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="profile-field">
-              <label className="field-label">Phone</label>
+            <div className="caretaker-profile-field">
+              <label className="caretaker-field-label">Phone</label>
               {isEditing ? (
                 <input
                   type="tel"
-                  className="field-input"
+                  className="caretaker-field-input"
                   value={formData.phone || ''}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="field-value">{user?.phone}</div>
+                <div className="caretaker-field-value">{user?.phone || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="profile-field">
-              <label className="field-label">Department</label>
+            <div className="caretaker-profile-field">
+              <label className="caretaker-field-label">Department</label>
               {isEditing ? (
                 <input
                   type="text"
-                  className="field-input"
+                  className="caretaker-field-input"
                   value={formData.department || ''}
                   onChange={(e) => handleInputChange('department', e.target.value)}
                 />
               ) : (
-                <div className="field-value">{user?.profile?.department}</div>
+                <div className="caretaker-field-value">{user?.profile?.department || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="profile-field">
-              <label className="field-label">Employee ID</label>
+            <div className="caretaker-profile-field">
+              <label className="caretaker-field-label">Employee ID</label>
               {isEditing ? (
                 <input
                   type="text"
-                  className="field-input"
+                  className="caretaker-field-input"
                   value={formData.employeeId || ''}
                   onChange={(e) => handleInputChange('employeeId', e.target.value)}
                 />
               ) : (
-                <div className="field-value">{user?.profile?.employeeId}</div>
+                <div className="caretaker-field-value">{user?.profile?.employeeId || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="profile-field">
-              <label className="field-label">Emergency Contact</label>
+            <div className="caretaker-profile-field">
+              <label className="caretaker-field-label">Emergency Contact</label>
               {isEditing ? (
                 <input
                   type="tel"
-                  className="field-input"
+                  className="caretaker-field-input"
                   value={formData.emergencyContact || ''}
                   onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
                 />
               ) : (
-                <div className="field-value">{user?.profile?.emergencyContact || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.profile?.emergencyContact || 'Not provided'}</div>
               )}
             </div>
           </div>
@@ -332,12 +365,12 @@ function CaretakerProfilePage() {
 
         {/* Skills Section */}
         <ChartCard title="Skills & Expertise">
-          <div className="skills-section">
-            <div className="skills-grid">
+          <div className="caretaker-skills-section">
+            <div className="caretaker-skills-grid">
               {availableSkills.map((skill) => (
                 <div
                   key={skill}
-                  className={`skill-tag ${formData.skills?.includes(skill) ? 'skill-active' : 'skill-inactive'}`}
+                  className={`caretaker-skill-tag ${formData.skills?.includes(skill) ? 'caretaker-skill-active' : 'caretaker-skill-inactive'}`}
                   onClick={() => isEditing && handleSkillToggle(skill)}
                 >
                   {skill.charAt(0).toUpperCase() + skill.slice(1)}
@@ -351,7 +384,7 @@ function CaretakerProfilePage() {
         </ChartCard>
 
         {/* Performance Statistics */}
-        <div className="dashboard-grid">
+        <div className="caretaker-stats-grid">
           <StatCard value={completedTasks} label="Tasks Done" />
           <StatCard value={`${efficiency}%`} label="Efficiency" />
           <StatCard value={formatCurrency(totalMaintenanceCost)} label="Cost Saved" />
@@ -360,56 +393,56 @@ function CaretakerProfilePage() {
 
         {/* Notification Settings */}
         <ChartCard title="Notification Settings">
-          <div className="notification-settings">
-            <div className="setting-item">
-              <div className="setting-info">
-                <div className="setting-title">Email Notifications</div>
-                <div className="setting-desc">Receive updates via email</div>
+          <div className="caretaker-notification-settings">
+            <div className="caretaker-setting-item">
+              <div className="caretaker-setting-info">
+                <div className="caretaker-setting-title">Email Notifications</div>
+                <div className="caretaker-setting-desc">Receive updates via email</div>
               </div>
-              <div 
-                className={`toggle-switch ${notificationSettings.email ? 'toggle-on' : 'toggle-off'}`}
+              <div
+                className={`caretaker-toggle-switch ${notificationSettings.email ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
                 onClick={() => handleNotificationChange('email')}
               >
-                <div className="toggle-slider"></div>
+                <div className="caretaker-toggle-slider"></div>
               </div>
             </div>
 
-            <div className="setting-item">
-              <div className="setting-info">
-                <div className="setting-title">Push Notifications</div>
-                <div className="setting-desc">Receive push notifications</div>
+            <div className="caretaker-setting-item">
+              <div className="caretaker-setting-info">
+                <div className="caretaker-setting-title">Push Notifications</div>
+                <div className="caretaker-setting-desc">Receive push notifications</div>
               </div>
-              <div 
-                className={`toggle-switch ${notificationSettings.push ? 'toggle-on' : 'toggle-off'}`}
+              <div
+                className={`caretaker-toggle-switch ${notificationSettings.push ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
                 onClick={() => handleNotificationChange('push')}
               >
-                <div className="toggle-slider"></div>
+                <div className="caretaker-toggle-slider"></div>
               </div>
             </div>
 
-            <div className="setting-item">
-              <div className="setting-info">
-                <div className="setting-title">Task Reminders</div>
-                <div className="setting-desc">Get reminded about upcoming tasks</div>
+            <div className="caretaker-setting-item">
+              <div className="caretaker-setting-info">
+                <div className="caretaker-setting-title">Task Reminders</div>
+                <div className="caretaker-setting-desc">Get reminded about upcoming tasks</div>
               </div>
-              <div 
-                className={`toggle-switch ${notificationSettings.taskReminders ? 'toggle-on' : 'toggle-off'}`}
+              <div
+                className={`caretaker-toggle-switch ${notificationSettings.taskReminders ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
                 onClick={() => handleNotificationChange('taskReminders')}
               >
-                <div className="toggle-slider"></div>
+                <div className="caretaker-toggle-slider"></div>
               </div>
             </div>
 
-            <div className="setting-item">
-              <div className="setting-info">
-                <div className="setting-title">Maintenance Updates</div>
-                <div className="setting-desc">Updates on maintenance requests</div>
+            <div className="caretaker-setting-item">
+              <div className="caretaker-setting-info">
+                <div className="caretaker-setting-title">Maintenance Updates</div>
+                <div className="caretaker-setting-desc">Updates on maintenance requests</div>
               </div>
-              <div 
-                className={`toggle-switch ${notificationSettings.maintenanceUpdates ? 'toggle-on' : 'toggle-off'}`}
+              <div
+                className={`caretaker-toggle-switch ${notificationSettings.maintenanceUpdates ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
                 onClick={() => handleNotificationChange('maintenanceUpdates')}
               >
-                <div className="toggle-slider"></div>
+                <div className="caretaker-toggle-slider"></div>
               </div>
             </div>
           </div>
@@ -418,12 +451,12 @@ function CaretakerProfilePage() {
         {/* Assigned Property */}
         {user?.profile?.assignedProperty && (
           <ChartCard title="Assigned Property">
-            <div className="property-info">
-              <div className="property-name">{user.profile.assignedProperty.name || 'Unknown Property'}</div>
-              <div className="property-address">{user.profile.assignedProperty.address || 'Address not available'}</div>
-              <div className="property-details">
-                <span className="property-type">{user.profile.assignedProperty.type || 'Property'}</span>
-                <span className="property-units">{user.profile.assignedProperty.totalUnits || 0} units</span>
+            <div className="caretaker-property-info">
+              <div className="caretaker-property-name">{user.profile.assignedProperty.name || 'Unknown Property'}</div>
+              <div className="caretaker-property-address">{user.profile.assignedProperty.address || 'Address not available'}</div>
+              <div className="caretaker-property-details">
+                <span className="caretaker-property-type">{user.profile.assignedProperty.type || 'Property'}</span>
+                <span className="caretaker-property-units">{user.profile.assignedProperty.totalUnits || 0} units</span>
               </div>
             </div>
           </ChartCard>
@@ -431,30 +464,56 @@ function CaretakerProfilePage() {
 
         {/* Recent Activity */}
         <ChartCard title="Recent Activity">
-          <div className="activity-list">
+          <div className="caretaker-activity-list">
             {tasksData
               .filter(task => task.status === 'completed')
               .slice(0, 3)
               .map((task) => (
-                <div key={task.id} className="activity-item">
-                  <div className="activity-icon">Done</div>
-                  <div className="activity-content">
-                    <div className="activity-title">Completed: {task.title}</div>
-                    <div className="activity-time">
+                <div key={task.id} className="caretaker-activity-item">
+                  <div className="caretaker-activity-icon">Done</div>
+                  <div className="caretaker-activity-content">
+                    <div className="caretaker-activity-title">Completed: {task.title}</div>
+                    <div className="caretaker-activity-time">
                       {task.completedDate ? formatDate(task.completedDate) : 'Recently'}
                     </div>
                   </div>
                 </div>
               ))}
             {tasksData.filter(task => task.status === 'completed').length === 0 && (
-              <div className="no-activity">
+              <div className="caretaker-no-activity">
                 <p>No recent activity</p>
               </div>
             )}
           </div>
         </ChartCard>
+
+        {/* Account Settings */}
+        <ChartCard title="Account Settings">
+          <div className="caretaker-settings-container">
+            <div className="caretaker-setting-row">
+              <div className="caretaker-setting-label">
+                <div className="caretaker-setting-name">Language Preference</div>
+                <div className="caretaker-setting-description">Choose your preferred language</div>
+              </div>
+              <LanguageSwitcher />
+            </div>
+
+            <div className="caretaker-setting-row">
+              <div className="caretaker-setting-label">
+                <div className="caretaker-setting-name">Two-Factor Authentication</div>
+                <div className="caretaker-setting-description">Add an extra layer of security</div>
+              </div>
+              <div
+                className="caretaker-toggle-switch caretaker-toggle-off"
+                onClick={() => alert('Two-factor authentication setup coming soon!')}
+              >
+                <div className="caretaker-toggle-slider"></div>
+              </div>
+            </div>
+          </div>
+        </ChartCard>
       </div>
-      
+
       <BottomNav items={navItems} responsive={false} />
     </div>
   );

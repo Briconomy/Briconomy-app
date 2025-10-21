@@ -32,8 +32,10 @@ button {
     padding: var(--space-sm) var(--space-md);
     font-size: var(--text-base);
     font-family: var(--font-family-primary);
-    width: 220px;
+    flex: 2;
+    min-width: 290px;
     height: var(--height-input);
+    box-sizing: border-box;
 }
 
 .search-filter select {
@@ -2474,4 +2476,308 @@ body {
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-bottom: 16px;
+}
+
+/* ===========================
+   Caretaker Profile Page Styles
+   =========================== */
+
+/* Profile Information Section */
+.caretaker-profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.caretaker-profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.caretaker-field-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
+}
+
+.caretaker-field-input {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-family: var(--font-family-primary);
+    transition: border-color var(--transition-base);
+}
+
+.caretaker-field-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.caretaker-field-value {
+    padding: var(--space-sm) 0;
+    font-size: var(--text-base);
+    color: var(--text-primary);
+}
+
+/* Skills Section */
+.caretaker-skills-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.caretaker-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-sm);
+}
+
+.caretaker-skill-tag {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    user-select: none;
+}
+
+.caretaker-skill-active {
+    background-color: var(--primary);
+    color: var(--surface);
+}
+
+.caretaker-skill-inactive {
+    background-color: var(--background);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.caretaker-skill-inactive:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Performance Statistics */
+.caretaker-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: var(--space-md);
+}
+
+.caretaker-stats-grid .stat-card {
+    padding: var(--space-sm) 6px;
+}
+
+@media (min-width: 768px) {
+    .caretaker-stats-grid {
+        grid-template-rows: auto;
+        gap: var(--space-md);
+    }
+
+    .caretaker-stats-grid .stat-card {
+        padding: var(--space-sm) var(--space-md);
+    }
+}
+
+/* Notification Settings */
+.caretaker-notification-settings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.caretaker-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.caretaker-setting-item:last-child {
+    border-bottom: none;
+}
+
+.caretaker-setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.caretaker-setting-title {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+}
+
+.caretaker-setting-desc {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+/* Toggle Switch */
+.caretaker-toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    background-color: var(--border);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background-color var(--transition-base);
+}
+
+.caretaker-toggle-on {
+    background-color: var(--primary);
+}
+
+.caretaker-toggle-off {
+    background-color: #ccc;
+}
+
+.caretaker-toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--surface);
+    border-radius: 50%;
+    transition: transform var(--transition-base);
+}
+
+.caretaker-toggle-on .caretaker-toggle-slider {
+    transform: translateX(24px);
+}
+
+/* Property Information */
+.caretaker-property-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.caretaker-property-name {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.caretaker-property-address {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+}
+
+.caretaker-property-details {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+}
+
+.caretaker-property-type,
+.caretaker-property-units {
+    padding: var(--space-xs) var(--space-sm);
+    background-color: var(--background);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+/* Activity Section */
+.caretaker-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.caretaker-activity-item {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--background);
+    border-radius: var(--radius-md);
+}
+
+.caretaker-activity-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary);
+    color: var(--surface);
+    border-radius: 50%;
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+}
+
+.caretaker-activity-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.caretaker-activity-title {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+}
+
+.caretaker-activity-time {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.caretaker-no-activity {
+    text-align: center;
+    padding: var(--space-lg);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+/* Caretaker Profile Section */
+.caretaker-settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.caretaker-setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.caretaker-setting-row:last-child {
+    border-bottom: none;
+}
+
+.caretaker-setting-label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.caretaker-setting-name {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+}
+
+.caretaker-setting-description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.caretaker-edit-btn {
+    margin-top: var(--space-sm);
 }
