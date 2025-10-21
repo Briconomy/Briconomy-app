@@ -29,24 +29,8 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const timeout = setTimeout(() => controller.abort(), 10000);
   (config as unknown as { signal?: AbortSignal }).signal = controller.signal;
 
-  // Debug DELETE requests
-  if (config.method === 'DELETE') {
-    console.log(`[apiRequest] DELETE ${url}`, { endpoint, config });
-  }
-
   try {
     const response = await fetch(url, config);
-    
-    if (endpoint.includes('security-settings')) {
-      const responseText = await response.clone().text();
-      console.log('=== SECURITY SETTINGS DEBUG ===');
-      console.log('Full URL called:', url);
-      console.log('Method:', config.method || 'GET');
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      console.log('Raw response text:', responseText);
-      console.log('================================');
-    }
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

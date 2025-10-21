@@ -223,6 +223,152 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
   }
 }
 
+export async function requestPasswordReset(email: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    const user = await users.findOne({ email: email });
+    if (!user) {
+      return { 
+        success: true, 
+        message: "If an account exists with this email, a reset link will be sent." 
+      };
+    }
+    
+    const resetToken = crypto.randomUUID();
+    const resetExpires = new Date(Date.now() + 3600000);
+    
+    await users.updateOne(
+      { _id: user._id },
+      { 
+        $set: { 
+          resetToken: resetToken,
+          resetExpires: resetExpires 
+        } 
+      }
+    );
+    
+    console.log(`Password reset token generated for user ${email}: ${resetToken}`);
+    
+    return {
+      success: true,
+      message: "If an account exists with this email, a reset link will be sent.",
+      resetToken: resetToken
+    };
+  } catch (error) {
+    console.error("Error requesting password reset:", error);
+    throw error;
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    
+    const user = await users.findOne({ 
+      resetToken: token,
+      resetExpires: { $gt: new Date() }
+    });
+    
+    if (!user) {
+      return { 
+        success: false, 
+        message: "Invalid or expired reset token." 
+      };
+    }
+    
+    const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(newPassword));
+    const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    await users.updateOne(
+      { _id: user._id },
+      { 
+        $set: { password: hashedPasswordHex },
+        $unset: { resetToken: "", resetExpires: "" }
+      }
+    );
+    
+    return {
+      success: true,
+      message: "Password has been reset successfully."
+    };
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    throw error;
+  }
+}
+
+export async function savePushSubscription(userId: string, subscription: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const pushSubscriptions = getCollection("push_subscriptions");
+    
+    await pushSubscriptions.updateOne(
+      { userId: userId },
+      { 
+        $set: { 
+          subscription: subscription,
+          updatedAt: new Date()
+        },
+        $setOnInsert: {
+          userId: userId,
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+    
+    console.log(`Push subscription saved for user ${userId}`);
+    
+    return {
+      success: true,
+      message: "Push subscription saved successfully."
+    };
+  } catch (error) {
+    console.error("Error saving push subscription:", error);
+    throw error;
+  }
+}
+
+export async function getPushSubscription(userId: string) {
+  try {
+    await connectToMongoDB();
+    const pushSubscriptions = getCollection("push_subscriptions");
+    
+    const result = await pushSubscriptions.findOne({ userId: userId });
+    
+    if (!result) {
+      return null;
+    }
+    
+    return result.subscription;
+  } catch (error) {
+    console.error("Error getting push subscription:", error);
+    throw error;
+  }
+}
+
+export async function deletePushSubscription(userId: string) {
+  try {
+    await connectToMongoDB();
+    const pushSubscriptions = getCollection("push_subscriptions");
+    
+    await pushSubscriptions.deleteOne({ userId: userId });
+    
+    return {
+      success: true,
+      message: "Push subscription deleted successfully."
+    };
+  } catch (error) {
+    console.error("Error deleting push subscription:", error);
+    throw error;
+  }
+}
+
 export async function getPendingUsers() {
   try {
     await connectToMongoDB();

@@ -210,11 +210,25 @@ function CaretakerHistoryPage() {
 
   const filteredData = getFilteredData();
 
-  // Calculate statistics
   const completedMaintenance = maintenanceData.filter(req => req.status === 'completed').length;
   const totalCompleted = completedMaintenance;
   
-  const avgCompletionTime = 0; // TODO: Calculate based on maintenance requests
+  const avgCompletionTime = (() => {
+    const completed = maintenanceData.filter(req => 
+      req.status === 'completed' && req.createdAt && req.completedDate
+    );
+    
+    if (completed.length === 0) return 0;
+    
+    const totalTime = completed.reduce((sum, req) => {
+      const created = new Date(req.createdAt).getTime();
+      const completedTime = new Date(req.completedDate).getTime();
+      const durationHours = (completedTime - created) / (1000 * 60 * 60);
+      return sum + durationHours;
+    }, 0);
+    
+    return Math.round(totalTime / completed.length);
+  })();
 
   const totalCost = maintenanceData
     .filter(req => req.status === 'completed' && req.actualCost)

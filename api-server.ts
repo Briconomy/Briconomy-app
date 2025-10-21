@@ -69,7 +69,12 @@ import {
   declinePendingUser,
   getPendingApplicationsForManager,
   approveApplicationByManager,
-  rejectApplicationByManager
+  rejectApplicationByManager,
+  requestPasswordReset,
+  resetPassword,
+  savePushSubscription,
+  getPushSubscription,
+  deletePushSubscription
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -322,6 +327,19 @@ serve(async (req) => {
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: result.success ? 201 : 400
+        });
+      } else if (path[2] === 'forgot-password' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await requestPasswordReset(data.email);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'reset-password' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await resetPassword(data.token, data.newPassword);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: result.success ? 200 : 400
         });
       }
     }
@@ -711,6 +729,27 @@ serve(async (req) => {
         const filters = Object.fromEntries(url.searchParams);
         const stats = await getDashboardStats(filters);
         return new Response(JSON.stringify(stats), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Push subscription endpoints
+    if (path[0] === 'api' && path[1] === 'push-subscribe') {
+      if (req.method === 'POST') {
+        const body = await req.json();
+        const result = await savePushSubscription(body.userId, body.subscription);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET' && path[2]) {
+        const subscription = await getPushSubscription(path[2]);
+        return new Response(JSON.stringify(subscription), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'DELETE' && path[2]) {
+        const result = await deletePushSubscription(path[2]);
+        return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
