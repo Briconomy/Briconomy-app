@@ -14,6 +14,7 @@ const iconMap: Record<string, string> = {
   'properties': '/src/Icons/Properties.svg',
   'lease': '/src/Icons/Lease.svg',
   'invoice': '/src/Icons/Invoice.svg',
+  'alert': '/src/Icons/Emergency.svg',
   'emergency': '/src/Icons/Emergency.svg',
   'announcements': '/src/Icons/Announcements.svg',
   'users': '/src/Icons/Users.svg',

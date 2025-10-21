@@ -49,6 +49,10 @@ import {
   getInvoiceById,
   updateInvoiceStatus,
   deleteInvoice,
+  generateMonthlyInvoices,
+  processOverdueInvoices,
+  getInvoiceMarkdown,
+  getInvoicePdf,
   saveChatMessage,
   getChatMessages,
   createChatEscalation,
@@ -483,7 +487,38 @@ serve(async (req) => {
 
     // Invoices endpoints
     if (path[0] === 'api' && path[1] === 'invoices') {
-      if (req.method === 'GET' && path[2]) {
+      if (req.method === 'GET' && path[2] && path[3] === 'pdf') {
+        const pdf = await getInvoicePdf(path[2]);
+        return new Response(pdf.bytes, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${pdf.filename}"`
+          }
+        });
+      } else if (req.method === 'GET' && path[2] && path[3] === 'markdown') {
+        const markdown = await getInvoiceMarkdown(path[2]);
+        return new Response(markdown.content, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/markdown; charset=utf-8',
+            'Content-Disposition': `attachment; filename="${markdown.filename}"`
+          }
+        });
+      } else if (req.method === 'POST' && path[2] === 'generate-monthly') {
+        const body = req.bodyUsed ? await req.json().catch(() => ({})) : {};
+        const invoicesGenerated = await generateMonthlyInvoices(body.managerId);
+        return new Response(JSON.stringify(invoicesGenerated), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
+        });
+      } else if (req.method === 'POST' && path[2] === 'process-overdue') {
+        const body = req.bodyUsed ? await req.json().catch(() => ({})) : {};
+        const processedInvoices = await processOverdueInvoices(body.managerId);
+        return new Response(JSON.stringify(processedInvoices), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET' && path[2]) {
         const invoice = await getInvoiceById(path[2]);
         return new Response(JSON.stringify(invoice), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
