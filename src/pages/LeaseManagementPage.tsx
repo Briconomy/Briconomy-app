@@ -36,8 +36,9 @@ function LeaseManagementPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(lease =>
-        (lease.propertyId?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.unitId?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lease.property?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lease.unit?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lease.tenant?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (lease.status?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
@@ -99,12 +100,17 @@ function LeaseManagementPage() {
 
   const leaseColumns = [
     { 
-      key: 'propertyId', 
+      key: 'tenant', 
+      label: t('lease.tenant'),
+      render: (value) => value?.fullName || 'N/A'
+    },
+    { 
+      key: 'property', 
       label: t('lease.property'),
       render: (value) => value?.name || 'N/A'
     },
     { 
-      key: 'unitId', 
+      key: 'unit', 
       label: t('lease.unit'),
       render: (value) => value?.unitNumber || 'N/A'
     },

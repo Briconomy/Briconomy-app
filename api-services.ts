@@ -389,6 +389,19 @@ function getDeletedCount(result: unknown): number {
   return typeof value === "number" ? value : 0;
 }
 
+// Users API
+export async function getUsers(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const rows = await users.find(normalizeFilters(filters) as Record<string, unknown>).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+}
+
 // Authentication API
 export async function loginUser(email: string, password: string, clientInfo?: Record<string, unknown>) {
   try {
@@ -1080,7 +1093,7 @@ export async function getUnits(propertyId?: string) {
   try {
     await connectToMongoDB();
     const units = getCollection("units");
-  const filter = propertyId ? { propertyId: new ObjectId(propertyId) } : {};
+  const filter = propertyId ? { propertyId: toId(propertyId) } : {};
   const rows = await units.find(filter).toArray();
   return mapDocs(rows);
   } catch (error) {
@@ -1106,27 +1119,81 @@ export async function getLeases(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-    const properties = getCollection("properties");
-    const units = getCollection("units");
 
-    type LeaseRow = { _id: ObjectId; propertyId?: ObjectId; unitId?: ObjectId } & Record<string, unknown>;
-  const rows = await leases.find(normalizeFilters(filters) as Record<string, unknown>).toArray() as Array<LeaseRow>;
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tenantId",
+          foreignField: "_id",
+          as: "tenantData"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "propertyData"
+        }
+      },
+      {
+        $lookup: {
+          from: "units",
+          localField: "unitId",
+          foreignField: "_id",
+          as: "unitData"
+        }
+      },
+      {
+        $addFields: {
+          tenant: {
+            $cond: {
+              if: { $gt: [{ $size: "$tenantData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$tenantData._id", 0] } },
+                fullName: { $arrayElemAt: ["$tenantData.fullName", 0] },
+                email: { $arrayElemAt: ["$tenantData.email", 0] },
+                phone: { $arrayElemAt: ["$tenantData.phone", 0] }
+              },
+              else: null
+            }
+          },
+          property: {
+            $cond: {
+              if: { $gt: [{ $size: "$propertyData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$propertyData._id", 0] } },
+                name: { $arrayElemAt: ["$propertyData.name", 0] },
+                address: { $arrayElemAt: ["$propertyData.address", 0] }
+              },
+              else: null
+            }
+          },
+          unit: {
+            $cond: {
+              if: { $gt: [{ $size: "$unitData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$unitData._id", 0] } },
+                unitNumber: { $arrayElemAt: ["$unitData.unitNumber", 0] }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          tenantData: 0,
+          propertyData: 0,
+          unitData: 0
+        }
+      }
+    ];
 
-    const mapped: Array<Record<string, unknown>> = [];
-    for (const row of rows) {
-      const base = mapDoc<LeaseRow>(row)!;
-      const leaseDoc: Record<string, unknown> = { ...base };
-      if (row.propertyId) {
-  const prop = await properties.findOne({ _id: row.propertyId as ObjectId });
-        if (prop) leaseDoc.propertyId = { id: prop._id.toString(), name: prop.name, address: prop.address };
-      }
-      if (row.unitId) {
-  const unit = await units.findOne({ _id: row.unitId as ObjectId });
-        if (unit) leaseDoc.unitId = { id: unit._id.toString(), unitNumber: unit.unitNumber };
-      }
-      mapped.push(leaseDoc);
-    }
-    return mapped;
+    const rows = await leases.aggregate(pipeline).toArray();
+    return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching leases:", error);
     throw error;
@@ -1137,7 +1204,20 @@ export async function createLease(leaseData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-  const result = await leases.insertOne({ ...(leaseData as Record<string, unknown>), createdAt: new Date() });
+    
+    const leaseDoc = { ...leaseData, createdAt: new Date() };
+    
+    if (leaseDoc.tenantId && typeof leaseDoc.tenantId === 'string') {
+      leaseDoc.tenantId = toId(leaseDoc.tenantId);
+    }
+    if (leaseDoc.propertyId && typeof leaseDoc.propertyId === 'string') {
+      leaseDoc.propertyId = toId(leaseDoc.propertyId);
+    }
+    if (leaseDoc.unitId && typeof leaseDoc.unitId === 'string') {
+      leaseDoc.unitId = toId(leaseDoc.unitId);
+    }
+    
+  const result = await leases.insertOne(leaseDoc);
     return result;
   } catch (error) {
     console.error("Error creating lease:", error);

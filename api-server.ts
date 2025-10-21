@@ -26,6 +26,7 @@ import {
   updateNotification,
   deleteNotification,
   getDashboardStats,
+  getUsers,
   loginUser,
   registerUser,
   getSystemStats,

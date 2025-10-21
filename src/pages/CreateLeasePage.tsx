@@ -28,14 +28,47 @@ function CreateLeasePage() {
   ];
 
   // Fetch real data from database
-  const { data: properties } = useApi(() => propertiesApi.getAll(), []);
-  const { data: tenants } = useApi(() => 
-    fetch('/api/users?userType=tenant').then(res => res.json()), []
+  const { data: properties, loading: loadingProperties, error: propertiesError } = useApi(() => propertiesApi.getAll(), []);
+  const { data: tenants, loading: loadingTenants, error: tenantsError } = useApi(() => 
+    fetch('http://localhost:8816/api/users?userType=tenant').then(res => {
+      if (!res.ok) throw new Error('Failed to fetch tenants');
+      return res.json();
+    }), []
   );
-  const { data: units } = useApi(() => 
+  const { data: units, loading: loadingUnits } = useApi(() => 
     formData.propertyId ? unitsApi.getAll(formData.propertyId) : Promise.resolve([]), 
     [formData.propertyId]
   );
+
+  // Show loading or error states
+  if (loadingProperties || loadingTenants) {
+    return (
+      <div className="app-container mobile-only">
+        <TopNav showLogout showBackButton />
+        <div className="main-content">
+          <div className="page-header">
+            <div className="page-title">Loading...</div>
+          </div>
+        </div>
+        <BottomNav items={navItems} responsive={false} />
+      </div>
+    );
+  }
+
+  if (propertiesError || tenantsError) {
+    return (
+      <div className="app-container mobile-only">
+        <TopNav showLogout showBackButton />
+        <div className="main-content">
+          <div className="page-header">
+            <div className="page-title">Error Loading Data</div>
+            <div className="page-subtitle">{propertiesError || tenantsError}</div>
+          </div>
+        </div>
+        <BottomNav items={navItems} responsive={false} />
+      </div>
+    );
+  }
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({

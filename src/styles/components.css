@@ -462,3 +462,80 @@
 .text-right {
   text-align: right;
 }
+
+.lease-form {
+  background: var(--surface);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.lease-form .form-group {
+  margin-bottom: var(--space-lg);
+}
+
+.lease-form label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.lease-form input,
+.lease-form select,
+.lease-form textarea {
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-family: var(--font-family-primary);
+  transition: border-color var(--transition-base);
+}
+
+.lease-form input:focus,
+.lease-form select:focus,
+.lease-form textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.lease-form input:disabled,
+.lease-form select:disabled,
+.lease-form textarea:disabled {
+  background: var(--background);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.lease-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-primary);
+}
+
+.form-actions .btn {
+  min-width: 120px;
+}
