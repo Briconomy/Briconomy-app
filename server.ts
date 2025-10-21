@@ -6,10 +6,58 @@ import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 
 const PORT = 5173;
 const __dirname = dirname(fromFileUrl(import.meta.url));
+const API_BASE_URL = Deno.env.get("BRICONOMY_API_URL") ?? "http://localhost:8816";
 
 async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const pathname = url.pathname;
+
+  if (pathname.startsWith("/api/")) {
+    const corsHeaders = new Headers({
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey, cache-control, pragma, expires, x-manager-id"
+    });
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    const outgoingHeaders = new Headers(request.headers);
+    outgoingHeaders.delete("host");
+    outgoingHeaders.delete("content-length");
+
+    let body: ArrayBuffer | undefined;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      const buffer = await request.arrayBuffer();
+      body = buffer.byteLength > 0 ? buffer : undefined;
+    }
+
+    const targetUrl = `${API_BASE_URL}${pathname}${url.search}`;
+    const upstream = await fetch(targetUrl, {
+      method: request.method,
+      headers: outgoingHeaders,
+      body: body ? body : undefined
+    }).catch((_error) => null);
+
+    if (!upstream) {
+      return new Response(JSON.stringify({ message: "API server unavailable" }), {
+        status: 503,
+        headers: corsHeaders
+      });
+    }
+
+    const responseHeaders = new Headers(upstream.headers);
+    corsHeaders.forEach((value, key) => {
+      responseHeaders.set(key, value);
+    });
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders
+    });
+  }
 
   // --- Logic for handling icons ---
   if (pathname.match(/^\/icon-\d+x\d+\.png$/)) {

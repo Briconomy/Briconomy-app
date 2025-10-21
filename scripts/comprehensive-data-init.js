@@ -13,10 +13,48 @@ db.notifications.drop();
 db.settings.drop();
 db.audit_logs.drop();
 
+const USER_IDS = {
+  admin: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
+  manager1: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+  manager2: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
+  caretaker1: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+  caretaker2: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
+  tenant1: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+  tenant2: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+  tenant3: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+  tenant4: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
+  tenant5: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa")
+};
+
+const PROPERTY_IDS = {
+  blueHills: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+  greenValley: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+  sunsetTowers: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3")
+};
+
+const UNIT_IDS = {
+  blueHills2A: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+  blueHills1B: ObjectId("67b2a1e0c9e4b8a3d4f5e6c2"),
+  blueHills3C: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+  blueHills4D: ObjectId("67b2a1e0c9e4b8a3d4f5e6c4"),
+  greenValleyA1: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
+  greenValleyB2: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+  sunsetTowersP1: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
+  sunsetTowers8A: ObjectId("67b2a1e0c9e4b8a3d4f5e6c8")
+};
+
+const LEASE_IDS = {
+  lease1: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
+  lease2: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
+  lease3: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
+  lease4: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
+  lease5: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5")
+};
+
 // Create users with proper ObjectIds
-const users = db.users.insertMany([
+db.users.insertMany([
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
+  _id: USER_IDS.admin,
     fullName: 'Sarah Johnson',
     email: 'admin@briconomy.com',
     phone: '+27821234567',
@@ -28,7 +66,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+  _id: USER_IDS.manager1,
     fullName: 'Michael Chen',
     email: 'manager1@briconomy.com',
     phone: '+27823456789',
@@ -40,7 +78,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
+  _id: USER_IDS.manager2,
     fullName: 'Patricia Williams',
     email: 'manager2@briconomy.com',
     phone: '+27825678901',
@@ -52,7 +90,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+  _id: USER_IDS.caretaker1,
     fullName: 'David Mokoena',
     email: 'caretaker1@briconomy.com',
     phone: '+27827890123',
@@ -64,7 +102,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
+  _id: USER_IDS.caretaker2,
     fullName: 'Thabo Ndlovu',
     email: 'caretaker2@briconomy.com',
     phone: '+27829012345',
@@ -76,7 +114,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+  _id: USER_IDS.tenant1,
     fullName: 'Emma Thompson',
     email: 'tenant1@briconomy.com',
     phone: '+27821234568',
@@ -88,7 +126,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+  _id: USER_IDS.tenant2,
     fullName: 'James Smith',
     email: 'tenant2@briconomy.com',
     phone: '+27823456790',
@@ -100,7 +138,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+  _id: USER_IDS.tenant3,
     fullName: 'Lisa Anderson',
     email: 'tenant3@briconomy.com',
     phone: '+27825678902',
@@ -112,7 +150,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
+  _id: USER_IDS.tenant4,
     fullName: 'Robert Brown',
     email: 'tenant4@briconomy.com',
     phone: '+27827890124',
@@ -124,7 +162,7 @@ const users = db.users.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
+  _id: USER_IDS.tenant5,
     fullName: 'Maria Garcia',
     email: 'tenant5@briconomy.com',
     phone: '+27829012346',
@@ -137,16 +175,31 @@ const users = db.users.insertMany([
   }
 ]);
 
+const users = {
+  insertedIds: {
+    "67b2a1e0c9e4b8a3d4f5e6a1": USER_IDS.admin,
+    "67b2a1e0c9e4b8a3d4f5e6a2": USER_IDS.manager1,
+    "67b2a1e0c9e4b8a3d4f5e6a3": USER_IDS.manager2,
+    "67b2a1e0c9e4b8a3d4f5e6a4": USER_IDS.caretaker1,
+    "67b2a1e0c9e4b8a3d4f5e6a5": USER_IDS.caretaker2,
+    "67b2a1e0c9e4b8a3d4f5e6a6": USER_IDS.tenant1,
+    "67b2a1e0c9e4b8a3d4f5e6a7": USER_IDS.tenant2,
+    "67b2a1e0c9e4b8a3d4f5e6a8": USER_IDS.tenant3,
+    "67b2a1e0c9e4b8a3d4f5e6a9": USER_IDS.tenant4,
+    "67b2a1e0c9e4b8a3d4f5e6aa": USER_IDS.tenant5
+  }
+};
+
 // Create properties with proper manager assignments
-const properties = db.properties.insertMany([
+db.properties.insertMany([
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+  _id: PROPERTY_IDS.blueHills,
     name: 'Blue Hills Apartments',
     address: '123 Main St, Cape Town, 8001',
     type: 'apartment',
     totalUnits: 24,
     occupiedUnits: 21,
-    managerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+  managerId: USER_IDS.manager1,
     amenities: ['pool', 'gym', 'parking', 'security', 'laundry', 'elevator'],
     description: 'Modern apartment complex in the heart of Cape Town with stunning city views',
     yearBuilt: 2018,
@@ -155,13 +208,13 @@ const properties = db.properties.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+  _id: PROPERTY_IDS.greenValley,
     name: 'Green Valley Complex',
     address: '456 Oak Ave, Durban, 4001',
     type: 'complex',
     totalUnits: 18,
     occupiedUnits: 16,
-    managerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a3"],
+  managerId: USER_IDS.manager2,
     amenities: ['parking', 'garden', 'playground', 'bbq_area', 'security'],
     description: 'Family-friendly complex with beautiful gardens and recreational facilities',
     yearBuilt: 2015,
@@ -170,13 +223,13 @@ const properties = db.properties.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
+  _id: PROPERTY_IDS.sunsetTowers,
     name: 'Sunset Towers',
     address: '789 Beach Rd, Port Elizabeth, 6001',
     type: 'apartment',
     totalUnits: 32,
     occupiedUnits: 28,
-    managerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+  managerId: USER_IDS.manager1,
     amenities: ['pool', 'gym', 'parking', 'ocean_view', 'concierge', 'spa'],
     description: 'Luxury beachfront apartments with panoramic ocean views',
     yearBuilt: 2020,
@@ -186,28 +239,36 @@ const properties = db.properties.insertMany([
   }
 ]);
 
+const properties = {
+  insertedIds: {
+    "67b2a1e0c9e4b8a3d4f5e6b1": PROPERTY_IDS.blueHills,
+    "67b2a1e0c9e4b8a3d4f5e6b2": PROPERTY_IDS.greenValley,
+    "67b2a1e0c9e4b8a3d4f5e6b3": PROPERTY_IDS.sunsetTowers
+  }
+};
+
 // Create units with proper property references
-const units = db.units.insertMany([
+db.units.insertMany([
   // Blue Hills Apartments units
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+  _id: UNIT_IDS.blueHills2A,
     unitNumber: '2A',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+  propertyId: PROPERTY_IDS.blueHills,
     rent: 12500,
     bedrooms: 2,
     bathrooms: 1,
     sqft: 850,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+  tenantId: USER_IDS.tenant1,
     features: ['balcony', 'built_in_cupboards', 'tiled_flooring'],
     floor: 2,
     createdAt: new Date(),
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c2"),
+  _id: UNIT_IDS.blueHills1B,
     unitNumber: '1B',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+  propertyId: PROPERTY_IDS.blueHills,
     rent: 10500,
     bedrooms: 1,
     bathrooms: 1,
@@ -220,24 +281,24 @@ const units = db.units.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+  _id: UNIT_IDS.blueHills3C,
     unitNumber: '3C',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+  propertyId: PROPERTY_IDS.blueHills,
     rent: 15000,
     bedrooms: 3,
     bathrooms: 2,
     sqft: 1200,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
+  tenantId: USER_IDS.tenant2,
     features: ['balcony', 'ocean_view', 'built_in_cupboards', 'air_conditioning'],
     floor: 3,
     createdAt: new Date(),
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c4"),
+  _id: UNIT_IDS.blueHills4D,
     unitNumber: '4D',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+  propertyId: PROPERTY_IDS.blueHills,
     rent: 8500,
     bedrooms: 1,
     bathrooms: 1,
@@ -252,30 +313,30 @@ const units = db.units.insertMany([
   },
   // Green Valley Complex units
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
+  _id: UNIT_IDS.greenValleyA1,
     unitNumber: 'A1',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+  propertyId: PROPERTY_IDS.greenValley,
     rent: 9500,
     bedrooms: 2,
     bathrooms: 1,
     sqft: 750,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
+  tenantId: USER_IDS.tenant3,
     features: ['garden_access', 'built_in_cupboards', 'parking'],
     floor: 1,
     createdAt: new Date(),
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+  _id: UNIT_IDS.greenValleyB2,
     unitNumber: 'B2',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+  propertyId: PROPERTY_IDS.greenValley,
     rent: 11500,
     bedrooms: 2,
     bathrooms: 2,
     sqft: 950,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
+  tenantId: USER_IDS.tenant4,
     features: ['balcony', 'built_in_cupboards', 'air_conditioning', 'parking'],
     floor: 2,
     createdAt: new Date(),
@@ -283,24 +344,24 @@ const units = db.units.insertMany([
   },
   // Sunset Towers units
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
+  _id: UNIT_IDS.sunsetTowersP1,
     unitNumber: 'P1',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+  propertyId: PROPERTY_IDS.sunsetTowers,
     rent: 18000,
     bedrooms: 2,
     bathrooms: 2,
     sqft: 1100,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
+  tenantId: USER_IDS.tenant5,
     features: ['penthouse', 'ocean_view', 'balcony', 'air_conditioning', 'concierge_service'],
     floor: 15,
     createdAt: new Date(),
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c8"),
+  _id: UNIT_IDS.sunsetTowers8A,
     unitNumber: '8A',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+  propertyId: PROPERTY_IDS.sunsetTowers,
     rent: 13500,
     bedrooms: 1,
     bathrooms: 1,
@@ -314,13 +375,26 @@ const units = db.units.insertMany([
   }
 ]);
 
+const units = {
+  insertedIds: {
+    "67b2a1e0c9e4b8a3d4f5e6c1": UNIT_IDS.blueHills2A,
+    "67b2a1e0c9e4b8a3d4f5e6c2": UNIT_IDS.blueHills1B,
+    "67b2a1e0c9e4b8a3d4f5e6c3": UNIT_IDS.blueHills3C,
+    "67b2a1e0c9e4b8a3d4f5e6c4": UNIT_IDS.blueHills4D,
+    "67b2a1e0c9e4b8a3d4f5e6c5": UNIT_IDS.greenValleyA1,
+    "67b2a1e0c9e4b8a3d4f5e6c6": UNIT_IDS.greenValleyB2,
+    "67b2a1e0c9e4b8a3d4f5e6c7": UNIT_IDS.sunsetTowersP1,
+    "67b2a1e0c9e4b8a3d4f5e6c8": UNIT_IDS.sunsetTowers8A
+  }
+};
+
 // Create leases with proper references
-const leases = db.leases.insertMany([
+db.leases.insertMany([
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+  _id: LEASE_IDS.lease1,
+  tenantId: USER_IDS.tenant1,
+  unitId: UNIT_IDS.blueHills2A,
+  propertyId: PROPERTY_IDS.blueHills,
     startDate: new Date('2024-01-01'),
     endDate: new Date('2024-12-31'),
     monthlyRent: 12500,
@@ -332,10 +406,10 @@ const leases = db.leases.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c3"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+  _id: LEASE_IDS.lease2,
+  tenantId: USER_IDS.tenant2,
+  unitId: UNIT_IDS.blueHills3C,
+  propertyId: PROPERTY_IDS.blueHills,
     startDate: new Date('2024-03-01'),
     endDate: new Date('2025-02-28'),
     monthlyRent: 15000,
@@ -347,10 +421,10 @@ const leases = db.leases.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c5"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+  _id: LEASE_IDS.lease3,
+  tenantId: USER_IDS.tenant3,
+  unitId: UNIT_IDS.greenValleyA1,
+  propertyId: PROPERTY_IDS.greenValley,
     startDate: new Date('2024-06-01'),
     endDate: new Date('2025-05-31'),
     monthlyRent: 9500,
@@ -362,10 +436,10 @@ const leases = db.leases.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c6"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+  _id: LEASE_IDS.lease4,
+  tenantId: USER_IDS.tenant4,
+  unitId: UNIT_IDS.greenValleyB2,
+  propertyId: PROPERTY_IDS.greenValley,
     startDate: new Date('2024-04-01'),
     endDate: new Date('2025-03-31'),
     monthlyRent: 11500,
@@ -377,10 +451,10 @@ const leases = db.leases.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c7"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+  _id: LEASE_IDS.lease5,
+  tenantId: USER_IDS.tenant5,
+  unitId: UNIT_IDS.sunsetTowersP1,
+  propertyId: PROPERTY_IDS.sunsetTowers,
     startDate: new Date('2024-07-01'),
     endDate: new Date('2025-06-30'),
     monthlyRent: 18000,
@@ -393,13 +467,23 @@ const leases = db.leases.insertMany([
   }
 ]);
 
+const leases = {
+  insertedIds: {
+    "67b2a1e0c9e4b8a3d4f5e6d1": LEASE_IDS.lease1,
+    "67b2a1e0c9e4b8a3d4f5e6d2": LEASE_IDS.lease2,
+    "67b2a1e0c9e4b8a3d4f5e6d3": LEASE_IDS.lease3,
+    "67b2a1e0c9e4b8a3d4f5e6d4": LEASE_IDS.lease4,
+    "67b2a1e0c9e4b8a3d4f5e6d5": LEASE_IDS.lease5
+  }
+};
+
 // Create payments with proper references
 const payments = db.payments.insertMany([
   // Emma Thompson payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e1"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    tenantId: USER_IDS.tenant1,
+    leaseId: LEASE_IDS.lease1,
     amount: 12500,
     paymentDate: new Date('2024-08-01'),
     dueDate: new Date('2024-08-01'),
@@ -412,8 +496,8 @@ const payments = db.payments.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e2"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    tenantId: USER_IDS.tenant1,
+    leaseId: LEASE_IDS.lease1,
     amount: 12500,
     paymentDate: null,
     dueDate: new Date('2024-09-01'),
@@ -427,8 +511,8 @@ const payments = db.payments.insertMany([
   // James Smith payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e3"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    tenantId: USER_IDS.tenant2,
+    leaseId: LEASE_IDS.lease2,
     amount: 15000,
     paymentDate: new Date('2024-08-15'),
     dueDate: new Date('2024-08-01'),
@@ -441,8 +525,8 @@ const payments = db.payments.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e4"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    tenantId: USER_IDS.tenant2,
+    leaseId: LEASE_IDS.lease2,
     amount: 15000,
     paymentDate: null,
     dueDate: new Date('2024-09-01'),
@@ -456,8 +540,8 @@ const payments = db.payments.insertMany([
   // Lisa Anderson payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e5"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
+    tenantId: USER_IDS.tenant3,
+    leaseId: LEASE_IDS.lease3,
     amount: 9500,
     paymentDate: new Date('2024-08-05'),
     dueDate: new Date('2024-08-01'),
@@ -471,8 +555,8 @@ const payments = db.payments.insertMany([
   // Robert Brown payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e6"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"],
+    tenantId: USER_IDS.tenant4,
+    leaseId: LEASE_IDS.lease4,
     amount: 11500,
     paymentDate: new Date('2024-08-10'),
     dueDate: new Date('2024-08-01'),
@@ -784,7 +868,7 @@ const reports = db.reports.insertMany([
 ]);
 
 // Create notifications with proper references
-const notifications = db.notifications.insertMany([
+const _notifications = db.notifications.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e721"),
     userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
@@ -866,7 +950,7 @@ const notifications = db.notifications.insertMany([
 ]);
 
 // Create settings with proper references
-const settings = db.settings.insertMany([
+const _settings = db.settings.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e731"),
     key: 'rent_due_day',
@@ -942,7 +1026,7 @@ const settings = db.settings.insertMany([
 ]);
 
 // Create audit logs with proper references
-const auditLogs = db.audit_logs.insertMany([
+const _auditLogs = db.audit_logs.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e741"),
     userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],

@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 import { serveDir } from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as esbuild from "https://deno.land/x/esbuild@v0.19.8/mod.js";
-import { registerUser, loginUser } from "./api.ts";
+const API_BASE_URL = Deno.env.get("BRICONOMY_API_URL") ?? "http://localhost:8816";
 
 const PORT = 5173;
 
@@ -36,52 +36,49 @@ async function handler(request: Request): Promise<Response> {
   console.log(`[${new Date().toISOString()}] [${method}] ${pathname}`);
   
   if (pathname.startsWith("/api/")) {
-    const headers = {
-      "Content-Type": "application/json",
+    const corsHeaders = new Headers({
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    };
-    
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey, cache-control, pragma, expires, x-manager-id"
+    });
+
     if (method === "OPTIONS") {
-      return new Response(null, { status: 200, headers });
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
-    
-    if (pathname === "/api/register" && method === "POST") {
-      try {
-        const body = await request.json();
-        const result = await registerUser(body);
-        return new Response(JSON.stringify(result), { 
-          status: result.success ? 200 : 400, 
-          headers 
-        });
-      } catch (_error) {
-        return new Response(JSON.stringify({ 
-          success: false, 
-          message: "Invalid request data" 
-        }), { status: 400, headers });
-      }
+
+    const incomingHeaders = new Headers(request.headers);
+    incomingHeaders.delete("host");
+    incomingHeaders.delete("content-length");
+
+    let body: ArrayBuffer | undefined;
+    if (method !== "GET" && method !== "HEAD") {
+      const buffer = await request.arrayBuffer();
+      body = buffer.byteLength > 0 ? buffer : undefined;
     }
-    
-    if (pathname === "/api/login" && method === "POST") {
-      try {
-        const body = await request.json();
-        const result = await loginUser(body.email, body.password);
-        return new Response(JSON.stringify(result), { 
-          status: result.success ? 200 : 401, 
-          headers 
-        });
-      } catch (_error) {
-        return new Response(JSON.stringify({ 
-          success: false, 
-          message: "Invalid request data" 
-        }), { status: 400, headers });
-      }
+
+    const targetUrl = `${API_BASE_URL}${pathname}${new URL(request.url).search}`;
+    const proxyResponse = await fetch(targetUrl, {
+      method,
+      headers: incomingHeaders,
+      body: body ? body : undefined
+    }).catch((_error) => null);
+
+    if (!proxyResponse) {
+      return new Response(JSON.stringify({ message: "API server unavailable" }), {
+        status: 503,
+        headers: corsHeaders
+      });
     }
-    
-    return new Response(JSON.stringify({ message: "API endpoint not found" }), { 
-      status: 404, 
-      headers 
+
+    const responseHeaders = new Headers(proxyResponse.headers);
+    corsHeaders.forEach((value, key) => {
+      responseHeaders.set(key, value);
+    });
+
+    return new Response(proxyResponse.body, {
+      status: proxyResponse.status,
+      statusText: proxyResponse.statusText,
+      headers: responseHeaders
     });
   }
   
