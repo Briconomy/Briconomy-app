@@ -121,17 +121,19 @@ if errorlevel 1 (
 
 if not exist "%INSTALL_DIR%\%BINARY_NAME%" (
     echo Searching for binary in extracted files...
+    set "BINARY_FOUND="
     for /r "%INSTALL_DIR%" %%F in (bricllm.exe) do (
         if exist "%%F" (
             echo Found binary at: %%F
             move /Y "%%F" "%INSTALL_DIR%\%BINARY_NAME%" >nul
-            goto :found
+            set "BINARY_FOUND=1"
         )
     )
-    echo Error: Binary not found in extracted files
-    rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
-    exit /b 1
-    :found
+    if not defined BINARY_FOUND (
+        echo Error: Binary not found in extracted files
+        rmdir /S /Q "%TEMP_DIR%" >nul 2>&1
+        exit /b 1
+    )
 )
 
 echo.
