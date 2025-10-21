@@ -237,7 +237,7 @@ export class OfflineStorageService {
   // Check if device is online and start sync
   startAutoSync(): void {
     // Sync when coming back online
-    window.addEventListener('online', () => {
+    globalThis.addEventListener('online', () => {
       console.log('Device came online, starting sync...');
       this.syncPendingData();
     });

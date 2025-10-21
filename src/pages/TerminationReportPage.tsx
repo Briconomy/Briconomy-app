@@ -282,7 +282,7 @@ const TerminationReportPage: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
             <div className="page-title">Termination Report</div>
@@ -298,7 +298,7 @@ const TerminationReportPage: React.FC = () => {
   if (!reportData) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
             <div className="page-title">Termination Report</div>
@@ -323,7 +323,7 @@ const TerminationReportPage: React.FC = () => {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">

@@ -742,7 +742,7 @@ function PropertyDetailsPage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -786,7 +786,7 @@ function PropertyDetailsPage() {
   if (!property) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         <div className="main-content">
           <div className="error-state">
             <p>Property not found</p>
@@ -814,7 +814,7 @@ function PropertyDetailsPage() {
 
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         
         <div className="main-content">
           {editing ? (
@@ -1040,7 +1040,7 @@ function PropertyDetailsPage() {
   if (isTenant) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         
         <div className="main-content">
           <div className="property-details-header">
@@ -1133,7 +1133,7 @@ function PropertyDetailsPage() {
   // Public View - Prospective Tenant Property Details
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} backLink="/properties" />
+      <TopNav showBackButton backLink="/properties" />
       
       <div className="main-content">
         <div className="property-details-header">

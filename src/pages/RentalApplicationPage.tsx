@@ -863,7 +863,7 @@ function RentalApplicationPage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -877,7 +877,7 @@ function RentalApplicationPage() {
   if (error) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         <div className="main-content">
           <div className="error-state">
             <p>Error: {error}</p>
@@ -891,7 +891,7 @@ function RentalApplicationPage() {
   if (submitted) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showBackButton={true} backLink="/properties" />
+        <TopNav showBackButton backLink="/properties" />
         <div className="main-content">
           <div className="success-state">
             <div className="success-icon">Success</div>
@@ -915,7 +915,7 @@ function RentalApplicationPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton={true} backLink={`/property/${propertyId}`} />
+      <TopNav showBackButton backLink={`/property/${propertyId}`} />
       
       <div className="main-content">
         {showAccountCreation ? (

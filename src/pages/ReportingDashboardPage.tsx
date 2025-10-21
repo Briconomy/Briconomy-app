@@ -127,7 +127,7 @@ function ReportingDashboardPage() {
 
 return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">

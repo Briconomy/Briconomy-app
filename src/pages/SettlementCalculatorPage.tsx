@@ -223,7 +223,7 @@ const SettlementCalculatorPage: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout={true} showBackButton={true} />
+<TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
             <div className="page-title">Settlement Calculator</div>
@@ -238,7 +238,7 @@ const SettlementCalculatorPage: React.FC = () => {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
