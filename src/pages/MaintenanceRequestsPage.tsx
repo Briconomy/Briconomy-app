@@ -2,13 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ActionCard from '../components/ActionCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import Icon from '../components/Icon.tsx';
 
 function MaintenanceRequestsPage() {
   const { t } = useLanguage();
@@ -26,107 +24,62 @@ function MaintenanceRequestsPage() {
   });
   const [uploadedPhotos, setUploadedPhotos] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState<'requests' | 'help'>('requests');
-  
-  // Help Support State
-  const [showContactForm, setShowContactForm] = useState(false);
   const [selectedFAQ, setSelectedFAQ] = useState<string | null>(null);
-  const [tickets, setTickets] = useState([]);
-  const [helpSubmitting, setHelpSubmitting] = useState(false);
-  const [helpFormData, setHelpFormData] = useState({
-    subject: '',
-    message: '',
-    priority: 'medium'
-  });
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
   const faqItems = [
     {
       id: '1',
       question: 'How do I pay my rent?',
-      answer: 'You can pay your rent through the Payments page. We accept bank transfers, EFT, and credit/debit cards. Simply select your preferred payment method and follow the instructions.',
-      category: 'Payments'
+      answer: 'Go to the Payments page and select your preferred payment method. We accept bank transfers, EFT, and credit/debit cards.',
+      icon: 'payment'
     },
     {
       id: '2',
       question: 'How do I report a maintenance issue?',
-      answer: 'Go to the Requests page and click "New Request". Fill in the details of the issue, select the priority level, and submit. Our maintenance team will be notified immediately.',
-      category: 'Maintenance'
+      answer: 'Click "Report Issue" on this page, fill in the details, and submit. Our maintenance team will be notified immediately.',
+      icon: 'issue'
     },
     {
       id: '3',
-      question: 'Can I view my lease agreement?',
-      answer: 'Yes, you can view your lease agreement in the Documents section of your Profile page. All your important documents are stored there for easy access.',
-      category: 'Documents'
+      question: 'How do I contact my property manager?',
+      answer: 'Use the Messages page to send a message or call directly using the Emergency Contact button above.',
+      icon: 'contact'
     },
     {
       id: '4',
-      question: 'How do I update my contact information?',
-      answer: 'You can update your contact information by going to your Profile page and clicking the "Edit" button. Make sure to keep your emergency contact information up to date.',
-      category: 'Profile'
+      question: 'What if I have an emergency?',
+      answer: 'Click the "Emergency Contact" button to call the property manager immediately, or view all emergency contacts in the Help & Support section.',
+      icon: 'emergency'
     },
     {
       id: '5',
-      question: 'What if I lose my keys?',
-      answer: 'In case of lost keys, please contact us immediately through the emergency contact or submit a high-priority maintenance request. There may be a replacement fee for new keys.',
-      category: 'Emergency'
+      question: 'Where can I view my lease?',
+      answer: 'Your lease agreement and all documents are available in the Documents section of your Profile page.',
+      icon: 'profile'
     },
     {
       id: '6',
-      question: 'How do I renew my lease?',
-      answer: 'Your lease renewal options will be available in your profile before your current lease expires. You can also contact your property manager to discuss renewal options.',
-      category: 'Lease'
+      question: 'How do I update my information?',
+      answer: 'Go to your Profile page and click the "Edit" button to update your contact and personal information.',
+      icon: 'profile'
     }
   ];
 
   const emergencyContacts = [
-    { name: 'Property Manager', phone: '+27 11 234 5678', type: 'Primary' },
-    { name: 'Emergency Maintenance', phone: '+27 11 234 5679', type: '24/7' },
-    { name: 'Security', phone: '+27 11 234 5680', type: '24/7' },
-    { name: 'Fire Department', phone: '10177', type: 'Emergency' },
-    { name: 'Police', phone: '10111', type: 'Emergency' },
-    { name: 'Ambulance', phone: '10177', type: 'Emergency' }
+    { name: 'Property Manager', phone: '+27 11 234 5678', description: 'Building emergencies & urgent issues' },
+    { name: 'Emergency Maintenance', phone: '+27 11 234 5679', description: 'After-hours maintenance emergencies' },
+    { name: 'Building Security', phone: '+27 11 234 5680', description: 'Security concerns & access issues' },
+    { name: 'Fire & Rescue', phone: '10177', description: 'Fire emergencies & medical assistance' },
+    { name: 'Police (SAPS)', phone: '10111', description: 'Crime, theft, & security emergencies' },
+    { name: 'Ambulance Service', phone: '10177', description: 'Medical emergencies' },
+    { name: 'Poison Information', phone: '0861 555 777', description: 'Poison & toxin emergencies' },
+    { name: 'Electricity (Eskom)', phone: '0860 037 566', description: 'Power outages & electrical faults' },
+    { name: 'Water & Sanitation', phone: '0860 562 874', description: 'Water leaks & sewage issues' }
   ];
-
-  const handleSubmitTicket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!helpFormData.subject || !helpFormData.message) return;
-
-    setHelpSubmitting(true);
-    
-    setTimeout(() => {
-      const newTicket = {
-        id: Date.now().toString(),
-        subject: helpFormData.subject,
-        message: helpFormData.message,
-        status: 'open',
-        createdAt: new Date().toISOString()
-      };
-
-      setTickets(prev => [newTicket, ...prev]);
-      setShowContactForm(false);
-      setHelpSubmitting(false);
-      setHelpFormData({
-        subject: '',
-        message: '',
-        priority: 'medium'
-      });
-    }, 1000);
-  };
 
   const toggleFAQ = (id: string) => {
     setSelectedFAQ(selectedFAQ === id ? null : id);
-  };
-
-  const getFAQByCategory = (category: string) => {
-    return faqItems.filter(item => item.category === category);
-  };
-
-  const getHelpStatusColor = (status: string) => {
-    switch (status) {
-      case 'open': return 'status-pending';
-      case 'in_progress': return 'status-progress';
-      case 'resolved': return 'status-paid';
-      default: return 'status-pending';
-    }
   };
 
   const navItems = [
@@ -265,10 +218,6 @@ function MaintenanceRequestsPage() {
     }
   };
 
-  const canSubmitRequest = () => {
-    return formData.title.trim() && formData.description.trim() && !submitting;
-  };
-
   if (requestsLoading || leasesLoading) {
 return (
        <div className="app-container mobile-only">
@@ -367,7 +316,7 @@ return (
                     className="btn btn-primary"
                     onClick={() => setShowRequestForm(true)}
                   >
-                    {t('requests.createFirstRequest')}
+                    Maintenance Request
                   </button>
                 </div>
               ) : (
@@ -447,32 +396,7 @@ return (
               )}
             </div>
 
-            <div className="quick-actions">
-              <ActionCard
-                onClick={() => setShowRequestForm(true)}
-                icon={<Icon name="issue" alt="Report Issue" />}
-                title={t('requests.reportIssue')}
-                description={t('requests.createNewRequest')}
-              />
-              <ActionCard
-                to="/tenant/messages"
-                icon={<Icon name="contact" alt="Contact Caretaker" />}
-                title={t('requests.contactCaretaker')}
-                description={t('requests.directCommunication')}
-              />
-              <ActionCard
-                onClick={() => setActiveTab('help')}
-                icon={<Icon name="emergency" alt="Emergency Info" />}
-                title={t('requests.emergencyInfo')}
-                description={t('requests.emergencyContacts')}
-              />
-              <ActionCard
-                onClick={() => setActiveTab('help')}
-                icon={<Icon name="help" alt="Help & Support" />}
-                title="Help & Support"
-                description="FAQs and contact support"
-              />
-            </div>
+
 
             <ChartCard title={t('requests.statusOverview')}>
               <div className="request-stats">
@@ -494,258 +418,117 @@ return (
         )}
 
         {activeTab === 'help' && (
-          <div className="help-support-content">
-            <div className="tab-navigation">
-              <button
-                type="button"
-                className={`tab-btn ${selectedFAQ === null || selectedFAQ.startsWith('1') || selectedFAQ.startsWith('2') || selectedFAQ.startsWith('3') || selectedFAQ.startsWith('4') ? 'active' : ''}`}
-                onClick={() => setSelectedFAQ(null)}
-              >
-                FAQ
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${selectedFAQ === 'contact' ? 'active' : ''}`}
-                onClick={() => setSelectedFAQ('contact')}
-              >
-                Contact Us
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${selectedFAQ === 'emergency' ? 'active' : ''}`}
-                onClick={() => setSelectedFAQ('emergency')}
-              >
-                Emergency
-              </button>
-            </div>
+          <div className="help-support-section">
+            <button 
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveTab('requests')}
+              style={{ marginBottom: '12px' }}
+            >
+              ← Back
+            </button>
 
-            <div className="tab-content">
-              {(selectedFAQ === null || selectedFAQ.startsWith('1') || selectedFAQ.startsWith('2') || selectedFAQ.startsWith('3') || selectedFAQ.startsWith('4')) && (
-                <div className="faq-section">
-                  <h3>Frequently Asked Questions</h3>
-                  
-                  <div className="faq-categories">
-                    <div className="faq-category">
-                      <h4>Payments</h4>
-                      {getFAQByCategory('Payments').map(item => (
-                        <div key={item.id} className="faq-item">
-                          <button
-                            type="button"
-                            className="faq-question"
-                            onClick={() => toggleFAQ(item.id)}
-                          >
-                            {item.question}
-                            <span className="faq-icon">{selectedFAQ === item.id ? '−' : '+'}</span>
-                          </button>
-                          {selectedFAQ === item.id && (
-                            <div className="faq-answer">{item.answer}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="faq-category">
-                      <h4>Maintenance</h4>
-                      {getFAQByCategory('Maintenance').map(item => (
-                        <div key={item.id} className="faq-item">
-                          <button
-                            type="button"
-                            className="faq-question"
-                            onClick={() => toggleFAQ(item.id)}
-                          >
-                            {item.question}
-                            <span className="faq-icon">{selectedFAQ === item.id ? '−' : '+'}</span>
-                          </button>
-                          {selectedFAQ === item.id && (
-                            <div className="faq-answer">{item.answer}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="faq-category">
-                      <h4>Documents & Profile</h4>
-                      {getFAQByCategory('Documents').concat(getFAQByCategory('Profile')).map(item => (
-                        <div key={item.id} className="faq-item">
-                          <button
-                            type="button"
-                            className="faq-question"
-                            onClick={() => toggleFAQ(item.id)}
-                          >
-                            {item.question}
-                            <span className="faq-icon">{selectedFAQ === item.id ? '−' : '+'}</span>
-                          </button>
-                          {selectedFAQ === item.id && (
-                            <div className="faq-answer">{item.answer}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="faq-category">
-                      <h4>Lease & Emergency</h4>
-                      {getFAQByCategory('Lease').concat(getFAQByCategory('Emergency')).map(item => (
-                        <div key={item.id} className="faq-item">
-                          <button
-                            type="button"
-                            className="faq-question"
-                            onClick={() => toggleFAQ(item.id)}
-                          >
-                            {item.question}
-                            <span className="faq-icon">{selectedFAQ === item.id ? '−' : '+'}</span>
-                          </button>
-                          {selectedFAQ === item.id && (
-                            <div className="faq-answer">{item.answer}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedFAQ === 'contact' && (
-                <div className="contact-section">
-                  <h3>Contact Support</h3>
-                  
-                  <div className="contact-info">
-                    <div className="contact-card">
-                      <h4>Phone Support</h4>
-                      <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
-                      <p>Saturday: 9:00 AM - 2:00 PM</p>
-                      <p>Sunday: Closed</p>
-                      <p><strong>Primary:</strong> +27 11 234 5678</p>
-                    </div>
-
-                    <div className="contact-card">
-                      <h4>Email Support</h4>
-                      <p>For general inquiries:</p>
-                      <p><strong>support@briconomy.com</strong></p>
-                      <p>For urgent matters:</p>
-                      <p><strong>urgent@briconomy.com</strong></p>
-                    </div>
-
-                    <div className="contact-card">
-                      <h4>Office Location</h4>
-                      <p>123 Main Street</p>
-                      <p>Blue Hills, Johannesburg</p>
-                      <p>South Africa, 2090</p>
-                      <p>Office Hours: 8:00 AM - 5:00 PM</p>
-                    </div>
-                  </div>
-
-                  <div className="support-tickets">
-                    <div className="section-header">
-                      <h4>Your Support Tickets</h4>
-                      <button 
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => setShowContactForm(true)}
-                      >
-                        New Ticket
-                      </button>
-                    </div>
-
-                    {tickets.length === 0 ? (
-                      <div className="empty-state">
-                        <p>No support tickets yet</p>
-                        <button 
-                          type="button"
-                          className="btn btn-primary"
-                          onClick={() => setShowContactForm(true)}
-                        >
-                          Create Your First Ticket
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="tickets-list">
-                        {tickets.map(ticket => (
-                          <div key={ticket.id} className="ticket-item">
-                            <div className="ticket-info">
-                              <h4>{ticket.subject}</h4>
-                              <p className="ticket-message">{ticket.message}</p>
-                              <p className="ticket-meta">
-                                {new Date(ticket.createdAt).toLocaleDateString()} • 
-                                <span className={`status-badge ${getHelpStatusColor(ticket.status)}`}>
-                                  {ticket.status.replace('_', ' ').toUpperCase()}
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+            {/* FAQ Section */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>FAQs</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {faqItems.map(item => (
+                  <div key={item.id} style={{ borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => toggleFAQ(item.id)}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: 'none',
+                        border: 'none',
+                        padding: '8px 0',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        textAlign: 'left',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <span>{item.question}</span>
+                      <span style={{ fontSize: '18px', color: '#666' }}>
+                        {selectedFAQ === item.id ? '−' : '+'}
+                      </span>
+                    </button>
+                    {selectedFAQ === item.id && (
+                      <p style={{ 
+                        margin: '8px 0 0 0', 
+                        fontSize: '13px', 
+                        color: '#666',
+                        lineHeight: '1.5'
+                      }}>
+                        {item.answer}
+                      </p>
                     )}
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Emergency & Contact */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>Emergency & Contact</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setShowEmergencyModal(true)}
+                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                >
+                  🚨 Emergency Contacts
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const confirmCall = globalThis.confirm('Call property manager?\n\n+27 11 234 5678');
+                    if (confirmCall) {
+                      globalThis.location.href = 'tel:+27112345678';
+                    }
+                  }}
+                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                >
+                  📞 Call Property Manager
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => globalThis.location.href = '/tenant/messages'}
+                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                >
+                  ✉️ Send Message
+                </button>
+              </div>
+            </div>
+
+            {/* Office Hours */}
+            <div className="card">
+              <h3 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>Office Hours</h3>
+              <div style={{ fontSize: '13px', color: '#666' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>Mon - Fri</span>
+                  <strong>8:00 AM - 6:00 PM</strong>
                 </div>
-              )}
-
-              {selectedFAQ === 'emergency' && (
-                <div className="emergency-section">
-                  <h3>Emergency Contacts</h3>
-                  <div className="emergency-warning">
-                    <strong>WARNING: For life-threatening emergencies, call 10177 (Ambulance/Fire) or 10111 (Police) immediately</strong>
-                  </div>
-
-                  <div className="emergency-contacts-grid">
-                    {emergencyContacts.map(contact => (
-                      <div key={contact.name} className="emergency-contact-card">
-                        <div className="contact-type">{contact.type}</div>
-                        <h4>{contact.name}</h4>
-                        <p className="contact-phone">
-                          <a href={`tel:${contact.phone.replace(/\s/g, '')}`}>
-                            {contact.phone}
-                          </a>
-                        </p>
-                        <button 
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          onClick={() => globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`}
-                        >
-                          Call Now
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="emergency-procedures">
-                    <h4>Emergency Procedures</h4>
-                    <div className="procedure-list">
-                      <div className="procedure-item">
-                        <h5>Fire Emergency</h5>
-                        <ol>
-                          <li>Evacuate immediately using nearest exit</li>
-                          <li>Call Fire Department: 10177</li>
-                          <li>Notify building management</li>
-                          <li>Do not use elevators</li>
-                          <li>Meet at designated assembly point</li>
-                        </ol>
-                      </div>
-
-                      <div className="procedure-item">
-                        <h5>Medical Emergency</h5>
-                        <ol>
-                          <li>Call Ambulance: 10177</li>
-                          <li>Provide first aid if trained</li>
-                          <li>Notify emergency contacts</li>
-                          <li>Inform property management</li>
-                          <li>Stay with the person until help arrives</li>
-                        </ol>
-                      </div>
-
-                      <div className="procedure-item">
-                        <h5>Security Emergency</h5>
-                        <ol>
-                          <li>Call Police: 10111</li>
-                          <li>Lock yourself in a safe room</li>
-                          <li>Notify building security</li>
-                          <li>Do not confront intruders</li>
-                          <li>Wait for authorities to arrive</li>
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>Saturday</span>
+                  <strong>9:00 AM - 2:00 PM</strong>
                 </div>
-              )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span>Sunday</span>
+                  <strong>Closed</strong>
+                </div>
+                <div style={{ borderTop: '1px solid #eee', paddingTop: '12px' }}>
+                  <p style={{ fontSize: '12px', margin: '0 0 4px 0' }}><strong>Office Location</strong></p>
+                  <p style={{ margin: '0', fontSize: '12px' }}>123 Main Street, Blue Hills</p>
+                  <p style={{ margin: '0', fontSize: '12px' }}>Johannesburg, SA 2090</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -896,74 +679,76 @@ return (
         </div>
       )}
 
-      {showContactForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+      {showEmergencyModal && (
+        <div className="modal-overlay" onClick={() => setShowEmergencyModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <h3>Create Support Ticket</h3>
-              <button 
-                type="button"
-                className="close-btn"
-                onClick={() => setShowContactForm(false)}
-              >
-                ×
-              </button>
+              <h3>🚨 Emergency Contacts</h3>
+              <button type="button" className="close-btn" onClick={() => setShowEmergencyModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <form onSubmit={handleSubmitTicket}>
-                <div className="form-group">
-                  <label>Subject</label>
-                  <input
-                    type="text"
-                    value={helpFormData.subject}
-                    onChange={(e) => setHelpFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Brief description of your issue"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Priority</label>
-                  <select
-                    value={helpFormData.priority}
-                    onChange={(e) => setHelpFormData(prev => ({ ...prev, priority: e.target.value }))}
+              <div style={{ 
+                background: '#fff3cd', 
+                border: '1px solid #ffc107', 
+                borderRadius: '8px', 
+                padding: '12px', 
+                marginBottom: '16px',
+                fontSize: '13px'
+              }}>
+                <strong>⚠️ Life-threatening emergencies:</strong><br />
+                Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {emergencyContacts.map((contact, index) => (
+                  <div 
+                    key={index}
+                    style={{
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      background: '#f9f9f9'
+                    }}
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Message</label>
-                  <textarea
-                    value={helpFormData.message}
-                    onChange={(e) => setHelpFormData(prev => ({ ...prev, message: e.target.value }))}
-                    rows={6}
-                    placeholder="Please provide detailed information about your issue..."
-                    required
-                  />
-                </div>
-
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowContactForm(false)}
-                    disabled={helpSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={!helpFormData.subject || !helpFormData.message || helpSubmitting}
-                  >
-                    {helpSubmitting ? 'Submitting...' : 'Submit Ticket'}
-                  </button>
-                </div>
-              </form>
+                    <div style={{ marginBottom: '8px' }}>
+                      <h4 style={{ fontSize: '14px', margin: '0 0 4px 0', fontWeight: '600' }}>
+                        {contact.name}
+                      </h4>
+                      <p style={{ fontSize: '12px', margin: '0', color: '#666' }}>
+                        {contact.description}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        const confirmCall = globalThis.confirm(`Call ${contact.name}?\n\n${contact.phone}`);
+                        if (confirmCall) {
+                          globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
+                          setShowEmergencyModal(false);
+                        }
+                      }}
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      📞 {contact.phone}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowEmergencyModal(false)}
+                style={{ width: '100%', marginTop: '16px' }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

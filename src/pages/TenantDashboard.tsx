@@ -215,8 +215,8 @@ return (
           <ActionCard
             onClick={() => navigate('/tenant/messages')}
             icon={<Icon name="contact" alt="Contact" />}
-            title={t('dashboard.contact')}
-            description={t('dashboard.message_management')}
+            title="Contact Information"
+            description="Emergency contacts & general help"
           />
           <ActionCard
             onClick={() => navigate('/tenant/profile')}
