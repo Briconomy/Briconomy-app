@@ -19,12 +19,30 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
+type TenantPayment = {
+  id?: string;
+  _id?: string;
+  status?: string;
+  amount?: number;
+  dueDate?: string;
+  type?: string;
+  paymentDate?: string;
+  [key: string]: unknown;
+};
+
+type LeaseRecord = {
+  monthlyRent?: number;
+  unitId?: { unitNumber?: string | number };
+  propertyId?: { name?: string };
+  [key: string]: unknown;
+};
+
 function TenantPaymentsPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [selectedPayment, setSelectedPayment] = useState<TenantPayment | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [processing, setProcessing] = useState(false);
   const [chartError, setChartError] = useState(false);
@@ -37,12 +55,12 @@ function TenantPaymentsPage() {
     { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
-  const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi(
+  const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi<TenantPayment[]>(
     () => paymentsApi.getAll({ tenantId: user?.id || '507f1f77bcf86cd799439012' }),
     [user?.id]
   );
 
-  const { data: leases, loading: leasesLoading } = useApi(
+  const { data: leases, loading: leasesLoading } = useApi<LeaseRecord[]>(
     () => leasesApi.getAll({ tenantId: user?.id || '507f1f77bcf86cd799439012' }),
     [user?.id]
   );
@@ -72,13 +90,13 @@ function TenantPaymentsPage() {
     loadSavedPaymentMethods();
   }, []);
 
-  const totalDue = payments
-    ?.filter((p: any) => p.status === 'pending')
-    .reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
-
-  const nextPayment = payments
-    ?.filter((p: any) => p.status === 'pending')
-    .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+  const paymentList: TenantPayment[] = Array.isArray(payments) ? payments : [];
+  const pendingPayments = paymentList.filter((payment) => payment.status === 'pending');
+  const totalDue = pendingPayments.reduce((sum, payment) => sum + (typeof payment.amount === 'number' ? payment.amount : 0), 0);
+  const pendingWithDueDate = pendingPayments.filter((payment): payment is TenantPayment & { dueDate: string } => typeof payment.dueDate === 'string');
+  const nextPayment = pendingWithDueDate.length > 0
+    ? [...pendingWithDueDate].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0]
+    : null;
 
   const getDaysUntilDue = (dueDate: string | Date) => {
     const today = new Date();
@@ -88,16 +106,14 @@ function TenantPaymentsPage() {
     return diffDays;
   };
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return 'status-paid';
-      case 'pending': return 'status-pending';
-      case 'overdue': return 'status-overdue';
-      default: return 'status-pending';
-    }
+  const getPaymentId = (payment: TenantPayment | null) => {
+    if (!payment) return null;
+    if (typeof payment.id === 'string') return payment.id;
+    if (typeof payment._id === 'string') return payment._id;
+    return null;
   };
 
-  const handleMakePayment = (payment: any) => {
+  const handleMakePayment = (payment: TenantPayment) => {
     setSelectedPayment(payment);
     setShowPaymentForm(true);
   };
@@ -105,9 +121,15 @@ function TenantPaymentsPage() {
   const handlePaymentSubmit = async () => {
     if (!selectedPayment) return;
 
+    const paymentId = getPaymentId(selectedPayment);
+    if (!paymentId) {
+      alert('Payment information is incomplete. Please try again later.');
+      return;
+    }
+
     setProcessing(true);
     try {
-      await paymentsApi.updateStatus(selectedPayment.id, 'paid');
+      await paymentsApi.updateStatus(paymentId, 'paid');
       await refetchPayments();
       setShowPaymentForm(false);
       setSelectedPayment(null);
@@ -121,9 +143,11 @@ function TenantPaymentsPage() {
   };
 
   const _handleDownloadStatement = () => {
+    const paidPayments = paymentList.filter((payment) => payment.status === 'paid');
+    const totalPaid = paidPayments.reduce((sum, payment) => sum + (typeof payment.amount === 'number' ? payment.amount : 0), 0);
     const statementData = {
-      payments: payments?.filter((p: any) => p.status === 'paid') || [],
-      totalPaid: payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + p.amount, 0) || 0,
+      payments: paidPayments,
+      totalPaid,
       generatedDate: new Date().toISOString(),
       tenant: user
     };
@@ -154,10 +178,26 @@ function TenantPaymentsPage() {
     );
   }
 
-  const currentLease = leases?.[0];
+  const currentLease = Array.isArray(leases) ? leases[0] : undefined;
 
   const renderPaymentChart = () => {
-    if (!payments || payments.length === 0) {
+    if (chartError) {
+      return (
+        <div className="chart-empty">
+          {t('payments.chartUnavailable')}
+        </div>
+      );
+    }
+
+    const chartPayments = paymentList
+      .filter((payment): payment is TenantPayment & { status: string; amount: number } => typeof payment.status === 'string' && typeof payment.amount === 'number')
+      .map((payment) => ({
+        status: payment.status,
+        amount: payment.amount,
+        paymentDate: typeof payment.paymentDate === 'string' ? payment.paymentDate : undefined,
+      }));
+
+    if (chartPayments.length === 0) {
       return (
         <div className="chart-empty">
           <p>{t('payments.noPaymentHistory')}</p>
@@ -168,7 +208,7 @@ function TenantPaymentsPage() {
     return (
       <ChartCard title={t('payments.paymentHistoryChart')}>
         <ErrorBoundary onError={() => setChartError(true)}>
-          <PaymentChart payments={payments} />
+          <PaymentChart payments={chartPayments} />
         </ErrorBoundary>
       </ChartCard>
     );
@@ -207,7 +247,7 @@ function TenantPaymentsPage() {
           <StatCard value={formatCurrency(totalDue)} label={t('payments.totalDue')} />
           <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label={t('payments.nextPayment')} />
           <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label={t('payments.daysUntilDue')} />
-          <StatCard value={payments?.filter((p: any) => p.status === 'paid').length || 0} label={t('payments.paymentsMade')} />
+          <StatCard value={paymentList.filter((payment) => payment.status === 'paid').length} label={t('payments.paymentsMade')} />
         </div>
 
         {nextPayment && (
@@ -275,9 +315,9 @@ function TenantPaymentsPage() {
               </div>
               <div className="modal-body">
                 <div className="payment-details">
-                  <p><strong>Amount:</strong> {selectedPayment ? formatCurrency(selectedPayment.amount) : 'R0'}</p>
+                  <p><strong>Amount:</strong> {selectedPayment && typeof selectedPayment.amount === 'number' ? formatCurrency(selectedPayment.amount) : 'R0'}</p>
                   <p><strong>Type:</strong> {selectedPayment?.type || 'Rent'}</p>
-                  <p><strong>Due Date:</strong> {selectedPayment ? formatDate(selectedPayment.dueDate) : 'N/A'}</p>
+                  <p><strong>Due Date:</strong> {selectedPayment && typeof selectedPayment.dueDate === 'string' ? formatDate(selectedPayment.dueDate) : 'N/A'}</p>
                 </div>
                 <div className="payment-methods">
                   <h4>Select Payment Method</h4>
@@ -292,7 +332,7 @@ function TenantPaymentsPage() {
                               name="savedPaymentMethod"
                               value={method.id}
                               checked={paymentMethod === `saved_${method.id}`}
-                              onChange={(e) => setPaymentMethod(`saved_${method.id}`)}
+                              onChange={() => setPaymentMethod(`saved_${method.id}`)}
                             />
                             <div className="saved-method-info">
                               <div className="method-header">
@@ -391,7 +431,7 @@ class ErrorBoundary extends React.Component<
     return { hasError: true };
   }
 
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
     this.props.onError?.();
   }
 

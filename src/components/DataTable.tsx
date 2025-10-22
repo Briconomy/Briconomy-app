@@ -1,6 +1,19 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-function DataTable({ title, data, columns, actions, onRowClick }) {
+interface DataTableColumn<T> {
+  key: keyof T & string;
+  render?: (value: T[keyof T], row: T) => ReactNode;
+}
+
+interface DataTableProps<T> {
+  title: string;
+  data: T[];
+  columns: Array<DataTableColumn<T>>;
+  actions?: ReactNode;
+  onRowClick?: (row: T) => void;
+}
+
+function DataTable<T>({ title, data, columns, actions, onRowClick }: DataTableProps<T>) {
   return (
     <div className="data-table">
       <div className="table-header">
@@ -18,19 +31,28 @@ function DataTable({ title, data, columns, actions, onRowClick }) {
             <p>No data available</p>
           </div>
         ) : (
-          data.map((row, index) => (
-            <div 
-              key={row.id || index} 
-              className="table-row"
-              onClick={() => onRowClick && onRowClick(row)}
-            >
-              {columns.map((column) => (
-                <div key={column.key} className="table-cell">
-                  {column.render ? column.render(row[column.key], row) : row[column.key]}
-                </div>
-              ))}
-            </div>
-          ))
+          data.map((row, index) => {
+            const handleRowClick = () => {
+              if (onRowClick) onRowClick(row);
+            };
+
+            return (
+              <div
+                key={String(index)}
+                className="table-row"
+                onClick={handleRowClick}
+              >
+                {columns.map((column) => {
+                  const cellValue = row[column.key];
+                  return (
+                    <div key={column.key} className="table-cell">
+                      {column.render ? column.render(cellValue, row) : cellValue as ReactNode}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })
         )}
       </div>
     </div>

@@ -58,9 +58,11 @@ import ProspectiveTenantRegisterPage from './pages/ProspectiveTenantRegisterPage
 import PendingApprovalPage from './pages/PendingApprovalPage.tsx';
 import AdminPendingUsersPage from './pages/AdminPendingUsersPage.tsx';
 
+type RuntimeEnv = Record<string, string | undefined>;
+
 function App() {
-  // Use runtime-injected env object when available (dev-server injects __BRICONOMY_ENV__)
-  const runtimeEnv = (globalThis as any).__BRICONOMY_ENV__ || {};
+  const scopedGlobal = globalThis as typeof globalThis & { __BRICONOMY_ENV__?: RuntimeEnv };
+  const runtimeEnv: RuntimeEnv = scopedGlobal.__BRICONOMY_ENV__ ?? {};
   const googleClientId = runtimeEnv.VITE_GOOGLE_CLIENT_ID || '471516393144-mb8903q4kvefqrl89na1ntevhq17t8h1.apps.googleusercontent.com';
 
   return (

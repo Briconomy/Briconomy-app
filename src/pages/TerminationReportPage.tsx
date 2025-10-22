@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import Modal from '../components/Modal.tsx';
-import { terminationsApi, formatCurrency, formatDate } from '../services/api.ts';
+import { terminationsApi, formatCurrency } from '../services/api.ts';
 
 interface Termination {
   _id: string;
@@ -255,16 +255,6 @@ const TerminationReportPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      pending: '#f59e0b',
-      approved: '#10b981',
-      rejected: '#ef4444',
-      completed: '#3b82f6'
-    };
-    return colors[status as keyof typeof colors] || '#6b7280';
-  };
-
   const getTopReasons = () => {
     if (!reportData) return [];
     return Object.entries(reportData.reasonDistribution)
@@ -309,6 +299,7 @@ const TerminationReportPage: React.FC = () => {
             <h5>No Data Available</h5>
             <p>There are no termination records available for report generation.</p>
             <button 
+              type="button"
               className="btn btn-secondary"
               onClick={() => navigate('/manager/terminations')}
             >
@@ -560,12 +551,14 @@ const TerminationReportPage: React.FC = () => {
 
         <div className="page-actions">
           <button 
+            type="button"
             className="btn btn-secondary"
             onClick={() => navigate('/manager/terminations')}
           >
             Back to Terminations
           </button>
           <button 
+            type="button"
             className="btn btn-primary"
             onClick={() => setShowExportModal(true)}
           >
@@ -593,6 +586,7 @@ const TerminationReportPage: React.FC = () => {
                   <p>Professional formatted report with charts and tables</p>
                 </div>
                 <button 
+                  type="button"
                   className="btn btn-primary"
                   onClick={() => handleExportReport('pdf')}
                   disabled={exporting}
@@ -608,6 +602,7 @@ const TerminationReportPage: React.FC = () => {
                   <p>Raw data with pivot tables and filtering capabilities</p>
                 </div>
                 <button 
+                  type="button"
                   className="btn btn-primary"
                   onClick={() => handleExportReport('excel')}
                   disabled={exporting}
@@ -623,6 +618,7 @@ const TerminationReportPage: React.FC = () => {
                   <p>Comma-separated values for data analysis</p>
                 </div>
                 <button 
+                  type="button"
                   className="btn btn-primary"
                   onClick={() => handleExportReport('csv')}
                   disabled={exporting}
@@ -639,6 +635,7 @@ const TerminationReportPage: React.FC = () => {
           
           <div className="modal-actions">
             <button 
+              type="button"
               className="btn btn-secondary"
               onClick={() => setShowExportModal(false)}
               disabled={exporting}

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { notificationService } from '../services/notifications.ts';
 
 interface Announcement {
   _id?: string;
+  id?: string;
   title: string;
   message: string;
   category: 'general' | 'maintenance' | 'urgent' | 'events';
@@ -21,7 +23,7 @@ interface AnnouncementSystemProps {
   userRole?: 'admin' | 'manager' | 'caretaker' | 'tenant';
 }
 
-const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRole }) => {
+const AnnouncementSystem = ({ onClose, userRole }: AnnouncementSystemProps) => {
   const { user } = useAuth();
   const currentUserRole = userRole || user?.userType;
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -183,13 +185,13 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
         }
       });
       if (!response.ok) throw new Error('Failed to fetch announcements');
-      const data = await response.json();
+      const data = (await response.json()) as Array<Announcement & { id?: string }>;
       console.log('Fetched announcements:', data);
       
       // Normalize the announcements to ensure they have _id field
-      const normalizedData = data.map((announcement: any) => ({
+      const normalizedData = data.map((announcement) => ({
         ...announcement,
-        _id: announcement.id || announcement._id
+        _id: announcement._id ?? announcement.id ?? `${announcement.title}-${announcement.createdAt}`
       }));
       
       // Remove any potential duplicates based on _id
@@ -238,7 +240,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.message.trim()) {
       setError('Title and message are required');
@@ -333,7 +335,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -556,20 +558,27 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityStyles = (priority: Announcement['priority']) => {
     switch (priority) {
-      case 'high': return 'text-red-600 bg-red-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'low': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'high':
+        return { backgroundColor: '#fef2f2', color: '#dc2626' };
+      case 'medium':
+        return { backgroundColor: '#fffbeb', color: '#d97706' };
+      case 'low':
+        return { backgroundColor: '#f0fdf4', color: '#16a34a' };
+      default:
+        return { backgroundColor: '#f3f4f6', color: '#374151' };
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyles = (status: Announcement['status']) => {
     switch (status) {
-      case 'sent': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'sent':
+        return { backgroundColor: '#dcfce7', color: '#166534' };
+      case 'scheduled':
+        return { backgroundColor: '#dbeafe', color: '#1e40af' };
+      default:
+        return { backgroundColor: '#f3f4f6', color: '#374151' };
     }
   };
 
@@ -1047,8 +1056,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                         fontSize: '11px',
                         fontWeight: '600',
                         borderRadius: '12px',
-                        backgroundColor: announcement.priority === 'high' ? '#fef2f2' : announcement.priority === 'medium' ? '#fffbeb' : '#f0fdf4',
-                        color: announcement.priority === 'high' ? '#dc2626' : announcement.priority === 'medium' ? '#d97706' : '#16a34a'
+                        ...getPriorityStyles(announcement.priority)
                       }}>
                         {announcement.priority}
                       </span>
@@ -1137,8 +1145,7 @@ const AnnouncementSystem: React.FC<AnnouncementSystemProps> = ({ onClose, userRo
                         padding: '2px 8px',
                         borderRadius: '12px',
                         fontSize: '11px',
-                        backgroundColor: announcement.status === 'sent' ? '#dcfce7' : announcement.status === 'scheduled' ? '#dbeafe' : '#f3f4f6',
-                        color: announcement.status === 'sent' ? '#166534' : announcement.status === 'scheduled' ? '#1e40af' : '#374151'
+                        ...getStatusStyles(announcement.status)
                       }}>
                         {announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}
                       </span>

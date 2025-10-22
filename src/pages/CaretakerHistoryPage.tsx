@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
+import { maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerHistoryPage() {
   const { user } = useAuth();
-  const [filterPeriod, setFilterPeriod] = useState('all'); // all, week, month, year
-  const [filterStatus, setFilterStatus] = useState('all'); // all, completed, in_progress
+  const [filterPeriod, setFilterPeriod] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   
   const navItems = [
     { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
@@ -50,129 +50,11 @@ function CaretakerHistoryPage() {
     }
   };
 
-  const getMockTasks = () => {
-    return [
-      {
-        id: '1',
-        title: 'Weekly property inspection',
-        description: 'Routine inspection of common areas and exterior',
-        property: 'Blue Hills Apartments',
-        priority: 'medium',
-        status: 'completed',
-        dueDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        completedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 4,
-        actualHours: 3.5,
-        notes: 'Inspection completed successfully. No major issues found.'
-      },
-      {
-        id: '2',
-        title: 'AC repair - Unit 2A',
-        description: 'Air conditioning not working properly',
-        property: 'Blue Hills Apartments',
-        priority: 'high',
-        status: 'completed',
-        dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        completedDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 3,
-        actualHours: 4,
-        notes: 'Replaced compressor unit. AC now working perfectly.'
-      },
-      {
-        id: '3',
-        title: 'Pool cleaning',
-        description: 'Weekly pool maintenance and chemical balancing',
-        property: 'Sunset Towers',
-        priority: 'medium',
-        status: 'completed',
-        dueDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        completedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 2,
-        actualHours: 2,
-        notes: 'Pool cleaned and chemicals balanced. Water quality optimal.'
-      },
-      {
-        id: '4',
-        title: 'Broken window repair',
-        description: 'Bedroom window lock replacement',
-        property: 'Green Valley Complex',
-        priority: 'high',
-        status: 'completed',
-        dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        completedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 2,
-        actualHours: 2.5,
-        notes: 'Window lock replaced and window sealed properly.'
-      },
-      {
-        id: '5',
-        title: 'Garden maintenance',
-        description: 'Trim hedges, water plants, and general landscaping',
-        property: 'Green Valley Complex',
-        priority: 'low',
-        status: 'in_progress',
-        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 6,
-        actualHours: 3,
-        notes: 'Started trimming hedges. Weather permitting will complete tomorrow.'
-      }
-    ];
-  };
-
-  const getMockMaintenance = () => {
-    return [
-      {
-        id: '1',
-        title: 'Broken window',
-        description: 'Bedroom window lock is broken, window cannot be closed properly',
-        property: 'Green Valley Complex',
-        unit: 'A1',
-        priority: 'high',
-        status: 'completed',
-        assignedTo: user?.id,
-        estimatedCost: 1200,
-        actualCost: 1150,
-        completedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        images: ['broken_window_before.jpg', 'broken_window_after.jpg'],
-        tenantId: 'tenant3',
-        notes: 'Window lock replaced successfully. Tenant satisfied with the repair.'
-      },
-      {
-        id: '2',
-        title: 'Leaky faucet',
-        description: 'Kitchen sink faucet is dripping continuously',
-        property: 'Blue Hills Apartments',
-        unit: '3C',
-        priority: 'medium',
-        status: 'completed',
-        assignedTo: user?.id,
-        estimatedCost: 800,
-        actualCost: 750,
-        completedDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-        images: ['faucet_before.jpg', 'faucet_after.jpg'],
-        tenantId: 'tenant2',
-        notes: 'Faucet washer replaced. No more leaks.'
-      },
-      {
-        id: '3',
-        title: 'Electrical issue',
-        description: 'Light switch in living room not working',
-        property: 'Green Valley Complex',
-        unit: 'B2',
-        priority: 'high',
-        status: 'in_progress',
-        assignedTo: user?.id,
-        estimatedCost: 2000,
-        actualCost: null,
-        completedDate: null,
-        images: ['light_switch.jpg'],
-        tenantId: 'tenant4',
-        notes: 'Diagnosed wiring issue. Waiting for parts to arrive.'
-      }
-    ];
-  };
-
   const maintenanceData = Array.isArray(maintenance) ? maintenance : [];
+  const caretakerId = user?.id;
+  const relevantMaintenance = caretakerId
+    ? maintenanceData.filter(req => req.assignedTo === caretakerId)
+    : maintenanceData;
 
   // Filter maintenance data based on selected filters
   const getFilteredData = () => {
@@ -205,35 +87,14 @@ function CaretakerHistoryPage() {
 
     const statusFilter = (item: { status: string }) => filterStatus === 'all' || item.status === filterStatus;
 
-    return maintenanceData.filter(req => dateFilter(req) && statusFilter(req));
+    return relevantMaintenance.filter(req => dateFilter(req) && statusFilter(req));
   };
 
   const filteredData = getFilteredData();
 
-  const completedMaintenance = maintenanceData.filter(req => req.status === 'completed').length;
+  const completedMaintenance = relevantMaintenance.filter(req => req.status === 'completed').length;
   const totalCompleted = completedMaintenance;
   
-  const avgCompletionTime = (() => {
-    const completed = maintenanceData.filter(req => 
-      req.status === 'completed' && req.createdAt && req.completedDate
-    );
-    
-    if (completed.length === 0) return 0;
-    
-    const totalTime = completed.reduce((sum, req) => {
-      const created = new Date(req.createdAt).getTime();
-      const completedTime = new Date(req.completedDate).getTime();
-      const durationHours = (completedTime - created) / (1000 * 60 * 60);
-      return sum + durationHours;
-    }, 0);
-    
-    return Math.round(totalTime / completed.length);
-  })();
-
-  const totalCost = maintenanceData
-    .filter(req => req.status === 'completed' && req.actualCost)
-    .reduce((sum, req) => sum + (Number(req.actualCost) || 0), 0);
-
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return 'text-red-600 font-semibold';
@@ -261,29 +122,6 @@ function CaretakerHistoryPage() {
     });
   };
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-ZA', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDuration = (milliseconds) => {
-    const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (days > 0) {
-      return `${days}d ${hours}h`;
-    } else if (hours > 0) {
-      return `${hours}h`;
-    }
-    return '< 1h';
-  };
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
@@ -293,6 +131,7 @@ function CaretakerHistoryPage() {
   };
 
   const loading = maintenanceLoading;
+  const hasMaintenanceError = Boolean(maintenanceError);
 
   if (loading) {
     return (
@@ -319,11 +158,17 @@ function CaretakerHistoryPage() {
           <div className="page-subtitle">Completed tasks and maintenance records</div>
         </div>
         
+        {hasMaintenanceError && (
+          <div className="alert alert-error">
+            <p>We could not refresh maintenance data. Showing the latest cached records.</p>
+          </div>
+        )}
+
         <div className="dashboard-grid">
           <StatCard value={totalCompleted} label="Completed" />
-          <StatCard value={maintenanceData.length} label="Total" />
-          <StatCard value={maintenanceData.filter(r => r.status === 'pending').length} label="Pending" />
-          <StatCard value={maintenanceData.filter(r => r.status === 'in_progress').length} label="In Progress" />
+          <StatCard value={relevantMaintenance.length} label="Total" />
+          <StatCard value={relevantMaintenance.filter(r => r.status === 'pending').length} label="Pending" />
+          <StatCard value={relevantMaintenance.filter(r => r.status === 'in_progress').length} label="In Progress" />
         </div>
 
         {/* Filters */}
@@ -486,7 +331,7 @@ function CaretakerHistoryPage() {
           <div className="performance-stats">
             <div className="stat-row">
               <div className="stat-label">Total Requests:</div>
-              <div className="stat-value">{maintenanceData.length}</div>
+              <div className="stat-value">{relevantMaintenance.length}</div>
             </div>
             <div className="stat-row">
               <div className="stat-label">Completed:</div>
@@ -494,16 +339,16 @@ function CaretakerHistoryPage() {
             </div>
             <div className="stat-row">
               <div className="stat-label">In Progress:</div>
-              <div className="stat-value">{maintenanceData.filter(r => r.status === 'in_progress').length}</div>
+              <div className="stat-value">{relevantMaintenance.filter(r => r.status === 'in_progress').length}</div>
             </div>
             <div className="stat-row">
               <div className="stat-label">Pending:</div>
-              <div className="stat-value">{maintenanceData.filter(r => r.status === 'pending').length}</div>
+              <div className="stat-value">{relevantMaintenance.filter(r => r.status === 'pending').length}</div>
             </div>
             <div className="stat-row">
               <div className="stat-label">Completion Rate:</div>
               <div className="stat-value">
-                {maintenanceData.length > 0 ? Math.round((completedMaintenance / maintenanceData.length) * 100) : 0}%
+                {relevantMaintenance.length > 0 ? Math.round((completedMaintenance / relevantMaintenance.length) * 100) : 0}%
               </div>
             </div>
           </div>

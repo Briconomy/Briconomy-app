@@ -1,23 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ManagerPropertyCard from '../components/ManagerPropertyCard.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
-import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+
+type ManagerProperty = {
+  _id?: string;
+  id?: string;
+  name: string;
+  address: string;
+  totalUnits: number;
+  occupiedUnits: number;
+  type: string;
+  [key: string]: unknown;
+};
 
 function ManagerPropertiesPage() {
   const { t } = useLanguage();
-  const [properties, setProperties] = useState([]);
+  const [properties, setProperties] = useState<ManagerProperty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [error, setError] = useState<string | null>(null);
+  const [filteredProperties, setFilteredProperties] = useState<ManagerProperty[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   const { lowBandwidthMode } = useLowBandwidthMode();
-  const { user } = useAuth();
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
@@ -39,10 +48,37 @@ function ManagerPropertiesPage() {
       setLoading(true);
       setError(null);
       const data = await propertiesApi.getAll();
-      setProperties(Array.isArray(data) ? data : []);
+      const propertyList: ManagerProperty[] = Array.isArray(data)
+        ? data.map((item) => {
+            if (!item || typeof item !== 'object') {
+              return {
+                name: 'Property',
+                address: '',
+                totalUnits: 0,
+                occupiedUnits: 0,
+                type: 'property',
+              } satisfies ManagerProperty;
+            }
+            const record = item as Record<string, unknown>;
+            const normalized: ManagerProperty = {
+              _id: typeof record._id === 'string' ? record._id : undefined,
+              id: typeof record.id === 'string' ? record.id : undefined,
+              name: typeof record.name === 'string' ? record.name : 'Property',
+              address: typeof record.address === 'string' ? record.address : '',
+              totalUnits: typeof record.totalUnits === 'number' ? record.totalUnits : 0,
+              occupiedUnits: typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0,
+              type: typeof record.type === 'string' ? record.type : 'property',
+            };
+            return { ...record, ...normalized } as ManagerProperty;
+          })
+        : [];
+      setProperties(propertyList);
+      setFilteredProperties(propertyList);
     } catch (err) {
-      setError(err.message || 'Failed to fetch properties');
+      const message = err instanceof Error ? err.message : 'Failed to fetch properties';
+      setError(message);
       setProperties([]);
+      setFilteredProperties([]);
     } finally {
       setLoading(false);
     }
@@ -59,19 +95,19 @@ function ManagerPropertiesPage() {
     setFilteredProperties(filtered);
   };
 
-  const handleViewDetails = (propertyId) => {
+  const handleViewDetails = (propertyId: string) => {
     globalThis.location.href = `/property/${propertyId}`;
   };
 
-  const handleEditProperty = (propertyId) => {
+  const handleEditProperty = (propertyId: string) => {
     globalThis.location.href = `/property/${propertyId}/edit`;
   };
 
-  const handleManageUnits = (propertyId) => {
+  const handleManageUnits = (propertyId: string) => {
     globalThis.location.href = `/property/${propertyId}/units`;
   };
 
-  const handleViewTenants = (propertyId) => {
+  const handleViewTenants = (propertyId: string) => {
     globalThis.location.href = `/property/${propertyId}/tenants`;
   };
 
@@ -80,13 +116,13 @@ function ManagerPropertiesPage() {
   };
 
   const totalProperties = properties.length;
-  const totalUnits = properties.reduce((sum, property) => sum + property.totalUnits, 0);
-  const occupiedUnits = properties.reduce((sum, property) => sum + property.occupiedUnits, 0);
+  const totalUnits = properties.reduce((sum, property) => sum + (property.totalUnits ?? 0), 0);
+  const occupiedUnits = properties.reduce((sum, property) => sum + (property.occupiedUnits ?? 0), 0);
   const overallOccupancy = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
   const estimatedMonthlyRevenue = properties.reduce((sum, property) => {
     const baseRent = property.type === 'apartment' ? 8000 : 
                      property.type === 'complex' ? 10000 : 12000;
-    return sum + (property.occupiedUnits * baseRent);
+    return sum + ((property.occupiedUnits ?? 0) * baseRent);
   }, 0);
 
   if (loading) {
@@ -176,7 +212,7 @@ function ManagerPropertiesPage() {
         <div className="manager-property-grid">
           {filteredProperties.map((property) => (
             <ManagerPropertyCard
-              key={property._id}
+              key={property._id ?? property.id ?? property.name}
               property={property}
               onViewDetails={handleViewDetails}
               onEditProperty={handleEditProperty}

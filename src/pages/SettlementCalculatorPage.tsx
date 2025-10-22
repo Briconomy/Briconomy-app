@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -174,7 +174,7 @@ const SettlementCalculatorPage: React.FC = () => {
     setShowDetailsModal(true);
   };
 
-  const handleSaveCalculations = async () => {
+  const handleSaveCalculations = () => {
     try {
       setSaving(true);
       
@@ -289,6 +289,7 @@ const SettlementCalculatorPage: React.FC = () => {
             <h5>No Terminations Available</h5>
             <p>There are no terminations available for settlement calculation.</p>
             <button 
+              type="button"
               className="btn btn-secondary"
               onClick={() => navigate('/manager/terminations')}
             >
@@ -371,14 +372,16 @@ const SettlementCalculatorPage: React.FC = () => {
                   </div>
                   
                   <div className="settlement-actions">
-                    <button 
-                      className="btn btn-sm btn-secondary"
-                      onClick={() => viewTerminationDetails(termination)}
-                    >
+                      <button 
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => viewTerminationDetails(termination)}
+                      >
                       View Details
                     </button>
                     {termination.status === 'approved' && (
                       <button 
+                        type="button"
                         className="btn btn-sm btn-primary"
                         onClick={() => {
                           alert(`Settlement of ${formatCurrency(Math.abs(calculation.finalSettlement))} has been processed for ${termination.tenant.name}`);
@@ -396,6 +399,7 @@ const SettlementCalculatorPage: React.FC = () => {
 
         <div className="page-actions">
           <button 
+            type="button"
             className="btn btn-secondary"
             onClick={() => navigate('/manager/terminations')}
           >
@@ -403,6 +407,7 @@ const SettlementCalculatorPage: React.FC = () => {
           </button>
           {terminations.length > 0 && (
             <button 
+              type="button"
               className="btn btn-primary"
               onClick={() => setShowSaveModal(true)}
             >
@@ -482,6 +487,7 @@ const SettlementCalculatorPage: React.FC = () => {
 
             <div className="modal-actions">
               <button 
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => {
                   setShowDetailsModal(false);
@@ -510,6 +516,7 @@ const SettlementCalculatorPage: React.FC = () => {
           
           <div className="modal-actions">
             <button 
+              type="button"
               className="btn btn-secondary"
               onClick={() => setShowSaveModal(false)}
               disabled={saving}
@@ -517,6 +524,7 @@ const SettlementCalculatorPage: React.FC = () => {
               Cancel
             </button>
             <button 
+              type="button"
               className="btn btn-primary"
               onClick={handleSaveCalculations}
               disabled={saving}

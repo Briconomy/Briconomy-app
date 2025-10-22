@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -7,8 +7,21 @@ import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Icon from '../components/Icon.tsx';
 
+type ManagedDocument = {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  uploadedBy: string;
+  uploadDate: string;
+  fileSize: string;
+  status: string;
+  property: string;
+  unit?: string;
+};
+
 function DocumentManagementPage() {
-  const [documents, setDocuments] = useState([
+  const [documents, setDocuments] = useState<ManagedDocument[]>([
     {
       id: '1',
       name: 'Lease Agreement - John Tenant',
@@ -70,7 +83,7 @@ function DocumentManagementPage() {
   ]);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [filteredDocuments, setFilteredDocuments] = useState(documents);
+  const [filteredDocuments, setFilteredDocuments] = useState<ManagedDocument[]>(documents);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -90,12 +103,12 @@ function DocumentManagementPage() {
     return sum + (doc.fileSize.includes('MB') ? size : size / 1024);
   }, 0);
 
-  const handleSearch = (term) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
     applyFilters(term, categoryFilter, typeFilter);
   };
 
-  const handleFilterChange = (key, value) => {
+  const handleFilterChange = (key: string, value: string) => {
     if (key === 'category') {
       setCategoryFilter(value);
       applyFilters(searchTerm, value, typeFilter);
@@ -105,7 +118,7 @@ function DocumentManagementPage() {
     }
   };
 
-  const applyFilters = (search, category, type) => {
+  const applyFilters = (search: string, category: string, type: string) => {
     let filtered = documents;
 
     if (search) {
@@ -135,13 +148,13 @@ function DocumentManagementPage() {
     { 
       key: 'uploadDate', 
       label: 'Date',
-      render: (value) => new Date(value).toLocaleDateString()
+      render: (value: string) => new Date(value).toLocaleDateString()
     },
     { key: 'fileSize', label: 'Size' },
     { 
       key: 'status', 
       label: 'Status',
-      render: (value) => (
+  render: (value: string) => (
         <span className={`status-badge ${
           value === 'signed' ? 'status-paid' : 
           value === 'approved' ? 'status-paid' :
@@ -180,7 +193,7 @@ function DocumentManagementPage() {
     }
   ];
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files[0];
     if (file) {
       const newDocument = {
@@ -239,7 +252,7 @@ function DocumentManagementPage() {
               Upload
             </button>
           }
-          onRowClick={(doc) => {}}
+          onRowClick={() => {}}
         />
 
         <div className="quick-actions">

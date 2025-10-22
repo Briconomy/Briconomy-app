@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -9,9 +9,8 @@ import { maintenanceApi, useApi } from '../services/api.ts';
 function CaretakerMaintenancePage() {
   const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, in_progress, completed
-  const [filterPriority, setFilterPriority] = useState('all'); // all, high, medium, low
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
   
   const navItems = [
     { path: '/caretaker', label: 'Dashboard', active: false },
@@ -20,7 +19,7 @@ function CaretakerMaintenancePage() {
     { path: '/caretaker/reports', label: 'Reports', active: false }
   ];
 
-  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi(
+  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
     () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
     [user?.id]
   );
@@ -153,16 +152,19 @@ function CaretakerMaintenancePage() {
       return sum + (completed - created);
     }, 0) / completedRequests || 0;
 
-  const handleStatusChange = (requestId, newStatus) => {
-    // In a real app, this would update the backend
-    console.log(`Updating request ${requestId} to status: ${newStatus}`);
-    // Show success message
-    alert(`Request status updated to ${newStatus}`);
+  const handleStatusChange = async (requestId, newStatus) => {
+    try {
+      await maintenanceApi.update(requestId, { status: newStatus });
+      await refetchMaintenance();
+      alert(`Request status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Failed to update maintenance status:', error);
+      alert('Unable to update the request right now. Please try again later.');
+    }
   };
 
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
-    setShowDetails(true);
   };
 
   const getPriorityColor = (priority) => {
@@ -221,6 +223,10 @@ function CaretakerMaintenancePage() {
       currency: 'ZAR',
       minimumFractionDigits: 0
     }).format(Number(amount) || 0);
+  };
+
+  const closeDetails = () => {
+    setSelectedRequest(null);
   };
 
   if (maintenanceLoading) {
@@ -418,7 +424,76 @@ function CaretakerMaintenancePage() {
           </div>
         </ChartCard>
       </div>
-      
+      {selectedRequest && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{selectedRequest.title}</h3>
+              <button type="button" className="close-btn" onClick={closeDetails}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="text-sm text-gray-600 mb-4">{selectedRequest.description}</p>
+              <div className="detail-grid">
+                <div>
+                  <strong>Property</strong>
+                  <div>{selectedRequest.property} • {selectedRequest.unit}</div>
+                </div>
+                <div>
+                  <strong>Priority</strong>
+                  <div className={getPriorityColor(selectedRequest.priority)}>{selectedRequest.priority.toUpperCase()}</div>
+                </div>
+                <div>
+                  <strong>Status</strong>
+                  <div>{selectedRequest.status}</div>
+                </div>
+                <div>
+                  <strong>Created</strong>
+                  <div>{selectedRequest.createdAt ? formatDateTime(selectedRequest.createdAt) : 'Unknown'}</div>
+                </div>
+                <div>
+                  <strong>Updated</strong>
+                  <div>{selectedRequest.updatedAt ? formatDateTime(selectedRequest.updatedAt) : 'Unknown'}</div>
+                </div>
+                <div>
+                  <strong>Cost</strong>
+                  <div>
+                    {selectedRequest.actualCost ? formatCurrency(selectedRequest.actualCost) : 'Not captured'}
+                  </div>
+                </div>
+              </div>
+              {selectedRequest.notes && (
+                <div className="mt-4 p-3 bg-gray-50 rounded">
+                  <strong>Notes:</strong> {selectedRequest.notes}
+                </div>
+              )}
+              {selectedRequest.images && selectedRequest.images.length > 0 && (
+                <div className="mt-4 text-sm text-blue-600">
+                  {selectedRequest.images.length} image(s) attached
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              {selectedRequest.status !== 'completed' && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    await handleStatusChange(selectedRequest.id, 'completed');
+                    closeDetails();
+                  }}
+                >
+                  Mark Completed
+                </button>
+              )}
+              <button type="button" className="btn btn-secondary" onClick={closeDetails}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <BottomNav items={navItems} responsive={false} />
     </div>
   );

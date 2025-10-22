@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -9,42 +9,281 @@ import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Modal from '../components/Modal.tsx';
 import Icon from '../components/Icon.tsx';
-import { terminationsApi, formatCurrency, formatDate } from '../services/api.ts';
+import { terminationsApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
-interface Termination {
+type TerminationStatus = 'pending' | 'approved' | 'rejected' | 'completed';
+
+type TerminationTenant = {
+  name: string;
+  email: string;
+};
+
+type TerminationUnit = {
+  number: string;
+  property: string;
+};
+
+type Termination = {
   _id: string;
-  tenant: {
-    name: string;
-    email: string;
-  };
-  unit: {
-    number: string;
-    property: string;
-  };
+  tenant: TerminationTenant;
+  unit: TerminationUnit;
   currentRent: number;
   terminationDate: string;
   requestDate: string;
   reason: string;
   notice: number;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: TerminationStatus;
   rejectionReason?: string;
   approvedBy?: string;
   notes?: string;
-}
+};
 
-interface TerminationFilters {
+type TerminationFilters = {
   status: string;
   search: string;
   dateRange: string;
-}
+};
 
-const LeaseTerminationsPage: React.FC = () => {
+type TerminationStats = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  completed: number;
+};
+
+type ActiveLease = {
+  _id: string;
+  tenant: TerminationTenant;
+  unit: TerminationUnit;
+  currentRent: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+};
+
+type TerminationForm = {
+  reason: string;
+  terminationDate: string;
+  notice: number;
+  notes: string;
+};
+
+type SettlementResult = {
+  penalty: number;
+  refund: number;
+  netAmount: number;
+  daysUntilTermination: number;
+  currentRent: number;
+};
+
+type SettlementInput = {
+  terminationDate: string;
+  currentRent: number;
+};
+
+type TerminationDocument = {
+  name: string;
+  type: string;
+  generated: boolean;
+  downloadUrl: string;
+};
+
+type TerminationReport = {
+  totalTerminations: number;
+  pendingTerminations: number;
+  approvedTerminations: number;
+  rejectedTerminations: number;
+  completedTerminations: number;
+  averageNoticePeriod: number;
+  totalRevenueImpact: number;
+  monthlyBreakdown: Record<string, number>;
+};
+
+type TerminationTableRow = Termination & {
+  tenantName: string;
+  unitNumber: string;
+  propertyName: string;
+};
+
+type TerminationColumn = {
+  key: keyof TerminationTableRow | 'actions';
+  label: string;
+  render?: (value: unknown, row: TerminationTableRow) => JSX.Element | string;
+};
+
+type FilterOption = {
+  value: string;
+  label: string;
+};
+
+type FilterConfig = {
+  key: keyof TerminationFilters;
+  value: string;
+  options: FilterOption[];
+};
+
+const MOCK_TERMINATIONS: Termination[] = [
+  {
+    _id: '1',
+    tenant: { name: 'John Smith', email: 'john@example.com' },
+    unit: { number: '101', property: 'Sunset Apartments' },
+    currentRent: 1200,
+    terminationDate: '2024-03-15',
+    requestDate: '2024-01-15',
+    reason: 'Relocating for work',
+    notice: 60,
+    status: 'pending',
+    notes: 'Tenant has been excellent, no issues'
+  },
+  {
+    _id: '2',
+    tenant: { name: 'Sarah Johnson', email: 'sarah@example.com' },
+    unit: { number: '205', property: 'Oak Ridge Complex' },
+    currentRent: 1450,
+    terminationDate: '2024-02-28',
+    requestDate: '2024-01-10',
+    reason: 'Purchasing a home',
+    notice: 45,
+    status: 'approved',
+    approvedBy: 'Manager Johnson',
+    notes: 'Early termination approved due to home purchase'
+  },
+  {
+    _id: '3',
+    tenant: { name: 'Mike Davis', email: 'mike@example.com' },
+    unit: { number: '312', property: 'Pine Valley Residences' },
+    currentRent: 1100,
+    terminationDate: '2024-04-01',
+    requestDate: '2024-02-01',
+    reason: 'Financial hardship',
+    notice: 60,
+    status: 'rejected',
+    rejectionReason: 'Insufficient notice period',
+    notes: 'Needs to provide 90 days notice per lease agreement'
+  }
+];
+
+const MOCK_ACTIVE_LEASES: ActiveLease[] = [
+  {
+    _id: 'lease1',
+    tenant: { name: 'John Smith', email: 'john@example.com' },
+    unit: { number: '101', property: 'Sunset Apartments' },
+    currentRent: 1200,
+    startDate: '2023-06-01',
+    endDate: '2024-05-31',
+    status: 'active'
+  },
+  {
+    _id: 'lease2',
+    tenant: { name: 'Sarah Johnson', email: 'sarah@example.com' },
+    unit: { number: '205', property: 'Oak Ridge Complex' },
+    currentRent: 1450,
+    startDate: '2023-08-15',
+    endDate: '2024-08-14',
+    status: 'active'
+  },
+  {
+    _id: 'lease3',
+    tenant: { name: 'Mike Davis', email: 'mike@example.com' },
+    unit: { number: '312', property: 'Pine Valley Residences' },
+    currentRent: 1100,
+    startDate: '2023-10-01',
+    endDate: '2024-09-30',
+    status: 'active'
+  }
+];
+
+const TERMINATION_STATUSES: TerminationStatus[] = ['pending', 'approved', 'rejected', 'completed'];
+
+const cloneTermination = (termination: Termination): Termination => ({
+  ...termination,
+  tenant: { ...termination.tenant },
+  unit: { ...termination.unit }
+});
+
+const parseTerminationStatus = (value: unknown): TerminationStatus => {
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase() as TerminationStatus;
+    if (TERMINATION_STATUSES.includes(normalized)) {
+      return normalized;
+    }
+  }
+  return 'pending';
+};
+
+const isTermination = (value: unknown): value is Termination => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  if (typeof record._id !== 'string') {
+    return false;
+  }
+  if (typeof record.currentRent !== 'number') {
+    return false;
+  }
+  if (typeof record.terminationDate !== 'string') {
+    return false;
+  }
+  if (typeof record.requestDate !== 'string') {
+    return false;
+  }
+  if (typeof record.reason !== 'string') {
+    return false;
+  }
+  if (typeof record.notice !== 'number') {
+    return false;
+  }
+  if (typeof record.status !== 'string') {
+    return false;
+  }
+  if (!TERMINATION_STATUSES.includes(record.status as TerminationStatus)) {
+    return false;
+  }
+  if (!record.tenant || typeof record.tenant !== 'object') {
+    return false;
+  }
+  if (!record.unit || typeof record.unit !== 'object') {
+    return false;
+  }
+
+  const tenant = record.tenant as Record<string, unknown>;
+  const unit = record.unit as Record<string, unknown>;
+
+  if (typeof tenant.name !== 'string' || typeof tenant.email !== 'string') {
+    return false;
+  }
+  if (typeof unit.number !== 'string' || typeof unit.property !== 'string') {
+    return false;
+  }
+
+  return true;
+};
+
+const extractTerminations = (payload: unknown): Termination[] => {
+  if (Array.isArray(payload)) {
+    return payload.filter(isTermination).map(cloneTermination);
+  }
+
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>;
+    if (Array.isArray(record.data)) {
+      return record.data.filter(isTermination).map(cloneTermination);
+    }
+  }
+
+  return [];
+};
+
+function LeaseTerminationsPage(): JSX.Element {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  
+
   const [terminations, setTerminations] = useState<Termination[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [filters, setFilters] = useState<TerminationFilters>({
     status: '',
     search: '',
@@ -59,48 +298,7 @@ const LeaseTerminationsPage: React.FC = () => {
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
 
-  const mockTerminations: Termination[] = [
-    {
-      _id: '1',
-      tenant: { name: 'John Smith', email: 'john@example.com' },
-      unit: { number: '101', property: 'Sunset Apartments' },
-      currentRent: 1200,
-      terminationDate: '2024-03-15',
-      requestDate: '2024-01-15',
-      reason: 'Relocating for work',
-      notice: 60,
-      status: 'pending',
-      notes: 'Tenant has been excellent, no issues'
-    },
-    {
-      _id: '2',
-      tenant: { name: 'Sarah Johnson', email: 'sarah@example.com' },
-      unit: { number: '205', property: 'Oak Ridge Complex' },
-      currentRent: 1450,
-      terminationDate: '2024-02-28',
-      requestDate: '2024-01-10',
-      reason: 'Purchasing a home',
-      notice: 45,
-      status: 'approved',
-      approvedBy: 'Manager Johnson',
-      notes: 'Early termination approved due to home purchase'
-    },
-    {
-      _id: '3',
-      tenant: { name: 'Mike Davis', email: 'mike@example.com' },
-      unit: { number: '312', property: 'Pine Valley Residences' },
-      currentRent: 1100,
-      terminationDate: '2024-04-01',
-      requestDate: '2024-02-01',
-      reason: 'Financial hardship',
-      notice: 60,
-      status: 'rejected',
-      rejectionReason: 'Insufficient notice period',
-      notes: 'Needs to provide 90 days notice per lease agreement'
-    }
-  ];
-
-  const navItems = [
+  const navItems: { path: string; label: string; icon: string; active?: boolean }[] = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
     { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
     { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
@@ -108,29 +306,36 @@ const LeaseTerminationsPage: React.FC = () => {
   ];
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchTerminations = async () => {
       try {
         setLoading(true);
-        try {
-          const response = await terminationsApi.getAll(filters);
-          setTerminations(response.data || []);
-        } catch (apiError) {
-          console.log('API not available, using mock data:', apiError);
-          setTimeout(() => {
-            setTerminations(mockTerminations);
-          }, 500);
+        const response = await terminationsApi.getAll(filters);
+        const apiTerminations = extractTerminations(response);
+        if (isActive) {
+          setTerminations(apiTerminations);
         }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching terminations:', error);
-        setLoading(false);
+      } catch (apiError) {
+        console.log('API not available, using mock data:', apiError);
+        if (isActive) {
+          setTerminations(MOCK_TERMINATIONS.map(cloneTermination));
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     fetchTerminations();
+
+    return () => {
+      isActive = false;
+    };
   }, [filters]);
 
-  const filteredTerminations = useMemo(() => {
+  const filteredTerminations = useMemo<Termination[]>(() => {
     return terminations.filter(termination => {
       const matchesStatus = !filters.status || termination.status === filters.status;
       const matchesSearch = !filters.search || 
@@ -142,7 +347,7 @@ const LeaseTerminationsPage: React.FC = () => {
     });
   }, [terminations, filters]);
 
-  const stats = useMemo(() => {
+  const stats = useMemo<TerminationStats>(() => {
     const total = terminations.length;
     const pending = terminations.filter(t => t.status === 'pending').length;
     const approved = terminations.filter(t => t.status === 'approved').length;
@@ -216,45 +421,25 @@ const LeaseTerminationsPage: React.FC = () => {
     navigate('/manager/terminations/initiate');
   };
 
-  const mockActiveLeases = [
-    {
-      _id: 'lease1',
-      tenant: { name: 'John Smith', email: 'john@example.com' },
-      unit: { number: '101', property: 'Sunset Apartments' },
-      currentRent: 1200,
-      startDate: '2023-06-01',
-      endDate: '2024-05-31',
-      status: 'active'
-    },
-    {
-      _id: 'lease2',
-      tenant: { name: 'Sarah Johnson', email: 'sarah@example.com' },
-      unit: { number: '205', property: 'Oak Ridge Complex' },
-      currentRent: 1450,
-      startDate: '2023-08-15',
-      endDate: '2024-08-14',
-      status: 'active'
-    },
-    {
-      _id: 'lease3',
-      tenant: { name: 'Mike Davis', email: 'mike@example.com' },
-      unit: { number: '312', property: 'Pine Valley Residences' },
-      currentRent: 1100,
-      startDate: '2023-10-01',
-      endDate: '2024-09-30',
-      status: 'active'
-    }
-  ];
+  const activeLeases = useMemo<ActiveLease[]>(
+    () =>
+      MOCK_ACTIVE_LEASES.map((lease) => ({
+        ...lease,
+        tenant: { ...lease.tenant },
+        unit: { ...lease.unit }
+      })),
+    []
+  );
 
-  const [selectedLease, setSelectedLease] = useState(null);
-  const [terminationForm, setTerminationForm] = useState({
+  const [selectedLease, setSelectedLease] = useState<ActiveLease | null>(null);
+  const [terminationForm, setTerminationForm] = useState<TerminationForm>({
     reason: '',
     terminationDate: '',
     notice: 30,
     notes: ''
   });
-  const [settlementCalculation, setSettlementCalculation] = useState(null);
-  const [formStep, setFormStep] = useState(1);
+  const [settlementCalculation, setSettlementCalculation] = useState<SettlementResult | null>(null);
+  const [formStep, setFormStep] = useState<number>(1);
 
   const handleCalculateSettlement = () => {
     navigate('/manager/terminations/settlement');
@@ -268,20 +453,20 @@ const LeaseTerminationsPage: React.FC = () => {
     navigate('/manager/terminations/report');
   };
 
-  const calculateSettlement = (termination: Termination) => {
+  const calculateSettlement = (input: SettlementInput): SettlementResult => {
     const currentDate = new Date();
-    const terminationDate = new Date(termination.terminationDate);
+    const terminationDate = new Date(input.terminationDate);
     const daysUntilTermination = Math.ceil((terminationDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
     
     let penalty = 0;
     let refund = 0;
     
     if (daysUntilTermination < 30 && daysUntilTermination > 0) {
-      penalty = termination.currentRent * 0.5;
+      penalty = input.currentRent * 0.5;
     }
     
     if (daysUntilTermination > 0) {
-      const dailyRent = termination.currentRent / 30;
+      const dailyRent = input.currentRent / 30;
       refund = dailyRent * daysUntilTermination;
     }
     
@@ -290,49 +475,51 @@ const LeaseTerminationsPage: React.FC = () => {
       refund,
       netAmount: refund - penalty,
       daysUntilTermination,
-      currentRent: termination.currentRent
+      currentRent: input.currentRent
     };
   };
 
-  const generateTerminationDocuments = (termination: Termination) => {
-    const documents = [
+  const generateTerminationDocuments = (termination: Termination): TerminationDocument[] => {
+    const baseUrl = `/api/terminations/${termination._id}/documents`;
+
+    return [
       {
         name: 'Termination Notice',
         type: 'PDF',
         generated: true,
-        downloadUrl: '#'
+        downloadUrl: `${baseUrl}/notice`
       },
       {
         name: 'Settlement Statement',
         type: 'PDF',
-        generated: true,
-        downloadUrl: '#'
+        generated: termination.status === 'approved' || termination.status === 'completed',
+        downloadUrl: `${baseUrl}/settlement`
       },
       {
         name: 'Final Inspection Report',
         type: 'PDF',
-        generated: false,
-        downloadUrl: '#'
+        generated: termination.status === 'completed',
+        downloadUrl: `${baseUrl}/inspection`
       },
       {
         name: 'Refund Authorization',
         type: 'PDF',
-        generated: true,
-        downloadUrl: '#'
+        generated: termination.status === 'completed',
+        downloadUrl: `${baseUrl}/refund`
       }
     ];
-    
-    return documents;
   };
 
-  const generateTerminationReport = () => {
+  const generateTerminationReport = (): TerminationReport => {
     const reportData = {
       totalTerminations: terminations.length,
       pendingTerminations: terminations.filter(t => t.status === 'pending').length,
       approvedTerminations: terminations.filter(t => t.status === 'approved').length,
       rejectedTerminations: terminations.filter(t => t.status === 'rejected').length,
       completedTerminations: terminations.filter(t => t.status === 'completed').length,
-      averageNoticePeriod: Math.round(terminations.reduce((sum, t) => sum + t.notice, 0) / terminations.length),
+      averageNoticePeriod: terminations.length > 0
+        ? Math.round(terminations.reduce((sum, t) => sum + t.notice, 0) / terminations.length)
+        : 0,
       totalRevenueImpact: terminations.reduce((sum, t) => sum + t.currentRent, 0),
       monthlyBreakdown: terminations.reduce((acc, t) => {
         const month = new Date(t.terminationDate).toLocaleDateString('en-ZA', { month: 'short', year: 'numeric' });
@@ -354,37 +541,44 @@ const LeaseTerminationsPage: React.FC = () => {
     return badges[status];
   };
 
-  const terminationColumns = [
+  const terminationColumns: TerminationColumn[] = [
     { key: 'tenantName', label: t('lease.tenant') },
     { key: 'unitNumber', label: t('lease.unit') },
     { key: 'propertyName', label: t('lease.property') },
     { 
       key: 'reason', 
       label: t('terminations.reason'),
-      render: (value) => (
-        <span className="reason-text" title={value}>
-          {value.length > 20 ? value.substring(0, 20) + '...' : value}
-        </span>
-      )
+      render: (value) => {
+        const reason = typeof value === 'string' ? value : '';
+        const displayReason = reason.length > 20 ? `${reason.substring(0, 20)}...` : reason || 'N/A';
+        return (
+          <span className="reason-text" title={reason || undefined}>
+            {displayReason}
+          </span>
+        );
+      }
     },
     { 
       key: 'terminationDate', 
       label: t('terminations.termination_date'),
-      render: (value) => new Date(value).toLocaleDateString()
+      render: (value) => new Date(String(value)).toLocaleDateString()
     },
     { 
       key: 'status', 
       label: t('common.status'),
-      render: (value) => (
-        <span className={`status-badge ${getStatusBadge(value)}`}>
-          {value.toUpperCase()}
-        </span>
-      )
+      render: (value) => {
+        const status = parseTerminationStatus(value);
+        return (
+          <span className={`status-badge ${getStatusBadge(status)}`}>
+            {status.toUpperCase()}
+          </span>
+        );
+      }
     },
     {
       key: 'actions',
       label: t('common.actions'),
-      render: (value, row) => (
+      render: (_value, row) => (
         <div className="action-buttons">
           <button type="button"
             className="btn btn-secondary btn-sm"
@@ -415,7 +609,7 @@ const LeaseTerminationsPage: React.FC = () => {
     }
   ];
 
-  const tableData = filteredTerminations.map(termination => ({
+  const tableData: TerminationTableRow[] = filteredTerminations.map((termination) => ({
     _id: termination._id,
     tenantName: termination.tenant.name,
     unitNumber: termination.unit.number,
@@ -426,7 +620,7 @@ const LeaseTerminationsPage: React.FC = () => {
     ...termination
   }));
 
-  const filtersConfig = [
+  const filtersConfig: FilterConfig[] = [
     {
       key: 'status',
       value: filters.status,
@@ -666,7 +860,7 @@ const LeaseTerminationsPage: React.FC = () => {
               <p className="step-description">Choose the active lease agreement you wish to terminate</p>
               
               <div className="lease-list">
-                {mockActiveLeases.map(lease => (
+                {activeLeases.map(lease => (
                   <div 
                     key={lease._id} 
                     className={`lease-card ${selectedLease?._id === lease._id ? 'selected' : ''}`}
@@ -705,7 +899,7 @@ const LeaseTerminationsPage: React.FC = () => {
             </div>
           )}
 
-          {formStep === 2 && (
+          {formStep === 2 && selectedLease && (
             <div className="termination-details-form">
               <h4>Termination Details</h4>
               <p className="step-description">Provide the reason and details for lease termination</p>
@@ -789,13 +983,11 @@ const LeaseTerminationsPage: React.FC = () => {
               {terminationForm.terminationDate && (
                 <div className="settlement-preview">
                   <h5>Settlement Calculation Preview</h5>
-                  {(() => {
-                    const tempTermination = {
-                      ...selectedLease,
+                  {selectedLease && (() => {
+                    const settlement = calculateSettlement({
                       terminationDate: terminationForm.terminationDate,
-                      notice: terminationForm.notice
-                    };
-                    const settlement = calculateSettlement(tempTermination);
+                      currentRent: selectedLease.currentRent
+                    });
                     return (
                       <div className="settlement-summary">
                         <div className="calculation-row">
@@ -830,13 +1022,15 @@ const LeaseTerminationsPage: React.FC = () => {
                 <button type="button"
                   className="btn btn-primary"
                   onClick={() => {
-                    const tempTermination = {
-                      ...selectedLease,
-                      terminationDate: terminationForm.terminationDate,
-                      notice: terminationForm.notice
-                    };
-                    const finalSettlement = calculateSettlement(tempTermination);
-                    setSettlementCalculation(finalSettlement);
+                    if (!selectedLease) {
+                      return;
+                    }
+                    setSettlementCalculation(
+                      calculateSettlement({
+                        terminationDate: terminationForm.terminationDate,
+                        currentRent: selectedLease.currentRent
+                      })
+                    );
                     setFormStep(3);
                   }}
                   disabled={!terminationForm.reason || !terminationForm.terminationDate}
@@ -847,7 +1041,7 @@ const LeaseTerminationsPage: React.FC = () => {
             </div>
           )}
 
-          {formStep === 3 && (
+          {formStep === 3 && selectedLease && settlementCalculation && (
             <div className="review-submit">
               <h4>Review Termination Request</h4>
               <p className="step-description">Review all details and submit the termination request</p>

@@ -784,7 +784,7 @@ const reports = db.reports.insertMany([
 ]);
 
 // Create notifications with proper references
-const notifications = db.notifications.insertMany([
+const _notifications = db.notifications.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e721"),
     userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
@@ -866,7 +866,7 @@ const notifications = db.notifications.insertMany([
 ]);
 
 // Create settings with proper references
-const settings = db.settings.insertMany([
+const _settings = db.settings.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e731"),
     key: 'rent_due_day',
@@ -942,7 +942,7 @@ const settings = db.settings.insertMany([
 ]);
 
 // Create audit logs with proper references
-const auditLogs = db.audit_logs.insertMany([
+const _auditLogs = db.audit_logs.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e741"),
     userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],

@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 
+type MaintenanceTask = {
+  id: string;
+  title: string;
+  description: string;
+  property: string;
+  priority: string;
+  status: string;
+  dueDate: string;
+  estimatedHours?: number;
+};
+
 function CaretakerSchedulePage() {
   const { user } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('day'); // day, week, month
   
   const navItems = [
@@ -18,7 +28,7 @@ function CaretakerSchedulePage() {
     { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
-  const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
+  const { data: tasks, loading: tasksLoading, refetch: refetchTasks } = useApi<MaintenanceTask[]>(
     () => maintenanceApi.getAll({}),
     [user?.id]
   );
@@ -49,63 +59,8 @@ function CaretakerSchedulePage() {
     }
   };
 
-  const getMockTasks = () => {
-    return [
-      {
-        id: '1',
-        title: 'Weekly property inspection',
-        description: 'Routine inspection of common areas and exterior',
-        property: 'Blue Hills Apartments',
-        priority: 'medium',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 4
-      },
-      {
-        id: '2',
-        title: 'AC repair - Unit 2A',
-        description: 'Air conditioning not working properly',
-        property: 'Blue Hills Apartments',
-        priority: 'high',
-        status: 'in_progress',
-        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 3
-      },
-      {
-        id: '3',
-        title: 'Pool cleaning',
-        description: 'Weekly pool maintenance and chemical balancing',
-        property: 'Sunset Towers',
-        priority: 'medium',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 2
-      },
-      {
-        id: '4',
-        title: 'Garden maintenance',
-        description: 'Trim hedges, water plants, and general landscaping',
-        property: 'Green Valley Complex',
-        priority: 'low',
-        status: 'in_progress',
-        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 6
-      },
-      {
-        id: '5',
-        title: 'Security system check',
-        description: 'Monthly security system inspection and testing',
-        property: 'Blue Hills Apartments',
-        priority: 'high',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 2
-      }
-    ];
-  };
-
   // Use real maintenance request data from API
-  const tasksData = Array.isArray(tasks) ? tasks : [];
+  const tasksData: MaintenanceTask[] = Array.isArray(tasks) ? tasks : [];
 
   // Filter tasks based on selected date and view mode
   const getFilteredTasks = () => {
@@ -154,7 +109,7 @@ function CaretakerSchedulePage() {
     .filter(task => task.status !== 'completed')
     .reduce((sum, task) => sum + (task.estimatedHours || 0), 0);
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'text-red-600 font-semibold';
       case 'medium': return 'text-yellow-600 font-semibold';
@@ -163,7 +118,7 @@ function CaretakerSchedulePage() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'status-pending';
       case 'in_progress': return 'status-progress';
@@ -172,7 +127,7 @@ function CaretakerSchedulePage() {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       weekday: 'short',
@@ -181,7 +136,7 @@ function CaretakerSchedulePage() {
     });
   };
 
-  const formatTime = (dateString) => {
+  const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-ZA', {
       hour: '2-digit',
@@ -189,7 +144,7 @@ function CaretakerSchedulePage() {
     });
   };
 
-  const isOverdue = (dueDate, status) => {
+  const isOverdue = (dueDate: string, status: string) => {
     return status === 'pending' && new Date(dueDate) < new Date();
   };
 

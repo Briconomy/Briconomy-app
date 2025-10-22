@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import {
@@ -8,15 +8,20 @@ import {
   paymentsApi,
   maintenanceApi,
   tasksApi,
-  reportsApi,
-  dashboardApi,
-  notificationsApi
+  dashboardApi
 } from '../services/api.ts';
 
+interface TestResult {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+}
+
+type TestResults = Record<string, Record<string, TestResult>>;
+
 function ApiTestPage() {
-  const [results, setResults] = useState({});
-  const [loading, setLoading] = useState({});
-  const [selectedTest, setSelectedTest] = useState('');
+  const [results, setResults] = useState<TestResults>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
 
   const navItems = [
     { path: '/admin', label: 'Dashboard', active: false },
@@ -200,11 +205,15 @@ function ApiTestPage() {
                     >
                       Test
                     </button>
-                    {results[testGroup.id]?.[test.name] && (
-                      <div className={`test-result ${results[testGroup.id][test.name].success ? 'success' : 'error'}`}>
-                        {results[testGroup.id][test.name].success ? 'PASS' : 'FAIL'}
-                      </div>
-                    )}
+                    {(() => {
+                      const testResult = results[testGroup.id]?.[test.name];
+                      if (!testResult) return null;
+                      return (
+                        <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
+                          {testResult.success ? 'PASS' : 'FAIL'}
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

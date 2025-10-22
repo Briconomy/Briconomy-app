@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -9,9 +9,23 @@ import SearchFilter from '../components/SearchFilter.tsx';
 import Icon from '../components/Icon.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
+type RenewalStatus = 'pending' | 'offer_sent' | 'accepted' | 'declined';
+
+type Renewal = {
+  id: string;
+  tenantName: string;
+  unitNumber: string;
+  propertyName: string;
+  currentEndDate: string;
+  daysUntilExpiry: number;
+  status: RenewalStatus;
+  renewalOfferSent: boolean;
+  tenantResponse: 'pending' | 'accepted' | 'declined' | null;
+};
+
 function LeaseRenewalsPage() {
   const { t } = useLanguage();
-  const [renewals, setRenewals] = useState([
+  const [renewals, setRenewals] = useState<Renewal[]>([
     {
       id: '1',
       tenantName: 'John Tenant',
@@ -58,9 +72,8 @@ function LeaseRenewalsPage() {
     }
   ]);
 
-  const [filteredRenewals, setFilteredRenewals] = useState(renewals);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | RenewalStatus>('all');
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
@@ -74,41 +87,35 @@ function LeaseRenewalsPage() {
   const acceptedRenewals = renewals.filter(r => r.tenantResponse === 'accepted').length;
   const expiringSoon = renewals.filter(r => r.daysUntilExpiry <= 30).length;
 
-  const handleSearch = (term) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
-    applyFilters(term, statusFilter);
   };
 
-  const handleFilterChange = (key, value) => {
-    setStatusFilter(value);
-    applyFilters(searchTerm, value);
+  const handleFilterChange = (_key: string, value: string) => {
+    setStatusFilter(value as typeof statusFilter);
   };
 
-  const applyFilters = (search, status) => {
-    let filtered = renewals;
-
-    if (search) {
-      filtered = filtered.filter(renewal =>
-        renewal.tenantName.toLowerCase().includes(search.toLowerCase()) ||
-        renewal.unitNumber.toLowerCase().includes(search.toLowerCase()) ||
-        renewal.propertyName.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (status !== 'all') {
-      filtered = filtered.filter(renewal => renewal.status === status);
-    }
-
-    setFilteredRenewals(filtered);
-  };
-
-  const handleSendRenewalOffer = (renewalId) => {
+  const handleSendRenewalOffer = (renewalId: string) => {
     setRenewals(prev => prev.map(renewal => 
       renewal.id === renewalId 
         ? { ...renewal, status: 'offer_sent', renewalOfferSent: true }
         : renewal
     ));
   };
+
+  const filteredRenewals = useMemo(() => {
+    return renewals.filter((renewal) => {
+      const searchMatch =
+        searchTerm.length === 0 ||
+        renewal.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        renewal.unitNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        renewal.propertyName.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const statusMatch = statusFilter === 'all' || renewal.status === statusFilter;
+
+      return searchMatch && statusMatch;
+    });
+  }, [renewals, searchTerm, statusFilter]);
 
   const renewalColumns = [
     { key: 'tenantName', label: t('lease.tenant') },
@@ -117,12 +124,12 @@ function LeaseRenewalsPage() {
     { 
       key: 'currentEndDate', 
       label: t('renewals.current_end_date'),
-      render: (value) => new Date(value).toLocaleDateString()
+      render: (value: string) => new Date(value).toLocaleDateString()
     },
     { 
       key: 'daysUntilExpiry', 
       label: t('renewals.days_left'),
-      render: (value) => (
+      render: (value: number) => (
         <span className={value <= 30 ? 'urgent' : 'normal'}>
           {value} days
         </span>
@@ -131,7 +138,7 @@ function LeaseRenewalsPage() {
     { 
       key: 'status', 
       label: t('common.status'),
-      render: (value, row) => (
+  render: (value: string, _row: Renewal) => (
         <span className={`status-badge ${
           value === 'accepted' ? 'status-paid' : 
           value === 'offer_sent' ? 'status-pending' : 'status-overdue'
@@ -145,7 +152,7 @@ function LeaseRenewalsPage() {
     {
       key: 'actions',
       label: t('common.actions'),
-      render: (value, row) => (
+      render: (_value, row: Renewal) => (
         <div className="action-buttons">
           {!row.renewalOfferSent && (
             <button type="button"
@@ -205,7 +212,7 @@ function LeaseRenewalsPage() {
           data={filteredRenewals}
           columns={renewalColumns}
           actions={null}
-          onRowClick={(renewal) => {}}
+          onRowClick={() => {}}
         />
 
         <ChartCard title={t('renewals.process')}>
