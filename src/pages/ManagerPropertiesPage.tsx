@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ManagerPropertyCard from '../components/ManagerPropertyCard.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
-import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function ManagerPropertiesPage() {
@@ -17,7 +16,6 @@ function ManagerPropertiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { lowBandwidthMode } = useLowBandwidthMode();
-  const { user } = useAuth();
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },

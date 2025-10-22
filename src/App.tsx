@@ -32,7 +32,6 @@ import LeaseRenewalsPage from './pages/LeaseRenewalsPage.tsx';
 import ManagerPaymentsPage from './pages/ManagerPaymentsPage.tsx';
 import ManagerMaintenancePage from './pages/ManagerMaintenancePage.tsx';
 import ManagerApplicationsPage from './pages/ManagerApplicationsPage.tsx';
-import ManagerInvoicesPage from './pages/ManagerInvoicesPage.tsx';
 import CommunicationPage from './pages/CommunicationPage.tsx';
 import CreateLeasePage from './pages/CreateLeasePage.tsx';
 import DocumentManagementPage from './pages/DocumentManagementPage.tsx';
@@ -97,8 +96,9 @@ function App() {
               <Route path="/manager/leases/:id" element={<ManagerRoute><LeaseDetailsPage /></ManagerRoute>} />
               <Route path="/manager/renewals" element={<ManagerRoute><LeaseRenewalsPage /></ManagerRoute>} />
               <Route path="/manager/payments" element={<ManagerRoute><ManagerPaymentsPage /></ManagerRoute>} />
-              <Route path="/manager/invoices" element={<ManagerRoute><ManagerInvoicesPage /></ManagerRoute>} />
               <Route path="/manager/maintenance" element={<ManagerRoute><ManagerMaintenancePage /></ManagerRoute>} />
+              <Route path="/property/new" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
+              <Route path="/property/:id/maintenance" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id" element={<PropertyDetailsPage />} />
               <Route path="/apply/:id" element={<RentalApplicationPage />} />
               <Route path="/caretaker/schedule" element={<CaretakerRoute><CaretakerSchedulePage /></CaretakerRoute>} />
@@ -106,11 +106,6 @@ function App() {
               <Route path="/caretaker/profile" element={<CaretakerRoute><CaretakerProfilePage /></CaretakerRoute>} />
               <Route path="/caretaker/maintenance" element={<CaretakerRoute><CaretakerMaintenancePage /></CaretakerRoute>} />
               <Route path="/caretaker/reports" element={<CaretakerRoute><CaretakerReportsPage /></CaretakerRoute>} />
-              <Route path="/property/new" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
-              <Route path="/property/:id/edit" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
-              <Route path="/property/:id/units" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
-              <Route path="/property/:id/tenants" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
-              <Route path="/property/:id/maintenance" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/tenant/messages" element={<TenantRoute><CommunicationPage /></TenantRoute>} />
               <Route path="/manager/documents" element={<ManagerRoute><DocumentManagementPage /></ManagerRoute>} />
               <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />
