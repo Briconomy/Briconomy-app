@@ -463,7 +463,7 @@ function CaretakerHistoryPage() {
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(request.id, 'pending')}
                         >
-                          Reopen
+                          Re-open
                         </button>
                       )}
                       <button

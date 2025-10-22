@@ -388,19 +388,18 @@ function CaretakerSchedulePage() {
                         {formatDate(task.dueDate)} at {formatTime(task.dueDate)}
                       </span>
                     </div>
-                    
+
                     {/* Action Buttons */}
-                    <div style={{ 
-                      marginTop: '12px', 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
-                      gap: '8px' 
+                    <div style={{
+                      marginTop: '12px',
+                      display: 'flex',
+                      gap: '8px'
                     }}>
                       {task.status === 'pending' && (
                         <button
                           type="button"
                           className="btn btn-primary"
-                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          style={{ flex: '1' }}
                           onClick={() => handleStatusChange(task.id, 'in_progress')}
                         >
                           Start Work
@@ -410,7 +409,7 @@ function CaretakerSchedulePage() {
                         <button
                           type="button"
                           className="btn btn-success"
-                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          style={{ flex: '1' }}
                           onClick={() => handleStatusChange(task.id, 'completed')}
                         >
                           Complete
@@ -420,7 +419,7 @@ function CaretakerSchedulePage() {
                         <button
                           type="button"
                           className="btn btn-secondary"
-                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                          style={{ flex: '1' }}
                           onClick={() => handleStatusChange(task.id, 'pending')}
                         >
                           Reopen
@@ -429,7 +428,7 @@ function CaretakerSchedulePage() {
                       <button
                         type="button"
                         className="btn btn-danger"
-                        style={{ fontSize: '13px', padding: '6px 12px' }}
+                        style={{ flex: '1' }}
                         onClick={() => handleDeleteRequest(task.id)}
                       >
                         Delete

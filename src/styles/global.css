@@ -649,7 +649,7 @@ body {
     background: rgba(255,255,255,0.1);
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: -10px;
 }
 
 .landing-card-title {
@@ -694,7 +694,8 @@ body {
     border-radius: 12px;
     font-size: 18px;
     font-weight: 600;
-    margin-bottom: 12px;
+        margin-top: 30px;
+    margin-bottom: -10px;
     transition: all 0.3s ease;
     text-align: center;
     box-sizing: border-box;
@@ -934,9 +935,7 @@ body {
     font-family: var(--font-family-primary);
     font-weight: var(--font-semibold);
     cursor: pointer;
-    margin-bottom: var(--space-sm);
     text-decoration: none;
-    display: inline-block;
     text-align: center;
     height: var(--height-button-md);
     transition: all var(--transition-base);
@@ -980,6 +979,11 @@ body {
     margin-bottom: 16px;
 }
 
+.btn.btn-success {
+   width: 200px;
+}
+
+
 .table-header {
     display: flex;
     justify-content: space-between;
@@ -997,8 +1001,11 @@ body {
 
 .list-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: stretch;
     padding: 12px 0;
     border-bottom: 1px solid #f8f9fa;
 }
@@ -1452,6 +1459,8 @@ body {
 
 .btn-sm {
     padding: 8px 16px;
+    width: 160px;
+    margin-bottom: -20px;
     font-size: 14px;
     border-radius: 6px;
     font-weight: 600;
@@ -1472,6 +1481,8 @@ body {
     background: #f8f9fa;
     color: #495057;
     border: 2px solid #e9ecef;
+    width: 179px;
+    margin-bottom: 20px;
 }
 
 .btn-secondary.btn-sm:hover:not(:disabled) {
@@ -1482,6 +1493,9 @@ body {
 .btn-primary.btn-sm {
     background: #162F1B;
     color: white;
+    width: 360px;
+    margin-top: 15px;
+    margin-bottom: -5px;
 }
 
 .btn-primary.btn-sm:hover:not(:disabled) {
