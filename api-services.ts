@@ -389,6 +389,19 @@ function getDeletedCount(result: unknown): number {
   return typeof value === "number" ? value : 0;
 }
 
+// Users API
+export async function getUsers(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const rows = await users.find(normalizeFilters(filters) as Record<string, unknown>).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+}
+
 // Authentication API
 export async function loginUser(email: string, password: string, clientInfo?: Record<string, unknown>) {
   try {
@@ -1052,8 +1065,27 @@ export async function createProperty(propertyData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const properties = getCollection("properties");
-  const result = await properties.insertOne({ ...(propertyData as Record<string, unknown>), createdAt: new Date() });
-    return result;
+    
+    const propertyDoc = {
+      name: propertyData.name,
+      address: propertyData.address,
+      type: propertyData.type || 'apartment',
+      totalUnits: propertyData.totalUnits || 1,
+      occupiedUnits: propertyData.occupiedUnits || 0,
+      managerId: propertyData.managerId ? toId(propertyData.managerId) : null,
+      amenities: propertyData.amenities || [],
+      description: propertyData.description || '',
+      status: propertyData.status || 'active',
+      yearBuilt: propertyData.yearBuilt || null,
+      lastRenovation: propertyData.lastRenovation || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await properties.insertOne(propertyDoc);
+    
+    const insertedProperty = await properties.findOne({ _id: result });
+    return mapDoc(insertedProperty);
   } catch (error) {
     console.error("Error creating property:", error);
     throw error;
@@ -1080,7 +1112,7 @@ export async function getUnits(propertyId?: string) {
   try {
     await connectToMongoDB();
     const units = getCollection("units");
-  const filter = propertyId ? { propertyId: new ObjectId(propertyId) } : {};
+  const filter = propertyId ? { propertyId: toId(propertyId) } : {};
   const rows = await units.find(filter).toArray();
   return mapDocs(rows);
   } catch (error) {
@@ -1106,27 +1138,81 @@ export async function getLeases(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-    const properties = getCollection("properties");
-    const units = getCollection("units");
 
-    type LeaseRow = { _id: ObjectId; propertyId?: ObjectId; unitId?: ObjectId } & Record<string, unknown>;
-  const rows = await leases.find(normalizeFilters(filters) as Record<string, unknown>).toArray() as Array<LeaseRow>;
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tenantId",
+          foreignField: "_id",
+          as: "tenantData"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "propertyData"
+        }
+      },
+      {
+        $lookup: {
+          from: "units",
+          localField: "unitId",
+          foreignField: "_id",
+          as: "unitData"
+        }
+      },
+      {
+        $addFields: {
+          tenant: {
+            $cond: {
+              if: { $gt: [{ $size: "$tenantData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$tenantData._id", 0] } },
+                fullName: { $arrayElemAt: ["$tenantData.fullName", 0] },
+                email: { $arrayElemAt: ["$tenantData.email", 0] },
+                phone: { $arrayElemAt: ["$tenantData.phone", 0] }
+              },
+              else: null
+            }
+          },
+          property: {
+            $cond: {
+              if: { $gt: [{ $size: "$propertyData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$propertyData._id", 0] } },
+                name: { $arrayElemAt: ["$propertyData.name", 0] },
+                address: { $arrayElemAt: ["$propertyData.address", 0] }
+              },
+              else: null
+            }
+          },
+          unit: {
+            $cond: {
+              if: { $gt: [{ $size: "$unitData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$unitData._id", 0] } },
+                unitNumber: { $arrayElemAt: ["$unitData.unitNumber", 0] }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          tenantData: 0,
+          propertyData: 0,
+          unitData: 0
+        }
+      }
+    ];
 
-    const mapped: Array<Record<string, unknown>> = [];
-    for (const row of rows) {
-      const base = mapDoc<LeaseRow>(row)!;
-      const leaseDoc: Record<string, unknown> = { ...base };
-      if (row.propertyId) {
-  const prop = await properties.findOne({ _id: row.propertyId as ObjectId });
-        if (prop) leaseDoc.propertyId = { id: prop._id.toString(), name: prop.name, address: prop.address };
-      }
-      if (row.unitId) {
-  const unit = await units.findOne({ _id: row.unitId as ObjectId });
-        if (unit) leaseDoc.unitId = { id: unit._id.toString(), unitNumber: unit.unitNumber };
-      }
-      mapped.push(leaseDoc);
-    }
-    return mapped;
+    const rows = await leases.aggregate(pipeline).toArray();
+    return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching leases:", error);
     throw error;
@@ -1137,10 +1223,152 @@ export async function createLease(leaseData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-  const result = await leases.insertOne({ ...(leaseData as Record<string, unknown>), createdAt: new Date() });
+    
+    const leaseDoc = { ...leaseData, createdAt: new Date() };
+    
+    if (leaseDoc.tenantId && typeof leaseDoc.tenantId === 'string') {
+      leaseDoc.tenantId = toId(leaseDoc.tenantId);
+    }
+    if (leaseDoc.propertyId && typeof leaseDoc.propertyId === 'string') {
+      leaseDoc.propertyId = toId(leaseDoc.propertyId);
+    }
+    if (leaseDoc.unitId && typeof leaseDoc.unitId === 'string') {
+      leaseDoc.unitId = toId(leaseDoc.unitId);
+    }
+    
+  const result = await leases.insertOne(leaseDoc);
     return result;
   } catch (error) {
     console.error("Error creating lease:", error);
+    throw error;
+  }
+}
+
+// Lease Renewals API
+export async function getRenewals(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "leases",
+          localField: "leaseId",
+          foreignField: "_id",
+          as: "lease"
+        }
+      },
+      { $unwind: { path: "$lease", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "lease.tenantId",
+          foreignField: "_id",
+          as: "tenant"
+        }
+      },
+      { $unwind: { path: "$tenant", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "lease.propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      { $unwind: { path: "$property", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "units",
+          localField: "lease.unitId",
+          foreignField: "_id",
+          as: "unit"
+        }
+      },
+      { $unwind: { path: "$unit", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          id: { $toString: "$_id" },
+          tenantName: "$tenant.fullName",
+          unitNumber: "$unit.unitNumber",
+          propertyName: "$property.name",
+          currentEndDate: "$lease.endDate"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: 1,
+          leaseId: { $toString: "$leaseId" },
+          tenantName: 1,
+          unitNumber: 1,
+          propertyName: 1,
+          currentEndDate: 1,
+          status: 1,
+          renewalOfferSent: 1,
+          tenantResponse: 1,
+          offerSentDate: 1,
+          responseDate: 1,
+          newTerms: 1,
+          createdAt: 1
+        }
+      }
+    ];
+    
+    const rows = await leaseRenewals.aggregate(pipeline).toArray();
+    
+    const today = new Date();
+    return rows.map((row: any) => ({
+      ...row,
+      daysUntilExpiry: row.currentEndDate 
+        ? Math.ceil((new Date(row.currentEndDate as string).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        : null
+    }));
+  } catch (error) {
+    console.error("Error fetching renewals:", error);
+    throw error;
+  }
+}
+
+export async function createRenewal(renewalData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const renewalDoc = {
+      ...renewalData,
+      leaseId: toId(renewalData.leaseId),
+      createdAt: new Date()
+    };
+    
+    const result = await leaseRenewals.insertOne(renewalDoc);
+    return result;
+  } catch (error) {
+    console.error("Error creating renewal:", error);
+    throw error;
+  }
+}
+
+export async function updateRenewal(id: string, updateData: Record<string, unknown>) {
+  try {
+    console.log('updateRenewal called with id:', id, 'data:', updateData);
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const objectId = toId(id);
+    console.log('Converted to ObjectId:', objectId);
+    
+    const result = await leaseRenewals.updateOne(
+      { _id: objectId },
+      { $set: { ...updateData, updatedAt: new Date() } }
+    );
+    
+    console.log('Update result:', result);
+    return result;
+  } catch (error) {
+    console.error("Error updating renewal:", error);
     throw error;
   }
 }
@@ -2993,5 +3221,127 @@ export async function exportReport(reportId: string, format: string) {
       reportId,
       format
     };
+  }
+}
+
+export async function getDocuments(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const documents = getCollection("documents");
+    
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "leases",
+          localField: "leaseId",
+          foreignField: "_id",
+          as: "lease"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      {
+        $lookup: {
+          from: "units",
+          localField: "unitId",
+          foreignField: "_id",
+          as: "unit"
+        }
+      },
+      {
+        $addFields: {
+          id: { $toString: "$_id" },
+          propertyName: { $arrayElemAt: ["$property.name", 0] },
+          unitNumber: { $arrayElemAt: ["$unit.unitNumber", 0] }
+        }
+      },
+      {
+        $project: {
+          lease: 0,
+          property: 0,
+          unit: 0
+        }
+      }
+    ];
+
+    const rows = await documents.aggregate(pipeline).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching documents:", error);
+    throw error;
+  }
+}
+
+export async function createDocument(documentData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const documents = getCollection("documents");
+    
+    const docToInsert: Record<string, unknown> = {
+      ...documentData,
+      createdAt: new Date(),
+      status: documentData.status || 'active'
+    };
+    
+    if (docToInsert.leaseId && typeof docToInsert.leaseId === 'string') {
+      docToInsert.leaseId = toId(docToInsert.leaseId);
+    }
+    if (docToInsert.propertyId && typeof docToInsert.propertyId === 'string') {
+      docToInsert.propertyId = toId(docToInsert.propertyId);
+    }
+    if (docToInsert.unitId && typeof docToInsert.unitId === 'string') {
+      docToInsert.unitId = toId(docToInsert.unitId);
+    }
+    if (docToInsert.tenantId && typeof docToInsert.tenantId === 'string') {
+      docToInsert.tenantId = toId(docToInsert.tenantId);
+    }
+    if (docToInsert.uploadedBy && typeof docToInsert.uploadedBy === 'string') {
+      docToInsert.uploadedBy = toId(docToInsert.uploadedBy);
+    }
+    
+    const result = await documents.insertOne(docToInsert);
+    return result;
+  } catch (error) {
+    console.error("Error creating document:", error);
+    throw error;
+  }
+}
+
+export async function deleteDocument(documentId: string) {
+  try {
+    await connectToMongoDB();
+    const documents = getCollection("documents");
+    
+    const result = await documents.deleteOne({
+      _id: toId(documentId)
+    });
+    
+    return result;
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    throw error;
+  }
+}
+
+export async function getDocumentById(documentId: string) {
+  try {
+    await connectToMongoDB();
+    const documents = getCollection("documents");
+    
+    const doc = await documents.findOne({
+      _id: toId(documentId)
+    });
+    
+    return doc ? mapDoc(doc) : null;
+  } catch (error) {
+    console.error("Error fetching document:", error);
+    throw error;
   }
 }

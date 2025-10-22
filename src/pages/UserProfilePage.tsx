@@ -66,7 +66,7 @@ function UserProfilePage() {
           </div>
           <button 
             type="button"
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm3"
             onClick={() => navigate('/tenant/profile/edit')}
           >
             {t('common.edit_user')}

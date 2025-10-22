@@ -69,6 +69,7 @@ button {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     padding: 0 0 var(--space-md) 0;
+    margin-top: 20px;
     margin-bottom: var(--space-lg);
     width: 100%;
     overflow-x: auto;
@@ -330,6 +331,14 @@ body {
     .app-container.responsive .dashboard-grid {
         grid-template-columns: repeat(4, 1fr);
     }
+}
+
+.view-mode-selector {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 .stat-card {
@@ -649,7 +658,7 @@ body {
     background: rgba(255,255,255,0.1);
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: -10px;
 }
 
 .landing-card-title {
@@ -694,7 +703,8 @@ body {
     border-radius: 12px;
     font-size: 18px;
     font-weight: 600;
-    margin-bottom: 12px;
+        margin-top: 30px;
+    margin-bottom: -10px;
     transition: all 0.3s ease;
     text-align: center;
     box-sizing: border-box;
@@ -934,9 +944,7 @@ body {
     font-family: var(--font-family-primary);
     font-weight: var(--font-semibold);
     cursor: pointer;
-    margin-bottom: var(--space-sm);
     text-decoration: none;
-    display: inline-block;
     text-align: center;
     height: var(--height-button-md);
     transition: all var(--transition-base);
@@ -949,6 +957,7 @@ body {
     background: var(--brand-primary);
     color: white;
 }
+
 
 .btn-primary:hover {
     background: #0f1f12;
@@ -980,6 +989,11 @@ body {
     margin-bottom: 16px;
 }
 
+.btn.btn-success {
+    width: 160px;
+}
+
+
 .table-header {
     display: flex;
     justify-content: space-between;
@@ -995,10 +1009,75 @@ body {
     color: #2c3e50;
 }
 
+.table-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.table-row {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.table-row:hover {
+    border-color: var(--secondary);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .table-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.table-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.table-cell:before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #6c757d;
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
 .list-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: stretch;
     padding: 12px 0;
     border-bottom: 1px solid #f8f9fa;
 }
@@ -1231,6 +1310,7 @@ body {
 
 .filter-select {
     width: 100%;
+    margin-bottom: 20px;
     padding: 12px 16px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
@@ -1452,6 +1532,8 @@ body {
 
 .btn-sm {
     padding: 8px 16px;
+    width: 160px;
+    margin-bottom: -20px;
     font-size: 14px;
     border-radius: 6px;
     font-weight: 600;
@@ -1472,6 +1554,8 @@ body {
     background: #f8f9fa;
     color: #495057;
     border: 2px solid #e9ecef;
+    width: 179px;
+    margin-bottom: -5px;
 }
 
 .btn-secondary.btn-sm:hover:not(:disabled) {
@@ -1479,10 +1563,31 @@ body {
     border-color: #dee2e6;
 }
 
-.btn-primary.btn-sm {
+.btn-primary.btn-sm1 {
     background: #162F1B;
     color: white;
+    width: 355px;
+    margin-top: 15px;
+    margin-bottom: 5px;
 }
+
+.btn-primary.btn-sm2 {
+    background: #162F1B;
+    color: white;
+    width: 325px;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.btn-primary.btn-sm3 {
+    background: #162F1B;
+    color: white;
+    width: 355px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+
 
 .btn-primary.btn-sm:hover:not(:disabled) {
     background: #0f1f12;
@@ -2797,4 +2902,9 @@ body {
 
 .caretaker-edit-btn {
     margin-top: var(--space-sm);
+    width: 300px;
+}
+
+.btn.btn-primary.btn-sm{
+    margin-bottom: 1px;
 }

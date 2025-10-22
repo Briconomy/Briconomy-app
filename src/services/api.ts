@@ -18,13 +18,18 @@ const API_BASE_URL = resolveApiBase();
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
   };
 
-  const config = { ...defaultOptions, ...options };
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...(options.headers || {}),
+    },
+  };
+  
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
   (config as unknown as { signal?: AbortSignal }).signal = controller.signal;
@@ -88,6 +93,47 @@ export const leasesApi = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+};
+
+export const renewalsApi = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    const endpoint = params ? `/api/renewals?${params}` : '/api/renewals';
+    return apiRequest(endpoint);
+  },
+  create: (data: Record<string, unknown>) => apiRequest('/api/renewals', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/renewals/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  sendOffer: (id: string) => apiRequest(`/api/renewals/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      status: 'offer_sent',
+      renewalOfferSent: true,
+      tenantResponse: 'pending',
+      offerSentDate: new Date().toISOString()
+    }),
+  }),
+};
+
+export const documentsApi = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    const endpoint = params ? `/api/documents?${params}` : '/api/documents';
+    return apiRequest(endpoint);
+  },
+  upload: (data: Record<string, unknown>) => apiRequest('/api/documents', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  delete: (id: string) => apiRequest(`/api/documents/${id}`, {
+    method: 'DELETE',
+  }),
+  getById: (id: string) => apiRequest(`/api/documents/${id}`),
 };
 
 export const paymentsApi = {
@@ -268,30 +314,6 @@ export const notificationsApi = {
   getAll: (userId: string) => apiRequest(`/api/notifications/${userId}`),
   create: (data: Record<string, unknown>) => apiRequest('/api/notifications', {
     method: 'POST',
-    body: JSON.stringify(data),
-  }),
-};
-
-export const terminationsApi = {
-  getAll: (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/api/terminations?${params}` : '/api/terminations';
-    return apiRequest(endpoint);
-  },
-  getById: (id: string) => apiRequest(`/api/terminations/${id}`),
-  create: (data: Record<string, unknown>) => apiRequest('/api/terminations', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  approve: (id: string) => apiRequest(`/api/terminations/${id}/approve`, {
-    method: 'PUT',
-  }),
-  reject: (id: string, reason: string) => apiRequest(`/api/terminations/${id}/reject`, {
-    method: 'PUT',
-    body: JSON.stringify({ reason }),
-  }),
-  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/terminations/${id}`, {
-    method: 'PUT',
     body: JSON.stringify(data),
   }),
 };

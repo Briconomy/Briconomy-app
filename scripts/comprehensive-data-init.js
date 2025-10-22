@@ -1,6 +1,5 @@
 db = db.getSiblingDB('briconomy');
 
-// Clear existing data
 db.users.drop();
 db.properties.drop();
 db.units.drop();
@@ -12,6 +11,8 @@ db.reports.drop();
 db.notifications.drop();
 db.settings.drop();
 db.audit_logs.drop();
+db.documents.drop();
+db.lease_renewals.drop();
 
 // Create users with proper ObjectIds
 const users = db.users.insertMany([
@@ -146,7 +147,7 @@ const properties = db.properties.insertMany([
     type: 'apartment',
     totalUnits: 24,
     occupiedUnits: 21,
-    managerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+    managerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     amenities: ['pool', 'gym', 'parking', 'security', 'laundry', 'elevator'],
     description: 'Modern apartment complex in the heart of Cape Town with stunning city views',
     yearBuilt: 2018,
@@ -161,7 +162,7 @@ const properties = db.properties.insertMany([
     type: 'complex',
     totalUnits: 18,
     occupiedUnits: 16,
-    managerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a3"],
+    managerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
     amenities: ['parking', 'garden', 'playground', 'bbq_area', 'security'],
     description: 'Family-friendly complex with beautiful gardens and recreational facilities',
     yearBuilt: 2015,
@@ -176,7 +177,7 @@ const properties = db.properties.insertMany([
     type: 'apartment',
     totalUnits: 32,
     occupiedUnits: 28,
-    managerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+    managerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     amenities: ['pool', 'gym', 'parking', 'ocean_view', 'concierge', 'spa'],
     description: 'Luxury beachfront apartments with panoramic ocean views',
     yearBuilt: 2020,
@@ -192,13 +193,13 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
     unitNumber: '2A',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     rent: 12500,
     bedrooms: 2,
     bathrooms: 1,
     sqft: 850,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     features: ['balcony', 'built_in_cupboards', 'tiled_flooring'],
     floor: 2,
     createdAt: new Date(),
@@ -207,7 +208,7 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c2"),
     unitNumber: '1B',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     rent: 10500,
     bedrooms: 1,
     bathrooms: 1,
@@ -222,13 +223,13 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
     unitNumber: '3C',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     rent: 15000,
     bedrooms: 3,
     bathrooms: 2,
     sqft: 1200,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     features: ['balcony', 'ocean_view', 'built_in_cupboards', 'air_conditioning'],
     floor: 3,
     createdAt: new Date(),
@@ -237,7 +238,7 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c4"),
     unitNumber: '4D',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     rent: 8500,
     bedrooms: 1,
     bathrooms: 1,
@@ -254,13 +255,13 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
     unitNumber: 'A1',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     rent: 9500,
     bedrooms: 2,
     bathrooms: 1,
     sqft: 750,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
     features: ['garden_access', 'built_in_cupboards', 'parking'],
     floor: 1,
     createdAt: new Date(),
@@ -269,13 +270,13 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
     unitNumber: 'B2',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     rent: 11500,
     bedrooms: 2,
     bathrooms: 2,
     sqft: 950,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
     features: ['balcony', 'built_in_cupboards', 'air_conditioning', 'parking'],
     floor: 2,
     createdAt: new Date(),
@@ -285,13 +286,13 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
     unitNumber: 'P1',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
     rent: 18000,
     bedrooms: 2,
     bathrooms: 2,
     sqft: 1100,
     status: 'occupied',
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
     features: ['penthouse', 'ocean_view', 'balcony', 'air_conditioning', 'concierge_service'],
     floor: 15,
     createdAt: new Date(),
@@ -300,7 +301,7 @@ const units = db.units.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c8"),
     unitNumber: '8A',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
     rent: 13500,
     bedrooms: 1,
     bathrooms: 1,
@@ -318,9 +319,9 @@ const units = db.units.insertMany([
 const leases = db.leases.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     startDate: new Date('2024-01-01'),
     endDate: new Date('2024-12-31'),
     monthlyRent: 12500,
@@ -333,9 +334,9 @@ const leases = db.leases.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c3"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     startDate: new Date('2024-03-01'),
     endDate: new Date('2025-02-28'),
     monthlyRent: 15000,
@@ -348,9 +349,9 @@ const leases = db.leases.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c5"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     startDate: new Date('2024-06-01'),
     endDate: new Date('2025-05-31'),
     monthlyRent: 9500,
@@ -363,9 +364,9 @@ const leases = db.leases.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c6"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     startDate: new Date('2024-04-01'),
     endDate: new Date('2025-03-31'),
     monthlyRent: 11500,
@@ -378,9 +379,9 @@ const leases = db.leases.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c7"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
     startDate: new Date('2024-07-01'),
     endDate: new Date('2025-06-30'),
     monthlyRent: 18000,
@@ -393,12 +394,101 @@ const leases = db.leases.insertMany([
   }
 ]);
 
+// Create lease renewals - using the actual lease IDs
+const leaseRenewals = db.lease_renewals.insertMany([
+  // Emma Thompson's lease - Pending
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a1"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
+    status: 'pending',
+    renewalOfferSent: false,
+    tenantResponse: null,
+    offerSentDate: null,
+    responseDate: null,
+    newTerms: {
+      duration: 12,
+      monthlyRent: 12000,
+      startDate: new Date('2025-06-01')
+    },
+    createdAt: new Date('2024-09-15'),
+    updatedAt: new Date('2024-09-15')
+  },
+  // Lisa Anderson's lease - Pending
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a2"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
+    status: 'pending',
+    renewalOfferSent: false,
+    tenantResponse: null,
+    offerSentDate: null,
+    responseDate: null,
+    newTerms: {
+      duration: 12,
+      monthlyRent: 15000,
+      startDate: new Date('2025-11-01')
+    },
+    createdAt: new Date('2024-09-20'),
+    updatedAt: new Date('2024-09-20')
+  },
+  // Mike Chen's lease - Offer Sent
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a3"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
+    status: 'offer_sent',
+    renewalOfferSent: true,
+    tenantResponse: 'pending',
+    offerSentDate: new Date('2024-10-10'),
+    responseDate: null,
+    newTerms: {
+      duration: 12,
+      monthlyRent: 11000,
+      startDate: new Date('2025-07-01')
+    },
+    createdAt: new Date('2024-10-01'),
+    updatedAt: new Date('2024-10-10')
+  },
+  // Sarah Williams's lease - Accepted
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a4"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
+    status: 'accepted',
+    renewalOfferSent: true,
+    tenantResponse: 'accepted',
+    offerSentDate: new Date('2024-09-15'),
+    responseDate: new Date('2024-09-20'),
+    newTerms: {
+      duration: 12,
+      monthlyRent: 9500,
+      startDate: new Date('2025-05-01')
+    },
+    createdAt: new Date('2024-09-01'),
+    updatedAt: new Date('2024-09-20')
+  },
+  // David Martinez's lease - Declined
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a5"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
+    status: 'declined',
+    renewalOfferSent: true,
+    tenantResponse: 'declined',
+    offerSentDate: new Date('2024-10-01'),
+    responseDate: new Date('2024-10-05'),
+    newTerms: {
+      duration: 12,
+      monthlyRent: 13500,
+      startDate: new Date('2025-09-01')
+    },
+    createdAt: new Date('2024-09-12'),
+    updatedAt: new Date('2024-10-05')
+  }
+]);
+
 // Create payments with proper references
 const payments = db.payments.insertMany([
   // Emma Thompson payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e1"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
     amount: 12500,
     paymentDate: new Date('2024-08-01'),
@@ -412,7 +502,7 @@ const payments = db.payments.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e2"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
     amount: 12500,
     paymentDate: null,
@@ -427,7 +517,7 @@ const payments = db.payments.insertMany([
   // James Smith payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e3"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
     amount: 15000,
     paymentDate: new Date('2024-08-15'),
@@ -441,7 +531,7 @@ const payments = db.payments.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e4"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
     amount: 15000,
     paymentDate: null,
@@ -456,7 +546,7 @@ const payments = db.payments.insertMany([
   // Lisa Anderson payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e5"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
     amount: 9500,
     paymentDate: new Date('2024-08-05'),
@@ -471,7 +561,7 @@ const payments = db.payments.insertMany([
   // Robert Brown payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e6"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"],
     amount: 11500,
     paymentDate: new Date('2024-08-10'),
@@ -486,7 +576,7 @@ const payments = db.payments.insertMany([
   // Maria Garcia payments
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e7"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"],
     amount: 18000,
     paymentDate: new Date('2024-08-01'),
@@ -500,7 +590,7 @@ const payments = db.payments.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e8"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
     leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"],
     amount: 18000,
     paymentDate: null,
@@ -518,14 +608,14 @@ const payments = db.payments.insertMany([
 const maintenanceRequests = db.maintenance_requests.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f1"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     title: 'AC repair',
     description: 'Air conditioning not working properly, making strange noises and not cooling effectively',
     priority: 'high',
     status: 'in_progress',
-    assignedTo: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
+    assignedTo: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
     estimatedCost: 1500,
     actualCost: null,
     completedDate: null,
@@ -535,9 +625,9 @@ const maintenanceRequests = db.maintenance_requests.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f2"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c3"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     title: 'Leaky faucet',
     description: 'Kitchen sink faucet is dripping continuously, wasting water and increasing utility bills',
     priority: 'medium',
@@ -552,14 +642,14 @@ const maintenanceRequests = db.maintenance_requests.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f3"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c5"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     title: 'Broken window',
     description: 'Bedroom window lock is broken, window cannot be closed properly',
     priority: 'high',
     status: 'completed',
-    assignedTo: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a5"],
+    assignedTo: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
     estimatedCost: 1200,
     actualCost: 1150,
     completedDate: new Date(Date.now() - 7*24*60*60*1000),
@@ -569,14 +659,14 @@ const maintenanceRequests = db.maintenance_requests.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f4"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c6"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     title: 'Electrical issue',
     description: 'Light switch in living room is not working, seems to be a wiring problem',
     priority: 'high',
     status: 'in_progress',
-    assignedTo: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
+    assignedTo: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
     estimatedCost: 2000,
     actualCost: null,
     completedDate: null,
@@ -586,9 +676,9 @@ const maintenanceRequests = db.maintenance_requests.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f5"),
-    tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"],
-    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c7"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
     title: 'Dishwasher not draining',
     description: 'Dishwasher is not draining properly, water pooling at bottom',
     priority: 'medium',
@@ -607,8 +697,8 @@ const maintenanceRequests = db.maintenance_requests.insertMany([
 const caretakerTasks = db.caretaker_tasks.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e701"),
-    caretakerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     title: 'Weekly property inspection',
     description: 'Routine inspection of common areas and exterior, check for maintenance issues',
     dueDate: new Date(Date.now() + 7*24*60*60*1000),
@@ -623,8 +713,8 @@ const caretakerTasks = db.caretaker_tasks.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e702"),
-    caretakerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a5"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     title: 'Garden maintenance',
     description: 'Trim hedges, water plants, and general landscaping of common areas',
     dueDate: new Date(Date.now() + 3*24*60*60*1000),
@@ -639,8 +729,8 @@ const caretakerTasks = db.caretaker_tasks.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e703"),
-    caretakerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
     title: 'Pool cleaning',
     description: 'Weekly pool maintenance and chemical balancing',
     dueDate: new Date(Date.now() + 2*24*60*60*1000),
@@ -655,8 +745,8 @@ const caretakerTasks = db.caretaker_tasks.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e704"),
-    caretakerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a5"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     title: 'Security system check',
     description: 'Monthly security system inspection and testing',
     dueDate: new Date(Date.now() + 5*24*60*60*1000),
@@ -671,8 +761,8 @@ const caretakerTasks = db.caretaker_tasks.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e705"),
-    caretakerId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     title: 'Playground inspection',
     description: 'Safety inspection of playground equipment',
     dueDate: new Date(Date.now() + 10*24*60*60*1000),
@@ -693,7 +783,7 @@ const reports = db.reports.insertMany([
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e711"),
     type: 'financial',
     period: 'monthly',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     data: {
       totalRevenue: 180000,
       totalExpenses: 45000,
@@ -706,7 +796,7 @@ const reports = db.reports.insertMany([
       insurance: 8000,
       propertyTaxes: 10000
     },
-    generatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -714,7 +804,7 @@ const reports = db.reports.insertMany([
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e712"),
     type: 'maintenance',
     period: 'weekly',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     data: {
       completedTasks: 12,
       pendingTasks: 5,
@@ -723,7 +813,7 @@ const reports = db.reports.insertMany([
       totalCost: 18500,
       avgResolutionTime: 3.2
     },
-    generatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a3"],
+    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -731,7 +821,7 @@ const reports = db.reports.insertMany([
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e713"),
     type: 'occupancy',
     period: 'monthly',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
     data: {
       totalUnits: 32,
       occupiedUnits: 28,
@@ -740,7 +830,7 @@ const reports = db.reports.insertMany([
       turnoverRate: 5.2,
       avgLeaseDuration: 18.5
     },
-    generatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -748,7 +838,7 @@ const reports = db.reports.insertMany([
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e714"),
     type: 'performance',
     period: 'monthly',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     data: {
       tenantSatisfaction: 4.2,
       maintenanceResponseTime: 2.1,
@@ -756,7 +846,7 @@ const reports = db.reports.insertMany([
       vacancyRate: 12.5,
       renewalRate: 78
     },
-    generatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -764,7 +854,7 @@ const reports = db.reports.insertMany([
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e715"),
     type: 'financial',
     period: 'quarterly',
-    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
     data: {
       totalRevenue: 540000,
       totalExpenses: 135000,
@@ -777,7 +867,7 @@ const reports = db.reports.insertMany([
       insurance: 24000,
       propertyTaxes: 30000
     },
-    generatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a3"],
+    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
     createdAt: new Date(),
     updatedAt: new Date()
   }
@@ -787,7 +877,7 @@ const reports = db.reports.insertMany([
 const _notifications = db.notifications.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e721"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     title: 'Rent Due Reminder',
     message: 'Your rent payment for September 2024 is due in 5 days. Please ensure payment is made on time to avoid late fees.',
     type: 'payment_reminder',
@@ -800,7 +890,7 @@ const _notifications = db.notifications.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e722"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     title: 'Maintenance Request Update',
     message: 'Your AC repair request has been assigned to David Mokoena. He will contact you within 24 hours.',
     type: 'maintenance_update',
@@ -813,7 +903,7 @@ const _notifications = db.notifications.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e723"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     title: 'Lease Renewal Notice',
     message: 'Your lease expires in 60 days. Please contact management to discuss renewal options.',
     type: 'lease_renewal',
@@ -826,7 +916,7 @@ const _notifications = db.notifications.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e724"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
     title: 'Payment Confirmation',
     message: 'Your rent payment for August 2024 has been successfully processed. Thank you for your payment.',
     type: 'payment_confirmation',
@@ -839,7 +929,7 @@ const _notifications = db.notifications.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e725"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
     title: 'New Maintenance Request',
     message: 'A new high-priority maintenance request has been assigned to you. Please review and take action.',
     type: 'task_assignment',
@@ -852,7 +942,7 @@ const _notifications = db.notifications.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e726"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     title: 'Monthly Report Available',
     message: 'The monthly financial report for Blue Hills Apartments is now available for review.',
     type: 'report_available',
@@ -873,7 +963,7 @@ const _settings = db.settings.insertMany([
     value: '1',
     description: 'Day of month when rent payments are due',
     category: 'payment',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -882,7 +972,7 @@ const _settings = db.settings.insertMany([
     value: '10',
     description: 'Late fee percentage for overdue rent payments',
     category: 'payment',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -891,7 +981,7 @@ const _settings = db.settings.insertMany([
     value: 'true',
     description: 'Enable email notifications for users',
     category: 'notification',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -900,7 +990,7 @@ const _settings = db.settings.insertMany([
     value: '24',
     description: 'Expected response time for maintenance requests (hours)',
     category: 'maintenance',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -909,7 +999,7 @@ const _settings = db.settings.insertMany([
     value: '1.0.0',
     description: 'Current application version',
     category: 'system',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -918,7 +1008,7 @@ const _settings = db.settings.insertMany([
     value: '24',
     description: 'Maximum lease duration in months',
     category: 'lease',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -927,7 +1017,7 @@ const _settings = db.settings.insertMany([
     value: '2',
     description: 'Security deposit as multiplier of monthly rent',
     category: 'payment',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   },
   {
@@ -936,7 +1026,7 @@ const _settings = db.settings.insertMany([
     value: '+27871234567',
     description: 'Emergency contact number for all properties',
     category: 'emergency',
-    updatedBy: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a1"],
+    updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   }
 ]);
@@ -945,7 +1035,7 @@ const _settings = db.settings.insertMany([
 const _auditLogs = db.audit_logs.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e741"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     action: 'user_login',
     resource: 'authentication',
     details: {
@@ -957,7 +1047,7 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e742"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     action: 'payment_created',
     resource: 'payments',
     details: {
@@ -970,7 +1060,7 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e743"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     action: 'maintenance_request_created',
     resource: 'maintenance_requests',
     details: {
@@ -982,7 +1072,7 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e744"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
     action: 'task_assigned',
     resource: 'caretaker_tasks',
     details: {
@@ -994,7 +1084,7 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e745"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     action: 'report_generated',
     resource: 'reports',
     details: {
@@ -1007,7 +1097,7 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e746"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     action: 'profile_updated',
     resource: 'users',
     details: {
@@ -1019,7 +1109,7 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e747"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a5"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
     action: 'task_completed',
     resource: 'caretaker_tasks',
     details: {
@@ -1031,13 +1121,13 @@ const _auditLogs = db.audit_logs.insertMany([
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e748"),
-    userId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a3"],
+    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
     action: 'lease_created',
     resource: 'leases',
     details: {
       leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
-      tenantId: users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"],
-      unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6c5"],
+      tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+      unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
       monthlyRent: 9500
     },
     timestamp: new Date()
@@ -1053,11 +1143,11 @@ db.users.updateMany(
         'profile.leaseId': {
           $switch: {
             branches: [
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a6"]] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"] },
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a7"]] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"] },
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a8"]] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"] },
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a9"]] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"] },
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6aa"]] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"] }
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a6")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"] },
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a7")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"] },
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a8")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"] },
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a9")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"] },
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6aa")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"] }
             ],
             default: null
           }
@@ -1077,15 +1167,15 @@ db.users.updateMany(
           $switch: {
             branches: [
               { 
-                case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a2"]] }, 
+                case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a2")] }, 
                 then: [
-                  properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
-                  properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"]
+                  ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+                  ObjectId("67b2a1e0c9e4b8a3d4f5e6b3")
                 ] 
               },
               { 
-                case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a3"]] }, 
-                then: [properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"]] 
+                case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a3")] }, 
+                then: [ObjectId("67b2a1e0c9e4b8a3d4f5e6b2")] 
               }
             ],
             default: []
@@ -1105,8 +1195,8 @@ db.users.updateMany(
         'profile.assignedProperty': {
           $switch: {
             branches: [
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a4"]] }, then: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"] },
-              { case: { $eq: ['$_id', users.insertedIds["67b2a1e0c9e4b8a3d4f5e6a5"]] }, then: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"] }
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a4")] }, then: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1") },
+              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a5")] }, then: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2") }
             ],
             default: null
           }
@@ -1115,6 +1205,142 @@ db.users.updateMany(
     }
   ]
 );
+
+db.documents.insertMany([
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f1"),
+    name: 'Lease Agreement - Emma Thompson',
+    description: 'Signed lease agreement for Unit 1A',
+    type: 'lease',
+    category: 'legal',
+    fileName: 'lease_emma_thompson.pdf',
+    fileSize: 2621440,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2024-01-15'),
+    status: 'signed',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f2"),
+    name: 'Property Inspection Report - Blue Hills Apartments',
+    description: 'Annual property inspection documentation',
+    type: 'inspection',
+    category: 'maintenance',
+    fileName: 'inspection_blue_hills_2024.pdf',
+    fileSize: 1258291,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+    uploadedByName: 'David Miller',
+    uploadDate: new Date('2024-08-15'),
+    status: 'approved',
+    createdAt: new Date('2024-08-15'),
+    updatedAt: new Date('2024-08-15')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f3"),
+    name: 'Property Insurance Policy - Blue Hills Apartments',
+    description: 'Annual insurance policy documentation',
+    type: 'insurance',
+    category: 'legal',
+    fileName: 'insurance_blue_hills_2024.pdf',
+    fileSize: 4404019,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2024-01-15'),
+    status: 'active',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f4"),
+    name: 'Lease Agreement - James Smith',
+    description: 'Signed lease agreement for Unit 2A',
+    type: 'lease',
+    category: 'legal',
+    fileName: 'lease_james_smith.pdf',
+    fileSize: 2516582,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2023-06-01'),
+    status: 'signed',
+    createdAt: new Date('2023-06-01'),
+    updatedAt: new Date('2023-06-01')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f5"),
+    name: 'Lease Agreement - Lisa Anderson',
+    description: 'Signed lease agreement for Unit 1B',
+    type: 'lease',
+    category: 'legal',
+    fileName: 'lease_lisa_anderson.pdf',
+    fileSize: 2453821,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2024-03-15'),
+    status: 'signed',
+    createdAt: new Date('2024-03-15'),
+    updatedAt: new Date('2024-03-15')
+  }
+]);
+
+db.properties.createIndex({ managerId: 1 });
+db.properties.createIndex({ status: 1 });
+db.properties.createIndex({ type: 1 });
+db.properties.createIndex({ name: "text", address: "text" });
+
+db.units.createIndex({ propertyId: 1 });
+db.units.createIndex({ status: 1 });
+
+db.leases.createIndex({ tenantId: 1 });
+db.leases.createIndex({ propertyId: 1 });
+db.leases.createIndex({ unitId: 1 });
+db.leases.createIndex({ status: 1 });
+
+db.payments.createIndex({ tenantId: 1 });
+db.payments.createIndex({ leaseId: 1 });
+db.payments.createIndex({ status: 1 });
+db.payments.createIndex({ dueDate: 1 });
+
+db.maintenance_requests.createIndex({ tenantId: 1 });
+db.maintenance_requests.createIndex({ propertyId: 1 });
+db.maintenance_requests.createIndex({ unitId: 1 });
+db.maintenance_requests.createIndex({ status: 1 });
+
+db.documents.createIndex({ leaseId: 1 });
+db.documents.createIndex({ propertyId: 1 });
+db.documents.createIndex({ tenantId: 1 });
+
+db.notifications.createIndex({ userId: 1 });
+db.notifications.createIndex({ read: 1 });
+
+db.audit_logs.createIndex({ userId: 1 });
+db.audit_logs.createIndex({ action: 1 });
+db.audit_logs.createIndex({ timestamp: -1 });
 
 print('Comprehensive database initialization completed successfully!');
 print('Collections created:');
@@ -1129,6 +1355,7 @@ print('   - reports (' + db.reports.countDocuments({}) + ' documents)');
 print('   - notifications (' + db.notifications.countDocuments({}) + ' documents)');
 print('   - settings (' + db.settings.countDocuments({}) + ' documents)');
 print('   - audit_logs (' + db.audit_logs.countDocuments({}) + ' documents)');
+print('   - documents (' + db.documents.countDocuments({}) + ' documents)');
 print('');
 print('Data relationships established:');
 print('   - Each tenant has a lease and assigned unit');
@@ -1139,5 +1366,6 @@ print('   - Maintenance requests are linked to tenants, units, and properties');
 print('   - Caretaker tasks are assigned to caretakers and properties');
 print('   - All notifications are linked to appropriate users');
 print('   - Audit logs track all user actions');
+print('   - Documents are linked to leases, properties, and tenants');
 print('');
 print('Database is ready for consistent development!');

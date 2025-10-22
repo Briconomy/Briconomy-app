@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState, ChangeEvent } from 'react';
+=======
+import React, { useState, useEffect } from 'react';
+>>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -6,6 +10,7 @@ import ActionCard from '../components/ActionCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Icon from '../components/Icon.tsx';
+import { documentsApi } from '../services/api.ts';
 
 type ManagedDocument = {
   id: string;
@@ -21,6 +26,7 @@ type ManagedDocument = {
 };
 
 function DocumentManagementPage() {
+<<<<<<< HEAD
   const [documents, setDocuments] = useState<ManagedDocument[]>([
     {
       id: '1',
@@ -84,9 +90,41 @@ function DocumentManagementPage() {
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [filteredDocuments, setFilteredDocuments] = useState<ManagedDocument[]>(documents);
+=======
+  const [documents, setDocuments] = useState([]);
+  const [_loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [lastUploadedFile, setLastUploadedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
+>>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await documentsApi.getAll();
+      setDocuments(data);
+      setFilteredDocuments(data);
+    } catch (err) {
+      console.error('Failed to load documents:', err);
+      setError('Failed to load documents. Please try again.');
+      setDocuments([]);
+      setFilteredDocuments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const navItems = [
     { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
@@ -99,8 +137,7 @@ function DocumentManagementPage() {
   const signedDocuments = documents.filter(d => d.status === 'signed').length;
   const pendingDocuments = documents.filter(d => d.status === 'pending').length;
   const totalSize = documents.reduce((sum, doc) => {
-    const size = parseFloat(doc.fileSize);
-    return sum + (doc.fileSize.includes('MB') ? size : size / 1024);
+    return sum + (doc.fileSize / (1024 * 1024));
   }, 0);
 
   const handleSearch = (term: string) => {
@@ -123,9 +160,9 @@ function DocumentManagementPage() {
 
     if (search) {
       filtered = filtered.filter(doc =>
-        doc.name.toLowerCase().includes(search.toLowerCase()) ||
-        doc.uploadedBy.toLowerCase().includes(search.toLowerCase()) ||
-        doc.property.toLowerCase().includes(search.toLowerCase())
+        doc.name?.toLowerCase().includes(search.toLowerCase()) ||
+        doc.uploadedByName?.toLowerCase().includes(search.toLowerCase()) ||
+        doc.propertyName?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -141,16 +178,36 @@ function DocumentManagementPage() {
   };
 
   const documentColumns = [
-    { key: 'name', label: 'Document' },
+    { 
+      key: 'name', 
+      label: 'Document',
+      render: (value) => (
+        <div style={{
+          maxWidth: '150px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
+          {value}
+        </div>
+      )
+    },
     { key: 'type', label: 'Type' },
     { key: 'category', label: 'Category' },
-    { key: 'uploadedBy', label: 'Uploaded By' },
+    { 
+      key: 'uploadedByName', 
+      label: 'Uploaded By'
+    },
     { 
       key: 'uploadDate', 
       label: 'Date',
       render: (value: string) => new Date(value).toLocaleDateString()
     },
-    { key: 'fileSize', label: 'Size' },
+    { 
+      key: 'fileSize', 
+      label: 'Size',
+      render: (value) => `${(value / (1024 * 1024)).toFixed(1)} MB`
+    },
     { 
       key: 'status', 
       label: 'Status',
@@ -193,22 +250,54 @@ function DocumentManagementPage() {
     }
   ];
 
+<<<<<<< HEAD
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+=======
+  const handleFileSelect = (e) => {
+>>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
     const file = e.target.files[0];
     if (file) {
-      const newDocument = {
-        id: Date.now().toString(),
-        name: file.name,
+      setSelectedFile(file);
+    }
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!selectedFile) return;
+    
+    try {
+      setError(null);
+      setUploading(true);
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const documentData = {
+        name: selectedFile.name,
         type: 'other',
         category: 'general',
-        uploadedBy: 'Current User',
-        uploadDate: new Date().toISOString().split('T')[0],
-        fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size,
+        mimeType: selectedFile.type,
+        uploadedBy: userData._id,
+        uploadedByName: userData.fullName || userData.name || 'Current User',
         status: 'pending',
-        property: 'Blue Hills Apartments'
+        uploadDate: new Date().toISOString()
       };
-      setDocuments(prev => [newDocument, ...prev]);
+      
+      await documentsApi.upload(documentData);
       setShowUploadForm(false);
+      setUploadSuccess(true);
+      setLastUploadedFile(selectedFile.name);
+      setSelectedFile(null);
+      await loadDocuments();
+      
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setLastUploadedFile(null);
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to upload document:', err);
+      setError('Failed to upload document. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -221,6 +310,34 @@ function DocumentManagementPage() {
           <div className="page-title">Document Management</div>
           <div className="page-subtitle">Store and manage property documents</div>
         </div>
+
+        {error && (
+          <div style={{ 
+            padding: '16px', 
+            margin: '16px 0', 
+            background: '#fee', 
+            border: '1px solid #fcc',
+            borderRadius: '8px',
+            color: '#c33'
+          }}>
+            {error}
+          </div>
+        )}
+
+        {uploadSuccess && (
+          <div style={{ 
+            padding: '16px', 
+            margin: '16px 0', 
+            background: '#efe', 
+            border: '1px solid #cfc',
+            borderRadius: '8px',
+            color: '#3c3'
+          }}>
+            {lastUploadedFile 
+              ? `"${lastUploadedFile}" uploaded successfully!` 
+              : 'Document uploaded successfully!'}
+          </div>
+        )}
         
         <div className="dashboard-grid">
           <StatCard value={totalDocuments} label="Total Docs" />
@@ -246,39 +363,31 @@ function DocumentManagementPage() {
           columns={documentColumns}
           actions={
             <button type="button"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary"
               onClick={() => setShowUploadForm(true)}
+              style={{ 
+                padding: '6px 12px', 
+                fontSize: '14px',
+                minWidth: 'auto',
+                whiteSpace: 'nowrap'
+              }}
             >
               Upload
             </button>
           }
+<<<<<<< HEAD
           onRowClick={() => {}}
+=======
+          onRowClick={(_doc) => {}}
+>>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
         />
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => {}}
+            onClick={() => setShowUploadForm(true)}
             icon={<Icon name="uploadDoc" alt="Upload Documents" />}
             title="Upload Documents"
-            description="Add new files"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon={<Icon name="template" alt="Templates" />}
-            title="Templates"
-            description="Document templates"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon={<Icon name="signDocs" alt="Sign Documents" />}
-            title="Sign Documents"
-            description="E-signature portal"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon={<Icon name="archive" alt="Archive" />}
-            title="Archive"
-            description="Document archive"
+            description="Upload lease agreements and tenant documents"
           />
         </div>
       </div>
@@ -291,29 +400,79 @@ function DocumentManagementPage() {
               <button type="button" className="close-btn" onClick={() => setShowUploadForm(false)}>×</button>
             </div>
             <div className="modal-body">
-              <div className="upload-area">
-                <input
-                  type="file"
-                  id="file-upload"
-                  onChange={handleFileUpload}
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="file-upload" className="upload-label">
-                  <div className="upload-icon">DOC</div>
-                  <p>Click to upload or drag and drop</p>
-                  <p className="upload-subtitle">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
-                </label>
-              </div>
-              
-              <div className="form-actions">
-                <button type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowUploadForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
+              {uploading ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '18px', marginBottom: '16px' }}>Uploading...</div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    {selectedFile ? `Uploading "${selectedFile.name}"` : 'Please wait while we process your file'}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="upload-area">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      onChange={handleFileSelect}
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="file-upload" className="upload-label">
+                      <div className="upload-icon">DOC</div>
+                      {selectedFile ? (
+                        <>
+                          <div style={{ 
+                            width: '100%',
+                            maxWidth: '280px',
+                            margin: '0 auto'
+                          }}>
+                            <p style={{ 
+                              fontWeight: 'bold', 
+                              color: '#2ecc71',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              width: '100%',
+                              margin: '8px 0'
+                            }}>
+                              Selected: {selectedFile.name}
+                            </p>
+                            <p className="upload-subtitle" style={{ margin: '4px 0' }}>
+                              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB - Click to change file
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <p>Click to upload or drag and drop</p>
+                          <p className="upload-subtitle">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                  
+                  <div className="form-actions">
+                    {selectedFile && (
+                      <button type="button"
+                        className="btn btn-primary"
+                        onClick={handleConfirmUpload}
+                        style={{ marginRight: '8px' }}
+                      >
+                        Confirm Upload
+                      </button>
+                    )}
+                    <button type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setShowUploadForm(false);
+                        setSelectedFile(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

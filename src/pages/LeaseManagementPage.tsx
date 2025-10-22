@@ -55,9 +55,16 @@ function LeaseManagementPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(lease =>
+<<<<<<< HEAD
         lease.propertyId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lease.unitId?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lease.status?.toLowerCase().includes(searchTerm.toLowerCase())
+=======
+        (lease.property?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lease.unit?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lease.tenant?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lease.status?.toLowerCase().includes(searchTerm.toLowerCase()))
+>>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
       );
     }
 
@@ -102,12 +109,17 @@ function LeaseManagementPage() {
 
   const leaseColumns = [
     { 
-      key: 'propertyId', 
+      key: 'tenant', 
+      label: t('lease.tenant'),
+      render: (value) => value?.fullName || 'N/A'
+    },
+    { 
+      key: 'property', 
       label: t('lease.property'),
       render: (value: Lease['propertyId']) => value?.name || 'N/A'
     },
     { 
-      key: 'unitId', 
+      key: 'unit', 
       label: t('lease.unit'),
       render: (value: Lease['unitId']) => value?.unitNumber || 'N/A'
     },
@@ -250,12 +262,6 @@ function LeaseManagementPage() {
             icon={<Icon name="renewals" alt={t('lease.renewals')} />}
             title={t('lease.renewals')}
             description={t('lease.manage_renewals')}
-          />
-          <ActionCard
-            onClick={() => navigate('/manager/terminations')}
-            icon={<Icon name="terminations" alt={t('lease.terminations')} />}
-            title={t('lease.terminations')}
-            description={t('lease.handle_terminations')}
           />
           <ActionCard
             to="/manager/documents"

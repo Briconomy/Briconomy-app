@@ -228,13 +228,13 @@ function ProspectiveTenantPropertiesPage() {
     // Property-specific main images to match the detail page
     const propertyMainImages = {
       // Blue Hills Apartments - Modern Cape Town apartment building
-      '68c71163d8d94bff38735189': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop&crop=entropy',
-      
+      '67b2a1e0c9e4b8a3d4f5e6b1': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop&crop=entropy',
+
       // Green Valley Complex - Family-friendly Durban complex
-      '68c71163d8d94bff3873518a': 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop&crop=entropy',
-      
+      '67b2a1e0c9e4b8a3d4f5e6b2': 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop&crop=entropy',
+
       // Sunset Towers - Luxury Port Elizabeth beachfront
-      '68c71163d8d94bff3873518b': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop&crop=entropy'
+      '67b2a1e0c9e4b8a3d4f5e6b3': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop&crop=entropy'
     };
     
     // Get property-specific main image or fall back to placeholder

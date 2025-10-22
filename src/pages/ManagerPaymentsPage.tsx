@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -8,6 +8,9 @@ import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import PaymentChart from '../components/PaymentChart.tsx';
 import Icon from '../components/Icon.tsx';
+import { paymentsApi, useApi } from '../services/api.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 // Simple error boundary for chart rendering
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -28,79 +31,63 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 function ManagerPaymentsPage() {
-  const [payments] = useState([
-    {
-      id: '1',
-      tenantName: 'John Tenant',
-      propertyName: 'Blue Hills Apartments',
-      unitNumber: '2A',
-      amount: 12500,
-      dueDate: '2024-09-01',
-      status: 'paid',
-      paymentDate: '2024-08-30',
-      paymentMethod: 'EFT'
-    },
-    {
-      id: '2',
-      tenantName: 'Jane Smith',
-      propertyName: 'Blue Hills Apartments',
-      unitNumber: '3C',
-      amount: 15000,
-      dueDate: '2024-09-01',
-      status: 'pending',
-      paymentDate: null,
-      paymentMethod: null
-    },
-    {
-      id: '3',
-      tenantName: 'Mike Johnson',
-      propertyName: 'Green Valley Complex',
-      unitNumber: '1B',
-      amount: 10500,
-      dueDate: '2024-09-01',
-      status: 'overdue',
-      paymentDate: null,
-      paymentMethod: null
-    },
-    {
-      id: '4',
-      tenantName: 'Sarah Wilson',
-      propertyName: 'Sunset Towers',
-      unitNumber: '4D',
-      amount: 8500,
-      dueDate: '2024-08-15',
-      status: 'paid',
-      paymentDate: '2024-08-14',
-      paymentMethod: 'Cash'
-    }
-  ]);
-
-  const [filteredPayments, setFilteredPayments] = useState(payments);
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const [filteredPayments, setFilteredPayments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  const { data: payments, loading: _loading, error: _error, refetch: _refetch } = useApi(
+    () => user?.id ? paymentsApi.getAll({ managerId: user.id }) : Promise.resolve([]),
+    [user?.id]
+  );
+
+  const paymentsData = Array.isArray(payments) ? payments : [];
+
   const navItems = [
-    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
-    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
-    { path: '/manager/leases', label: 'Leases', icon: 'lease' },
-    { path: '/manager/payments', label: 'Payments', icon: 'payment', active: true }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease' },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment', active: true }
   ];
 
-  const totalRevenue = payments
+  useEffect(() => {
+    applyFilters(searchTerm, statusFilter);
+  }, [payments, searchTerm, statusFilter]);
+
+  const totalRevenue = paymentsData
     .filter(p => p.status === 'paid')
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
     
-  const pendingPayments = payments.filter(p => p.status === 'pending').length;
-  const overduePayments = payments.filter(p => p.status === 'overdue').length;
-  const collectedThisMonth = payments
+  const pendingPayments = paymentsData.filter(p => p.status === 'pending').length;
+  const overduePayments = paymentsData.filter(p => p.status === 'overdue').length;
+  const collectedThisMonth = paymentsData
     .filter(p => {
+      if (!p.paymentDate || p.status !== 'paid') return false;
       const paymentDate = new Date(p.paymentDate);
       const currentDate = new Date();
-      return p.status === 'paid' && 
-             paymentDate.getMonth() === currentDate.getMonth() && 
+      return paymentDate.getMonth() === currentDate.getMonth() && 
              paymentDate.getFullYear() === currentDate.getFullYear();
     })
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const applyFilters = (search, status) => {
+    let filtered = paymentsData;
+
+    if (search) {
+      filtered = filtered.filter(payment =>
+        payment.tenantName?.toLowerCase().includes(search.toLowerCase()) ||
+        payment.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
+        payment.unitNumber?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (status !== 'all') {
+      filtered = filtered.filter(payment => payment.status === status);
+    }
+
+    setFilteredPayments(filtered);
+  };
 
   const handleSearch = (term) => {
     setSearchTerm(term);
@@ -110,24 +97,6 @@ function ManagerPaymentsPage() {
   const handleFilterChange = (_key, value) => {
     setStatusFilter(value);
     applyFilters(searchTerm, value);
-  };
-
-  const applyFilters = (search, status) => {
-    let filtered = payments;
-
-    if (search) {
-      filtered = filtered.filter(payment =>
-        payment.tenantName.toLowerCase().includes(search.toLowerCase()) ||
-        payment.propertyName.toLowerCase().includes(search.toLowerCase()) ||
-        payment.unitNumber.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (status !== 'all') {
-      filtered = filtered.filter(payment => payment.status === status);
-    }
-
-    setFilteredPayments(filtered);
   };
 
   const paymentColumns = [
