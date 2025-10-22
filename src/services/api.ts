@@ -120,6 +120,22 @@ export const renewalsApi = {
   }),
 };
 
+export const documentsApi = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    const endpoint = params ? `/api/documents?${params}` : '/api/documents';
+    return apiRequest(endpoint);
+  },
+  upload: (data: Record<string, unknown>) => apiRequest('/api/documents', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  delete: (id: string) => apiRequest(`/api/documents/${id}`, {
+    method: 'DELETE',
+  }),
+  getById: (id: string) => apiRequest(`/api/documents/${id}`),
+};
+
 export const paymentsApi = {
   getAll: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();

@@ -1,6 +1,5 @@
 db = db.getSiblingDB('briconomy');
 
-// Clear existing data
 db.users.drop();
 db.properties.drop();
 db.units.drop();
@@ -12,6 +11,8 @@ db.reports.drop();
 db.notifications.drop();
 db.settings.drop();
 db.audit_logs.drop();
+db.documents.drop();
+db.lease_renewals.drop();
 
 // Create users with proper ObjectIds
 const users = db.users.insertMany([
@@ -1205,6 +1206,108 @@ db.users.updateMany(
   ]
 );
 
+db.documents.insertMany([
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f1"),
+    name: 'Lease Agreement - Emma Thompson',
+    description: 'Signed lease agreement for Unit 1A',
+    type: 'lease',
+    category: 'legal',
+    fileName: 'lease_emma_thompson.pdf',
+    fileSize: 2621440,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6b1"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2024-01-15'),
+    status: 'signed',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f2"),
+    name: 'Property Inspection Report - Blue Hills Apartments',
+    description: 'Annual property inspection documentation',
+    type: 'inspection',
+    category: 'maintenance',
+    fileName: 'inspection_blue_hills_2024.pdf',
+    fileSize: 1258291,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+    uploadedByName: 'David Miller',
+    uploadDate: new Date('2024-08-15'),
+    status: 'approved',
+    createdAt: new Date('2024-08-15'),
+    updatedAt: new Date('2024-08-15')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f3"),
+    name: 'Property Insurance Policy - Blue Hills Apartments',
+    description: 'Annual insurance policy documentation',
+    type: 'insurance',
+    category: 'legal',
+    fileName: 'insurance_blue_hills_2024.pdf',
+    fileSize: 4404019,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2024-01-15'),
+    status: 'active',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f4"),
+    name: 'Lease Agreement - James Smith',
+    description: 'Signed lease agreement for Unit 2A',
+    type: 'lease',
+    category: 'legal',
+    fileName: 'lease_james_smith.pdf',
+    fileSize: 2516582,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6b3"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2023-06-01'),
+    status: 'signed',
+    createdAt: new Date('2023-06-01'),
+    updatedAt: new Date('2023-06-01')
+  },
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7f5"),
+    name: 'Lease Agreement - Lisa Anderson',
+    description: 'Signed lease agreement for Unit 1B',
+    type: 'lease',
+    category: 'legal',
+    fileName: 'lease_lisa_anderson.pdf',
+    fileSize: 2453821,
+    mimeType: 'application/pdf',
+    gridFsFileId: ObjectId(),
+    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
+    propertyId: properties.insertedIds["67b2a1e0c9e4b8a3d4f5e6c1"],
+    unitId: units.insertedIds["67b2a1e0c9e4b8a3d4f5e6b2"],
+    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
+    uploadedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+    uploadedByName: 'Michael Chen',
+    uploadDate: new Date('2024-03-15'),
+    status: 'signed',
+    createdAt: new Date('2024-03-15'),
+    updatedAt: new Date('2024-03-15')
+  }
+]);
+
 print('Comprehensive database initialization completed successfully!');
 print('Collections created:');
 print('   - users (' + db.users.countDocuments({}) + ' documents)');
@@ -1218,6 +1321,7 @@ print('   - reports (' + db.reports.countDocuments({}) + ' documents)');
 print('   - notifications (' + db.notifications.countDocuments({}) + ' documents)');
 print('   - settings (' + db.settings.countDocuments({}) + ' documents)');
 print('   - audit_logs (' + db.audit_logs.countDocuments({}) + ' documents)');
+print('   - documents (' + db.documents.countDocuments({}) + ' documents)');
 print('');
 print('Data relationships established:');
 print('   - Each tenant has a lease and assigned unit');
@@ -1228,5 +1332,6 @@ print('   - Maintenance requests are linked to tenants, units, and properties');
 print('   - Caretaker tasks are assigned to caretakers and properties');
 print('   - All notifications are linked to appropriate users');
 print('   - Audit logs track all user actions');
+print('   - Documents are linked to leases, properties, and tenants');
 print('');
 print('Database is ready for consistent development!');
