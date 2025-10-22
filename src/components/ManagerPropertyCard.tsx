@@ -26,7 +26,7 @@ function ManagerPropertyCard({
   const estimatedMonthlyRevenue = property.occupiedUnits * (property.type === 'apartment' ? 8000 :
                                  property.type === 'complex' ? 10000 : 12000);
 
-  const imageUrl = optimizeImage(`/api/properties/${property._id}/image`, lowBandwidthMode);
+  const imageUrl = optimizeImage(`/api/properties/${property.id}/image`, lowBandwidthMode);
 
   const getOccupancyStatus = () => {
     if (occupancyRate >= 90) return { status: 'high', color: '#1f7a3a', text: 'High' };
@@ -256,25 +256,25 @@ function ManagerPropertyCard({
           <div style={styles.actions}>
             <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onViewDetails(property._id)}
+              onClick={() => onViewDetails(property.id)}
             >
               View
             </button>
             <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onEditProperty(property._id)}
+              onClick={() => onEditProperty(property.id)}
             >
               Edit
             </button>
             <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onManageUnits(property._id)}
+              onClick={() => onManageUnits(property.id)}
             >
               Units
             </button>
             <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onViewTenants(property._id)}
+              onClick={() => onViewTenants(property.id)}
             >
               Tenants
             </button>

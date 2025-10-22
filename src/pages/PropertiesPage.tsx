@@ -159,7 +159,7 @@ function PropertiesPage() {
     }
 
     // Get property name for registration
-    const property = properties.find(p => p.id === propertyId || p._id === propertyId);
+    const property = properties.find(p => p.id === propertyId);
     const propertyName = property?.name || 'Selected Property';
 
     // Check if user is logged in
@@ -301,7 +301,7 @@ if (error) {
           <div className="manager-property-grid">
             {filteredProperties.map((property) => (
               <ManagerPropertyCard
-                key={property._id}
+                key={property.id}
                 property={property}
                 onViewDetails={handleManagerViewDetails}
                 onEditProperty={handleEditProperty}
@@ -374,10 +374,10 @@ if (error) {
 
           <div className="tenant-property-grid">
             {filteredProperties.map((property) => {
-              const imageUrl = optimizeImage(`/api/properties/${property._id}/image`, lowBandwidthMode);
-              
+              const imageUrl = optimizeImage(`/api/properties/${property.id}/image`, lowBandwidthMode);
+
               return (
-                <div key={property._id} className="tenant-property-card">
+                <div key={property.id} className="tenant-property-card">
                   <div className="property-image-container">
                     <div className="property-image">
                       <img 
@@ -397,7 +397,7 @@ if (error) {
                     
                     <div className="property-actions">
                       <button type="button"
-                        onClick={() => handleViewDetails(property._id)}
+                        onClick={() => handleViewDetails(property.id)}
                         className="btn btn-primary btn-sm"
                       >
                         View Details
@@ -498,10 +498,10 @@ if (error) {
           {filteredProperties.map((property) => {
             const estimatedRent = calculateEstimatedRent(property);
             const availability = getPropertyAvailability(property);
-            const imageUrl = optimizeImage(`/api/properties/${property._id}/image`, lowBandwidthMode);
+            const imageUrl = optimizeImage(`/api/properties/${property.id}/image`, lowBandwidthMode);
 
             return (
-              <div key={property._id} className="property-card">
+              <div key={property.id} className="property-card">
                 <div className="property-image-container">
                   <div className="property-image">
                     <img 
@@ -553,13 +553,13 @@ if (error) {
 
                   <div className="property-actions">
                     <button type="button"
-                      onClick={() => handleViewDetails(property._id)}
+                      onClick={() => handleViewDetails(property.id)}
                       className="btn btn-secondary btn-sm"
                     >
                       View Details
                     </button>
                     <button type="button"
-                      onClick={() => handleApplyNow(property._id)}
+                      onClick={() => handleApplyNow(property.id)}
                       className="btn btn-primary btn-sm"
                       disabled={availability.available === 0}
                     >

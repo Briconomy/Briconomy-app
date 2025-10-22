@@ -47,7 +47,7 @@ export class InvoiceService {
     if (typeof invoice === 'string') {
       return invoice;
     }
-    return invoice.id || invoice._id || invoice.invoiceNumber;
+    return invoice.id || invoice.invoiceNumber;
   }
 
   private buildQuery(params: Record<string, string | undefined>): string {

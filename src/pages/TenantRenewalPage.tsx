@@ -40,11 +40,11 @@ function TenantRenewalPage() {
   };
 
   const handleAcceptSubmit = async () => {
-    if (!selectedRenewal?._id || !user?.id) return;
+    if (!selectedRenewal?.id || !user?.id) return;
 
     setProcessing(true);
     try {
-      await renewalsApi.update(selectedRenewal._id as string, {
+      await renewalsApi.update(selectedRenewal.id as string, {
         status: 'accepted',
         tenantResponse: 'accepted',
         tenantResponseDate: new Date(),
@@ -63,14 +63,14 @@ function TenantRenewalPage() {
   };
 
   const handleDeclineSubmit = async () => {
-    if (!selectedRenewal?._id || !user?.id || !declineReason.trim()) {
+    if (!selectedRenewal?.id || !user?.id || !declineReason.trim()) {
       alert('Please provide a reason for declining.');
       return;
     }
 
     setProcessing(true);
     try {
-      await renewalsApi.update(selectedRenewal._id as string, {
+      await renewalsApi.update(selectedRenewal.id as string, {
         status: 'declined',
         tenantResponse: 'declined',
         tenantResponseDate: new Date(),
@@ -147,7 +147,7 @@ function TenantRenewalPage() {
         ) : (
           <div className="renewal-list">
             {renewals.map((renewal: Record<string, unknown>) => (
-              <div key={renewal._id as string} className="renewal-card" style={{
+              <div key={renewal.id as string} className="renewal-card" style={{
                 background: 'white',
                 borderRadius: '12px',
                 padding: '20px',

@@ -449,8 +449,8 @@ if (typeof document !== 'undefined' && !document.getElementById('property-detail
 
 // Mock property data based on the database scripts for fallback
 const mockProperties = {
-  '68c71163d8d94bff38735189': {
-    id: '68c71163d8d94bff38735189',
+  '67b2a1e0c9e4b8a3d4f5e6b1': {
+    id: '67b2a1e0c9e4b8a3d4f5e6b1',
     name: 'Blue Hills Apartments',
     address: '123 Main St, Cape Town, 8001',
     type: 'apartment',
@@ -461,8 +461,8 @@ const mockProperties = {
     yearBuilt: 2018,
     lastRenovation: 2022
   },
-  '68c71163d8d94bff3873518a': {
-    id: '68c71163d8d94bff3873518a',
+  '67b2a1e0c9e4b8a3d4f5e6b2': {
+    id: '67b2a1e0c9e4b8a3d4f5e6b2',
     name: 'Green Valley Complex',
     address: '456 Oak Ave, Durban, 4001',
     type: 'complex',
@@ -473,8 +473,8 @@ const mockProperties = {
     yearBuilt: 2015,
     lastRenovation: 2021
   },
-  '68c71163d8d94bff3873518b': {
-    id: '68c71163d8d94bff3873518b',
+  '67b2a1e0c9e4b8a3d4f5e6b3': {
+    id: '67b2a1e0c9e4b8a3d4f5e6b3',
     name: 'Sunset Towers',
     address: '789 Beach Rd, Port Elizabeth, 6001',
     type: 'apartment',
@@ -683,25 +683,25 @@ function PropertyDetailsPage() {
     // Property-specific image sets based on actual property data
     const propertyImageSets = {
       // Blue Hills Apartments - Cape Town (Modern apartment complex, 2018, pool/gym/parking/security/laundry/elevator)
-      '68c71163d8d94bff38735189': [
+      '67b2a1e0c9e4b8a3d4f5e6b1': [
         'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop&crop=entropy', // Modern apartment building exterior
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&crop=entropy', // Modern apartment interior living room
         'https://images.unsplash.com/photo-1571624436279-b272aff752b5?w=800&h=600&fit=crop&crop=entropy', // Modern kitchen
         'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?w=800&h=600&fit=crop&crop=entropy', // Swimming pool area
         'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&crop=entropy', // Modern gym facility
       ],
-      
+
       // Green Valley Complex - Durban (Family-friendly complex, 2015, parking/garden/playground/bbq_area/security)
-      '68c71163d8d94bff3873518a': [
+      '67b2a1e0c9e4b8a3d4f5e6b2': [
         'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop&crop=entropy', // Family complex exterior with gardens
         'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&crop=entropy', // Cozy family living room
         'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop&crop=entropy', // Family kitchen/dining area
         'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop&crop=entropy', // Garden and playground area
         'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800&h=600&fit=crop&crop=entropy', // BBQ and outdoor area
       ],
-      
+
       // Sunset Towers - Port Elizabeth (Luxury beachfront apartments, 2020, pool/gym/parking/ocean_view/concierge/spa)
-      '68c71163d8d94bff3873518b': [
+      '67b2a1e0c9e4b8a3d4f5e6b3': [
         'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&crop=entropy', // Luxury beachfront tower exterior
         'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&crop=entropy', // Luxury apartment interior with ocean view
         'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&h=600&fit=crop&crop=entropy', // High-end modern kitchen

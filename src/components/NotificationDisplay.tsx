@@ -72,9 +72,9 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
         body: JSON.stringify({ read: true })
       });
       
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif._id === notificationId 
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.id === notificationId
             ? { ...notif, read: true }
             : notif
         )
@@ -95,8 +95,8 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
       
       if (!response.ok) throw new Error('Failed to delete notification');
       
-      setNotifications(prev => 
-        prev.filter(notif => notif._id !== notificationId)
+      setNotifications(prev =>
+        prev.filter(notif => notif.id !== notificationId)
       );
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -159,13 +159,13 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
           <div className="space-y-3">
             {displayNotifications.map((notification) => (
               <div
-                key={notification._id}
+                key={notification.id}
                 className={`p-4 border rounded-lg ${
                   notification.read 
                     ? 'bg-gray-50 border-gray-200' 
                     : 'bg-blue-50 border-blue-200'
                 }`}
-                onClick={() => !notification.read && markAsRead(notification._id)}
+                onClick={() => !notification.read && markAsRead(notification.id)}
               >
                 <div className="flex items-start space-x-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
@@ -188,7 +188,7 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={(e) => deleteNotification(notification._id, e)}
+                          onClick={(e) => deleteNotification(notification.id, e)}
                           className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity text-xs font-medium"
                           title="Delete notification"
                         >
@@ -250,12 +250,12 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
             ) : (
               displayNotifications.map((notification) => (
                 <div
-                  key={notification._id}
+                  key={notification.id}
                   className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${
                     !notification.read ? 'bg-blue-50' : ''
                   }`}
                   onClick={() => {
-                    if (!notification.read) markAsRead(notification._id);
+                    if (!notification.read) markAsRead(notification.id);
                     setShowDropdown(false);
                   }}
                 >
@@ -282,7 +282,7 @@ const NotificationDisplay: React.FC<NotificationDisplayProps> = ({
                         <div className="flex items-center space-x-2">
                           <button
                             type="button"
-                            onClick={(e) => deleteNotification(notification._id, e)}
+                            onClick={(e) => deleteNotification(notification.id, e)}
                             className="text-red-500 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity text-xs font-medium"
                             title="Delete notification"
                           >

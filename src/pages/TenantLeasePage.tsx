@@ -25,11 +25,11 @@ function TenantLeasePage() {
   ];
 
   const handleDownloadLease = async () => {
-    if (!lease?._id) return;
+    if (!lease?.id) return;
 
     setDownloading(true);
     try {
-      await leasesApi.downloadDocument(lease._id);
+      await leasesApi.downloadDocument(lease.id);
       alert('Lease document download initiated!');
     } catch (err) {
       console.error('Error downloading lease:', err);

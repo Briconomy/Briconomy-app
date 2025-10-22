@@ -158,7 +158,7 @@ function ManagerInvoicesPage() {
   const tableData = useMemo(() => (
     filteredInvoices.map((invoice) => ({
       ...invoice,
-      id: invoice.id || invoice._id || invoice.invoiceNumber,
+      id: invoice.id || invoice.invoiceNumber,
       actions: null
     }))
   ), [filteredInvoices]);
