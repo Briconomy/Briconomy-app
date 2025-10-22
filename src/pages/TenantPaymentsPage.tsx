@@ -235,9 +235,9 @@ function TenantPaymentsPage() {
         <div className="payment-methods-section">
           <div className="section-header">
             <h3>{t('payments.paymentMethods')}</h3>
-            <button 
+            <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm1"
               onClick={() => navigate('/tenant/manage-payment-methods')}
             >
               {t('payments.managePaymentMethods')}

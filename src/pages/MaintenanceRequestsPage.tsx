@@ -276,21 +276,10 @@ return (
                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                     <button 
                       type="button"
-                      className="btn btn-primary btn-sm"
+                      className="btn btn-primary btn-sm2"
                       onClick={() => setShowRequestForm(true)}
                     >
                       {t('requests.newRequest')}
-                    </button>
-                    <button 
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        console.log('[MaintenanceRequestsPage] Manual refresh triggered');
-                        refetchRequests();
-                      }}
-                      title="Refresh maintenance requests"
-                    >
-                       Refresh
                     </button>
                   </div>
                 )}
