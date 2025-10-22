@@ -1,5 +1,9 @@
 import { connectToMongoDB, getCollection } from "./db.ts";
 import { ObjectId } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
+import { join } from "@std/path";
+import { ensureDir } from "@std/fs";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import type { PDFFont } from "pdf-lib";
 
 function toId(id: unknown) {
   try {
@@ -72,6 +76,332 @@ function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> 
   return filtered as Array<Omit<T, "_id"> & { id: string }>;
 }
 
+function toObjectId(id: unknown): ObjectId | undefined {
+  const converted = toId(id);
+  return converted instanceof ObjectId ? converted : undefined;
+}
+
+const invoiceArtifactsRoot = join(Deno.cwd(), "generated", "invoices");
+
+type RawInvoiceDoc = Record<string, unknown> & { _id?: ObjectId };
+
+function sanitizeFileSegment(segment: string): string {
+  return segment.replace(/[^a-zA-Z0-9-_]+/g, "_");
+}
+
+function toIsoDateString(input: unknown): string {
+  if (input instanceof Date) {
+    return input.toISOString().split("T")[0];
+  }
+  if (typeof input === "string" && input.trim().length > 0) {
+    const parsed = new Date(input);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().split("T")[0];
+    }
+    return input;
+  }
+  if (typeof input === "number") {
+    const parsed = new Date(input);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().split("T")[0];
+    }
+  }
+  return new Date().toISOString().split("T")[0];
+}
+
+function valueToString(value: unknown): string | null {
+  if (value instanceof ObjectId) {
+    return value.toString();
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return null;
+}
+
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine.length === 0 ? word : `${currentLine} ${word}`;
+    if (font.widthOfTextAtSize(testLine, size) <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine.length > 0) {
+        lines.push(currentLine);
+      }
+      currentLine = word;
+    }
+  }
+
+  if (currentLine.length > 0) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+async function markdownToPdf(markdown: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create();
+  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  let page = pdfDoc.addPage();
+  const margin = 50;
+  let y = page.getHeight() - margin;
+  const maxWidth = page.getWidth() - margin * 2;
+  const lines = markdown.split("\n");
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trimEnd();
+    if (trimmed === "") {
+      y -= 18;
+      continue;
+    }
+    if (trimmed === "---") {
+      if (y <= margin) {
+        page = pdfDoc.addPage();
+        y = page.getHeight() - margin;
+      }
+      page.drawLine({
+        start: { x: margin, y },
+        end: { x: page.getWidth() - margin, y },
+        thickness: 1,
+        color: rgb(0.4, 0.4, 0.4)
+      });
+      y -= 18;
+      continue;
+    }
+    let font = regularFont;
+    let size = 12;
+    let spacing = 18;
+    let text = trimmed;
+    if (trimmed.startsWith("# ")) {
+      font = boldFont;
+      size = 22;
+      spacing = 28;
+      text = trimmed.slice(2).trim();
+    } else if (trimmed.startsWith("## ")) {
+      font = boldFont;
+      size = 18;
+      spacing = 24;
+      text = trimmed.slice(3).trim();
+    } else if (trimmed.startsWith("**") && trimmed.endsWith("**") && trimmed.length > 4) {
+      font = boldFont;
+      text = trimmed.slice(2, -2);
+    } else if (trimmed.startsWith("- ")) {
+      text = `• ${trimmed.slice(2).trim()}`;
+    }
+    const wrapped = wrapText(text, font, size, maxWidth);
+    for (const segment of wrapped) {
+      if (y <= margin) {
+        page = pdfDoc.addPage();
+        y = page.getHeight() - margin;
+      }
+      page.drawText(segment, {
+        x: margin,
+        y,
+        size,
+        font,
+        color: rgb(0, 0, 0)
+      });
+      y -= spacing;
+    }
+  }
+
+  return pdfDoc.save();
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function computeMonthLabel(issueDate: string, provided?: unknown): string {
+  if (typeof provided === "string" && provided.trim().length > 0) {
+    return provided;
+  }
+  const date = new Date(issueDate);
+  return date.toLocaleString("default", { month: "long" });
+}
+
+function computeYearValue(issueDate: string, provided?: unknown): number {
+  if (typeof provided === "number") {
+    return provided;
+  }
+  const date = new Date(issueDate);
+  return date.getFullYear();
+}
+
+function computeDueDate(issueDate: string, provided?: unknown): string {
+  if (typeof provided === "string" && provided.trim().length > 0) {
+    return toIsoDateString(provided);
+  }
+  const base = new Date(issueDate);
+  const due = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 1));
+  return due.toISOString().split("T")[0];
+}
+
+function generateInvoiceNumber(): string {
+  const now = new Date();
+  const year = now.getFullYear().toString();
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+  const day = now.getDate().toString().padStart(2, "0");
+  const hours = now.getHours().toString().padStart(2, "0");
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  const seconds = now.getSeconds().toString().padStart(2, "0");
+  return `INV-${year}${month}${day}${hours}${minutes}${seconds}`;
+}
+
+function buildArtifactDirectory(month: string, year: number): string {
+  const normalized = `${year}-${month.toLowerCase().replace(/\s+/g, "-")}`;
+  return join(invoiceArtifactsRoot, sanitizeFileSegment(normalized));
+}
+
+async function ensureInvoiceArtifacts(doc: RawInvoiceDoc): Promise<{ markdownContent: string; markdownPath: string; pdfPath: string }> {
+  const invoices = getCollection("invoices");
+  const issueDate = toIsoDateString(doc.issueDate);
+  const dueDate = computeDueDate(issueDate, doc.dueDate);
+  const monthLabel = computeMonthLabel(issueDate, doc.month);
+  const yearValue = computeYearValue(issueDate, doc.year);
+  const amount = Number(typeof doc.amount === "number" ? doc.amount : (doc.amount ?? 0));
+  const invoiceNumber = typeof doc.invoiceNumber === "string" && doc.invoiceNumber.length > 0 ? doc.invoiceNumber : generateInvoiceNumber();
+  const tenantName = typeof doc.tenantName === "string" && doc.tenantName.length > 0 ? doc.tenantName : "Tenant";
+  const propertyName = typeof doc.propertyName === "string" && doc.propertyName.length > 0 ? doc.propertyName : undefined;
+  const propertyAddress = typeof doc.propertyAddress === "string" && doc.propertyAddress.length > 0 ? doc.propertyAddress : undefined;
+  const description = typeof doc.description === "string" && doc.description.length > 0 ? doc.description : undefined;
+  const markdownContent = buildInvoiceMarkdown({
+    invoiceNumber,
+    issueDate,
+    dueDate,
+    tenantName,
+    propertyName,
+    propertyAddress,
+    amount,
+    description,
+    month: monthLabel,
+    year: yearValue
+  });
+  const directory = buildArtifactDirectory(monthLabel, yearValue);
+  await ensureDir(directory);
+  const baseName = sanitizeFileSegment(invoiceNumber);
+  const markdownPath = join(directory, `${baseName}.md`);
+  const pdfPath = join(directory, `${baseName}.pdf`);
+  const pdfNeeded = !(await fileExists(pdfPath));
+  const markdownNeeded = !(await fileExists(markdownPath));
+  if (markdownNeeded) {
+    await Deno.writeTextFile(markdownPath, markdownContent);
+  }
+  if (pdfNeeded || markdownNeeded) {
+    const pdfBytes = await markdownToPdf(markdownContent);
+    await Deno.writeFile(pdfPath, pdfBytes);
+  }
+  if (doc._id) {
+    await invoices.updateOne({ _id: doc._id }, {
+      $set: {
+        invoiceNumber,
+        issueDate,
+        dueDate,
+        month: monthLabel,
+        year: yearValue,
+        markdownContent,
+        artifactPaths: {
+          markdown: markdownPath,
+          pdf: pdfPath
+        },
+        updatedAt: new Date()
+      }
+    });
+  }
+  return { markdownContent, markdownPath, pdfPath };
+}
+
+function buildInvoiceMarkdown(data: {
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  tenantName: string;
+  propertyName?: string;
+  propertyAddress?: string;
+  amount: number;
+  description?: string;
+  month: string;
+  year: number;
+}): string {
+  const lines = [
+    `# Invoice ${data.invoiceNumber}`,
+    `**Issue Date:** ${data.issueDate}`,
+    `**Due Date:** ${data.dueDate}`,
+    "---",
+    `**Tenant:** ${data.tenantName}`,
+    data.propertyName ? `**Property:** ${data.propertyName}` : null,
+    data.propertyAddress ? `**Address:** ${data.propertyAddress}` : null,
+    "---",
+    `**Amount Due:** R ${data.amount.toFixed(2)}`,
+    data.description ? `**Description:** ${data.description}` : null,
+    `**Billing Period:** ${data.month} ${data.year}`
+  ];
+  return lines.filter((line): line is string => Boolean(line)).join("\n\n");
+}
+
+function serializeInvoice(doc: RawInvoiceDoc | null) {
+  if (!doc) {
+    return null;
+  }
+  const mapped = mapDoc(doc);
+  if (!mapped) {
+    return null;
+  }
+  const result: Record<string, unknown> = { ...mapped, _id: mapped.id };
+  const keys = ["tenantId", "propertyId", "leaseId", "managerId"];
+  for (const key of keys) {
+    if (key in result) {
+      const str = valueToString(result[key]);
+      if (str) {
+        result[key] = str;
+      }
+    }
+  }
+  if (mapped.id) {
+    result.artifactUrls = {
+      pdf: `/api/invoices/${mapped.id}/pdf`,
+      markdown: `/api/invoices/${mapped.id}/markdown`
+    };
+  }
+  return result;
+}
+
+function toInsertedIdString(result: unknown): string {
+  const inserted = (result as { insertedId?: ObjectId }).insertedId ?? result;
+  return inserted instanceof ObjectId ? inserted.toString() : String(inserted);
+}
+
+function getDeletedCount(result: unknown): number {
+  if (typeof result === "number") {
+    return result;
+  }
+  const value = (result as { deletedCount?: number }).deletedCount;
+  return typeof value === "number" ? value : 0;
+}
+
+// Users API
+export async function getUsers(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const rows = await users.find(normalizeFilters(filters) as Record<string, unknown>).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+}
+
 // Authentication API
 export async function loginUser(email: string, password: string, clientInfo?: Record<string, unknown>) {
   try {
@@ -120,7 +450,32 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
     const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
     const mappedUser = { id: String(rest._id ?? ""), ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id")) };
 
-    // Log successful login
+    const userType = (mappedUser as Record<string, unknown>).userType;
+    const managerApprovalStatus = (mappedUser as Record<string, unknown>).managerApprovalStatus;
+    
+    if (userType === 'tenant' && managerApprovalStatus === 'rejected') {
+      await createAuditLog({
+        userId: mappedUser.id,
+        action: 'user_login_restricted',
+        resource: 'authentication',
+        details: {
+          email,
+          reason: 'manager_rejected_application',
+          ip: clientInfo?.ip || 'unknown',
+          userAgent: clientInfo?.userAgent || 'unknown'
+        }
+      });
+      
+      return {
+        success: true,
+        message: "Login successful. Your property application was not approved, but you can browse and apply for other properties.",
+        user: mappedUser,
+        token: "mock-jwt-token",
+        restricted: true,
+        redirectTo: '/browse-properties'
+      };
+    }
+
     await createAuditLog({
       userId: mappedUser.id,
       action: 'user_login',
@@ -183,17 +538,20 @@ export async function registerUser(userData: Record<string, unknown>) {
 
 export async function registerPendingTenant(userData: Record<string, unknown>) {
   try {
+    console.log('[registerPendingTenant] Starting registration for:', userData.email);
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
     
     const existingUser = await users.findOne({ email: userData.email });
     if (existingUser) {
+      console.log('[registerPendingTenant] User already exists');
       return { success: false, message: "User with this email already exists" };
     }
     
     const existingPending = await pendingUsers.findOne({ email: userData.email });
     if (existingPending) {
+      console.log('[registerPendingTenant] Application already pending');
       return { success: false, message: "Application with this email already pending" };
     }
     
@@ -211,15 +569,17 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
       createdAt: new Date()
     };
     
+    console.log('[registerPendingTenant] Inserting into DB...');
     await pendingUsers.insertOne(toInsert);
+    console.log('[registerPendingTenant] Success');
     
     return {
       success: true,
       message: "Application submitted successfully. Awaiting admin approval."
     };
   } catch (error) {
-    console.error("Error registering pending tenant:", error);
-    throw error;
+    console.error("[registerPendingTenant] Error:", error);
+    return { success: false, message: "Failed to submit application. Please try again." };
   }
 }
 
@@ -387,19 +747,26 @@ export async function approvePendingUser(userId: string) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const userObjectId = toObjectId(userId);
+    if (!userObjectId) {
+      throw new Error("Invalid pending user identifier");
+    }
     
-    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
     
     if (!pendingUser) {
       throw new Error("Pending user not found");
     }
     
-    const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+  const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
     
     const newUser = {
       ...userDataToInsert,
       userType: 'tenant',
       isActive: true,
+      adminApproved: true,
+      managerApprovalStatus: 'pending',
+      appliedPropertyId: appliedPropertyId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -407,13 +774,17 @@ export async function approvePendingUser(userId: string) {
     await users.insertOne(newUser);
     
     await pendingUsers.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { status: 'approved', approvedAt: new Date() } }
+      { _id: userObjectId },
+      { $set: { 
+        status: 'admin_approved', 
+        adminApprovedAt: new Date(),
+        managerApprovalStatus: 'pending'
+      } }
     );
     
     return {
       success: true,
-      message: "User approved and account created successfully",
+      message: "User approved by admin. Account created. Awaiting manager approval for property access.",
       user: mapDoc(await users.findOne({ email: pendingUser.email }))
     };
   } catch (error) {
@@ -426,9 +797,13 @@ export async function declinePendingUser(userId: string) {
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
+    const userObjectId = toObjectId(userId);
+    if (!userObjectId) {
+      throw new Error("Invalid pending user identifier");
+    }
     
     const result = await pendingUsers.updateOne(
-      { _id: new ObjectId(userId) },
+      { _id: userObjectId },
       { $set: { status: 'declined', declinedAt: new Date() } }
     );
     
@@ -451,18 +826,24 @@ export async function getPendingApplicationsForManager(managerId: string) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const properties = getCollection("properties");
+    const managerObjectId = toObjectId(managerId);
+    const managerMatch = managerObjectId ?? managerId;
     
     // First, get all properties managed by this manager
-    const managerProperties = await properties.find({ managerId: new ObjectId(managerId) }).toArray();
+    const managerProperties = await properties.find({ managerId: managerMatch }).toArray();
+    
     const propertyIds = managerProperties.map(p => p._id.toString());
     
     if (propertyIds.length === 0) {
       return []; // Manager has no properties, so no applications
     }
     
-    // Get pending applications for those properties
+    // Get pending applications for those properties - check both pending and admin_approved
     const applications = await pendingUsers.find({ 
-      status: 'pending',
+      $or: [
+        { status: 'pending' },
+        { status: 'admin_approved' }
+      ],
       appliedPropertyId: { $in: propertyIds }
     }).sort({ appliedAt: -1 }).toArray();
     
@@ -488,51 +869,94 @@ export async function approveApplicationByManager(userId: string, managerId: str
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
     const properties = getCollection("properties");
+    const userObjectId = toObjectId(userId);
+    if (!userObjectId) {
+      throw new Error("Invalid application identifier");
+    }
     
-    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
     
     if (!pendingUser) {
       throw new Error("Application not found");
     }
     
-    // Verify the manager has permission to approve this application
+    const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
+    const managerObjectId = toObjectId(managerId);
+    if (!appliedPropertyObjectId || !managerObjectId) {
+      throw new Error("Invalid property reference for pending application");
+    }
+
     const property = await properties.findOne({ 
-      _id: new ObjectId(pendingUser.appliedPropertyId),
-      managerId: new ObjectId(managerId)
+      _id: appliedPropertyObjectId,
+      managerId: { $in: [managerObjectId, managerId] }
     });
     
     if (!property) {
       throw new Error("Unauthorized: You can only approve applications for your properties");
     }
     
-    const { _id, appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+    const existingUser = await users.findOne({ email: pendingUser.email });
     
-    const newUser = {
-      ...userDataToInsert,
-      userType: 'tenant',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      approvedBy: managerId,
-      approvedAt: new Date()
-    };
-    
-    await users.insertOne(newUser);
-    
-    await pendingUsers.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { 
-        status: 'approved', 
-        approvedAt: new Date(),
-        approvedBy: managerId
-      } }
-    );
-    
-    return {
-      success: true,
-      message: "Application approved successfully",
-      user: mapDoc(await users.findOne({ email: pendingUser.email }))
-    };
+    if (existingUser) {
+      await users.updateOne(
+        { _id: existingUser._id },
+        { $set: { 
+          managerApprovalStatus: 'approved',
+          managerApprovedBy: managerId,
+          managerApprovedAt: new Date(),
+          assignedPropertyId: pendingUser.appliedPropertyId,
+          isActive: true,
+          updatedAt: new Date()
+        } }
+      );
+      
+      await pendingUsers.updateOne(
+        { _id: userObjectId },
+        { $set: { 
+          status: 'fully_approved',
+          managerApprovedAt: new Date(),
+          managerApprovedBy: managerId
+        } }
+      );
+      
+      return {
+        success: true,
+        message: "Application approved. Tenant now has full access to the property.",
+        user: mapDoc(await users.findOne({ email: pendingUser.email }))
+      };
+    } else {
+      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
+      
+      const newUser = {
+        ...userDataToInsert,
+        userType: 'tenant',
+        isActive: true,
+        adminApproved: false,
+        managerApprovalStatus: 'approved',
+        managerApprovedBy: managerId,
+        managerApprovedAt: new Date(),
+        assignedPropertyId: appliedPropertyId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await users.insertOne(newUser);
+      
+      await pendingUsers.updateOne(
+        { _id: userObjectId },
+        { $set: { 
+          status: 'approved', 
+          approvedAt: new Date(),
+          approvedBy: managerId
+        } }
+      );
+      
+      return {
+        success: true,
+        message: "Application approved successfully. Account created with full property access.",
+        user: mapDoc(await users.findOne({ email: pendingUser.email }))
+      };
+    }
   } catch (error) {
     console.error("Error approving application:", error);
     throw error;
@@ -543,31 +967,57 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
+    const users = getCollection("users");
     const properties = getCollection("properties");
+    const userObjectId = toObjectId(userId);
+    if (!userObjectId) {
+      throw new Error("Invalid application identifier");
+    }
     
-    const pendingUser = await pendingUsers.findOne({ _id: new ObjectId(userId) });
+    const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
     
     if (!pendingUser) {
       throw new Error("Application not found");
     }
     
-    // Verify the manager has permission to reject this application
+    const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
+    const managerObjectId = toObjectId(managerId);
+    if (!appliedPropertyObjectId || !managerObjectId) {
+      throw new Error("Invalid property reference for pending application");
+    }
+
     const property = await properties.findOne({ 
-      _id: new ObjectId(pendingUser.appliedPropertyId),
-      managerId: new ObjectId(managerId)
+      _id: appliedPropertyObjectId,
+      managerId: { $in: [managerObjectId, managerId] }
     });
     
     if (!property) {
       throw new Error("Unauthorized: You can only reject applications for your properties");
     }
     
+    const existingUser = await users.findOne({ email: pendingUser.email });
+    
+    if (existingUser) {
+      await users.updateOne(
+        { _id: existingUser._id },
+        { $set: { 
+          managerApprovalStatus: 'rejected',
+          managerRejectedBy: managerId,
+          managerRejectedAt: new Date(),
+          managerRejectionReason: reason || 'No reason provided',
+          assignedPropertyId: null,
+          updatedAt: new Date()
+        } }
+      );
+    }
+    
     const result = await pendingUsers.updateOne(
-      { _id: new ObjectId(userId) },
+      { _id: userObjectId },
       { $set: { 
-        status: 'rejected', 
-        rejectedAt: new Date(),
-        rejectedBy: managerId,
-        rejectionReason: reason || 'No reason provided'
+        status: 'manager_rejected', 
+        managerRejectedAt: new Date(),
+        managerRejectedBy: managerId,
+        managerRejectionReason: reason || 'No reason provided'
       } }
     );
     
@@ -643,7 +1093,7 @@ export async function getUnits(propertyId?: string) {
   try {
     await connectToMongoDB();
     const units = getCollection("units");
-  const filter = propertyId ? { propertyId: new ObjectId(propertyId) } : {};
+  const filter = propertyId ? { propertyId: toId(propertyId) } : {};
   const rows = await units.find(filter).toArray();
   return mapDocs(rows);
   } catch (error) {
@@ -669,27 +1119,81 @@ export async function getLeases(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-    const properties = getCollection("properties");
-    const units = getCollection("units");
 
-    type LeaseRow = { _id: ObjectId; propertyId?: ObjectId; unitId?: ObjectId } & Record<string, unknown>;
-  const rows = await leases.find(normalizeFilters(filters) as Record<string, unknown>).toArray() as Array<LeaseRow>;
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tenantId",
+          foreignField: "_id",
+          as: "tenantData"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "propertyData"
+        }
+      },
+      {
+        $lookup: {
+          from: "units",
+          localField: "unitId",
+          foreignField: "_id",
+          as: "unitData"
+        }
+      },
+      {
+        $addFields: {
+          tenant: {
+            $cond: {
+              if: { $gt: [{ $size: "$tenantData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$tenantData._id", 0] } },
+                fullName: { $arrayElemAt: ["$tenantData.fullName", 0] },
+                email: { $arrayElemAt: ["$tenantData.email", 0] },
+                phone: { $arrayElemAt: ["$tenantData.phone", 0] }
+              },
+              else: null
+            }
+          },
+          property: {
+            $cond: {
+              if: { $gt: [{ $size: "$propertyData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$propertyData._id", 0] } },
+                name: { $arrayElemAt: ["$propertyData.name", 0] },
+                address: { $arrayElemAt: ["$propertyData.address", 0] }
+              },
+              else: null
+            }
+          },
+          unit: {
+            $cond: {
+              if: { $gt: [{ $size: "$unitData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$unitData._id", 0] } },
+                unitNumber: { $arrayElemAt: ["$unitData.unitNumber", 0] }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          tenantData: 0,
+          propertyData: 0,
+          unitData: 0
+        }
+      }
+    ];
 
-    const mapped: Array<Record<string, unknown>> = [];
-    for (const row of rows) {
-      const base = mapDoc<LeaseRow>(row)!;
-      const leaseDoc: Record<string, unknown> = { ...base };
-      if (row.propertyId) {
-  const prop = await properties.findOne({ _id: row.propertyId as ObjectId });
-        if (prop) leaseDoc.propertyId = { id: prop._id.toString(), name: prop.name, address: prop.address };
-      }
-      if (row.unitId) {
-  const unit = await units.findOne({ _id: row.unitId as ObjectId });
-        if (unit) leaseDoc.unitId = { id: unit._id.toString(), unitNumber: unit.unitNumber };
-      }
-      mapped.push(leaseDoc);
-    }
-    return mapped;
+    const rows = await leases.aggregate(pipeline).toArray();
+    return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching leases:", error);
     throw error;
@@ -700,10 +1204,152 @@ export async function createLease(leaseData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-  const result = await leases.insertOne({ ...(leaseData as Record<string, unknown>), createdAt: new Date() });
+    
+    const leaseDoc = { ...leaseData, createdAt: new Date() };
+    
+    if (leaseDoc.tenantId && typeof leaseDoc.tenantId === 'string') {
+      leaseDoc.tenantId = toId(leaseDoc.tenantId);
+    }
+    if (leaseDoc.propertyId && typeof leaseDoc.propertyId === 'string') {
+      leaseDoc.propertyId = toId(leaseDoc.propertyId);
+    }
+    if (leaseDoc.unitId && typeof leaseDoc.unitId === 'string') {
+      leaseDoc.unitId = toId(leaseDoc.unitId);
+    }
+    
+  const result = await leases.insertOne(leaseDoc);
     return result;
   } catch (error) {
     console.error("Error creating lease:", error);
+    throw error;
+  }
+}
+
+// Lease Renewals API
+export async function getRenewals(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "leases",
+          localField: "leaseId",
+          foreignField: "_id",
+          as: "lease"
+        }
+      },
+      { $unwind: { path: "$lease", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "lease.tenantId",
+          foreignField: "_id",
+          as: "tenant"
+        }
+      },
+      { $unwind: { path: "$tenant", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "lease.propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      { $unwind: { path: "$property", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "units",
+          localField: "lease.unitId",
+          foreignField: "_id",
+          as: "unit"
+        }
+      },
+      { $unwind: { path: "$unit", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          id: { $toString: "$_id" },
+          tenantName: "$tenant.fullName",
+          unitNumber: "$unit.unitNumber",
+          propertyName: "$property.name",
+          currentEndDate: "$lease.endDate"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: 1,
+          leaseId: { $toString: "$leaseId" },
+          tenantName: 1,
+          unitNumber: 1,
+          propertyName: 1,
+          currentEndDate: 1,
+          status: 1,
+          renewalOfferSent: 1,
+          tenantResponse: 1,
+          offerSentDate: 1,
+          responseDate: 1,
+          newTerms: 1,
+          createdAt: 1
+        }
+      }
+    ];
+    
+    const rows = await leaseRenewals.aggregate(pipeline).toArray();
+    
+    const today = new Date();
+    return rows.map((row: any) => ({
+      ...row,
+      daysUntilExpiry: row.currentEndDate 
+        ? Math.ceil((new Date(row.currentEndDate as string).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        : null
+    }));
+  } catch (error) {
+    console.error("Error fetching renewals:", error);
+    throw error;
+  }
+}
+
+export async function createRenewal(renewalData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const renewalDoc = {
+      ...renewalData,
+      leaseId: toId(renewalData.leaseId),
+      createdAt: new Date()
+    };
+    
+    const result = await leaseRenewals.insertOne(renewalDoc);
+    return result;
+  } catch (error) {
+    console.error("Error creating renewal:", error);
+    throw error;
+  }
+}
+
+export async function updateRenewal(id: string, updateData: Record<string, unknown>) {
+  try {
+    console.log('updateRenewal called with id:', id, 'data:', updateData);
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const objectId = toId(id);
+    console.log('Converted to ObjectId:', objectId);
+    
+    const result = await leaseRenewals.updateOne(
+      { _id: objectId },
+      { $set: { ...updateData, updatedAt: new Date() } }
+    );
+    
+    console.log('Update result:', result);
+    return result;
+  } catch (error) {
+    console.error("Error updating renewal:", error);
     throw error;
   }
 }
@@ -776,7 +1422,7 @@ export async function getMaintenanceRequests(filters: Record<string, unknown> = 
     const requests = getCollection("maintenance_requests");
     const properties = getCollection("properties");
     
-    let queryFilters = normalizeFilters(filters) as Record<string, unknown>;
+  const queryFilters = normalizeFilters(filters) as Record<string, unknown>;
     
     // If managerId is provided, get properties for that manager and filter by those propertyIds
     if (filters.managerId) {
@@ -810,7 +1456,7 @@ export async function createMaintenanceRequest(requestData: Record<string, unkno
     };
     
     const result = await requests.insertOne(requestDoc);
-    const requestId = String(result.insertedId || result);
+  const requestId = toInsertedIdString(result);
     
     const createdRequest = await requests.findOne({ _id: new ObjectId(requestId) });
     
@@ -840,8 +1486,8 @@ export async function createMaintenanceRequest(requestData: Record<string, unkno
         const notifResult = await notifications.insertOne(notificationDoc);
         
         const createdNotification = {
-          id: String(notifResult.insertedId || notifResult),
-          _id: String(notifResult.insertedId || notifResult),
+          id: toInsertedIdString(notifResult),
+          _id: toInsertedIdString(notifResult),
           userId: String(user._id),
           title: notificationDoc.title,
           message: notificationDoc.message,
@@ -881,13 +1527,13 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
       throw new Error('Maintenance request not found');
     }
     
-    const updateDoc = { 
+    const updateDoc: Record<string, unknown> = { 
       ...updateData, 
       updatedAt: new Date() 
     };
     
     if (updateData.status === 'completed' && !existingRequest.completedAt) {
-      updateDoc.completedAt = new Date();
+      updateDoc['completedAt'] = new Date();
     }
     
     await requests.updateOne(
@@ -944,8 +1590,8 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
         const notifResult = await notifications.insertOne(notificationDoc);
         
         const createdNotification = {
-          id: String(notifResult.insertedId || notifResult),
-          _id: String(notifResult.insertedId || notifResult),
+          id: toInsertedIdString(notifResult),
+          _id: toInsertedIdString(notifResult),
           userId: userId,
           title: notificationDoc.title,
           message: notificationDoc.message,
@@ -1004,8 +1650,8 @@ export async function deleteMaintenanceRequest(id: string, broadcaster?: { broad
       const notifResult = await notifications.insertOne(notificationDoc);
       
       const createdNotification = {
-        id: String(notifResult.insertedId || notifResult),
-        _id: String(notifResult.insertedId || notifResult),
+        id: toInsertedIdString(notifResult),
+        _id: toInsertedIdString(notifResult),
         userId: tenantId,
         title: notificationDoc.title,
         message: notificationDoc.message,
@@ -1020,7 +1666,8 @@ export async function deleteMaintenanceRequest(id: string, broadcaster?: { broad
       }
     }
     
-    return { success: true, deletedCount: result.deletedCount };
+  const deletedCount = getDeletedCount(result);
+  return { success: true, deletedCount };
   } catch (error) {
     console.error("Error deleting maintenance request:", error);
     throw error;
@@ -1157,8 +1804,8 @@ export async function createNotification(
         
         // Create notification object for broadcasting
         const createdNotification = {
-          id: String(result.insertedId || result),
-          _id: String(result.insertedId || result),
+          id: toInsertedIdString(result),
+          _id: toInsertedIdString(result),
           userId: String(user._id),
           title: notificationData.title,
           message: notificationData.message,
@@ -1228,8 +1875,8 @@ export async function createNotification(
       const result = await notifications.insertOne(notificationDoc);
       
       const createdNotification = {
-        id: String(result.insertedId || result),
-        _id: String(result.insertedId || result),
+        id: toInsertedIdString(result),
+        _id: toInsertedIdString(result),
         ...notificationDoc,
         userId: String(notificationData.userId),
         createdAt: notificationDoc.createdAt.toISOString()
@@ -1698,15 +2345,96 @@ export async function createInvoice(invoiceData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const invoices = getCollection("invoices");
-    
-    const toInsert = {
-      ...invoiceData,
+    const users = getCollection("users");
+    const properties = getCollection("properties");
+
+    const issueDate = toIsoDateString(invoiceData.issueDate);
+    const dueDate = computeDueDate(issueDate, invoiceData.dueDate);
+    const monthLabel = computeMonthLabel(issueDate, invoiceData.month);
+    const yearValue = computeYearValue(issueDate, invoiceData.year);
+
+    const tenantObjectId = toObjectId(invoiceData.tenantId);
+    if (tenantObjectId) {
+      const duplicate = await invoices.findOne({ tenantId: tenantObjectId, month: monthLabel, year: yearValue });
+      if (duplicate) {
+        await ensureInvoiceArtifacts(duplicate as RawInvoiceDoc);
+        const refreshed = await invoices.findOne({ _id: (duplicate as RawInvoiceDoc)._id });
+        return serializeInvoice(refreshed as RawInvoiceDoc);
+      }
+    }
+
+    let tenantName = typeof invoiceData.tenantName === "string" && invoiceData.tenantName.length > 0 ? invoiceData.tenantName : undefined;
+    if (!tenantName && tenantObjectId) {
+      const tenantRecord = await users.findOne({ _id: tenantObjectId });
+      if (tenantRecord) {
+        const fullName = (tenantRecord as Record<string, unknown>).fullName;
+        if (typeof fullName === "string" && fullName.length > 0) {
+          tenantName = fullName;
+        }
+      }
+    }
+
+    const propertyObjectId = toObjectId(invoiceData.propertyId);
+    let propertyName = typeof invoiceData.propertyName === "string" && invoiceData.propertyName.length > 0 ? invoiceData.propertyName : undefined;
+    let propertyAddress = typeof invoiceData.propertyAddress === "string" && invoiceData.propertyAddress.length > 0 ? invoiceData.propertyAddress : undefined;
+    let managerObjectId = toObjectId(invoiceData.managerId);
+
+    if (propertyObjectId) {
+      const propertyRecord = await properties.findOne({ _id: propertyObjectId });
+      if (propertyRecord) {
+        const nameValue = (propertyRecord as Record<string, unknown>).name;
+        const addressValue = (propertyRecord as Record<string, unknown>).address;
+        const managerValue = (propertyRecord as Record<string, unknown>).managerId;
+        if (!propertyName && typeof nameValue === "string" && nameValue.length > 0) {
+          propertyName = nameValue;
+        }
+        if (!propertyAddress && typeof addressValue === "string" && addressValue.length > 0) {
+          propertyAddress = addressValue;
+        }
+        if (!managerObjectId && managerValue instanceof ObjectId) {
+          managerObjectId = managerValue;
+        }
+      }
+    }
+
+    const leaseObjectId = toObjectId(invoiceData.leaseId);
+    const invoiceNumber = typeof invoiceData.invoiceNumber === "string" && invoiceData.invoiceNumber.length > 0 ? invoiceData.invoiceNumber : generateInvoiceNumber();
+    const amount = Number(invoiceData.amount ?? 0);
+
+    const toInsert: Record<string, unknown> = {
+      invoiceNumber,
+      tenantId: tenantObjectId ?? invoiceData.tenantId,
+      tenantName: tenantName ?? "Tenant",
+      propertyId: propertyObjectId ?? invoiceData.propertyId,
+      propertyName,
+      propertyAddress,
+      managerId: managerObjectId ?? invoiceData.managerId,
+      leaseId: leaseObjectId ?? invoiceData.leaseId,
+      amount,
+      dueDate,
+      issueDate,
+      status: invoiceData.status ?? "pending",
+      description: invoiceData.description ?? `Monthly rent for ${monthLabel} ${yearValue}`,
+      month: monthLabel,
+      year: yearValue,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
+    for (const key of Object.keys(toInsert)) {
+      if (toInsert[key] === undefined || toInsert[key] === null) {
+        delete toInsert[key];
+      }
+    }
+
     const result = await invoices.insertOne(toInsert);
-    return mapDoc(await invoices.findOne({ _id: result }));
+    const created = await invoices.findOne({ _id: result });
+    if (!created) {
+      throw new Error("Invoice not found after creation");
+    }
+    await ensureInvoiceArtifacts(created as RawInvoiceDoc);
+    const refreshed = await invoices.findOne({ _id: result });
+    return serializeInvoice(refreshed as RawInvoiceDoc);
   } catch (error) {
     console.error("Error creating invoice:", error);
     throw error;
@@ -1717,9 +2445,36 @@ export async function getInvoices(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const invoices = getCollection("invoices");
+    const properties = getCollection("properties");
     const normalizedFilters = normalizeFilters(filters);
+
+    if ("managerId" in normalizedFilters) {
+      const managerObjectId = toObjectId(normalizedFilters.managerId);
+      delete normalizedFilters.managerId;
+      if (managerObjectId) {
+        const propertyDocs = await properties.find({ managerId: managerObjectId }).toArray();
+        const idList = propertyDocs.map((entry) => entry._id).filter((entry): entry is ObjectId => entry instanceof ObjectId);
+        if (idList.length > 0) {
+          normalizedFilters.propertyId = { $in: idList };
+        } else {
+          normalizedFilters.propertyId = { $in: [] };
+        }
+      } else {
+        normalizedFilters.propertyId = { $in: [] };
+      }
+    }
+
     const invoiceList = await invoices.find(normalizedFilters).sort({ createdAt: -1 }).toArray();
-    return mapDocs(invoiceList);
+    const serialized: Array<Record<string, unknown>> = [];
+    for (const entry of invoiceList) {
+      await ensureInvoiceArtifacts(entry as RawInvoiceDoc);
+      const refreshed = await invoices.findOne({ _id: (entry as RawInvoiceDoc)._id });
+      const mapped = serializeInvoice(refreshed as RawInvoiceDoc);
+      if (mapped) {
+        serialized.push(mapped);
+      }
+    }
+    return serialized;
   } catch (error) {
     console.error("Error fetching invoices:", error);
     throw error;
@@ -1731,7 +2486,12 @@ export async function getInvoiceById(id: string) {
     await connectToMongoDB();
     const invoices = getCollection("invoices");
     const invoice = await invoices.findOne({ _id: toId(id) });
-    return mapDoc(invoice);
+    if (!invoice) {
+      return null;
+    }
+    await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
+    const refreshed = await invoices.findOne({ _id: (invoice as RawInvoiceDoc)._id });
+    return serializeInvoice(refreshed as RawInvoiceDoc);
   } catch (error) {
     console.error("Error fetching invoice:", error);
     throw error;
@@ -1742,23 +2502,23 @@ export async function updateInvoiceStatus(id: string, status: string) {
   try {
     await connectToMongoDB();
     const invoices = getCollection("invoices");
-    
     const result = await invoices.updateOne(
       { _id: toId(id) },
-      { 
-        $set: { 
+      {
+        $set: {
           status,
           updatedAt: new Date(),
-          ...(status === 'paid' ? { paidAt: new Date() } : {})
-        } 
+          ...(status === "paid" ? { paidAt: new Date() } : {})
+        }
       }
     );
-    
-    if (result.matchedCount === 0) {
+    if ((result as { matchedCount?: number }).matchedCount === 0) {
       throw new Error("Invoice not found");
     }
-    
-    return mapDoc(await invoices.findOne({ _id: toId(id) }));
+    const invoice = await invoices.findOne({ _id: toId(id) });
+    await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
+    const refreshed = await invoices.findOne({ _id: toId(id) });
+    return serializeInvoice(refreshed as RawInvoiceDoc);
   } catch (error) {
     console.error("Error updating invoice status:", error);
     throw error;
@@ -1769,10 +2529,207 @@ export async function deleteInvoice(id: string) {
   try {
     await connectToMongoDB();
     const invoices = getCollection("invoices");
-    const result = await invoices.deleteOne({ _id: toId(id) });
-    return result.deletedCount > 0;
+    const invoice = await invoices.findOne({ _id: toId(id) });
+    if (!invoice) {
+      return false;
+    }
+    const artifactPaths = (invoice as Record<string, unknown>).artifactPaths as { markdown?: string; pdf?: string } | undefined;
+    if (artifactPaths?.markdown) {
+      await Deno.remove(artifactPaths.markdown).catch(() => {});
+    }
+    if (artifactPaths?.pdf) {
+      await Deno.remove(artifactPaths.pdf).catch(() => {});
+    }
+    const result = await invoices.deleteOne({ _id: (invoice as RawInvoiceDoc)._id });
+    if (typeof result === "number") {
+      return result > 0;
+    }
+    return Boolean((result as { deletedCount?: number }).deletedCount);
   } catch (error) {
     console.error("Error deleting invoice:", error);
+    throw error;
+  }
+}
+
+export async function generateMonthlyInvoices(managerId?: string) {
+  try {
+    await connectToMongoDB();
+    const leases = getCollection("leases");
+    const users = getCollection("users");
+    const properties = getCollection("properties");
+
+    const today = new Date();
+    const startOfMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+    const endOfMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0));
+    const managerObjectId = managerId ? toObjectId(managerId) : undefined;
+
+    const activeLeases = await leases.find({ status: "active" }).toArray();
+    const created: Array<Record<string, unknown>> = [];
+
+    for (const lease of activeLeases) {
+      const leaseStart = (lease as Record<string, unknown>).startDate ? new Date((lease as Record<string, unknown>).startDate as Date) : undefined;
+      const leaseEnd = (lease as Record<string, unknown>).endDate ? new Date((lease as Record<string, unknown>).endDate as Date) : undefined;
+      if (leaseStart && leaseStart > endOfMonth) {
+        continue;
+      }
+      if (leaseEnd && leaseEnd < startOfMonth) {
+        continue;
+      }
+
+      const propertyId = (lease as Record<string, unknown>).propertyId;
+      const tenantId = (lease as Record<string, unknown>).tenantId;
+      const leaseId = (lease as Record<string, unknown>)._id;
+      const monthlyRent = Number((lease as Record<string, unknown>).monthlyRent ?? 0);
+
+      if (!propertyId || !tenantId) {
+        continue;
+      }
+
+      const property = await properties.findOne({ _id: propertyId as ObjectId });
+      if (!property) {
+        continue;
+      }
+      const propertyManager = (property as Record<string, unknown>).managerId;
+      if (managerObjectId && (!(propertyManager instanceof ObjectId) || propertyManager.toString() !== managerObjectId.toString())) {
+        continue;
+      }
+
+      const tenant = await users.findOne({ _id: tenantId as ObjectId });
+      if (!tenant) {
+        continue;
+      }
+
+      const tenantName = (tenant as Record<string, unknown>).fullName ?? (tenant as Record<string, unknown>).name ?? "Tenant";
+      const propertyName = (property as Record<string, unknown>).name as string | undefined;
+      const propertyAddress = (property as Record<string, unknown>).address as string | undefined;
+      const managerForProperty = (property as Record<string, unknown>).managerId;
+
+      const invoice = await createInvoice({
+        tenantId,
+        tenantName,
+        propertyId,
+        propertyName,
+        propertyAddress,
+        managerId: managerForProperty,
+        leaseId,
+        amount: monthlyRent,
+        issueDate: today.toISOString().split("T")[0],
+        description: `Monthly rent for ${today.toLocaleString("default", { month: "long" })} ${today.getFullYear()}`
+      });
+      if (invoice) {
+        created.push(invoice);
+      }
+    }
+
+    return created;
+  } catch (error) {
+    console.error("Error generating invoices:", error);
+    throw error;
+  }
+}
+
+export async function processOverdueInvoices(managerId?: string) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    const properties = getCollection("properties");
+
+    const filter: Record<string, unknown> = { status: "pending" };
+    const managerObjectId = managerId ? toObjectId(managerId) : undefined;
+
+    if (managerId && !managerObjectId) {
+      return [];
+    }
+
+    if (managerObjectId) {
+      const managedProperties = await properties.find({ managerId: managerObjectId }).toArray();
+      const propertyIds = managedProperties.map((property) => property._id).filter((value): value is ObjectId => value instanceof ObjectId);
+      if (propertyIds.length === 0) {
+        return [];
+      }
+      filter.propertyId = { $in: propertyIds };
+    }
+
+    const pendingInvoices = await invoices.find(filter).toArray();
+    if (pendingInvoices.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const updated: Array<Record<string, unknown>> = [];
+
+    for (const entry of pendingInvoices) {
+      const raw = entry as RawInvoiceDoc;
+      const dueIso = toIsoDateString(raw.dueDate);
+      const dueDate = new Date(dueIso);
+      if (Number.isNaN(dueDate.getTime())) {
+        continue;
+      }
+      if (dueDate.getTime() > now.getTime()) {
+        continue;
+      }
+
+      await invoices.updateOne({ _id: raw._id }, {
+        $set: {
+          status: "overdue",
+          updatedAt: new Date(),
+          overdueAt: new Date()
+        }
+      });
+
+      const refreshed = await invoices.findOne({ _id: raw._id });
+      if (!refreshed) {
+        continue;
+      }
+
+      await ensureInvoiceArtifacts(refreshed as RawInvoiceDoc);
+      const serialized = serializeInvoice(refreshed as RawInvoiceDoc);
+      if (serialized) {
+        const overdueDays = Math.max(0, Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
+        serialized.overdueDays = overdueDays;
+        updated.push(serialized);
+      }
+    }
+
+    return updated;
+  } catch (error) {
+    console.error("Error processing overdue invoices:", error);
+    throw error;
+  }
+}
+
+export async function getInvoiceMarkdown(id: string) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    const invoice = await invoices.findOne({ _id: toId(id) });
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+    const artifacts = await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
+    const filenameBase = typeof (invoice as Record<string, unknown>).invoiceNumber === "string" && (invoice as Record<string, unknown>).invoiceNumber ? (invoice as Record<string, unknown>).invoiceNumber as string : id;
+    const content = await Deno.readTextFile(artifacts.markdownPath);
+    return { filename: `${sanitizeFileSegment(filenameBase)}.md`, content };
+  } catch (error) {
+    console.error("Error fetching invoice markdown:", error);
+    throw error;
+  }
+}
+
+export async function getInvoicePdf(id: string) {
+  try {
+    await connectToMongoDB();
+    const invoices = getCollection("invoices");
+    const invoice = await invoices.findOne({ _id: toId(id) });
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+    const artifacts = await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
+    const filenameBase = typeof (invoice as Record<string, unknown>).invoiceNumber === "string" && (invoice as Record<string, unknown>).invoiceNumber ? (invoice as Record<string, unknown>).invoiceNumber as string : id;
+    const bytes = await Deno.readFile(artifacts.pdfPath);
+    return { filename: `${sanitizeFileSegment(filenameBase)}.pdf`, bytes };
+  } catch (error) {
+    console.error("Error fetching invoice pdf:", error);
     throw error;
   }
 }
@@ -1846,7 +2803,7 @@ export async function createAnnouncement(announcementData: Record<string, unknow
     console.log("Insert result:", result);
     
     // Get the insertedId properly
-    const insertedId = result.insertedId || result;
+  const insertedId = (result as { insertedId?: ObjectId }).insertedId || result;
     console.log("Using insertedId:", insertedId);
     
     if (!insertedId) {
@@ -1941,10 +2898,11 @@ export async function deleteAnnouncement(id: string) {
       return { success: true, deletedId: id, wasGhost: true };
     }
     
-    const result = await announcements.deleteOne({ _id: toId(id) });
-    console.log("Delete result:", result);
+  const result = await announcements.deleteOne({ _id: toId(id) });
+  console.log("Delete result:", result);
+  const deletedCount = getDeletedCount(result);
     
-    if (result.deletedCount === 0) {
+  if (deletedCount === 0) {
       console.log("No documents deleted for ID:", id);
       // Treat as ghost announcement - return success so UI can remove it
       return { success: true, deletedId: id, wasGhost: true };
@@ -2000,13 +2958,14 @@ export async function deleteAnnouncementByContent(announcementData: {
       message: announcementData.message,
       createdBy: announcementData.createdBy
     });
+    const deletedCountMatch = getDeletedCount(result);
     
-    if (result.deletedCount === 0) {
+    if (deletedCountMatch === 0) {
       throw new Error("Failed to delete announcement");
     }
     
     console.log(`Successfully deleted announcement: ${announcement.title}`);
-    return { success: true, deletedTitle: announcementData.title, deletedCount: result.deletedCount };
+    return { success: true, deletedTitle: announcementData.title, deletedCount: deletedCountMatch };
   } catch (error) {
     console.error("Error deleting announcement by content:", error);
     throw error;
@@ -2074,9 +3033,10 @@ export async function clearSecurityAlert(alertId: string) {
     await connectToMongoDB();
     const alerts = getCollection("security_alerts");
     
-    const result = await alerts.deleteOne({ _id: toId(alertId) });
+  const result = await alerts.deleteOne({ _id: toId(alertId) });
+  const deletedCount = getDeletedCount(result);
     
-    return { success: true, deletedCount: result.deletedCount };
+  return { success: true, deletedCount };
   } catch (error) {
     console.error("Error clearing security alert:", error);
     throw error;

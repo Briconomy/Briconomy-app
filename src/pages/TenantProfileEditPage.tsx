@@ -66,7 +66,7 @@ function TenantProfileEditPage() {
   if (isLoading) {
     return (
       <div className="app-container mobile-only">
-        <TopNav showLogout={true} showBackButton={true} />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading">{t('common.loading')}</div>
         </div>
@@ -77,7 +77,7 @@ function TenantProfileEditPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showLogout={true} showBackButton={true} />
+      <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">

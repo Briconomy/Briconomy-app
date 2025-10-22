@@ -239,7 +239,7 @@ function ManagerPaymentsPage() {
                   : [];
 
               if (exportRows.length === 0) {
-                window.alert('No payment data available to export.');
+                globalThis.alert('No payment data available to export.');
                 return;
               }
 

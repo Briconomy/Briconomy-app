@@ -69,15 +69,20 @@ function LoginPage() {
         }
 
         const userName = result.user?.fullName || 'User';
-        showToast(`Welcome back, ${userName}`, 'success', 3000);
-
-        const dashboards = {
-          admin: '/admin',
-          manager: '/manager',
-          tenant: '/tenant',
-          caretaker: '/caretaker'
-        };
-        navigate(dashboards[result.user?.userType as keyof typeof dashboards] || '/tenant');
+        
+        if (result.restricted && result.redirectTo) {
+          showToast(`${userName}, your property application was not approved. You can browse and apply for other properties.`, 'info', 5000);
+          navigate(result.redirectTo);
+        } else {
+          showToast(`Welcome back, ${userName}`, 'success', 3000);
+          const dashboards = {
+            admin: '/admin',
+            manager: '/manager',
+            tenant: '/tenant',
+            caretaker: '/caretaker'
+          };
+          navigate(dashboards[result.user?.userType as keyof typeof dashboards] || '/tenant');
+        }
       } else {
         setAuthError(result.message);
       }

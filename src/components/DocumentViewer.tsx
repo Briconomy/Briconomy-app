@@ -154,7 +154,7 @@ function DocumentViewer() {
                 <button 
                   type="button"
                   className="btn btn-sm btn-secondary"
-                  onClick={() => doc.url && window.open(doc.url, '_blank')}
+                  onClick={() => doc.url && globalThis.open(doc.url, '_blank')}
                 >
                   Download
                 </button>
@@ -294,7 +294,7 @@ function DocumentViewer() {
                 <button 
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => selectedDocument.url && window.open(selectedDocument.url, '_blank')}
+                  onClick={() => selectedDocument.url && globalThis.open(selectedDocument.url, '_blank')}
                 >
                   Download
                 </button>

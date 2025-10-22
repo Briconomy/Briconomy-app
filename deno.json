@@ -3,7 +3,8 @@
     "dev": "deno run -A --watch dev-server.ts",
     "build": "deno run -A build.ts",
     "preview": "deno run -A server.ts",
-    "init-db": "mongo briconomy scripts/init-users-simple.js && mongo briconomy scripts/comprehensive-relational-data.js",
+    "init-db": "mongo briconomy scripts/comprehensive-data-init.js",
+    "init-collections": "deno run -A scripts/init-pending-users.js && deno run -A scripts/add-sample-applications.js && deno run -A scripts/setup-manager-properties.ts",
     "api": "deno run -A api-server.ts",
     "dev-full": "deno run -A dev-server.ts & deno run -A api-server.ts",
     "update-llm": "bash update-llm.sh"
@@ -17,13 +18,15 @@
     "chart.js": "https://esm.sh/chart.js@4.2.1",
     "react-chartjs-2": "https://esm.sh/react-chartjs-2@5.2.0",
     "xlsx": "https://esm.sh/xlsx@0.18.5",
-    "@react-oauth/google": "https://esm.sh/@react-oauth/google@0.12.2"
+    "@react-oauth/google": "https://esm.sh/@react-oauth/google@0.12.2",
+    "@std/path": "https://deno.land/std@0.204.0/path/mod.ts",
+    "@std/fs": "https://deno.land/std@0.204.0/fs/mod.ts",
+    "pdf-lib": "https://esm.sh/pdf-lib@1.17.1?target=deno"
   },
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react", 
     "lib": ["dom", "dom.iterable", "es2020", "deno.ns"],
-    "strict": false,
-    "noEmit": true
-}
+    "strict": false
+  }
 }

@@ -999,6 +999,68 @@ body {
     color: #2c3e50;
 }
 
+.table-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.table-row {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.table-row:hover {
+    border-color: var(--secondary);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .table-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.table-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.table-cell:before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #6c757d;
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
 .list-item {
     display: flex;
     flex-direction: column;

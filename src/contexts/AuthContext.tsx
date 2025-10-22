@@ -28,7 +28,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; message: string; user?: User }>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; message: string; user?: User; restricted?: boolean; redirectTo?: string }>;
   register: (userData: Record<string, unknown>) => Promise<{ success: boolean; message: string }>;
   updateUser: (userData: Partial<User>) => void;
   logout: () => void;
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string, rememberMe = false) => {
     try {
-      const result: { success: boolean; message: string; user?: Record<string, unknown>; token?: string } = await authApi.login(email, password);
+      const result: { success: boolean; message: string; user?: Record<string, unknown>; token?: string; restricted?: boolean; redirectTo?: string } = await authApi.login(email, password);
 
       if (result.success && result.user) {
         const raw = result.user as Record<string, unknown>;
@@ -147,7 +147,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('[AuthContext] Login successful, saved to sessionStorage (current session only):', userWithId.fullName, userWithId.userType);
         }
         
-        return { success: true, message: result.message, user: userWithId };
+        return { 
+          success: true, 
+          message: result.message, 
+          user: userWithId,
+          restricted: result.restricted,
+          redirectTo: result.redirectTo
+        };
       } else {
         return { success: false, message: result.message };
       }

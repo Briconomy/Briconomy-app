@@ -6,7 +6,6 @@ import ActionCard from "../components/ActionCard.tsx";
 import ChartCard from "../components/ChartCard.tsx";
 import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
-import InvoiceManagement from '../components/InvoiceManagement.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import Icon from '../components/Icon.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
@@ -18,7 +17,6 @@ import { dashboardApi, propertiesApi, maintenanceApi, leasesApi, formatCurrency,
 function ManagerDashboard() {
   const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
-  const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
 
   // API calls for real-time data - FILTERED BY MANAGER ID
@@ -37,7 +35,7 @@ function ManagerDashboard() {
     [user?.id]
   );
 
-  const { data: leases, loading: leasesLoading } = useApi(
+  const { data: leases } = useApi(
     () => user?.id ? leasesApi.getAll() : Promise.resolve([]),
     [user?.id]
   );
@@ -127,7 +125,7 @@ function ManagerDashboard() {
             description={t('manager.contracts')}
           />
           <ActionCard
-            onClick={() => setShowInvoiceManagement(true)}
+            to="/manager/invoices"
             icon={<Icon name="invoice" alt="Invoices" />}
             title={t('manager.invoices')}
             description={t('manager.generate_manage')}
@@ -172,13 +170,6 @@ function ManagerDashboard() {
       
       {/* Offline Indicator */}
       <OfflineIndicator />
-      
-      {/* Invoice Management Modal */}
-      {showInvoiceManagement && (
-        <InvoiceManagement 
-          onClose={() => setShowInvoiceManagement(false)}
-        />
-      )}
       
       {/* Announcement System Modal */}
       {showAnnouncements && (

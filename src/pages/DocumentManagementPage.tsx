@@ -244,28 +244,10 @@ function DocumentManagementPage() {
 
         <div className="quick-actions">
           <ActionCard
-            onClick={() => {}}
+            onClick={() => setShowUploadForm(true)}
             icon={<Icon name="uploadDoc" alt="Upload Documents" />}
             title="Upload Documents"
-            description="Add new files"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon={<Icon name="template" alt="Templates" />}
-            title="Templates"
-            description="Document templates"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon={<Icon name="signDocs" alt="Sign Documents" />}
-            title="Sign Documents"
-            description="E-signature portal"
-          />
-          <ActionCard
-            onClick={() => {}}
-            icon={<Icon name="archive" alt="Archive" />}
-            title="Archive"
-            description="Document archive"
+            description="Upload lease agreements and tenant documents"
           />
         </div>
       </div>

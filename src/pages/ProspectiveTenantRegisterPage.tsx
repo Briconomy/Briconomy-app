@@ -110,6 +110,10 @@ function ProspectiveTenantRegisterPage() {
     }
     
     try {
+      // Find the property ID based on the selected property name
+      const selectedProperty = properties.find(p => p.name === formData.profile.property);
+      const actualPropertyId = selectedProperty ? selectedProperty.id : propertyId;
+      
       const profileData = {
         emergencyContact: formData.profile.emergencyContact,
         property: formData.profile.property,
@@ -128,7 +132,7 @@ function ProspectiveTenantRegisterPage() {
         userType: 'tenant',
         profile: profileData,
         status: 'pending',
-        appliedPropertyId: propertyId
+        appliedPropertyId: actualPropertyId
       });
       
       navigate('/pending-approval', { 
