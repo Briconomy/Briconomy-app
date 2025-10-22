@@ -1065,8 +1065,27 @@ export async function createProperty(propertyData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const properties = getCollection("properties");
-  const result = await properties.insertOne({ ...(propertyData as Record<string, unknown>), createdAt: new Date() });
-    return result;
+    
+    const propertyDoc = {
+      name: propertyData.name,
+      address: propertyData.address,
+      type: propertyData.type || 'apartment',
+      totalUnits: propertyData.totalUnits || 1,
+      occupiedUnits: propertyData.occupiedUnits || 0,
+      managerId: propertyData.managerId ? toId(propertyData.managerId) : null,
+      amenities: propertyData.amenities || [],
+      description: propertyData.description || '',
+      status: propertyData.status || 'active',
+      yearBuilt: propertyData.yearBuilt || null,
+      lastRenovation: propertyData.lastRenovation || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await properties.insertOne(propertyDoc);
+    
+    const insertedProperty = await properties.findOne({ _id: result });
+    return mapDoc(insertedProperty);
   } catch (error) {
     console.error("Error creating property:", error);
     throw error;

@@ -5,18 +5,12 @@ import { useImageOptimization } from '../utils/bandwidth.ts';
 interface ManagerPropertyCardProps {
   property: any;
   onViewDetails: (propertyId: string) => void;
-  onEditProperty: (propertyId: string) => void;
-  onManageUnits: (propertyId: string) => void;
-  onViewTenants: (propertyId: string) => void;
   lowBandwidthMode: boolean;
 }
 
 function ManagerPropertyCard({
   property,
   onViewDetails,
-  onEditProperty,
-  onManageUnits,
-  onViewTenants,
   lowBandwidthMode
 }: ManagerPropertyCardProps) {
   const { optimizeImage } = useImageOptimization();
@@ -26,7 +20,8 @@ function ManagerPropertyCard({
   const estimatedMonthlyRevenue = property.occupiedUnits * (property.type === 'apartment' ? 8000 :
                                  property.type === 'complex' ? 10000 : 12000);
 
-  const imageUrl = optimizeImage(`/api/properties/${property._id}/image`, lowBandwidthMode);
+  const propertyId = property.id || property._id;
+  const imageUrl = optimizeImage(`/api/properties/${propertyId}/image`, lowBandwidthMode);
 
   const getOccupancyStatus = () => {
     if (occupancyRate >= 90) return { status: 'high', color: '#1f7a3a', text: 'High' };
@@ -256,27 +251,9 @@ function ManagerPropertyCard({
           <div style={styles.actions}>
             <button type="button"
               style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onViewDetails(property._id)}
+              onClick={() => onViewDetails(property.id || property._id)}
             >
-              View
-            </button>
-            <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onEditProperty(property._id)}
-            >
-              Edit
-            </button>
-            <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onManageUnits(property._id)}
-            >
-              Units
-            </button>
-            <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onViewTenants(property._id)}
-            >
-              Tenants
+              View Details
             </button>
           </div>
         </div>

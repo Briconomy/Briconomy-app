@@ -1308,6 +1308,40 @@ db.documents.insertMany([
   }
 ]);
 
+db.properties.createIndex({ managerId: 1 });
+db.properties.createIndex({ status: 1 });
+db.properties.createIndex({ type: 1 });
+db.properties.createIndex({ name: "text", address: "text" });
+
+db.units.createIndex({ propertyId: 1 });
+db.units.createIndex({ status: 1 });
+
+db.leases.createIndex({ tenantId: 1 });
+db.leases.createIndex({ propertyId: 1 });
+db.leases.createIndex({ unitId: 1 });
+db.leases.createIndex({ status: 1 });
+
+db.payments.createIndex({ tenantId: 1 });
+db.payments.createIndex({ leaseId: 1 });
+db.payments.createIndex({ status: 1 });
+db.payments.createIndex({ dueDate: 1 });
+
+db.maintenance_requests.createIndex({ tenantId: 1 });
+db.maintenance_requests.createIndex({ propertyId: 1 });
+db.maintenance_requests.createIndex({ unitId: 1 });
+db.maintenance_requests.createIndex({ status: 1 });
+
+db.documents.createIndex({ leaseId: 1 });
+db.documents.createIndex({ propertyId: 1 });
+db.documents.createIndex({ tenantId: 1 });
+
+db.notifications.createIndex({ userId: 1 });
+db.notifications.createIndex({ read: 1 });
+
+db.audit_logs.createIndex({ userId: 1 });
+db.audit_logs.createIndex({ action: 1 });
+db.audit_logs.createIndex({ timestamp: -1 });
+
 print('Comprehensive database initialization completed successfully!');
 print('Collections created:');
 print('   - users (' + db.users.countDocuments({}) + ' documents)');

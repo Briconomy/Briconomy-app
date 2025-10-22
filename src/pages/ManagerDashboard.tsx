@@ -125,12 +125,6 @@ function ManagerDashboard() {
             description={t('manager.contracts')}
           />
           <ActionCard
-            to="/manager/invoices"
-            icon={<Icon name="invoice" alt="Invoices" />}
-            title={t('manager.invoices')}
-            description={t('manager.generate_manage')}
-          />
-          <ActionCard
             onClick={() => {}}
             icon={<Icon name="payment" alt="Payments" />}
             title={t('nav.payments')}

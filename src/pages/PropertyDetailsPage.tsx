@@ -137,10 +137,30 @@ const modalStyles = `
   
   .thumbnail-grid {
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    margin-top: 12px;
     overflow-x: auto;
-    padding: 5px 0;
+    padding: 8px 0;
+  }
+  
+  .thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  
+  .thumbnail:hover {
+    border-color: #e0e0e0;
+    transform: scale(1.05);
+  }
+  
+  .thumbnail.active {
+    border-color: #162F1B;
   }
   
   .thumbnail-btn {
@@ -158,19 +178,22 @@ const modalStyles = `
   }
   
   .thumbnail-image {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     object-fit: cover;
     display: block;
+    border-radius: 8px;
   }
   
   .main-image-container {
     position: relative;
     width: 100%;
-    height: 300px;
+    max-height: 400px;
+    height: 400px;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   .main-property-image {
@@ -436,6 +459,250 @@ const modalStyles = `
   
   .pricing-value.unavailable {
     color: #dc3545;
+  }
+
+  .property-details-header {
+    margin-bottom: 24px;
+  }
+
+  .property-details-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+  }
+
+  .property-address {
+    font-size: 16px;
+    color: #6c757d;
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+  }
+
+  .property-type-badge {
+    display: inline-block;
+    background: #162F1B;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .property-image-gallery {
+    margin-bottom: 24px;
+  }
+
+  .manager-financial-overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .financial-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .financial-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #28a745;
+    margin-bottom: 8px;
+  }
+
+  .financial-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  .manager-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .property-overview-section,
+  .property-description-section,
+  .property-amenities-section {
+    margin-bottom: 24px;
+  }
+
+  .property-overview-section h2,
+  .property-description-section h2,
+  .property-amenities-section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 16px 0;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .overview-item {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .overview-label {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 8px;
+  }
+
+  .overview-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+
+  .property-description-section p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #495057;
+    margin: 0;
+  }
+
+  .image-counter {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .section-heading {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 12px;
+  }
+
+  .maintenance-note {
+    color: #e67e22;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .map-placeholder-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .map-placeholder-text {
+    color: #6c757d;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .contact-text {
+    color: #6c757d;
+    font-size: 14px;
+  }
+
+  .manager-units-section {
+    margin-bottom: 24px;
+  }
+
+  .manager-units-section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 16px 0;
+  }
+
+  .units-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .summary-item {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border-left: 4px solid transparent;
+  }
+
+  .summary-item.occupied {
+    border-left-color: #28a745;
+  }
+
+  .summary-item.vacant {
+    border-left-color: #ffc107;
+  }
+
+  .summary-item.maintenance {
+    border-left-color: #dc3545;
+  }
+
+  .summary-count {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+  }
+
+  .summary-label {
+    display: block;
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .property-details-header h1 {
+      font-size: 24px;
+    }
+
+    .main-image-container {
+      height: 300px;
+    }
+
+    .thumbnail {
+      width: 70px;
+      height: 70px;
+    }
+
+    .financial-value {
+      font-size: 24px;
+    }
+
+    .manager-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .overview-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .manager-financial-overview {
+      grid-template-columns: 1fr;
+    }
+
+    .units-summary {
+      grid-template-columns: 1fr;
+    }
   }
 `;
 
@@ -979,8 +1246,8 @@ function PropertyDetailsPage() {
                 <div className="amenities-grid">
                   {property.amenities.map((amenity, index) => (
                     <div key={index} className="amenity-item">
-                      <span className="amenity-icon">Available</span>
-                      <span className="amenity-name">{amenity.replace('_', ' ')}</span>
+                      <span className="amenity-icon">Available </span>
+                      <span className="amenity-name">{amenity.replace(/_/g, ' ')}</span>
                     </div>
                   ))}
                 </div>
@@ -989,19 +1256,10 @@ function PropertyDetailsPage() {
               {units.length > 0 && (
                 <div className="manager-units-section">
                   <h2>Unit Management</h2>
-                  <div className="units-summary">
-                    <div className="summary-item occupied">
-                      <span className="summary-count">{units.filter(u => u.status === 'occupied').length}</span>
-                      <span className="summary-label">Occupied</span>
-                    </div>
-                    <div className="summary-item vacant">
-                      <span className="summary-count">{units.filter(u => u.status === 'vacant').length}</span>
-                      <span className="summary-label">Vacant</span>
-                    </div>
-                    <div className="summary-item maintenance">
-                      <span className="summary-count">{units.filter(u => u.status === 'maintenance').length}</span>
-                      <span className="summary-label">Maintenance</span>
-                    </div>
+                  <div style={{ fontSize: '15px', lineHeight: '1.8', color: '#495057' }}>
+                    <div>{units.filter(u => u.status === 'occupied').length} Occupied</div>
+                    <div>{units.filter(u => u.status === 'vacant').length} Vacant</div>
+                    <div>{units.filter(u => u.status === 'maintenance').length} Maintenance</div>
                   </div>
                 </div>
               )}
@@ -1102,8 +1360,8 @@ function PropertyDetailsPage() {
               <div className="amenities-grid">
                 {property.amenities.map((amenity, index) => (
                   <div key={index} className="amenity-item">
-                    <span className="amenity-icon">Available</span>
-                    <span className="amenity-name">{amenity.replace('_', ' ')}</span>
+                    <span className="amenity-icon">Available </span>
+                    <span className="amenity-name">{amenity.replace(/_/g, ' ')}</span>
                   </div>
                 ))}
               </div>
@@ -1309,7 +1567,7 @@ function PropertyDetailsPage() {
         {/* Property Description Card */}
         <div className="property-card">
           <div className="property-info">
-            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.about_property')}</h3>
+            <h3 className="section-heading">{t('prospect.about_property')}</h3>
             <div className="property-description">
               <p>{property.description || 'This is a beautiful property in a prime location with excellent amenities and convenient access to local attractions.'}</p>
             </div>
@@ -1319,11 +1577,11 @@ function PropertyDetailsPage() {
         {/* Amenities Card */}
         <div className="property-card">
           <div className="property-info">
-            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.amenities')}</h3>
+            <h3 className="section-heading">{t('prospect.amenities')}</h3>
             <div className="property-amenities">
               {property.amenities.map((amenity, index) => (
                 <span key={index} className="amenity-tag">
-                  {amenity.replace('_', ' ')}
+                  {amenity.replace(/_/g, ' ')}
                 </span>
               ))}
             </div>
@@ -1354,7 +1612,7 @@ function PropertyDetailsPage() {
         {units.length > 0 && (
           <div className="property-card">
             <div className="property-info">
-              <h3 style={{ marginBottom: '16px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.available_units')} ({units.filter(u => u.status === 'vacant').length})</h3>
+              <h3 className="section-heading" style={{ marginBottom: '16px' }}>{t('prospect.available_units')} ({units.filter(u => u.status === 'vacant').length})</h3>
               <div className="units-grid">
                 {units.map((unit, index) => (
                   <div key={unit.id || `unit-${index}`} className="property-card unit-detail-card">
@@ -1389,7 +1647,7 @@ function PropertyDetailsPage() {
                       
                       {unit.maintenanceNotes && (
                         <div className="property-description" style={{ marginTop: '12px' }}>
-                          <p style={{ color: '#e67e22', fontSize: '13px', fontWeight: '500' }}>
+                          <p className="maintenance-note">
                             <strong>Maintenance Note:</strong> {unit.maintenanceNotes}
                           </p>
                         </div>
@@ -1439,8 +1697,8 @@ function PropertyDetailsPage() {
         {/* Location Card */}
         <div className="property-card">
           <div className="property-info">
-            <h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>{t('prospect.location')}</h3>
-            <div className="property-location" style={{ fontSize: '16px', marginBottom: '16px' }}>{property.address}</div>
+            <h3 className="section-heading">{t('prospect.location')}</h3>
+            <div className="property-location" style={{ marginBottom: '16px' }}>{property.address}</div>
             <div className="location-map-placeholder">
               <div style={{ 
                 background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)', 
@@ -1449,9 +1707,9 @@ function PropertyDetailsPage() {
                 textAlign: 'center',
                 border: '2px dashed #dee2e6'
               }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>📍</div>
+                <div className="map-placeholder-icon">📍</div>
                 <p style={{ color: '#6c757d', margin: '0 0 4px 0', fontWeight: '500' }}>{t('prospect.interactive_map')}</p>
-                <p style={{ color: '#6c757d', margin: '0', fontSize: '12px' }}>{t('prospect.maps_coming_soon')}</p>
+                <p className="map-placeholder-text">{t('prospect.maps_coming_soon')}</p>
               </div>
             </div>
           </div>
@@ -1465,7 +1723,7 @@ function PropertyDetailsPage() {
                 <div className="property-price" style={{ marginBottom: '4px' }}>
                   {availability.available > 0 ? `${availability.available} ${t('prospect.units_available')}` : t('prospect.fully_occupied')}
                 </div>
-                <div style={{ color: '#6c757d', fontSize: '14px' }}>
+                <div className="contact-text">
                   {t('prospect.ready_to_apply')}
                 </div>
               </div>
