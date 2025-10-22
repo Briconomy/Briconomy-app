@@ -9,6 +9,9 @@ import {
   createUnit,
   getLeases,
   createLease,
+  getRenewals,
+  createRenewal,
+  updateRenewal,
   getPayments,
   createPayment,
   updatePaymentStatus,
@@ -458,6 +461,31 @@ serve(async (req) => {
         return new Response(JSON.stringify(lease), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
+        });
+      }
+    }
+
+    // Renewals endpoints
+    if (path[0] === 'api' && path[1] === 'renewals') {
+      if (req.method === 'GET') {
+        const filters = Object.fromEntries(url.searchParams);
+        const renewals = await getRenewals(filters);
+        return new Response(JSON.stringify(renewals), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST') {
+        const body = await req.json();
+        const renewal = await createRenewal(body);
+        return new Response(JSON.stringify(renewal), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
+        });
+      } else if (req.method === 'PATCH' && path[2]) {
+        const renewalId = path[2];
+        const body = await req.json();
+        const result = await updateRenewal(renewalId, body);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     }

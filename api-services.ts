@@ -1225,6 +1225,135 @@ export async function createLease(leaseData: Record<string, unknown>) {
   }
 }
 
+// Lease Renewals API
+export async function getRenewals(filters: Record<string, unknown> = {}) {
+  try {
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const pipeline = [
+      { $match: normalizeFilters(filters) },
+      {
+        $lookup: {
+          from: "leases",
+          localField: "leaseId",
+          foreignField: "_id",
+          as: "lease"
+        }
+      },
+      { $unwind: { path: "$lease", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "lease.tenantId",
+          foreignField: "_id",
+          as: "tenant"
+        }
+      },
+      { $unwind: { path: "$tenant", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "lease.propertyId",
+          foreignField: "_id",
+          as: "property"
+        }
+      },
+      { $unwind: { path: "$property", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "units",
+          localField: "lease.unitId",
+          foreignField: "_id",
+          as: "unit"
+        }
+      },
+      { $unwind: { path: "$unit", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          id: { $toString: "$_id" },
+          tenantName: "$tenant.fullName",
+          unitNumber: "$unit.unitNumber",
+          propertyName: "$property.name",
+          currentEndDate: "$lease.endDate"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: 1,
+          leaseId: { $toString: "$leaseId" },
+          tenantName: 1,
+          unitNumber: 1,
+          propertyName: 1,
+          currentEndDate: 1,
+          status: 1,
+          renewalOfferSent: 1,
+          tenantResponse: 1,
+          offerSentDate: 1,
+          responseDate: 1,
+          newTerms: 1,
+          createdAt: 1
+        }
+      }
+    ];
+    
+    const rows = await leaseRenewals.aggregate(pipeline).toArray();
+    
+    const today = new Date();
+    return rows.map((row: any) => ({
+      ...row,
+      daysUntilExpiry: row.currentEndDate 
+        ? Math.ceil((new Date(row.currentEndDate as string).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        : null
+    }));
+  } catch (error) {
+    console.error("Error fetching renewals:", error);
+    throw error;
+  }
+}
+
+export async function createRenewal(renewalData: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const renewalDoc = {
+      ...renewalData,
+      leaseId: toId(renewalData.leaseId),
+      createdAt: new Date()
+    };
+    
+    const result = await leaseRenewals.insertOne(renewalDoc);
+    return result;
+  } catch (error) {
+    console.error("Error creating renewal:", error);
+    throw error;
+  }
+}
+
+export async function updateRenewal(id: string, updateData: Record<string, unknown>) {
+  try {
+    console.log('updateRenewal called with id:', id, 'data:', updateData);
+    await connectToMongoDB();
+    const leaseRenewals = getCollection("lease_renewals");
+    
+    const objectId = toId(id);
+    console.log('Converted to ObjectId:', objectId);
+    
+    const result = await leaseRenewals.updateOne(
+      { _id: objectId },
+      { $set: { ...updateData, updatedAt: new Date() } }
+    );
+    
+    console.log('Update result:', result);
+    return result;
+  } catch (error) {
+    console.error("Error updating renewal:", error);
+    throw error;
+  }
+}
+
 // Payments API
 export async function getPayments(filters: Record<string, unknown> = {}) {
   try {

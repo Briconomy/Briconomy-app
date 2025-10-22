@@ -393,6 +393,95 @@ const leases = db.leases.insertMany([
   }
 ]);
 
+// Create lease renewals - using the actual lease IDs
+const leaseRenewals = db.lease_renewals.insertMany([
+  // Emma Thompson's lease - Pending
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a1"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
+    status: 'pending',
+    renewalOfferSent: false,
+    tenantResponse: null,
+    offerSentDate: null,
+    responseDate: null,
+    newTerms: {
+      duration: 12,
+      monthlyRent: 12000,
+      startDate: new Date('2025-06-01')
+    },
+    createdAt: new Date('2024-09-15'),
+    updatedAt: new Date('2024-09-15')
+  },
+  // Lisa Anderson's lease - Pending
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a2"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
+    status: 'pending',
+    renewalOfferSent: false,
+    tenantResponse: null,
+    offerSentDate: null,
+    responseDate: null,
+    newTerms: {
+      duration: 12,
+      monthlyRent: 15000,
+      startDate: new Date('2025-11-01')
+    },
+    createdAt: new Date('2024-09-20'),
+    updatedAt: new Date('2024-09-20')
+  },
+  // Mike Chen's lease - Offer Sent
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a3"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
+    status: 'offer_sent',
+    renewalOfferSent: true,
+    tenantResponse: 'pending',
+    offerSentDate: new Date('2024-10-10'),
+    responseDate: null,
+    newTerms: {
+      duration: 12,
+      monthlyRent: 11000,
+      startDate: new Date('2025-07-01')
+    },
+    createdAt: new Date('2024-10-01'),
+    updatedAt: new Date('2024-10-10')
+  },
+  // Sarah Williams's lease - Accepted
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a4"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
+    status: 'accepted',
+    renewalOfferSent: true,
+    tenantResponse: 'accepted',
+    offerSentDate: new Date('2024-09-15'),
+    responseDate: new Date('2024-09-20'),
+    newTerms: {
+      duration: 12,
+      monthlyRent: 9500,
+      startDate: new Date('2025-05-01')
+    },
+    createdAt: new Date('2024-09-01'),
+    updatedAt: new Date('2024-09-20')
+  },
+  // David Martinez's lease - Declined
+  {
+    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a5"),
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
+    status: 'declined',
+    renewalOfferSent: true,
+    tenantResponse: 'declined',
+    offerSentDate: new Date('2024-10-01'),
+    responseDate: new Date('2024-10-05'),
+    newTerms: {
+      duration: 12,
+      monthlyRent: 13500,
+      startDate: new Date('2025-09-01')
+    },
+    createdAt: new Date('2024-09-12'),
+    updatedAt: new Date('2024-10-05')
+  }
+]);
+
 // Create payments with proper references
 const payments = db.payments.insertMany([
   // Emma Thompson payments
