@@ -302,30 +302,6 @@ export const notificationsApi = {
   }),
 };
 
-export const terminationsApi = {
-  getAll: (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const endpoint = params ? `/api/terminations?${params}` : '/api/terminations';
-    return apiRequest(endpoint);
-  },
-  getById: (id: string) => apiRequest(`/api/terminations/${id}`),
-  create: (data: Record<string, unknown>) => apiRequest('/api/terminations', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  approve: (id: string) => apiRequest(`/api/terminations/${id}/approve`, {
-    method: 'PUT',
-  }),
-  reject: (id: string, reason: string) => apiRequest(`/api/terminations/${id}/reject`, {
-    method: 'PUT',
-    body: JSON.stringify({ reason }),
-  }),
-  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/terminations/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-};
-
 export function useApi<T>(apiCall: () => Promise<T>, dependencies: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);

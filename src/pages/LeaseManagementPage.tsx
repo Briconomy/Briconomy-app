@@ -250,12 +250,6 @@ function LeaseManagementPage() {
             description={t('lease.manage_renewals')}
           />
           <ActionCard
-            onClick={() => navigate('/manager/terminations')}
-            icon={<Icon name="terminations" alt={t('lease.terminations')} />}
-            title={t('lease.terminations')}
-            description={t('lease.handle_terminations')}
-          />
-          <ActionCard
             to="/manager/documents"
             icon={<Icon name="docLease" alt={t('common.documents')} />}
             title={t('common.documents')}
