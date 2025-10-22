@@ -38,7 +38,7 @@ function DataTable<T>({ title, data, columns, actions, onRowClick }: DataTablePr
               onClick={() => onRowClick && onRowClick(row)}
             >
               {columns.map((column) => (
-                <div key={column.key} className="table-cell">
+                <div key={column.key} className="table-cell" data-label={column.label}>
                   {column.render ? column.render(row[column.key], row) : row[column.key]}
                 </div>
               ))}

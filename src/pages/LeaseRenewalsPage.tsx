@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { useMemo, useState } from 'react';
-=======
-import React, { useState, useEffect } from 'react';
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
+import { useMemo, useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -10,7 +6,6 @@ import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import { renewalsApi } from '../services/api.ts';
 
 type RenewalStatus = 'pending' | 'offer_sent' | 'accepted' | 'declined';
 
@@ -28,84 +23,76 @@ type Renewal = {
 
 function LeaseRenewalsPage() {
   const { t } = useLanguage();
-<<<<<<< HEAD
-  const [renewals, setRenewals] = useState<Renewal[]>([
-    {
-      id: '1',
-      tenantName: 'John Tenant',
-      unitNumber: '2A',
-      propertyName: 'Blue Hills Apartments',
-      currentEndDate: '2024-12-31',
-      daysUntilExpiry: 45,
-      status: 'pending',
-      renewalOfferSent: false,
-      tenantResponse: null
-    },
-    {
-      id: '2',
-      tenantName: 'Jane Smith',
-      unitNumber: '3C',
-      propertyName: 'Blue Hills Apartments',
-      currentEndDate: '2025-02-28',
-      daysUntilExpiry: 104,
-      status: 'pending',
-      renewalOfferSent: true,
-      tenantResponse: null
-    },
-    {
-      id: '3',
-      tenantName: 'Mike Johnson',
-      unitNumber: '1B',
-      propertyName: 'Green Valley Complex',
-      currentEndDate: '2024-11-15',
-      daysUntilExpiry: 30,
-      status: 'offer_sent',
-      renewalOfferSent: true,
-      tenantResponse: 'pending'
-    },
-    {
-      id: '4',
-      tenantName: 'Sarah Wilson',
-      unitNumber: '4D',
-      propertyName: 'Sunset Towers',
-      currentEndDate: '2024-10-01',
-      daysUntilExpiry: 15,
-      status: 'accepted',
-      renewalOfferSent: true,
-      tenantResponse: 'accepted'
-    }
-  ]);
-
+  const [renewals, setRenewals] = useState<Renewal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | RenewalStatus>('all');
-=======
-  const [renewals, setRenewals] = useState([]);
-  const [filteredRenewals, setFilteredRenewals] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch renewals from API
     fetchRenewals();
   }, []);
-
-  useEffect(() => {
-    applyFilters(searchTerm, statusFilter);
-  }, [renewals]);
 
   const fetchRenewals = async () => {
     try {
       setLoading(true);
-      const data = await renewalsApi.getAll();
-      setRenewals(data);
-      setFilteredRenewals(data);
+      // TODO: Replace with actual API call
+      // const data = await renewalsApi.getAll();
+      // setRenewals(data);
+      
+      // Mock data for now
+      setRenewals([
+        {
+          id: '1',
+          tenantName: 'John Tenant',
+          unitNumber: '2A',
+          propertyName: 'Blue Hills Apartments',
+          currentEndDate: '2024-12-31',
+          daysUntilExpiry: 45,
+          status: 'pending',
+          renewalOfferSent: false,
+          tenantResponse: null
+        },
+        {
+          id: '2',
+          tenantName: 'Jane Smith',
+          unitNumber: '3C',
+          propertyName: 'Blue Hills Apartments',
+          currentEndDate: '2025-02-28',
+          daysUntilExpiry: 104,
+          status: 'pending',
+          renewalOfferSent: true,
+          tenantResponse: null
+        },
+        {
+          id: '3',
+          tenantName: 'Mike Johnson',
+          unitNumber: '1B',
+          propertyName: 'Green Valley Complex',
+          currentEndDate: '2024-11-15',
+          daysUntilExpiry: 30,
+          status: 'offer_sent',
+          renewalOfferSent: true,
+          tenantResponse: 'pending'
+        },
+        {
+          id: '4',
+          tenantName: 'Sarah Wilson',
+          unitNumber: '4D',
+          propertyName: 'Sunset Towers',
+          currentEndDate: '2024-10-01',
+          daysUntilExpiry: 15,
+          status: 'accepted',
+          renewalOfferSent: true,
+          tenantResponse: 'accepted'
+        }
+      ]);
     } catch (error) {
       console.error('Error fetching renewals:', error);
     } finally {
       setLoading(false);
     }
   };
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
@@ -127,48 +114,12 @@ function LeaseRenewalsPage() {
     setStatusFilter(value as typeof statusFilter);
   };
 
-<<<<<<< HEAD
   const handleSendRenewalOffer = (renewalId: string) => {
     setRenewals(prev => prev.map(renewal => 
       renewal.id === renewalId 
         ? { ...renewal, status: 'offer_sent', renewalOfferSent: true }
         : renewal
     ));
-=======
-  const applyFilters = (search, status) => {
-    let filtered = renewals;
-
-    if (search) {
-      filtered = filtered.filter(renewal =>
-        renewal.tenantName.toLowerCase().includes(search.toLowerCase()) ||
-        renewal.unitNumber.toLowerCase().includes(search.toLowerCase()) ||
-        renewal.propertyName.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (status !== 'all') {
-      filtered = filtered.filter(renewal => renewal.status === status);
-    }
-
-    setFilteredRenewals(filtered);
-  };
-
-  const handleSendRenewalOffer = async (renewalId) => {
-    const renewal = renewals.find(r => r.id === renewalId);
-    if (renewal && confirm(`Send renewal offer to ${renewal.tenantName} for unit ${renewal.unitNumber}?`)) {
-      try {
-        console.log('Sending offer for renewal ID:', renewalId);
-        const result = await renewalsApi.sendOffer(renewalId);
-        console.log('Send offer result:', result);
-        await fetchRenewals();
-        alert('Renewal offer sent successfully!');
-      } catch (error) {
-        console.error('Error sending renewal offer:', error);
-        console.error('Error details:', error.message, error.stack);
-        alert(`Failed to send renewal offer: ${error.message}`);
-      }
-    }
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
   };
 
   const filteredRenewals = useMemo(() => {

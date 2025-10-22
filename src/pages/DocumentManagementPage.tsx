@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { useState, ChangeEvent } from 'react';
-=======
-import React, { useState, useEffect } from 'react';
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
+import React, { useState } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -10,24 +6,9 @@ import ActionCard from '../components/ActionCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Icon from '../components/Icon.tsx';
-import { documentsApi } from '../services/api.ts';
-
-type ManagedDocument = {
-  id: string;
-  name: string;
-  type: string;
-  category: string;
-  uploadedBy: string;
-  uploadDate: string;
-  fileSize: string;
-  status: string;
-  property: string;
-  unit?: string;
-};
 
 function DocumentManagementPage() {
-<<<<<<< HEAD
-  const [documents, setDocuments] = useState<ManagedDocument[]>([
+  const [documents, setDocuments] = useState([
     {
       id: '1',
       name: 'Lease Agreement - John Tenant',
@@ -89,18 +70,7 @@ function DocumentManagementPage() {
   ]);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [filteredDocuments, setFilteredDocuments] = useState<ManagedDocument[]>(documents);
-=======
-  const [documents, setDocuments] = useState([]);
-  const [_loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [lastUploadedFile, setLastUploadedFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [showUploadForm, setShowUploadForm] = useState(false);
-  const [filteredDocuments, setFilteredDocuments] = useState([]);
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
+  const [filteredDocuments, setFilteredDocuments] = useState(documents);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -250,11 +220,7 @@ function DocumentManagementPage() {
     }
   ];
 
-<<<<<<< HEAD
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-=======
-  const handleFileSelect = (e) => {
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
+  const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
@@ -375,11 +341,7 @@ function DocumentManagementPage() {
               Upload
             </button>
           }
-<<<<<<< HEAD
-          onRowClick={() => {}}
-=======
-          onRowClick={(_doc) => {}}
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
+          onRowClick={(doc) => {}}
         />
 
         <div className="quick-actions">

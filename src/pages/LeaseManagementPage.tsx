@@ -55,16 +55,9 @@ function LeaseManagementPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(lease =>
-<<<<<<< HEAD
         lease.propertyId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lease.unitId?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lease.status?.toLowerCase().includes(searchTerm.toLowerCase())
-=======
-        (lease.property?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.unit?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.tenant?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.status?.toLowerCase().includes(searchTerm.toLowerCase()))
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
       );
     }
 

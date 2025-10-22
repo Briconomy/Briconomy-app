@@ -212,11 +212,7 @@ function ManagerPropertiesPage() {
         <div className="manager-property-grid">
           {filteredProperties.map((property) => (
             <ManagerPropertyCard
-<<<<<<< HEAD
               key={property._id ?? property.id ?? property.name}
-=======
-              key={property.id}
->>>>>>> 9123a3c8381559ee7662ca8a9f3948814f68e006
               property={property}
               onViewDetails={handleViewDetails}
               onEditProperty={handleEditProperty}
