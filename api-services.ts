@@ -1388,8 +1388,101 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const payments = getCollection("payments");
-  const rows = await payments.find(normalizeFilters(filters) as Record<string, unknown>).toArray();
-  return mapDocs(rows);
+    
+    const { managerId, ...otherFilters } = filters;
+    
+    if (managerId) {
+      const pipeline = [
+        {
+          $lookup: {
+            from: "leases",
+            localField: "leaseId",
+            foreignField: "_id",
+            as: "lease"
+          }
+        },
+        {
+          $unwind: {
+            path: "$lease",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $lookup: {
+            from: "properties",
+            localField: "lease.propertyId",
+            foreignField: "_id",
+            as: "property"
+          }
+        },
+        {
+          $unwind: {
+            path: "$property",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            "property.managerId": toId(managerId)
+          }
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "tenantId",
+            foreignField: "_id",
+            as: "tenant"
+          }
+        },
+        {
+          $unwind: {
+            path: "$tenant",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            tenantId: 1,
+            leaseId: 1,
+            amount: 1,
+            paymentDate: 1,
+            dueDate: 1,
+            status: 1,
+            type: 1,
+            method: 1,
+            reference: 1,
+            proofUrl: 1,
+            notes: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            "tenant.fullName": 1,
+            "property.name": 1,
+            "property._id": 1
+          }
+        }
+      ];
+      
+      if (Object.keys(otherFilters).length > 0) {
+        pipeline.unshift({
+          $match: normalizeFilters(otherFilters) as Record<string, unknown>
+        });
+      }
+      
+      const rows = await payments.aggregate(pipeline).toArray();
+      return rows.map(row => {
+        const { _id, tenant, property, ...rest } = row;
+        return {
+          id: String(_id),
+          ...rest,
+          tenant: tenant ? { fullName: tenant.fullName } : undefined,
+          property: property ? { name: property.name, id: String(property._id) } : undefined
+        };
+      });
+    } else {
+      const rows = await payments.find(normalizeFilters(otherFilters) as Record<string, unknown>).toArray();
+      return mapDocs(rows);
+    }
   } catch (error) {
     console.error("Error fetching payments:", error);
     throw error;

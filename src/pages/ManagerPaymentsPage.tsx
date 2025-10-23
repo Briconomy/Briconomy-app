@@ -225,7 +225,7 @@ function ManagerPaymentsPage() {
             marginBottom: '20px',
             color: 'var(--error-color, #e74c3c)'
           }}>
-            <strong>⚠️ {stats.overdue} payments are overdue by more than 14 days</strong>
+            <strong>{stats.overdue} payments are overdue by more than 14 days</strong>
             <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>
               Consider sending escalation notices to tenants.
             </p>
@@ -258,7 +258,6 @@ function ManagerPaymentsPage() {
             padding: '40px 20px',
             color: 'var(--text-secondary)'
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
             <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
               No payments found
             </div>

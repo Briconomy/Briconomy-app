@@ -127,7 +127,7 @@ function ManagerDashboard() {
             description={t('manager.contracts')}
           />
           <ActionCard
-            onClick={() => {}}
+            to="/manager/payments"
             icon={<Icon name="payment" alt="Payments" />}
             title={t('nav.payments')}
             description={t('manager.rent_collection')}
