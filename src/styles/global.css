@@ -45,6 +45,7 @@ button {
     font-size: var(--text-base);
     font-family: var(--font-family-primary);
     height: var(--height-input);
+    margin-bottom: 10px;
 }
 
 .search-filter button {
@@ -900,6 +901,24 @@ body {
     color: var(--text-primary);
     transition: all var(--transition-base);
     height: var(--height-input);
+    
+}
+
+.form-group2 input,
+.form-group2 select {
+    width: 100%;
+    padding: 0 var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-base);
+    font-family: var(--font-family-primary);
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: all var(--transition-base);
+    height: var(--height-input);
+    position: relative;
+    top: 5px;
+    right: 18px;
 }
 
 .form-group input[type="text"],
@@ -951,6 +970,8 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 10px;
+    margin-top: -10px;
 }
 
 .btn-primary {
@@ -1281,6 +1302,7 @@ body {
     color: #2c3e50;
     transition: all 0.3s ease;
     box-sizing: border-box;
+        margin-top: -20px;
 }
 
 .search-input:focus {
@@ -2907,4 +2929,9 @@ body {
 
 .btn.btn-primary.btn-sm{
     margin-bottom: 1px;
+}
+
+.btn.btn-primary.btnNewProperty {
+    width : 360px;
+    margin-top: -5px;
 }

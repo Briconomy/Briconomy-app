@@ -149,7 +149,7 @@ function ManagerPropertiesPage() {
         </div>
 
         <div className="manager-actions">
-          <button type="button" onClick={handleAddProperty} className="btn btn-primary">
+          <button type="button" onClick={handleAddProperty} className="btn btn-primary btnNewProperty">
             + {t('manager.add_new_property')}
           </button>
         </div>

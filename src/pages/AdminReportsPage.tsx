@@ -343,10 +343,10 @@ function AdminReportsPage() {
             <div className="table-title">{t('reports.generate')} New Report</div>
           </div>
           
-          <div className="form-group" style={{ padding: '15px' }}>
+          <div className="form-group2" style={{ padding: '15px' }}>
             <label className="form-label">{t('reports.type')}</label>
             <select 
-              className="form-select"
+              className="form-select2"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
               style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
@@ -363,7 +363,7 @@ function AdminReportsPage() {
                 <label className="form-label">{t('common.from_date')}</label>
                 <input 
                   type="date" 
-                  className="form-input"
+                  className="form-input2"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
                   style={{ width: '100%', padding: '8px' }}
@@ -373,7 +373,7 @@ function AdminReportsPage() {
                 <label className="form-label">{t('common.to_date')}</label>
                 <input 
                   type="date" 
-                  className="form-input"
+                  className="form-input2"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
                   style={{ width: '100%', padding: '8px' }}

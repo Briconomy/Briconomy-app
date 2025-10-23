@@ -302,18 +302,6 @@ function ManagerMaintenancePage() {
           <div className="page-title">Maintenance Requests</div>
           <div className="page-subtitle">
             Manage and track maintenance across all properties
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                console.log('[ManagerMaintenancePage] Manual refresh triggered');
-                refetchMaintenance();
-              }}
-              style={{ marginLeft: '12px', fontSize: '13px', padding: '4px 10px' }}
-              title="Refresh maintenance requests"
-            >
-              Refresh
-            </button>
           </div>
         </div>
         
