@@ -312,18 +312,12 @@ function AdminReportsPage() {
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <span className={`status-badge status-${report.status}`}>{report.status}</span>
                   <button 
-                    type="button" 
+                    type="button"
+                    className="btn btn-secondary"
                     style={{
-                      background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
-                      color: 'white',
                       padding: '10px 18px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontWeight: '600',
                       fontSize: '14px',
-                      cursor: 'pointer',
-                      boxShadow: '0 3px 10px rgba(74, 144, 226, 0.3)',
-                      transition: 'all 0.3s ease'
+                      boxShadow: '0 3px 10px rgba(255, 137, 77, 0.3)'
                     }}
                     onClick={() => {
                       setSelectedReport(report.title);
@@ -389,18 +383,12 @@ function AdminReportsPage() {
           
             <button 
               type="button" 
-              className="btn-primary" 
+              className="btn btn-primary" 
               style={{ 
                 width: '100%',
-                background: 'linear-gradient(135deg, #162F1B 0%, #1a4d2e 100%)',
                 padding: '14px',
-                borderRadius: '10px',
-                fontWeight: '600',
                 fontSize: '16px',
-                boxShadow: '0 4px 15px rgba(22, 47, 27, 0.3)',
-                transition: 'all 0.3s ease',
-                border: 'none',
-                cursor: 'pointer'
+                boxShadow: '0 4px 15px rgba(22, 47, 27, 0.3)'
               }}
               onClick={handleGenerateReport}
               disabled={generating}
@@ -462,18 +450,12 @@ function AdminReportsPage() {
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexDirection: 'column' }}>
                   <span className={`status-badge status-${report.status}`}>{report.status}</span>
                   <button 
-                    type="button" 
+                    type="button"
+                    className="btn btn-secondary"
                     style={{
-                      background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
-                      color: 'white',
                       padding: '10px 20px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontWeight: '600',
                       fontSize: '14px',
-                      cursor: 'pointer',
-                      boxShadow: '0 3px 10px rgba(74, 144, 226, 0.3)',
-                      transition: 'all 0.3s ease',
+                      boxShadow: '0 3px 10px rgba(255, 137, 77, 0.3)',
                       whiteSpace: 'nowrap'
                     }}
                     onClick={() => {
@@ -519,72 +501,48 @@ function AdminReportsPage() {
           <p>Select export format for: <strong>{selectedReport}</strong></p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
             <button 
-              type="button" 
+              type="button"
+              className="btn btn-secondary"
               style={{
-                background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
-                color: 'white',
                 padding: '14px',
-                borderRadius: '10px',
-                border: 'none',
-                fontWeight: '600',
                 fontSize: '15px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)',
-                transition: 'all 0.3s ease'
+                boxShadow: '0 4px 12px rgba(255, 137, 77, 0.3)'
               }}
               onClick={() => handleExportReport('pdf')}
             >
               Export as PDF
             </button>
             <button 
-              type="button" 
+              type="button"
+              className="btn btn-secondary"
               style={{
-                background: 'linear-gradient(135deg, #28a745 0%, #218838 100%)',
-                color: 'white',
                 padding: '14px',
-                borderRadius: '10px',
-                border: 'none',
-                fontWeight: '600',
                 fontSize: '15px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
-                transition: 'all 0.3s ease'
+                boxShadow: '0 4px 12px rgba(255, 137, 77, 0.3)'
               }}
               onClick={() => handleExportReport('csv')}
             >
               Export as CSV
             </button>
             <button 
-              type="button" 
+              type="button"
+              className="btn btn-secondary"
               style={{
-                background: 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)',
-                color: 'white',
                 padding: '14px',
-                borderRadius: '10px',
-                border: 'none',
-                fontWeight: '600',
                 fontSize: '15px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)',
-                transition: 'all 0.3s ease'
+                boxShadow: '0 4px 12px rgba(255, 137, 77, 0.3)'
               }}
               onClick={() => handleExportReport('xlsx')}
             >
               Export as Excel (XLSX)
             </button>
             <button 
-              type="button" 
+              type="button"
+              className="btn btn-notifications"
               style={{
-                background: 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)',
-                color: 'white',
                 padding: '14px',
-                borderRadius: '10px',
-                border: 'none',
-                fontWeight: '600',
                 fontSize: '15px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(108, 117, 125, 0.3)',
-                transition: 'all 0.3s ease'
+                boxShadow: '0 4px 12px rgba(108, 117, 125, 0.3)'
               }}
               onClick={() => handleExportReport('json')}
             >

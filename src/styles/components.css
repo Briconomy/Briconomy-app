@@ -35,26 +35,25 @@
 }
 
 .button-primary {
-  background: var(--secondary);
+  background: var(--brand-primary);
   color: var(--surface);
 }
 
 .button-primary:hover {
-  background: #2980b9;
+  background: #0f1f12;
 }
 
 .button-primary:active {
-  background: #1f6fa6;
+  background: #0a1509;
 }
 
 .button-secondary {
-  background: transparent;
-  color: var(--secondary);
-  border: 2px solid var(--secondary);
+  background: var(--brand-secondary);
+  color: var(--surface);
 }
 
 .button-secondary:hover {
-  background: rgba(52, 152, 219, 0.1);
+  background: #e67a3d;
 }
 
 .button-ghost {
@@ -66,17 +65,26 @@
   background: var(--background);
 }
 
-.button-danger {
-  background: var(--danger);
+.button-ai {
+  background: var(--brand-ai);
   color: var(--surface);
 }
 
-.button-danger:hover {
-  background: #c0392b;
+.button-ai:hover {
+  background: #1d4ed8;
+}
+
+.button-notifications {
+  background: var(--brand-notifications);
+  color: var(--surface);
+}
+
+.button-notifications:hover {
+  background: #5a6268;
 }
 
 .button-brand {
-  background: var(--brand-accent);
+  background: var(--brand-secondary);
   color: var(--surface);
 }
 

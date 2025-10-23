@@ -399,8 +399,8 @@ function ManagerPaymentsPage() {
                 <button
                   type="button"
                   onClick={handleRejectPayment}
-                  className="btn"
-                  style={{ flex: 1, background: 'var(--error-color, #e74c3c)', color: 'white' }}
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
                 >
                   Reject
                 </button>

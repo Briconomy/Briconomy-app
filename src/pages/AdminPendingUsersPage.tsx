@@ -263,15 +263,13 @@ function AdminPendingUsersPage() {
                     type="button"
                     onClick={() => handleApprove(user.id, user.fullName)}
                     disabled={processing === user.id}
+                    className="btn btn-secondary"
                     style={{
                       flex: 1,
                       padding: '12px',
-                      background: processing === user.id ? '#ccc' : '#27ae60',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
                       fontSize: '16px',
                       fontWeight: '600',
+                      opacity: processing === user.id ? 0.6 : 1,
                       cursor: processing === user.id ? 'not-allowed' : 'pointer',
                       transition: 'all 0.3s ease'
                     }}
@@ -282,15 +280,13 @@ function AdminPendingUsersPage() {
                     type="button"
                     onClick={() => handleDecline(user.id, user.fullName)}
                     disabled={processing === user.id}
+                    className="btn btn-secondary"
                     style={{
                       flex: 1,
                       padding: '12px',
-                      background: processing === user.id ? '#ccc' : '#e74c3c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
                       fontSize: '16px',
                       fontWeight: '600',
+                      opacity: processing === user.id ? 0.6 : 1,
                       cursor: processing === user.id ? 'not-allowed' : 'pointer',
                       transition: 'all 0.3s ease'
                     }}

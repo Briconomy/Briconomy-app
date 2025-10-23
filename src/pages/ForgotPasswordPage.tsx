@@ -81,14 +81,12 @@ function ForgotPasswordPage() {
           <button
             type="button"
             onClick={() => navigate('/login')}
+            className="btn btn-secondary"
             style={{
-              background: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              color: '#495057',
               width: '32px',
               height: '32px',
               borderRadius: '6px',
-              cursor: 'pointer',
+              padding: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -202,16 +200,14 @@ function ForgotPasswordPage() {
               <button 
                 type="submit"
                 disabled={submitting}
+                className="btn btn-primary"
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: 'none',
                   borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: '600',
                   cursor: submitting ? 'not-allowed' : 'pointer',
-                  background: submitting ? '#ccc' : '#162F1B',
-                  color: 'white',
                   opacity: submitting ? 0.7 : 1,
                   transition: 'all 0.3s ease'
                 }}
@@ -304,16 +300,13 @@ function ForgotPasswordPage() {
             <button
               type="button" 
               onClick={() => navigate('/login')}
+              className="btn btn-primary"
               style={{
                 width: '100%',
                 padding: '12px',
-                border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                background: '#162F1B',
-                color: 'white'
+                fontWeight: '600'
               }}
             >
               Return to Login

@@ -552,11 +552,9 @@ function CaretakerTasksPage() {
             <div className="modal-footer">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 onClick={() => handleDeleteTask(selectedTask.id)}
                 style={{ 
-                  background: '#dc3545', 
-                  color: 'white', 
                   marginRight: 'auto',
                   whiteSpace: 'nowrap',
                   fontSize: '14px',
@@ -600,9 +598,9 @@ function CaretakerTasksPage() {
               {(selectedTask.status === 'in_progress' || selectedTask.status === 'pending') && comment.trim() && (
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-primary"
                   onClick={() => handleStatusChange(selectedTask.id, selectedTask.status)}
-                  style={{ background: '#28a745', whiteSpace: 'nowrap', fontSize: '14px' }}
+                  style={{ whiteSpace: 'nowrap', fontSize: '14px' }}
                 >
                   Save
                 </button>
