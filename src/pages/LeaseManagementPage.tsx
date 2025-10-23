@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -11,15 +11,36 @@ import { leasesApi, useApi, formatCurrency } from '../services/api.ts';
 import Icon from '../components/Icon.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
+type LeaseStatus = 'active' | 'expired' | 'terminated' | string;
+
+type Lease = {
+  id?: string;
+  _id?: string;
+  propertyId?: { name?: string } | null;
+  unitId?: { unitNumber?: string } | null;
+  status?: LeaseStatus | null;
+  monthlyRent?: number | null;
+  endDate?: string | null;
+};
+
+type LeaseStats = {
+  active: number;
+  expired: number;
+  totalRevenue: number;
+  expiringSoon: number;
+};
+
 function LeaseManagementPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [filteredLeases, setFilteredLeases] = useState([]);
+  const [filteredLeases, setFilteredLeases] = useState<Lease[]>([]);
   
   // Fetch real lease data from database
-  const { data: leases, loading, error, refetch } = useApi(() => leasesApi.getAll(), []);
+  const { data: leases, loading, error, refetch } = useApi<Lease[]>(() => leasesApi.getAll(), []);
+
+  const normalizedLeases = useMemo(() => (Array.isArray(leases) ? leases : []), [leases]);
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
@@ -30,16 +51,13 @@ function LeaseManagementPage() {
 
   // Filter leases based on search and status
   useEffect(() => {
-    if (!leases) return;
-    
-    let filtered = leases;
+    let filtered = normalizedLeases;
 
     if (searchTerm) {
       filtered = filtered.filter(lease =>
-        (lease.property?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.unit?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.tenant?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (lease.status?.toLowerCase().includes(searchTerm.toLowerCase()))
+        lease.propertyId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lease.unitId?.unitNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lease.status?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -48,54 +66,38 @@ function LeaseManagementPage() {
     }
 
     setFilteredLeases(filtered);
-  }, [leases, searchTerm, statusFilter]);
+  }, [normalizedLeases, searchTerm, statusFilter]);
 
   // Calculate statistics
-  const getLeaseStats = () => {
-    if (!leases) return { active: 0, expired: 0, totalRevenue: 0, expiringSoon: 0 };
-    
-    const activeLeases = leases.filter(l => l.status === 'active').length;
-    const expiredLeases = leases.filter(l => l.status === 'expired').length;
-    const totalMonthlyRevenue = leases
-      .filter(l => l.status === 'active')
-      .reduce((sum, l) => sum + (l.monthlyRent || 0), 0);
-    
-    const upcomingExpirations = leases.filter(l => {
-      if (!l.endDate) return false;
-      const daysUntilExpiry = (new Date(l.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
+  const stats = useMemo<LeaseStats>(() => {
+    const active = normalizedLeases.filter((lease) => lease.status === 'active').length;
+    const expired = normalizedLeases.filter((lease) => lease.status === 'expired').length;
+    const totalRevenue = normalizedLeases
+      .filter((lease) => lease.status === 'active')
+      .reduce((sum, lease) => sum + (lease.monthlyRent ?? 0), 0);
+
+    const expiringSoon = normalizedLeases.filter((lease) => {
+      if (!lease.endDate) {
+        return false;
+      }
+      const daysUntilExpiry = (new Date(lease.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
       return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
     }).length;
 
     return {
-      active: activeLeases,
-      expired: expiredLeases,
-      totalRevenue: totalMonthlyRevenue,
-      expiringSoon: upcomingExpirations
+      active,
+      expired,
+      totalRevenue,
+      expiringSoon
     };
-  };
+  }, [normalizedLeases]);
 
-  const stats = getLeaseStats();
-
-  const handleSearch = (term) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
   };
 
-  const handleFilterChange = (_key, value) => {
+  const handleFilterChange = (_key: string, value: string) => {
     setStatusFilter(value);
-  };
-
-  const handleDeleteLease = async (leaseId) => {
-    if (!confirm(t('message.confirm_delete'))) return;
-    
-    try {
-      // Note: Need to implement delete method in leasesApi
-      console.log('Delete lease:', leaseId);
-      refetch(); // Refresh the data
-      alert(t('message.deleted_successfully'));
-    } catch (error) {
-      console.error('Error deleting lease:', error);
-      alert(t('message.failed_to_delete'));
-    }
   };
 
   const leaseColumns = [
@@ -107,27 +109,27 @@ function LeaseManagementPage() {
     { 
       key: 'property', 
       label: t('lease.property'),
-      render: (value) => value?.name || 'N/A'
+      render: (value: Lease['propertyId']) => value?.name || 'N/A'
     },
     { 
       key: 'unit', 
       label: t('lease.unit'),
-      render: (value) => value?.unitNumber || 'N/A'
+      render: (value: Lease['unitId']) => value?.unitNumber || 'N/A'
     },
     { 
       key: 'monthlyRent', 
       label: t('lease.monthly_rent'),
-      render: (value) => `R${(value || 0).toLocaleString()}`
+      render: (value: Lease['monthlyRent']) => formatCurrency(value ?? 0)
     },
     { 
       key: 'endDate', 
       label: t('lease.end_date'),
-      render: (value) => value ? new Date(value).toLocaleDateString() : 'N/A'
+      render: (value: Lease['endDate']) => (value ? new Date(value).toLocaleDateString() : 'N/A')
     },
     { 
       key: 'status', 
       label: t('common.status'),
-      render: (value) => (
+      render: (value: Lease['status']) => (
         <span className={`status-badge ${
           value === 'active' ? 'status-paid' : 
           value === 'expired' ? 'status-overdue' : 'status-pending'
@@ -172,7 +174,7 @@ function LeaseManagementPage() {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="error-state">
-            <p>{t('common.error')}: {error}</p>
+            <p>{t('common.error')}: {String(error)}</p>
             <button type="button" onClick={refetch} className="btn btn-primary">
               {t('common.retry')}
             </button>
@@ -212,7 +214,12 @@ function LeaseManagementPage() {
           data={filteredLeases}
           columns={leaseColumns}
           actions={null}
-          onRowClick={(_lease) => navigate(`/manager/leases/${_lease.id}`)}
+          onRowClick={(lease: Lease) => {
+            const leaseId = lease.id ?? lease._id;
+            if (leaseId) {
+              navigate(`/manager/leases/${leaseId}`);
+            }
+          }}
         />
 
         <ChartCard title={t('lease.overview')}>

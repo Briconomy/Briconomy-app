@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -24,7 +23,6 @@ interface Payment {
 }
 
 function ManagerPaymentsPage() {
-  const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,8 +39,7 @@ function ManagerPaymentsPage() {
     { path: '/manager/payments', label: t('nav.payments'), icon: 'payment', active: true }
   ];
 
-  // Fetch payments data
-  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = useApi(
+  const { data: payments, loading: paymentsLoading, error: _paymentsError, refetch: refetchPayments } = useApi(
     () => paymentsApi.getAll({ managerId: user?.id }),
     [user?.id]
   );
@@ -143,12 +140,12 @@ function ManagerPaymentsPage() {
     {
       key: 'tenant',
       label: t('common.tenant'),
-      render: (value: any) => value?.fullName || 'N/A'
+      render: (value: { fullName: string } | undefined) => value?.fullName || 'N/A'
     },
     {
       key: 'property',
       label: t('common.property'),
-      render: (value: any) => value?.name || 'N/A'
+      render: (value: { name: string } | undefined) => value?.name || 'N/A'
     },
     {
       key: 'amount',
@@ -308,6 +305,7 @@ function ManagerPaymentsPage() {
                 Review Payment
               </h2>
               <button
+                type="button"
                 onClick={() => {
                   setReviewMode(false);
                   setSelectedPayment(null);
@@ -385,10 +383,10 @@ function ManagerPaymentsPage() {
               />
             </div>
 
-            {/* Actions */}
             {selectedPayment.status === 'pending_approval' && (
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
+                  type="button"
                   onClick={() => {
                     setReviewMode(false);
                     setSelectedPayment(null);
@@ -400,6 +398,7 @@ function ManagerPaymentsPage() {
                   Close
                 </button>
                 <button
+                  type="button"
                   onClick={handleRejectPayment}
                   className="btn"
                   style={{ flex: 1, background: 'var(--error-color, #e74c3c)', color: 'white' }}
@@ -407,6 +406,7 @@ function ManagerPaymentsPage() {
                   Reject
                 </button>
                 <button
+                  type="button"
                   onClick={handleApprovePayment}
                   className="btn btn-primary"
                   style={{ flex: 1 }}
@@ -417,6 +417,7 @@ function ManagerPaymentsPage() {
             )}
             {selectedPayment.status !== 'pending_approval' && (
               <button
+                type="button"
                 onClick={() => {
                   setReviewMode(false);
                   setSelectedPayment(null);

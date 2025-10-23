@@ -128,6 +128,7 @@ function PaymentProofUploader({ onFileSelected, isLoading }: PaymentProofUploade
             </div>
           </div>
           <button
+            type="button"
             onClick={() => {
               setUploadedFile(null);
               if (fileInputRef.current) fileInputRef.current.value = '';

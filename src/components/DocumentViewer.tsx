@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 
 interface Document {
   id: string;
@@ -55,13 +55,11 @@ function DocumentViewer() {
     setDocuments(prev => prev.filter(doc => doc.id !== id));
   };
 
-  const handleSubmitUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitUpload = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!formData.file || !formData.name) return;
 
     setUploading(true);
-    
-    // Simulate upload process
     setTimeout(() => {
       const newDocument: Document = {
         id: Date.now().toString(),
@@ -103,9 +101,7 @@ function DocumentViewer() {
     }
   };
 
-  const formatFileSize = (size: string) => {
-    return size;
-  };
+  const formatFileSize = (size: string) => size;
 
   return (
     <div className="document-viewer">

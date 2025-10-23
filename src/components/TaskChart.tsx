@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import '../utils/chart-registration.ts';
 
@@ -119,7 +119,7 @@ function TaskChart({ onError }: TaskChartProps) {
         chartInstance.current = null;
       }
     };
-  }, []);
+  }, [onError]);
 
   if (error) {
     return (

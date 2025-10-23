@@ -1,7 +1,11 @@
+type OfflineDataType = 'maintenance_request' | 'payment_proof' | 'chat_message' | 'announcement_read';
+
+type OfflinePayload = Record<string, unknown>;
+
 interface OfflineData {
   id: string;
-  type: 'maintenance_request' | 'payment_proof' | 'chat_message' | 'announcement_read';
-  data: any;
+  type: OfflineDataType;
+  data: OfflinePayload;
   timestamp: Date;
   syncStatus: 'pending' | 'syncing' | 'synced' | 'failed';
   retryCount: number;
@@ -20,7 +24,7 @@ export class OfflineStorageService {
     return OfflineStorageService.instance;
   }
 
-  async initDB(): Promise<void> {
+  initDB(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version);
 
@@ -44,13 +48,13 @@ export class OfflineStorageService {
     });
   }
 
-  async storeOfflineData(type: string, data: any): Promise<string> {
+  async storeOfflineData(type: OfflineDataType, data: OfflinePayload): Promise<string> {
     if (!this.db) await this.initDB();
 
     const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const offlineData: OfflineData = {
       id,
-      type: type as any,
+      type,
       data,
       timestamp: new Date(),
       syncStatus: 'pending',
@@ -178,7 +182,7 @@ export class OfflineStorageService {
     }
   }
 
-  private async syncMaintenanceRequest(data: any): Promise<void> {
+  private async syncMaintenanceRequest(data: OfflinePayload): Promise<void> {
     const response = await fetch('/api/maintenance', {
       method: 'POST',
       headers: {
@@ -192,7 +196,7 @@ export class OfflineStorageService {
     }
   }
 
-  private async syncPaymentProof(data: any): Promise<void> {
+  private async syncPaymentProof(data: OfflinePayload): Promise<void> {
     const response = await fetch('/api/payments', {
       method: 'POST',
       headers: {
@@ -206,7 +210,7 @@ export class OfflineStorageService {
     }
   }
 
-  private async syncChatMessage(data: any): Promise<void> {
+  private async syncChatMessage(data: OfflinePayload): Promise<void> {
     const response = await fetch('/api/chat-messages', {
       method: 'POST',
       headers: {
@@ -220,13 +224,20 @@ export class OfflineStorageService {
     }
   }
 
-  private async syncAnnouncementRead(data: any): Promise<void> {
-    const response = await fetch(`/api/announcements/${data.announcementId}/read`, {
+  private async syncAnnouncementRead(data: OfflinePayload): Promise<void> {
+    const announcementIdValue = data['announcementId'];
+    const userIdValue = data['userId'];
+
+    if (typeof announcementIdValue !== 'string' || typeof userIdValue !== 'string') {
+      throw new Error('Invalid announcement read payload');
+    }
+
+    const response = await fetch(`/api/announcements/${announcementIdValue}/read`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId: data.userId })
+      body: JSON.stringify({ userId: userIdValue })
     });
 
     if (!response.ok) {

@@ -1,5 +1,5 @@
 import { connectToMongoDB, getCollection } from "./db.ts";
-import { ObjectId } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
+import { ObjectId } from "mongo";
 import { join } from "@std/path";
 import { ensureDir } from "@std/fs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
@@ -1321,7 +1321,7 @@ export async function getRenewals(filters: Record<string, unknown> = {}) {
     const rows = await leaseRenewals.aggregate(pipeline).toArray();
     
     const today = new Date();
-    return rows.map((row: any) => ({
+    return rows.map((row: { currentEndDate?: string | Date; [key: string]: unknown }) => ({
       ...row,
       daysUntilExpiry: row.currentEndDate 
         ? Math.ceil((new Date(row.currentEndDate as string).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))

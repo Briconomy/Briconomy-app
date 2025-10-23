@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 
+type MaintenanceTask = {
+  id: string;
+  title: string;
+  description: string;
+  property: string;
+  priority: string;
+  status: string;
+  dueDate: string;
+  estimatedHours?: number;
+};
+
 function CaretakerSchedulePage() {
   const { user } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('day'); // day, week, month
   
   const navItems = [
@@ -18,7 +28,7 @@ function CaretakerSchedulePage() {
     { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
-  const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
+  const { data: tasks, loading: tasksLoading, error: _tasksError, refetch: refetchTasks } = useApi<MaintenanceTask[]>(
     async () => {
       if (!user?.id) return [];
 
@@ -42,7 +52,7 @@ function CaretakerSchedulePage() {
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
-      const updateData: any = { status: newStatus };
+      const updateData: Record<string, unknown> = { status: newStatus };
       // #COMPLETION_DRIVE: When caretaker picks up work, assign it to them
       // #SUGGEST_VERIFY: Verify assignedTo is set to caretaker ID when starting work
       if (newStatus === 'in_progress') {
@@ -73,7 +83,7 @@ function CaretakerSchedulePage() {
   };
 
   // Use real maintenance request data from API
-  const tasksData = Array.isArray(tasks) ? tasks : [];
+  const tasksData: MaintenanceTask[] = Array.isArray(tasks) ? tasks : [];
 
   // #COMPLETION_DRIVE: Filter tasks by dueDate; handle null dates from existing records
   // #SUGGEST_VERIFY: Verify backward compatibility with maintenance requests without dueDate
@@ -128,7 +138,7 @@ function CaretakerSchedulePage() {
     .filter(task => task.status !== 'completed')
     .reduce((sum, task) => sum + (task.estimatedHours || 0), 0);
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'text-red-600 font-semibold';
       case 'medium': return 'text-yellow-600 font-semibold';
@@ -137,7 +147,7 @@ function CaretakerSchedulePage() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'status-pending';
       case 'in_progress': return 'status-progress';
@@ -146,7 +156,7 @@ function CaretakerSchedulePage() {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       weekday: 'short',
@@ -155,7 +165,7 @@ function CaretakerSchedulePage() {
     });
   };
 
-  const formatTime = (dateString) => {
+  const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-ZA', {
       hour: '2-digit',
@@ -163,7 +173,7 @@ function CaretakerSchedulePage() {
     });
   };
 
-  const isOverdue = (dueDate, status) => {
+  const isOverdue = (dueDate: string, status: string) => {
     return status === 'pending' && new Date(dueDate) < new Date();
   };
 

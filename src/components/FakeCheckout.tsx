@@ -81,7 +81,7 @@ function FakeCheckout({ amount, invoiceNumber, tenantName, onComplete, onCancel,
       // Generate reference number
       const reference = `REF-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       onComplete(reference);
-    } catch (err) {
+    } catch (_err) {
       setError('Payment processing failed. Please try again.');
     } finally {
       setProcessing(false);
@@ -130,6 +130,7 @@ function FakeCheckout({ amount, invoiceNumber, tenantName, onComplete, onCancel,
             Card Payment
           </h2>
           <button
+            type="button"
             onClick={onCancel}
             disabled={processing || isLoading}
             style={{

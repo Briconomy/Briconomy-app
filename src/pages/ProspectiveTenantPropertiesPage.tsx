@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, SyntheticEvent } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
@@ -8,14 +8,34 @@ import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
+type ProspectiveProperty = {
+  id: string;
+  name: string;
+  address: string;
+  type: string;
+  totalUnits: number;
+  occupiedUnits: number;
+  rent?: number;
+  description?: string;
+  yearBuilt?: string | number;
+  lastRenovation?: string | number;
+  amenities: string[];
+  [key: string]: unknown;
+};
+
+type PriceRange = {
+  min: string;
+  max: string;
+};
+
 function ProspectiveTenantPropertiesPage() {
-  const [properties, setProperties] = useState([]);
+  const [properties, setProperties] = useState<ProspectiveProperty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [error, setError] = useState<string | null>(null);
+  const [filteredProperties, setFilteredProperties] = useState<ProspectiveProperty[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [priceRange, setPriceRange] = useState<PriceRange>({ min: '', max: '' });
 
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
@@ -52,15 +72,56 @@ function ProspectiveTenantPropertiesPage() {
       setLoading(true);
       setError(null);
       const data = await propertiesApi.getAll();
-      setProperties(data);
-      
       if (!Array.isArray(data)) {
         setError('Invalid data format received from server');
         setProperties([]);
+        setFilteredProperties([]);
+        return;
       }
+
+      const normalized: ProspectiveProperty[] = data.map((item) => {
+        if (!item || typeof item !== 'object') {
+          return {
+            id: crypto.randomUUID(),
+            name: 'Property',
+            address: '',
+            type: 'apartment',
+            totalUnits: 0,
+            occupiedUnits: 0,
+            amenities: [],
+          } satisfies ProspectiveProperty;
+        }
+
+        const record = item as Record<string, unknown>;
+        const id = typeof record.id === 'string'
+          ? record.id
+          : typeof record._id === 'string'
+            ? record._id
+            : crypto.randomUUID();
+        const amenities = Array.isArray(record.amenities)
+          ? record.amenities.filter((value): value is string => typeof value === 'string')
+          : [];
+
+        return {
+          id,
+          name: typeof record.name === 'string' ? record.name : 'Property',
+          address: typeof record.address === 'string' ? record.address : '',
+          type: typeof record.type === 'string' ? record.type : 'apartment',
+          totalUnits: typeof record.totalUnits === 'number' ? record.totalUnits : 0,
+          occupiedUnits: typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0,
+          rent: typeof record.rent === 'number' ? record.rent : undefined,
+          description: typeof record.description === 'string' ? record.description : undefined,
+          yearBuilt: typeof record.yearBuilt === 'number' || typeof record.yearBuilt === 'string' ? record.yearBuilt : undefined,
+          lastRenovation: typeof record.lastRenovation === 'number' || typeof record.lastRenovation === 'string' ? record.lastRenovation : undefined,
+          amenities,
+        } satisfies ProspectiveProperty;
+      });
+
+      setProperties(normalized);
+      setFilteredProperties(normalized);
     } catch (err) {
       console.error('Error fetching properties:', err);
-      const errorMessage = err.message || 'Failed to fetch properties';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch properties';
       
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
         setError('Unable to connect to the server. Please check your internet connection.');
@@ -73,6 +134,7 @@ function ProspectiveTenantPropertiesPage() {
       }
       
       setProperties([]);
+      setFilteredProperties([]);
     } finally {
       setLoading(false);
     }
@@ -82,9 +144,10 @@ function ProspectiveTenantPropertiesPage() {
     let filtered = [...properties];
 
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(property =>
-        property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.address.toLowerCase().includes(searchTerm.toLowerCase())
+        property.name.toLowerCase().includes(term) ||
+        property.address.toLowerCase().includes(term)
       );
     }
 
@@ -95,37 +158,39 @@ function ProspectiveTenantPropertiesPage() {
     if (priceRange.min) {
       filtered = filtered.filter(property => {
         const estimatedRent = calculateEstimatedRent(property);
-        return estimatedRent >= parseInt(priceRange.min);
+        return estimatedRent >= parseInt(priceRange.min, 10);
       });
     }
 
     if (priceRange.max) {
       filtered = filtered.filter(property => {
         const estimatedRent = calculateEstimatedRent(property);
-        return estimatedRent <= parseInt(priceRange.max);
+        return estimatedRent <= parseInt(priceRange.max, 10);
       });
     }
 
     setFilteredProperties(filtered);
   };
 
-  const calculateEstimatedRent = (property) => {
+  const calculateEstimatedRent = (property: ProspectiveProperty) => {
     const baseRent = property.type === 'apartment' ? 8000 : 
                     property.type === 'complex' ? 10000 : 12000;
-    const occupancyMultiplier = property.occupiedUnits / property.totalUnits;
+    const totalUnits = property.totalUnits > 0 ? property.totalUnits : 1;
+    const occupancyMultiplier = property.occupiedUnits / totalUnits;
     return Math.round(baseRent * (1 + occupancyMultiplier * 0.5));
   };
 
-  const getPropertyAvailability = (property) => {
-    const availableUnits = property.totalUnits - property.occupiedUnits;
+  const getPropertyAvailability = (property: ProspectiveProperty) => {
+    const availableUnits = Math.max(property.totalUnits - property.occupiedUnits, 0);
+    const totalUnits = property.totalUnits > 0 ? property.totalUnits : 1;
     return {
       available: availableUnits,
-      total: property.totalUnits,
-      percentage: Math.round((availableUnits / property.totalUnits) * 100)
+      total: totalUnits,
+      percentage: Math.round((availableUnits / totalUnits) * 100)
     };
   };
 
-  const handleViewDetails = (propertyId) => {
+  const handleViewDetails = (propertyId: string) => {
     // Track viewed property for prospective tenants
     if (propertyId) {
       addViewedProperty(propertyId);
@@ -133,9 +198,9 @@ function ProspectiveTenantPropertiesPage() {
     globalThis.location.href = `/property/${propertyId}`;
   };
 
-  const handleApplyNow = (propertyId) => {
+  const handleApplyNow = (propertyId: string) => {
     // If propertyId is missing or invalid, alert user
-    if (!propertyId || typeof propertyId !== 'string' || propertyId.trim() === '') {
+    if (!propertyId || propertyId.trim() === '') {
       alert('Unable to apply for this property. Please try again.');
       return;
     }
@@ -159,7 +224,7 @@ function ProspectiveTenantPropertiesPage() {
     }
   };
 
-  const getPropertyImage = (property: any) => {
+  const getPropertyImage = (property: ProspectiveProperty) => {
     // Property-specific main images to match the detail page
     const propertyMainImages = {
       // Blue Hills Apartments - Modern Cape Town apartment building
@@ -173,13 +238,13 @@ function ProspectiveTenantPropertiesPage() {
     };
     
     // Get property-specific main image or fall back to placeholder
-    const mainImage = propertyMainImages[property.id];
+  const mainImage = propertyMainImages[property.id];
     
     if (mainImage) {
       return optimizeImage(mainImage, lowBandwidthMode);
     } else {
       // Fallback for any other properties
-      const seed = parseInt(property.id?.slice(-6) || '123456', 16);
+      const seed = parseInt(property.id.slice(-6), 16) || 123456;
       return optimizeImage(`https://picsum.photos/seed/${seed}/400/300`, lowBandwidthMode);
     }
   };
@@ -286,9 +351,6 @@ function ProspectiveTenantPropertiesPage() {
           {filteredProperties.map((property) => {
             const estimatedRent = calculateEstimatedRent(property);
             const availability = getPropertyAvailability(property);
-            // Generate property-specific image using external service
-            const seed = parseInt((property.id || 'default').slice(-6), 16) || 123456;
-            const imageUrl = optimizeImage(`https://picsum.photos/seed/${seed}/400/300`, lowBandwidthMode);
 
             return (
               <div key={property.id} className="property-card">
@@ -298,8 +360,8 @@ function ProspectiveTenantPropertiesPage() {
                       src={getPropertyImage(property)}
                       alt={property.name}
                       className="property-image"
-                      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                        const target = e.target as HTMLImageElement;
+                      onError={(event: SyntheticEvent<HTMLImageElement, Event>) => {
+                        const target = event.target as HTMLImageElement;
                         target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRTVFNUU5Ii8+CjxwYXRoIGQ9Ik0xNzUgMTEySDIyNVYxODJIMTc1VjExMlpNMTkwIDEzMkgyMFYxNDJIMTkwVjEzMlpNMTkwIDE0MkgyMFYxNTJIMTkwVjE0MlpNMTkwIDE1MkgyMFYxNjJIMTkwVjE1MloiIGZpbGw9IiM5Q0EzQUYiLz4KPHRleHQgeD0iMjAwIiB5PSIxOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Qjc2OEYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiI+UHJvcGVydHkgSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=';
                       }}
                     />
@@ -321,11 +383,11 @@ function ProspectiveTenantPropertiesPage() {
                   </div>
 
                   <div className="property-description">
-                    <p>{property.description}</p>
+                    <p>{property.description ?? t('prospect.no_description')}</p>
                   </div>
 
                   <div className="property-meta">
-                    <span className="year-built">{t('prospect.built')} {property.yearBuilt}</span>
+                    <span className="year-built">{t('prospect.built')} {property.yearBuilt ?? t('prospect.not_available')}</span>
                     {property.lastRenovation && (
                       <span className="last-renovation">{t('prospect.renovated')} {property.lastRenovation}</span>
                     )}

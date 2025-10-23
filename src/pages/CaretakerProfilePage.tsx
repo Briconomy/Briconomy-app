@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -168,6 +168,17 @@ function CaretakerProfilePage() {
 
   const efficiency = Math.round((1 / Math.max(avgTaskCompletion, 1)) * 100);
 
+  const caretakerStats = [
+    { value: totalTasks, label: 'Tasks Total' },
+    { value: completedTasks, label: 'Tasks Done' },
+    { value: pendingTasks, label: 'Tasks Pending' },
+    { value: inProgressTasks, label: 'In Progress' },
+    { value: `${efficiency}%`, label: 'Efficiency' },
+    { value: completedMaintenance, label: 'Maintenance Closed' },
+    { value: formatCurrency(totalMaintenanceCost), label: 'Cost Saved' },
+    { value: user?.profile?.assignedProperty ? 'Yes' : 'No', label: 'Assigned Property' }
+  ];
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -223,22 +234,22 @@ function CaretakerProfilePage() {
     }));
   };
 
-  const formatDate = (dateString) => {
+  function formatDate(dateString: string) {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
     });
-  };
+  }
 
-  const formatCurrency = (amount) => {
+  function formatCurrency(amount: number | string) {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: 'ZAR',
       minimumFractionDigits: 0
     }).format(Number(amount) || 0);
-  };
+  }
 
   const availableSkills = [
     'plumbing', 'electrical', 'general', 'carpentry', 
@@ -389,10 +400,9 @@ function CaretakerProfilePage() {
 
         {/* Performance Statistics */}
         <div className="caretaker-stats-grid">
-          <StatCard value={completedTasks} label="Tasks Done" />
-          <StatCard value={`${efficiency}%`} label="Efficiency" />
-          <StatCard value={formatCurrency(totalMaintenanceCost)} label="Cost Saved" />
-          <StatCard value={user?.profile?.assignedProperty ? 'Yes' : 'No'} label="Assigned" />
+          {caretakerStats.map(stat => (
+            <StatCard key={stat.label} value={stat.value} label={stat.label} />
+          ))}
         </div>
 
         {/* Notification Settings */}

@@ -542,3 +542,60 @@
 .form-actions .btn {
   min-width: 120px;
 }
+
+.language-selector-content {
+  padding: var(--space-md) 0;
+}
+
+.language-prompt {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.language-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.language-option {
+  background: var(--surface);
+  border: 2px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  width: 100%;
+  text-align: left;
+}
+
+.language-option:hover {
+  border-color: var(--secondary);
+  background: rgba(52, 152, 219, 0.05);
+}
+
+.language-option.active {
+  border-color: var(--secondary);
+  background: rgba(52, 152, 219, 0.1);
+}
+
+.language-option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.language-name {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.language-checkmark {
+  font-size: var(--text-xl);
+  color: var(--secondary);
+  font-weight: bold;
+}
+

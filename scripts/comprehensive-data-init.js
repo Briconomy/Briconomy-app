@@ -16,7 +16,7 @@ db.documents.drop();
 db.lease_renewals.drop();
 
 // Create users with proper ObjectIds
-const users = db.users.insertMany([
+const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     fullName: 'Sarah Johnson',
@@ -396,7 +396,7 @@ const leases = db.leases.insertMany([
 ]);
 
 // Create invoices with proper references
-const invoices = db.invoices.insertMany([
+const _invoices = db.invoices.insertMany([
   // Emma Thompson invoices (Lease 1, 12500/month)
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f1"),
@@ -675,7 +675,7 @@ const invoices = db.invoices.insertMany([
 ]);
 
 // Create lease renewals - using the actual lease IDs
-const leaseRenewals = db.lease_renewals.insertMany([
+const _leaseRenewals = db.lease_renewals.insertMany([
   // Emma Thompson's lease - Pending
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a1"),
@@ -1068,7 +1068,7 @@ const reports = db.reports.insertMany([
 ]);
 
 // Create notifications with proper references
-const notifications = db.notifications.insertMany([
+const _notifications = db.notifications.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e721"),
     userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
@@ -1124,7 +1124,7 @@ const notifications = db.notifications.insertMany([
 ]);
 
 // Create settings with proper references
-const settings = db.settings.insertMany([
+const _settings = db.settings.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e731"),
     key: 'rent_due_day',
@@ -1200,7 +1200,7 @@ const settings = db.settings.insertMany([
 ]);
 
 // Create audit logs with proper references
-const auditLogs = db.audit_logs.insertMany([
+const _auditLogs = db.audit_logs.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e741"),
     userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),

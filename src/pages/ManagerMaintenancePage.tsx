@@ -1,21 +1,40 @@
-import React, { useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
-import { useAuth } from '../contexts/AuthContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 
+type MaintenanceStatus = 'pending' | 'in_progress' | 'completed';
+type MaintenancePriority = 'high' | 'medium' | 'low';
+
+type MaintenanceRequest = {
+  id: string;
+  title: string;
+  status: MaintenanceStatus;
+  description: string;
+  property: string;
+  unit?: string | null;
+  priority: MaintenancePriority;
+  assignedTo?: string | null;
+  estimatedCost?: number | null;
+  actualCost?: number | null;
+  createdAt: string;
+  updatedAt?: string;
+  completedDate?: string;
+  notes?: string;
+  images?: string[];
+};
+
 function ManagerMaintenancePage() {
-  const { user } = useAuth();
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedCaretaker, setSelectedCaretaker] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, in_progress, completed
-  const [filterPriority, setFilterPriority] = useState('all'); // all, high, medium, low
-  const [filterProperty, setFilterProperty] = useState('all'); // all properties
-  const [filterAssignment, setFilterAssignment] = useState('all'); // all, assigned, unassigned
+  const [filterStatus, setFilterStatus] = useState<'all' | MaintenanceStatus>('all');
+  const [filterPriority, setFilterPriority] = useState<'all' | MaintenancePriority>('all');
+  const [filterProperty, setFilterProperty] = useState('all');
+  const [filterAssignment, setFilterAssignment] = useState<'all' | 'assigned' | 'unassigned'>('all');
   
   const navItems = [
     { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
@@ -24,16 +43,17 @@ function ManagerMaintenancePage() {
     { path: '/manager/payments', label: 'Payments', icon: 'payment', active: false }
   ];
 
-  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
+  const { data: maintenance, loading: maintenanceLoading, refetch: refetchMaintenance } = useApi<MaintenanceRequest[]>(
     () => maintenanceApi.getAll({}),
     []
   );
 
-  // Use real data from API
   const maintenanceData = Array.isArray(maintenance) ? maintenance : [];
 
-  // Get unique properties for filter
-  const properties = [...new Set(maintenanceData.map(req => req.property))];
+  const properties = useMemo(
+    () => [...new Set(maintenanceData.map((req) => req.property))],
+    [maintenanceData]
+  );
 
   // Simple caretaker options (1, 2, or 3)
   const caretakers = [
@@ -43,41 +63,42 @@ function ManagerMaintenancePage() {
   ];
 
   // Filter maintenance requests
-  const getFilteredRequests = () => {
-    return maintenanceData.filter(request => {
+  const filteredRequests = useMemo(() => {
+    return maintenanceData.filter((request) => {
       const statusMatch = filterStatus === 'all' || request.status === filterStatus;
       const priorityMatch = filterPriority === 'all' || request.priority === filterPriority;
       const propertyMatch = filterProperty === 'all' || request.property === filterProperty;
-      const assignmentMatch = filterAssignment === 'all' || 
+      const assignmentMatch =
+        filterAssignment === 'all' ||
         (filterAssignment === 'assigned' && request.assignedTo) ||
         (filterAssignment === 'unassigned' && !request.assignedTo);
-      
+
       return statusMatch && priorityMatch && propertyMatch && assignmentMatch;
     });
-  };
-
-  const filteredRequests = getFilteredRequests();
+  }, [filterAssignment, filterPriority, filterProperty, filterStatus, maintenanceData]);
 
   // Calculate statistics
-  const pendingRequests = maintenanceData.filter(req => req.status === 'pending').length;
-  const inProgressRequests = maintenanceData.filter(req => req.status === 'in_progress').length;
-  const completedRequests = maintenanceData.filter(req => req.status === 'completed').length;
-  const highPriorityRequests = maintenanceData.filter(req => req.priority === 'high' && req.status !== 'completed').length;
-  const unassignedRequests = maintenanceData.filter(req => !req.assignedTo && req.status !== 'completed').length;
+  const pendingRequests = maintenanceData.filter((req) => req.status === 'pending').length;
+  const inProgressRequests = maintenanceData.filter((req) => req.status === 'in_progress').length;
+  const completedRequests = maintenanceData.filter((req) => req.status === 'completed').length;
+  const highPriorityRequests = maintenanceData.filter((req) => req.priority === 'high' && req.status !== 'completed').length;
+  const unassignedRequests = maintenanceData.filter((req) => !req.assignedTo && req.status !== 'completed').length;
   
   const totalCost = maintenanceData
-    .filter(req => req.status === 'completed' && req.actualCost)
+    .filter((req) => req.status === 'completed' && req.actualCost)
     .reduce((sum, req) => sum + (Number(req.actualCost) || 0), 0);
 
   const avgResolutionTime = maintenanceData
-    .filter(req => req.status === 'completed' && req.completedDate && req.createdAt)
+    .filter((req) => req.status === 'completed' && req.completedDate && req.createdAt)
     .reduce((sum, req) => {
       const created = new Date(req.createdAt).getTime();
       const completed = new Date(req.completedDate).getTime();
       return sum + (completed - created);
-    }, 0) / (completedRequests || 1) || 0;
+    }, 0) /
+      (completedRequests || 1) ||
+    0;
 
-  const handleViewDetails = (request) => {
+  const handleViewDetails = (request: MaintenanceRequest) => {
     setSelectedRequest(request);
     setShowDetails(true);
   };
@@ -126,13 +147,13 @@ function ManagerMaintenancePage() {
     }
   };
 
-  const openAssignModal = (request: any) => {
+  const openAssignModal = (request: MaintenanceRequest) => {
     setSelectedRequest(request);
     setSelectedCaretaker(request.assignedTo || '');
     setShowAssignModal(true);
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: MaintenancePriority) => {
     switch (priority) {
       case 'high': return 'text-red-600 font-semibold';
       case 'medium': return 'text-yellow-600 font-semibold';
@@ -141,7 +162,7 @@ function ManagerMaintenancePage() {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: MaintenanceStatus) => {
     switch (status) {
       case 'pending': return 'status-pending';
       case 'in_progress': return 'status-progress';
@@ -150,7 +171,7 @@ function ManagerMaintenancePage() {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       day: 'numeric',
@@ -159,7 +180,7 @@ function ManagerMaintenancePage() {
     });
   };
 
-  const formatDuration = (milliseconds) => {
+  const formatDuration = (milliseconds: number) => {
     const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
     const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     
@@ -171,7 +192,7 @@ function ManagerMaintenancePage() {
     return '< 1h';
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number | string | null | undefined) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: 'ZAR',
@@ -179,25 +200,20 @@ function ManagerMaintenancePage() {
     }).format(Number(amount) || 0);
   };
 
-  // Helper function to sort maintenance requests
-  const sortRequests = (a, b) => {
-    const priorityOrder = { high: 3, medium: 2, low: 1 };
-    const statusOrder = { pending: 3, in_progress: 2, completed: 1 };
+  const sortRequests = (a: MaintenanceRequest, b: MaintenanceRequest) => {
+    const priorityOrder: Record<MaintenancePriority, number> = { high: 3, medium: 2, low: 1 };
+    const statusOrder: Record<MaintenanceStatus, number> = { pending: 3, in_progress: 2, completed: 1 };
 
-    // Sort by priority first (high priority first)
     const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
     if (priorityDiff !== 0) return -priorityDiff;
 
-    // Then sort by status (pending first, then in progress, then completed)
     const statusDiff = statusOrder[a.status] - statusOrder[b.status];
     if (statusDiff !== 0) return -statusDiff;
 
-    // Finally sort by creation date (newest first)
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   };
 
-  // Helper function to format status text
-  const formatStatusText = (status) => {
+  const formatStatusText = (status: MaintenanceStatus) => {
     switch (status) {
       case 'in_progress': return 'In Progress';
       case 'pending': return 'Pending';
@@ -206,8 +222,27 @@ function ManagerMaintenancePage() {
     }
   };
 
-  // Component for individual maintenance request item
-  const MaintenanceRequestItem = ({ request }) => (
+  const handleStatusFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setFilterStatus(event.target.value as typeof filterStatus);
+  };
+
+  const handlePriorityFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setFilterPriority(event.target.value as typeof filterPriority);
+  };
+
+  const handlePropertyFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setFilterProperty(event.target.value);
+  };
+
+  const handleAssignmentFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setFilterAssignment(event.target.value as typeof filterAssignment);
+  };
+
+  const handleCaretakerChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCaretaker(event.target.value);
+  };
+
+  const MaintenanceRequestItem = ({ request }: { request: MaintenanceRequest }) => (
     <div className="list-item">
       <div className="item-info">
         <div className="flex justify-between items-start">
@@ -319,7 +354,7 @@ function ManagerMaintenancePage() {
             <select 
               className="filter-select"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={handleStatusFilterChange}
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -332,7 +367,7 @@ function ManagerMaintenancePage() {
             <select 
               className="filter-select"
               value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
+              onChange={handlePriorityFilterChange}
             >
               <option value="all">All Priorities</option>
               <option value="high">High</option>
@@ -345,7 +380,7 @@ function ManagerMaintenancePage() {
             <select 
               className="filter-select"
               value={filterProperty}
-              onChange={(e) => setFilterProperty(e.target.value)}
+              onChange={handlePropertyFilterChange}
             >
               <option value="all">All Properties</option>
               {properties.map(property => (
@@ -358,7 +393,7 @@ function ManagerMaintenancePage() {
             <select 
               className="filter-select"
               value={filterAssignment}
-              onChange={(e) => setFilterAssignment(e.target.value)}
+              onChange={handleAssignmentFilterChange}
             >
               <option value="all">All Tasks</option>
               <option value="assigned">Assigned</option>
@@ -553,7 +588,7 @@ function ManagerMaintenancePage() {
                 <select
                   className="filter-select"
                   value={selectedCaretaker}
-                  onChange={(e) => setSelectedCaretaker(e.target.value)}
+                  onChange={handleCaretakerChange}
                   style={{ width: '100%', padding: '10px', fontSize: '14px' }}
                 >
                   <option value="">-- Select a caretaker --</option>

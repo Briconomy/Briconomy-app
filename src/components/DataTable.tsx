@@ -1,6 +1,19 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-function DataTable({ title, data, columns, actions, onRowClick }) {
+interface DataTableColumn<T> {
+  key: keyof T & string;
+  render?: (value: T[keyof T], row: T) => ReactNode;
+}
+
+interface DataTableProps<T> {
+  title: string;
+  data: T[];
+  columns: Array<DataTableColumn<T>>;
+  actions?: ReactNode;
+  onRowClick?: (row: T) => void;
+}
+
+function DataTable<T>({ title, data, columns, actions, onRowClick }: DataTableProps<T>) {
   return (
     <div className="data-table">
       <div className="table-header">

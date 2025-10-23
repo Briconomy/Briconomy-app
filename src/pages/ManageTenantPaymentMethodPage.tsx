@@ -1,4 +1,3 @@
-import React from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import PaymentMethodsManager from '../components/PaymentMethodsManager.tsx';

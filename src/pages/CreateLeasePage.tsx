@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, unitsApi, leasesApi, useApi } from '../services/api.ts';
-import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 function CreateLeasePage() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     tenantId: '',
@@ -35,7 +33,7 @@ function CreateLeasePage() {
       return res.json();
     }), []
   );
-  const { data: units, loading: loadingUnits } = useApi(() => 
+  const { data: units, loading: _loadingUnits } = useApi(() => 
     formData.propertyId ? unitsApi.getAll(formData.propertyId) : Promise.resolve([]), 
     [formData.propertyId]
   );
@@ -77,8 +75,8 @@ function CreateLeasePage() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setSubmitting(true);
 
     try {
@@ -105,6 +103,26 @@ function CreateLeasePage() {
     }
   };
 
+  const getEntityId = (entity: { id?: string; _id?: string } | null | undefined) => {
+    if (!entity) return '';
+    return entity.id ?? entity._id ?? '';
+  };
+
+  const getTenantLabel = (tenant: { fullName?: string; name?: string; email?: string } | null | undefined) => {
+    if (!tenant) return 'Tenant';
+    return tenant.fullName || tenant.name || tenant.email || 'Tenant';
+  };
+
+  const getPropertyName = (property: { name?: string; title?: string } | null | undefined) => {
+    if (!property) return 'Property';
+    return property.name || property.title || 'Property';
+  };
+
+  const getUnitLabel = (unit: { unitNumber?: string; name?: string } | null | undefined) => {
+    if (!unit) return 'Unit';
+    return unit.unitNumber || unit.name || 'Unit';
+  };
+
   return (
     <div className="app-container mobile-only">
       <TopNav showLogout showBackButton />
@@ -124,11 +142,18 @@ function CreateLeasePage() {
               required
             >
               <option value="">Choose Tenant</option>
-              {tenants?.map(tenant => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.fullName}
-                </option>
-              ))}
+              {tenants?.map(tenant => {
+                const tenantId = getEntityId(tenant);
+                if (!tenantId) {
+                  return null;
+                }
+
+                return (
+                  <option key={tenantId} value={tenantId}>
+                    {getTenantLabel(tenant)}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -143,11 +168,18 @@ function CreateLeasePage() {
               required
             >
               <option value="">Choose Property</option>
-              {properties?.map(property => (
-                <option key={property.id} value={property.id}>
-                  {property.name}
-                </option>
-              ))}
+              {properties?.map(property => {
+                const propertyId = getEntityId(property);
+                if (!propertyId) {
+                  return null;
+                }
+
+                return (
+                  <option key={propertyId} value={propertyId}>
+                    {getPropertyName(property)}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -160,11 +192,18 @@ function CreateLeasePage() {
               disabled={!formData.propertyId}
             >
               <option value="">Choose Unit</option>
-              {units?.map(unit => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.unitNumber}
-                </option>
-              ))}
+              {units?.map(unit => {
+                const unitId = getEntityId(unit);
+                if (!unitId) {
+                  return null;
+                }
+
+                return (
+                  <option key={unitId} value={unitId}>
+                    {getUnitLabel(unit)}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

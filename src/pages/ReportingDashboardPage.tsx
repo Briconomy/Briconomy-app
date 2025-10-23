@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
-import TopNav from '../components/TopNav';
-import BottomNav from '../components/BottomNav';
-import StatCard from '../components/StatCard';
-import ActionCard from '../components/ActionCard';
-import ChartCard from '../components/ChartCard';
-import PaymentChart from '../components/PaymentChart';
+import { useState } from 'react';
+import TopNav from '../components/TopNav.tsx';
+import BottomNav from '../components/BottomNav.tsx';
+import StatCard from '../components/StatCard.tsx';
+import ActionCard from '../components/ActionCard.tsx';
+import ChartCard from '../components/ChartCard.tsx';
+import PaymentChart from '../components/PaymentChart.tsx';
+
+type DashboardReport = {
+  id: string;
+  title: string;
+  type: string;
+  period: string;
+  generatedDate: string;
+  status: string;
+  data: Record<string, number>;
+};
 
 function ReportingDashboardPage() {
-  const [reports, setReports] = useState([
+  const [reports, setReports] = useState<DashboardReport[]>([
     {
       id: '1',
       title: 'Monthly Financial Report',
@@ -87,7 +97,7 @@ function ReportingDashboardPage() {
   const pendingReports = reports.filter(r => r.status === 'pending').length;
   const completedReports = reports.filter(r => r.status === 'completed').length;
 
-  const reportTypes = [
+  const reportTypes: Array<{ value: string; label: string; icon: string }> = [
     { value: 'financial', label: 'Financial Report', icon: 'F' },
     { value: 'occupancy', label: 'Occupancy Report', icon: 'O' },
     { value: 'maintenance', label: 'Maintenance Report', icon: 'M' },
@@ -95,7 +105,7 @@ function ReportingDashboardPage() {
     { value: 'performance', label: 'Performance Report', icon: 'P' }
   ];
 
-  const handleGenerateReport = (type) => {
+  const handleGenerateReport = (type: string) => {
     setSelectedReportType(type);
     setShowReportGenerator(true);
   };
@@ -116,7 +126,7 @@ function ReportingDashboardPage() {
     setSelectedReportType('');
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'status-paid';
       case 'pending': return 'status-pending';
@@ -150,6 +160,7 @@ return (
           <div className="table-header">
             <div className="table-title">Recent Reports</div>
             <button 
+              type="button"
               className="btn btn-primary btn-sm"
               onClick={() => setShowReportGenerator(true)}
             >
@@ -178,8 +189,8 @@ return (
                   {report.status.toUpperCase()}
                 </span>
                 <div className="report-actions">
-                  <button className="btn btn-sm btn-secondary">View</button>
-                  <button className="btn btn-sm btn-secondary">Download</button>
+                  <button type="button" className="btn btn-sm btn-secondary">View</button>
+                  <button type="button" className="btn btn-sm btn-secondary">Download</button>
                 </div>
               </div>
             </div>
@@ -229,7 +240,7 @@ return (
           <div className="modal-content">
             <div className="modal-header">
               <h3>Generate Report</h3>
-              <button className="close-btn" onClick={() => setShowReportGenerator(false)}>×</button>
+              <button type="button" className="close-btn" onClick={() => setShowReportGenerator(false)}>×</button>
             </div>
             <div className="modal-body">
               <div className="report-types">
@@ -286,12 +297,14 @@ return (
               
               <div className="form-actions">
                 <button 
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowReportGenerator(false)}
                 >
                   Cancel
                 </button>
                 <button 
+                  type="button"
                   className="btn btn-primary"
                   onClick={handleCreateReport}
                   disabled={!selectedReportType}

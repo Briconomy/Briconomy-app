@@ -1,10 +1,10 @@
-// Reset auth configuration to use the correct collection
-use briconomy
+const database = typeof db !== "undefined" ? db : null;
 
-// Drop the old security_config collection if it exists
-db.security_config.drop();
+if (!database) {
+	throw new Error("Mongo shell db context not available");
+}
 
-// Drop the auth_config collection to start fresh
-db.auth_config.drop();
+database.security_config.drop();
+database.auth_config.drop();
 
 print("Auth configuration reset complete. The system will auto-initialize with defaults.");

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import Icon from './Icon.tsx';
+import { useState } from 'react';
 
 interface Invoice {
   id: string;
@@ -186,6 +185,7 @@ function InvoiceViewer({ invoice, onDownload, isLoading }: InvoiceViewerProps) {
         borderTop: '1px solid var(--border-primary)'
       }}>
         <button
+          type="button"
           onClick={() => onDownload?.(invoice.id, 'pdf')}
           disabled={isLoading}
           className="btn btn-secondary"
@@ -194,6 +194,7 @@ function InvoiceViewer({ invoice, onDownload, isLoading }: InvoiceViewerProps) {
           {isLoading ? '...' : '📄 PDF'}
         </button>
         <button
+          type="button"
           onClick={() => onDownload?.(invoice.id, 'markdown')}
           disabled={isLoading}
           className="btn btn-secondary"

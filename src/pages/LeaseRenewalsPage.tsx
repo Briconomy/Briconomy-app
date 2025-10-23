@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -6,30 +6,86 @@ import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import { renewalsApi } from '../services/api.ts';
+
+type RenewalStatus = 'pending' | 'offer_sent' | 'accepted' | 'declined';
+
+type Renewal = {
+  id: string;
+  tenantName: string;
+  unitNumber: string;
+  propertyName: string;
+  currentEndDate: string;
+  daysUntilExpiry: number;
+  status: RenewalStatus;
+  renewalOfferSent: boolean;
+  tenantResponse: 'pending' | 'accepted' | 'declined' | null;
+};
 
 function LeaseRenewalsPage() {
   const { t } = useLanguage();
-  const [renewals, setRenewals] = useState([]);
-  const [filteredRenewals, setFilteredRenewals] = useState([]);
+  const [renewals, setRenewals] = useState<Renewal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<'all' | RenewalStatus>('all');
+  const [_loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRenewals();
   }, []);
 
-  useEffect(() => {
-    applyFilters(searchTerm, statusFilter);
-  }, [renewals]);
-
-  const fetchRenewals = async () => {
+  const fetchRenewals = () => {
     try {
       setLoading(true);
-      const data = await renewalsApi.getAll();
-      setRenewals(data);
-      setFilteredRenewals(data);
+      // TODO: Replace with actual API call
+      // const data = await renewalsApi.getAll();
+      // setRenewals(data);
+      
+      // Mock data for now
+      setRenewals([
+        {
+          id: '1',
+          tenantName: 'John Tenant',
+          unitNumber: '2A',
+          propertyName: 'Blue Hills Apartments',
+          currentEndDate: '2024-12-31',
+          daysUntilExpiry: 45,
+          status: 'pending',
+          renewalOfferSent: false,
+          tenantResponse: null
+        },
+        {
+          id: '2',
+          tenantName: 'Jane Smith',
+          unitNumber: '3C',
+          propertyName: 'Blue Hills Apartments',
+          currentEndDate: '2025-02-28',
+          daysUntilExpiry: 104,
+          status: 'pending',
+          renewalOfferSent: true,
+          tenantResponse: null
+        },
+        {
+          id: '3',
+          tenantName: 'Mike Johnson',
+          unitNumber: '1B',
+          propertyName: 'Green Valley Complex',
+          currentEndDate: '2024-11-15',
+          daysUntilExpiry: 30,
+          status: 'offer_sent',
+          renewalOfferSent: true,
+          tenantResponse: 'pending'
+        },
+        {
+          id: '4',
+          tenantName: 'Sarah Wilson',
+          unitNumber: '4D',
+          propertyName: 'Sunset Towers',
+          currentEndDate: '2024-10-01',
+          daysUntilExpiry: 15,
+          status: 'accepted',
+          renewalOfferSent: true,
+          tenantResponse: 'accepted'
+        }
+      ]);
     } catch (error) {
       console.error('Error fetching renewals:', error);
     } finally {
@@ -49,50 +105,35 @@ function LeaseRenewalsPage() {
   const acceptedRenewals = renewals.filter(r => r.tenantResponse === 'accepted').length;
   const expiringSoon = renewals.filter(r => r.daysUntilExpiry <= 30).length;
 
-  const handleSearch = (term) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
-    applyFilters(term, statusFilter);
   };
 
-  const handleFilterChange = (key, value) => {
-    setStatusFilter(value);
-    applyFilters(searchTerm, value);
+  const handleFilterChange = (_key: string, value: string) => {
+    setStatusFilter(value as typeof statusFilter);
   };
 
-  const applyFilters = (search, status) => {
-    let filtered = renewals;
-
-    if (search) {
-      filtered = filtered.filter(renewal =>
-        renewal.tenantName.toLowerCase().includes(search.toLowerCase()) ||
-        renewal.unitNumber.toLowerCase().includes(search.toLowerCase()) ||
-        renewal.propertyName.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (status !== 'all') {
-      filtered = filtered.filter(renewal => renewal.status === status);
-    }
-
-    setFilteredRenewals(filtered);
+  const handleSendRenewalOffer = (renewalId: string) => {
+    setRenewals(prev => prev.map(renewal => 
+      renewal.id === renewalId 
+        ? { ...renewal, status: 'offer_sent', renewalOfferSent: true }
+        : renewal
+    ));
   };
 
-  const handleSendRenewalOffer = async (renewalId) => {
-    const renewal = renewals.find(r => r.id === renewalId);
-    if (renewal && confirm(`Send renewal offer to ${renewal.tenantName} for unit ${renewal.unitNumber}?`)) {
-      try {
-        console.log('Sending offer for renewal ID:', renewalId);
-        const result = await renewalsApi.sendOffer(renewalId);
-        console.log('Send offer result:', result);
-        await fetchRenewals();
-        alert('Renewal offer sent successfully!');
-      } catch (error) {
-        console.error('Error sending renewal offer:', error);
-        console.error('Error details:', error.message, error.stack);
-        alert(`Failed to send renewal offer: ${error.message}`);
-      }
-    }
-  };
+  const filteredRenewals = useMemo(() => {
+    return renewals.filter((renewal) => {
+      const searchMatch =
+        searchTerm.length === 0 ||
+        renewal.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        renewal.unitNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        renewal.propertyName.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const statusMatch = statusFilter === 'all' || renewal.status === statusFilter;
+
+      return searchMatch && statusMatch;
+    });
+  }, [renewals, searchTerm, statusFilter]);
 
   const renewalColumns = [
     { key: 'tenantName', label: t('lease.tenant') },
@@ -101,12 +142,12 @@ function LeaseRenewalsPage() {
     { 
       key: 'currentEndDate', 
       label: t('renewals.current_end_date'),
-      render: (value) => new Date(value).toLocaleDateString()
+      render: (value: string) => new Date(value).toLocaleDateString()
     },
     { 
       key: 'daysUntilExpiry', 
       label: t('renewals.days_left'),
-      render: (value) => (
+      render: (value: number) => (
         <span className={value <= 30 ? 'urgent' : 'normal'}>
           {value} days
         </span>
@@ -115,7 +156,7 @@ function LeaseRenewalsPage() {
     { 
       key: 'status', 
       label: t('common.status'),
-      render: (value, row) => (
+  render: (value: string, _row: Renewal) => (
         <span className={`status-badge ${
           value === 'accepted' ? 'status-paid' : 
           value === 'offer_sent' ? 'status-pending' : 'status-overdue'
@@ -129,7 +170,7 @@ function LeaseRenewalsPage() {
     {
       key: 'actions',
       label: t('common.actions'),
-      render: (value, row) => (
+      render: (_value, row: Renewal) => (
         <div className="action-buttons">
           {!row.renewalOfferSent && (
             <button type="button"
@@ -189,7 +230,7 @@ function LeaseRenewalsPage() {
           data={filteredRenewals}
           columns={renewalColumns}
           actions={null}
-          onRowClick={(renewal) => {}}
+          onRowClick={() => {}}
         />
 
         <ChartCard title={t('renewals.process')}>

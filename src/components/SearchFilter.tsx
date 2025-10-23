@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
-function SearchFilter({ placeholder, onSearch, filters, onFilterChange }) {
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface FilterConfig {
+  key: string;
+  value: string;
+  options: FilterOption[];
+}
+
+interface SearchFilterProps {
+  placeholder?: string;
+  onSearch?: (query: string) => void;
+  filters?: FilterConfig[];
+  onFilterChange?: (key: string, value: string) => void;
+}
+
+function SearchFilter({ placeholder, onSearch, filters, onFilterChange }: SearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
     setSearchTerm(value);
-    onSearch && onSearch(value);
+    onSearch?.(value);
   };
 
   return (
@@ -20,13 +38,13 @@ function SearchFilter({ placeholder, onSearch, filters, onFilterChange }) {
         />
       </div>
       
-      {filters && (
+      {filters && onFilterChange && (
         <div className="filter-options">
           {filters.map((filter) => (
             <select
               key={filter.key}
               value={filter.value}
-              onChange={(e) => onFilterChange(filter.key, e.target.value)}
+              onChange={(event) => onFilterChange(filter.key, event.target.value)}
             >
               {filter.options.map((option) => (
                 <option key={option.value} value={option.value}>

@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
+import { serve } from "@std/http/server";
 import { connectToMongoDB, getCollection } from "./db.ts";
 import { bricllmHandler } from "./bricllm-handler.ts";
 import {
@@ -31,7 +31,7 @@ import {
   updateNotification,
   deleteNotification,
   getDashboardStats,
-  getUsers,
+  getUsers as _getUsers,
   loginUser,
   registerUser,
   getSystemStats,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -7,11 +7,37 @@ import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
+type SecurityStat = {
+  secureStatus?: string;
+  threats?: number;
+  monitoring?: string;
+  twoFactorEnabled?: string;
+};
+
+type SecuritySetting = {
+  setting: string;
+  value: string;
+  configurable: boolean;
+};
+
+type SecurityConfig = {
+  method: string;
+  description: string;
+  status: string;
+};
+
+type SecurityAlert = {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+};
+
 function AdminSecurityPage() {
   const { t } = useLanguage();
-  const [selectedSetting, setSelectedSetting] = useState<any>(null);
+  const [selectedSetting, setSelectedSetting] = useState<SecuritySetting | null>(null);
   const [showSettingModal, setShowSettingModal] = useState(false);
-  const [selectedAuthMethod, setSelectedAuthMethod] = useState<any>(null);
+  const [selectedAuthMethod, setSelectedAuthMethod] = useState<SecurityConfig | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [settingValue, setSettingValue] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -23,18 +49,18 @@ function AdminSecurityPage() {
     { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
   ];
 
-  const { data: securityStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSecurityStats());
-  const { data: securitySettings, loading: settingsLoading, refetch: refetchSettings } = useApi(() => adminApi.getSecuritySettings());
-  const { data: securityConfig, loading: configLoading, refetch: refetchConfig } = useApi(() => adminApi.getSecurityConfig());
-  const { data: securityAlerts, loading: alertsLoading, refetch: refetchAlerts } = useApi(() => adminApi.getSecurityAlerts());
+  const { data: securityStats, loading: statsLoading } = useApi<SecurityStat[]>(() => adminApi.getSecurityStats());
+  const { data: securitySettings, loading: settingsLoading, refetch: refetchSettings } = useApi<SecuritySetting[]>(() => adminApi.getSecuritySettings());
+  const { data: securityConfig, loading: configLoading, refetch: refetchConfig } = useApi<SecurityConfig[]>(() => adminApi.getSecurityConfig());
+  const { data: securityAlerts, loading: alertsLoading, refetch: refetchAlerts } = useApi<SecurityAlert[]>(() => adminApi.getSecurityAlerts());
 
-  const getFallbackSecurityAlerts = () => [
+  const getFallbackSecurityAlerts = (): SecurityAlert[] => [
     { id: '1', title: 'Failed Login Attempts', message: 'Multiple failed login attempts detected from IP 192.168.1.100', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
     { id: '2', title: 'Password Policy Update', message: 'Password policy updated to require 12 characters', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString() },
     { id: '3', title: 'New Admin Account Created', message: 'New administrator account created: admin2@briconomy.com', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() }
   ];
 
-  const getFallbackSecuritySettings = () => [
+  const getFallbackSecuritySettings = (): SecuritySetting[] => [
     { setting: 'Session Timeout', value: '30 minutes', configurable: true },
     { setting: 'Password Expiry', value: '90 days', configurable: true },
     { setting: 'Max Login Attempts', value: '5 attempts', configurable: true },
@@ -53,7 +79,7 @@ function AdminSecurityPage() {
       };
     }
     
-    const stats = securityStats[0];
+  const stats = securityStats?.[0];
     return {
       secureStatus: stats?.secureStatus || '100%',
       threats: stats?.threats?.toString() || '0',
@@ -78,7 +104,7 @@ function AdminSecurityPage() {
     }
   };
 
-  const handleConfigureSetting = (setting: any) => {
+  const handleConfigureSetting = (setting: SecuritySetting) => {
     setSelectedSetting(setting);
     
     // Extract numeric values from formatted strings
@@ -179,7 +205,7 @@ function AdminSecurityPage() {
     }
   };
 
-  const handleToggleAuthMethod = (method: any) => {
+  const handleToggleAuthMethod = (method: SecurityConfig) => {
     setSelectedAuthMethod(method);
     setShowAuthModal(true);
   };
@@ -219,6 +245,8 @@ function AdminSecurityPage() {
   };
 
   const stats = getSecurityStatsData();
+  const alertsToRender: SecurityAlert[] = securityAlerts?.length ? securityAlerts : getFallbackSecurityAlerts();
+  const settingsToRender: SecuritySetting[] = securitySettings?.length ? securitySettings : getFallbackSecuritySettings();
 
   return (
     <div className="app-container mobile-only">
@@ -249,7 +277,7 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : securityConfig && securityConfig.length > 0 ? (
-            securityConfig.map((config: { method: string; description: string; status: string }, index: number) => (
+            securityConfig.map((config, index) => (
               <div key={`auth-${config.method}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{config.method}</h4>
@@ -322,7 +350,7 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            (securityAlerts && securityAlerts.length > 0 ? securityAlerts : getFallbackSecurityAlerts()).map((alert: { id: string; title: string; message: string; timestamp: string }, index: number) => (
+            alertsToRender.map((alert, index) => (
               <div key={`alert-${alert.id || index}`} className="list-item">
                 <div className="item-info">
                   <h4>{alert.title}</h4>
@@ -373,10 +401,7 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            (() => {
-              const useRealData = securitySettings && securitySettings.length > 0;
-              return useRealData ? securitySettings : getFallbackSecuritySettings();
-            })().map((setting: { setting: string; value: string; configurable: boolean }, index: number) => (
+            settingsToRender.map((setting, index) => (
               <div key={`setting-${setting.setting}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{setting.setting} {!setting.configurable && <span style={{ color: '#999', fontSize: '12px' }}>(Read-only)</span>}</h4>

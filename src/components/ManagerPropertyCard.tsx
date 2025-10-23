@@ -1,9 +1,19 @@
-import React from 'react';
+import type { CSSProperties, SyntheticEvent } from 'react';
 import { formatCurrency } from '../services/api.ts';
 import { useImageOptimization } from '../utils/bandwidth.ts';
 
+interface ManagerPropertySummary {
+  _id: string;
+  name: string;
+  type: string;
+  address: string;
+  occupiedUnits: number;
+  totalUnits: number;
+  updatedAt: string | number | Date;
+}
+
 interface ManagerPropertyCardProps {
-  property: any;
+  property: ManagerPropertySummary;
   onViewDetails: (propertyId: string) => void;
   onEditProperty: (propertyId: string) => void;
   onManageUnits: (propertyId: string) => void;
@@ -36,7 +46,7 @@ function ManagerPropertyCard({
 
   const occupancyStatus = getOccupancyStatus();
 
-  const styles: { [k: string]: React.CSSProperties } = {
+  const styles: Record<string, CSSProperties> = {
     card: {
       display: 'flex',
       gap: 16,
@@ -206,8 +216,8 @@ function ManagerPropertyCard({
           src={imageUrl}
           alt={property.name || 'Property image'}
           style={styles.img}
-          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            const target = e.target as HTMLImageElement;
+          onError={(event: SyntheticEvent<HTMLImageElement, Event>) => {
+            const target = event.target as HTMLImageElement;
             target.src =
               'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRTVFNUU5Ii8+CjxwYXRoIGQ9Ik0xMjUgNzVIMTc1VjEyNUgxMjVWNzVaTTE0MCA5MEgxNjBWMTBIMTQwVjkwWk0xNDAgMTBIMTYwVjExMEgxNDBWMTAwWk0xNDAgMTEwSDE2MFYxMjBIMTQwVjExMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHRleHQgeD0iMTUwIiB5PSIxNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Qjc2OEYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCI+UHJvcGVydHkgSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo=';
           }}

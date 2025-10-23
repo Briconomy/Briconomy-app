@@ -1,6 +1,5 @@
 // Setup script to link managers to properties and create sample applications
 import { connectToMongoDB, getCollection } from "../db.ts";
-import { ObjectId } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
 
 async function setupManagerProperties() {
   try {

@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useOffline, apiWithOfflineFallback } from '../hooks/useOffline.ts';
+
+type OfflineFallbackResult = Awaited<ReturnType<typeof apiWithOfflineFallback>>;
 
 interface OfflineMaintenanceFormProps {
   tenantId: string;
   propertyId: string;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: OfflineFallbackResult) => void;
 }
 
-const OfflineMaintenanceForm: React.FC<OfflineMaintenanceFormProps> = ({ 
-  tenantId, 
-  propertyId, 
-  onSuccess 
-}) => {
-  const { isOnline, storeOfflineData } = useOffline();
+const OfflineMaintenanceForm = ({
+  tenantId,
+  propertyId,
+  onSuccess
+}: OfflineMaintenanceFormProps) => {
+  const { isOnline } = useOffline();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -24,8 +26,8 @@ const OfflineMaintenanceForm: React.FC<OfflineMaintenanceFormProps> = ({
     location: ''
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setLoading(true);
     setMessage(null);
 
@@ -63,9 +65,7 @@ const OfflineMaintenanceForm: React.FC<OfflineMaintenanceFormProps> = ({
         location: ''
       });
 
-      if (onSuccess) {
-        onSuccess(result);
-      }
+      onSuccess?.(result);
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
       setMessage('Failed to submit request. Please try again.');
@@ -74,8 +74,10 @@ const OfflineMaintenanceForm: React.FC<OfflineMaintenanceFormProps> = ({
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = event.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 

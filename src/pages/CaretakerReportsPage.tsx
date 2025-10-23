@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -6,13 +6,54 @@ import ChartCard from '../components/ChartCard.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { tasksApi, maintenanceApi, reportsApi, useApi } from '../services/api.ts';
 
+type CaretakerTask = {
+  id: string;
+  title: string;
+  status: string;
+  completedDate?: string;
+  dueDate?: string;
+  estimatedHours?: number;
+  actualHours?: number;
+  property: string;
+};
+
+type MaintenanceRequest = {
+  id: string;
+  title: string;
+  status: string;
+  property: string;
+  unit?: string;
+  priority: string;
+  estimatedCost?: number | null;
+  actualCost?: number | null;
+  createdAt: string;
+  completedDate?: string;
+};
+
+type CaretakerReport = {
+  id: string;
+  type: 'performance' | 'maintenance' | 'financial';
+  period: string;
+  title: string;
+  property: string;
+  generatedBy?: string;
+  generatedAt: string;
+  data: Record<string, number>;
+};
+
 function CaretakerReportsPage() {
   const { user } = useAuth();
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [showReportDetails, setShowReportDetails] = useState(false);
-  const [reportType, setReportType] = useState('all'); // all, performance, maintenance, financial
-  const [timePeriod, setTimePeriod] = useState('month'); // week, month, quarter, year
-  
+  const [reportType, setReportType] = useState<'all' | 'performance' | 'maintenance' | 'financial'>('all');
+  const [timePeriod, setTimePeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+
+  const handleReportTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setReportType(event.target.value as 'all' | 'performance' | 'maintenance' | 'financial');
+  };
+
+  const handleTimePeriodChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setTimePeriod(event.target.value as 'week' | 'month' | 'quarter' | 'year');
+  };
+
   const navItems = [
     { path: '/caretaker', label: 'Dashboard', active: false },
     { path: '/caretaker/tasks', label: 'Tasks', active: false },
@@ -20,22 +61,22 @@ function CaretakerReportsPage() {
     { path: '/caretaker/reports', label: 'Reports', active: true }
   ];
 
-  const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
+  const { data: tasks, loading: tasksLoading, error: tasksError } = useApi<CaretakerTask[]>(
     () => tasksApi.getAll(user?.id ? { caretakerId: user.id } : {}),
     [user?.id]
   );
 
-  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi(
+  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi<MaintenanceRequest[]>(
     () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
     [user?.id]
   );
 
-  const { data: reports, loading: reportsLoading, error: reportsError } = useApi(
+  const { data: reports, loading: reportsLoading, error: reportsError } = useApi<CaretakerReport[]>(
     () => reportsApi.getAll(user?.id ? { generatedBy: user.id } : {}),
     [user?.id]
   );
 
-  const getMockTasks = () => {
+  const getMockTasks = (): CaretakerTask[] => {
     return [
       {
         id: '1',
@@ -83,34 +124,34 @@ function CaretakerReportsPage() {
     ];
   };
 
-  const getMockMaintenance = () => {
+  const getMockMaintenance = (): MaintenanceRequest[] => {
     return [
       {
         id: '1',
         title: 'AC repair',
-        status: 'in_progress',
+    status: 'in_progress',
         property: 'Blue Hills Apartments',
         unit: '2A',
         priority: 'high',
         estimatedCost: 1500,
-        actualCost: null,
+    actualCost: null,
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: '2',
         title: 'Leaky faucet',
-        status: 'pending',
+    status: 'pending',
         property: 'Blue Hills Apartments',
         unit: '3C',
         priority: 'medium',
         estimatedCost: 800,
-        actualCost: null,
+    actualCost: null,
         createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
         id: '3',
         title: 'Broken window',
-        status: 'completed',
+    status: 'completed',
         property: 'Green Valley Complex',
         unit: 'A1',
         priority: 'high',
@@ -122,12 +163,12 @@ function CaretakerReportsPage() {
       {
         id: '4',
         title: 'Electrical issue',
-        status: 'in_progress',
+    status: 'in_progress',
         property: 'Green Valley Complex',
         unit: 'B2',
         priority: 'high',
         estimatedCost: 2000,
-        actualCost: null,
+    actualCost: null,
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
@@ -144,7 +185,7 @@ function CaretakerReportsPage() {
     ];
   };
 
-  const getMockReports = () => {
+  const getMockReports = (): CaretakerReport[] => {
     return [
       {
         id: '1',
@@ -203,9 +244,13 @@ function CaretakerReportsPage() {
   const mockMaintenance = getMockMaintenance();
   const mockReports = getMockReports();
   
-  const tasksData = Array.isArray(tasks) ? tasks : (useMockTasksData ? mockTasks : []);
-  const maintenanceData = Array.isArray(maintenance) ? maintenance : (useMockMaintenanceData ? mockMaintenance : []);
-  const reportsData = Array.isArray(reports) ? reports : (useMockReportsData ? mockReports : []);
+  const tasksData: CaretakerTask[] = Array.isArray(tasks) ? tasks : (useMockTasksData ? mockTasks : []);
+  const maintenanceData: MaintenanceRequest[] = Array.isArray(maintenance)
+    ? maintenance
+    : (useMockMaintenanceData ? mockMaintenance : []);
+  const reportsData: CaretakerReport[] = Array.isArray(reports)
+    ? reports
+    : (useMockReportsData ? mockReports : []);
 
   // Filter reports based on selected filters
   const getFilteredReports = () => {
@@ -222,7 +267,6 @@ function CaretakerReportsPage() {
   const totalTasks = tasksData.length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const completedMaintenance = maintenanceData.filter(req => req.status === 'completed').length;
   const totalMaintenanceCost = maintenanceData
     .filter(req => req.status === 'completed' && req.actualCost)
     .reduce((sum, req) => sum + (Number(req.actualCost) || 0), 0);
@@ -233,24 +277,24 @@ function CaretakerReportsPage() {
 
   const efficiency = Math.round((1 / Math.max(avgTaskCompletion, 1)) * 100);
 
-  const handleGenerateReport = (type) => {
+  const handleGenerateReport = (type: CaretakerReport['type']) => {
     // In a real app, this would generate and save a new report
     console.log(`Generating ${type} report for period: ${timePeriod}`);
     alert(`${type.charAt(0).toUpperCase() + type.slice(1)} report generated successfully!`);
   };
 
-  const handleViewReport = (report) => {
-    setSelectedReport(report);
-    setShowReportDetails(true);
+  const handleViewReport = (report: CaretakerReport) => {
+    console.log('Viewing report:', report.id);
+    alert(`Viewing ${report.title}`);
   };
 
-  const handleExportReport = (report) => {
+  const handleExportReport = (report: CaretakerReport) => {
     // In a real app, this would export the report
     console.log('Exporting report:', report);
     alert('Report exported successfully!');
   };
 
-  const getReportTypeColor = (type) => {
+  const getReportTypeColor = (type: CaretakerReport['type']) => {
     switch (type) {
       case 'performance': return 'text-blue-600 font-semibold';
       case 'maintenance': return 'text-green-600 font-semibold';
@@ -259,7 +303,7 @@ function CaretakerReportsPage() {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       day: 'numeric',
@@ -268,7 +312,7 @@ function CaretakerReportsPage() {
     });
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number | string | null | undefined) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: 'ZAR',
@@ -281,7 +325,7 @@ function CaretakerReportsPage() {
   if (loading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout showBackButton />
+  <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
@@ -319,7 +363,7 @@ function CaretakerReportsPage() {
                 <select 
                   className="control-select"
                   value={timePeriod}
-                  onChange={(e) => setTimePeriod(e.target.value)}
+                  onChange={handleTimePeriodChange}
                 >
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
@@ -333,6 +377,7 @@ function CaretakerReportsPage() {
               <button 
                 className="report-type-btn"
                 onClick={() => handleGenerateReport('performance')}
+                type="button"
               >
                 <div className="report-icon">Chart</div>
                 <div className="report-name">Performance</div>
@@ -342,6 +387,7 @@ function CaretakerReportsPage() {
               <button 
                 className="report-type-btn"
                 onClick={() => handleGenerateReport('maintenance')}
+                type="button"
               >
                 <div className="report-icon">Tools</div>
                 <div className="report-name">Maintenance</div>
@@ -351,6 +397,7 @@ function CaretakerReportsPage() {
               <button 
                 className="report-type-btn"
                 onClick={() => handleGenerateReport('financial')}
+                type="button"
               >
                 <div className="report-icon">Money</div>
                 <div className="report-name">Financial</div>
@@ -367,7 +414,7 @@ function CaretakerReportsPage() {
             <select 
               className="filter-select"
               value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
+              onChange={handleReportTypeChange}
             >
               <option value="all">All Types</option>
               <option value="performance">Performance</option>
@@ -392,7 +439,7 @@ function CaretakerReportsPage() {
             </div>
           ) : (
             filteredReports
-              .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))
+              .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime())
               .map((report) => (
                 <div key={report.id} className="list-item">
                   <div className="item-info">
@@ -436,12 +483,14 @@ function CaretakerReportsPage() {
                     <button 
                       className="btn btn-sm btn-secondary"
                       onClick={() => handleViewReport(report)}
+                      type="button"
                     >
                       View
                     </button>
                     <button 
                       className="btn btn-sm btn-primary"
                       onClick={() => handleExportReport(report)}
+                      type="button"
                     >
                       Export
                     </button>
