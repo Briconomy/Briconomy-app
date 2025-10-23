@@ -2,151 +2,208 @@ import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ActionCard from '../components/ActionCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
-import PaymentChart from '../components/PaymentChart.tsx';
-import { paymentsApi, leasesApi, formatCurrency, formatDate, useApi } from '../services/api.ts';
+import DataTable from '../components/DataTable.tsx';
+import InvoiceViewer from '../components/InvoiceViewer.tsx';
+import PaymentMethodSelector, { PaymentMethod } from '../components/PaymentMethodSelector.tsx';
+import PaymentProofUploader from '../components/PaymentProofUploader.tsx';
+import FakeCheckout from '../components/FakeCheckout.tsx';
+import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { useNavigate } from 'react-router-dom';
-import Icon from '../components/Icon.tsx';
 
-interface PaymentMethod {
+interface Invoice {
   id: string;
-  type: 'bank_account' | 'credit_card' | 'debit_card' | 'eft';
-  name: string;
-  details: string;
-  isDefault: boolean;
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  amount: number;
+  status: string;
+  description?: string;
+  tenant?: { fullName: string };
+  property?: { name: string; address: string };
+}
+
+interface PaymentFormData {
+  invoiceId: string;
+  amount: number;
+  method: PaymentMethod | null;
+  proofFile?: { name: string; data: string; mimeType: string };
+  reference?: string;
+  notes?: string;
 }
 
 function TenantPaymentsPage() {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
-  const [processing, setProcessing] = useState(false);
-  const [chartError, setChartError] = useState(false);
-  const [savedPaymentMethods, setSavedPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [activeTab, setActiveTab] = useState<'invoices' | 'history'>('invoices');
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [paymentMode, setPaymentMode] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [proofFile, setProofFile] = useState<{ name: string; data: string; mimeType: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [generatedReference, setGeneratedReference] = useState('');
 
   const navItems = [
-    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
+    { path: '/tenant', label: t('nav.home'), icon: 'properties' },
     { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment', active: true },
     { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
     { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
+  // Fetch invoices
+  const { data: invoices, loading: invoicesLoading, refetch: refetchInvoices } = useApi(
+    () => invoicesApi.getAll({ tenantId: user?.id }),
+    [user?.id]
+  );
+
+  // Fetch payment history
   const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi(
-    () => paymentsApi.getAll({ tenantId: user?.id || '507f1f77bcf86cd799439012' }),
+    () => paymentsApi.getAll({ tenantId: user?.id }),
     [user?.id]
   );
 
-  const { data: leases, loading: leasesLoading } = useApi(
-    () => leasesApi.getAll({ tenantId: user?.id || '507f1f77bcf86cd799439012' }),
-    [user?.id]
-  );
+  // Calculate stats
+  const getStats = () => {
+    if (!invoices) return { totalDue: 0, overdue: 0, nextDue: null };
 
-  const loadSavedPaymentMethods = () => {
-    try {
-      const saved = localStorage.getItem('briconomy_payment_methods');
-      if (saved) {
-        setSavedPaymentMethods(JSON.parse(saved));
-      } else {
-        // Default payment method
-        setSavedPaymentMethods([{
-          id: '1',
-          type: 'bank_account',
-          name: 'Primary Bank Account',
-          details: '**** **** **** 1234',
-          isDefault: true
-        }]);
-      }
-    } catch (err) {
-      console.error('Error loading payment methods:', err);
-      setSavedPaymentMethods([]);
-    }
-  };
-
-  useEffect(() => {
-    loadSavedPaymentMethods();
-  }, []);
-
-  const totalDue = payments
-    ?.filter((p: any) => p.status === 'pending')
-    .reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
-
-  const nextPayment = payments
-    ?.filter((p: any) => p.status === 'pending')
-    .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
-
-  const getDaysUntilDue = (dueDate: string | Date) => {
     const today = new Date();
-    const due = new Date(dueDate);
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    const pending = invoices.filter(inv => inv.status !== 'paid') as any[];
+
+    const totalDue = pending.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+    const overdue = pending.filter(inv => {
+      const dueDate = new Date(inv.dueDate);
+      return dueDate < today;
+    }).length;
+
+    const nextDue = pending
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] || null;
+
+    return { totalDue, overdue, nextDue };
   };
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return 'status-paid';
-      case 'pending': return 'status-pending';
-      case 'overdue': return 'status-overdue';
-      default: return 'status-pending';
+  const stats = getStats();
+
+  const handlePaymentComplete = async (reference: string) => {
+    if (!selectedInvoice || !selectedPaymentMethod) {
+      alert('Missing payment information');
+      return;
     }
-  };
 
-  const handleMakePayment = (payment: any) => {
-    setSelectedPayment(payment);
-    setShowPaymentForm(true);
-  };
-
-  const handlePaymentSubmit = async () => {
-    if (!selectedPayment) return;
-
-    setProcessing(true);
+    setSubmitting(true);
     try {
-      await paymentsApi.updateStatus(selectedPayment.id, 'paid');
-      await refetchPayments();
-      setShowPaymentForm(false);
-      setSelectedPayment(null);
-      setPaymentMethod('bank_transfer');
+      // Create payment record
+      const paymentData = {
+        tenantId: user?.id,
+        leaseId: selectedInvoice.id,
+        invoiceId: selectedInvoice.id,
+        amount: selectedInvoice.amount,
+        dueDate: selectedInvoice.dueDate,
+        method: selectedPaymentMethod,
+        reference: selectedPaymentMethod === 'card' ? reference : (paymentReference || ''),
+        status: proofFile ? 'pending_approval' : 'paid',
+        notes: paymentNotes,
+        paymentDate: new Date().toISOString()
+      };
+
+      const createdPayment = await paymentsApi.create(paymentData);
+
+      // Upload proof if provided
+      if (proofFile) {
+        await documentsApi.uploadPaymentProof(
+          createdPayment.id,
+          proofFile.name,
+          proofFile.data,
+          proofFile.mimeType,
+          user?.id || '',
+          selectedInvoice.id
+        );
+      }
+
+      alert('Payment submitted successfully!');
+      setShowCheckout(false);
+      setPaymentMode(false);
+      setSelectedInvoice(null);
+      setSelectedPaymentMethod(null);
+      setPaymentNotes('');
+      setPaymentReference('');
+      setProofFile(null);
+      setGeneratedReference('');
+      refetchInvoices();
+      refetchPayments();
     } catch (error) {
-      console.error('Error processing payment:', error);
-      alert('Payment failed. Please try again.');
+      alert('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
-      setProcessing(false);
+      setSubmitting(false);
     }
   };
 
-  const _handleDownloadStatement = () => {
-    const statementData = {
-      payments: payments?.filter((p: any) => p.status === 'paid') || [],
-      totalPaid: payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + p.amount, 0) || 0,
-      generatedDate: new Date().toISOString(),
-      tenant: user
-    };
+  const handleSubmitPayment = async () => {
+    if (!selectedInvoice || !selectedPaymentMethod) {
+      alert('Please select a payment method');
+      return;
+    }
 
-    const blob = new Blob([JSON.stringify(statementData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `payment-statement-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // For card payments, show fake checkout
+    if (selectedPaymentMethod === 'card') {
+      setShowCheckout(true);
+      return;
+    }
+
+    // For manual methods, require proof
+    if (!proofFile) {
+      alert('Please upload proof of payment');
+      return;
+    }
+
+    // Generate reference for manual payments
+    const ref = `REF-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    setGeneratedReference(ref);
+    await handlePaymentComplete(ref);
   };
 
-  if (paymentsLoading || leasesLoading) {
+  const paymentHistoryColumns = [
+    {
+      key: 'invoiceNumber',
+      label: 'Invoice',
+      render: (value: string) => value || 'N/A'
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      render: (value: number) => formatCurrency(value)
+    },
+    {
+      key: 'paymentDate',
+      label: 'Date Paid',
+      render: (value?: string) => value ? formatDate(value) : 'Pending'
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (value: string) => (
+        <span className={`status-badge ${
+          value === 'paid' ? 'status-paid' :
+          value === 'pending_approval' ? 'status-pending' :
+          value === 'overdue' ? 'status-overdue' : 'status-pending'
+        }`}>
+          {value?.toUpperCase()}
+        </span>
+      )
+    }
+  ];
+
+  if (invoicesLoading || paymentsLoading) {
     return (
       <div className="app-container mobile-only">
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>{t('payments.loadingPayments')}</p>
+            <p>{t('common.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -154,254 +211,319 @@ function TenantPaymentsPage() {
     );
   }
 
-  const currentLease = leases?.[0];
-
-  const renderPaymentChart = () => {
-    if (!payments || payments.length === 0) {
-      return (
-        <div className="chart-empty">
-          <p>{t('payments.noPaymentHistory')}</p>
-        </div>
-      );
-    }
-
-    return (
-      <ChartCard title={t('payments.paymentHistoryChart')}>
-        <ErrorBoundary onError={() => setChartError(true)}>
-          <PaymentChart payments={payments} />
-        </ErrorBoundary>
-      </ChartCard>
-    );
-  };
-
   return (
     <div className="app-container mobile-only">
       <TopNav showLogout showBackButton />
+
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">{t('nav.payments')}</div>
-          <div className="page-subtitle">{t('payments.subtitle')}</div>
+          <div className="page-title">Payments</div>
+          <div className="page-subtitle">View invoices and manage payments</div>
         </div>
 
-        {currentLease && (
-          <div className="lease-summary-card">
-            <h3>{t('payments.currentLease')}</h3>
-            <div className="lease-summary">
-              <div className="lease-item">
-                <span>{t('payments.monthlyRent')} </span>
-                <span className="lease-value">{formatCurrency(currentLease.monthlyRent)}</span>
-              </div>
-              <div className="lease-item">
-                <span>{t('payments.unit')} </span>
-                <span className="lease-value">{currentLease.unitId?.unitNumber || 'N/A'}</span>
-              </div>
-              <div className="lease-item">
-                <span>{t('payments.property')} </span>
-                <span className="lease-value">{currentLease.propertyId?.name || 'N/A'}</span>
-              </div>
-            </div>
+        {/* Stats */}
+        <div className="dashboard-grid">
+          <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" highlight={stats.totalDue > 0} />
+          <StatCard value={stats.overdue} label="Overdue Invoices" highlight={stats.overdue > 0} />
+          <StatCard
+            value={stats.nextDue ? formatDate(stats.nextDue.dueDate) : 'N/A'}
+            label="Next Due Date"
+          />
+        </div>
+
+        {/* Alerts */}
+        {stats.overdue > 0 && (
+          <div style={{
+            background: 'var(--error-light, rgba(231, 76, 60, 0.1))',
+            border: '1px solid var(--error-color, #e74c3c)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '20px',
+            color: 'var(--error-color, #e74c3c)'
+          }}>
+            <strong>⚠️ You have {stats.overdue} overdue invoice(s)</strong>
+            <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>
+              Please submit payment as soon as possible to avoid penalties.
+            </p>
           </div>
         )}
 
-        <div className="dashboard-grid">
-          <StatCard value={formatCurrency(totalDue)} label={t('payments.totalDue')} />
-          <StatCard value={nextPayment ? formatCurrency(nextPayment.amount) : 'R0'} label={t('payments.nextPayment')} />
-          <StatCard value={nextPayment ? `${getDaysUntilDue(nextPayment.dueDate)} days` : 'N/A'} label={t('payments.daysUntilDue')} />
-          <StatCard value={payments?.filter((p: any) => p.status === 'paid').length || 0} label={t('payments.paymentsMade')} />
+        {/* Tabs */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '20px',
+          borderBottom: '1px solid var(--border-primary)',
+          paddingBottom: '12px'
+        }}>
+          <button
+            onClick={() => {
+              setActiveTab('invoices');
+              setPaymentMode(false);
+            }}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'invoices' ? 'var(--primary)' : 'transparent',
+              color: activeTab === 'invoices' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'invoices' ? '600' : '500',
+              fontSize: '14px'
+            }}
+          >
+            📋 Invoices
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'history' ? 'var(--primary)' : 'transparent',
+              color: activeTab === 'history' ? 'white' : 'var(--text-secondary)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'history' ? '600' : '500',
+              fontSize: '14px'
+            }}
+          >
+            ✅ Payment History
+          </button>
         </div>
 
-        {nextPayment && (
-          <div className="payment-reminder-card">
-            <div className="reminder-content">
-              <div className="reminder-icon">{t('payments.reminder')}</div>
-              <div className="reminder-text">
-                <h4>{t('payments.paymentReminder')}</h4>
-                <p>{t('payments.rentDueIn').replace('{amount}', formatCurrency(nextPayment.amount)).replace('{days}', getDaysUntilDue(nextPayment.dueDate).toString())}</p>
-                <p className="due-date">{t('payments.dueDate')} {formatDate(nextPayment.dueDate)}</p>
+        {/* Invoices Tab */}
+        {activeTab === 'invoices' && !paymentMode && (
+          <div>
+            {!invoices || invoices.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: 'var(--text-secondary)'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
+                  No invoices
+                </div>
+                <div style={{ fontSize: '13px' }}>
+                  You don't have any outstanding invoices
+                </div>
               </div>
-              <button 
-                type="button"
+            ) : (
+              <div>
+                {(invoices as Invoice[]).map(invoice => (
+                  <InvoiceViewer
+                    key={invoice.id}
+                    invoice={invoice}
+                    onDownload={async (id, format) => {
+                      try {
+                        await invoicesApi.download(id, format);
+                      } catch (error) {
+                        alert('Failed to download invoice');
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Quick Action */}
+            {(invoices as Invoice[] || []).some(inv => inv.status !== 'paid') && (
+              <div style={{ marginTop: '24px' }}>
+                <button
+                  onClick={() => {
+                    setSelectedInvoice((invoices as Invoice[]).find(inv => inv.status !== 'paid') || null);
+                    setPaymentMode(true);
+                  }}
+                  className="btn btn-primary"
+                  style={{ width: '100%', padding: '14px' }}
+                >
+                  💳 Pay Now
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Payment Mode */}
+        {activeTab === 'invoices' && paymentMode && selectedInvoice && (
+          <div>
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setPaymentMode(false);
+                setSelectedInvoice(null);
+                setSelectedPaymentMethod(null);
+                setPaymentNotes('');
+                setPaymentReference('');
+                setProofFile(null);
+              }}
+              style={{
+                marginBottom: '20px',
+                padding: '8px 12px',
+                background: 'none',
+                border: '1px solid var(--border-primary)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ← Back to Invoices
+            </button>
+
+            {/* Selected Invoice */}
+            <div style={{
+              background: 'var(--background)',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px'
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>
+                SELECTED INVOICE
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px',
+                background: 'var(--surface)',
+                borderRadius: '8px'
+              }}>
+                <div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    {selectedInvoice.invoiceNumber}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: '600' }}>
+                    Due: {formatDate(selectedInvoice.dueDate)}
+                  </div>
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary)' }}>
+                  {formatCurrency(selectedInvoice.amount)}
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Method Selection */}
+            <PaymentMethodSelector
+              selected={selectedPaymentMethod}
+              onChange={setSelectedPaymentMethod}
+            />
+
+            {/* Payment Proof Upload (for manual methods) */}
+            {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
+              <PaymentProofUploader
+                onFileSelected={(name, data, mimeType) => {
+                  setProofFile({ name, data, mimeType });
+                }}
+              />
+            )}
+
+            {/* Notes */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                Additional Notes (optional)
+              </label>
+              <textarea
+                value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)}
+                placeholder="e.g., 'Payment includes deposit refund'"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: '8px',
+                  fontFamily: 'inherit',
+                  fontSize: '13px',
+                  minHeight: '60px',
+                  resize: 'none'
+                }}
+              />
+            </div>
+
+            {/* Manual Payment Reference */}
+            {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                  Payment Reference (optional)
+                </label>
+                <input
+                  type="text"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="e.g., cheque number or bank reference"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '8px',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <div style={{ marginBottom: '20px' }}>
+              <button
+                onClick={handleSubmitPayment}
+                disabled={!selectedPaymentMethod || (selectedPaymentMethod !== 'card' && !proofFile) || submitting}
                 className="btn btn-primary"
-                onClick={() => handleMakePayment(nextPayment)}
+                style={{ width: '100%', padding: '14px' }}
               >
-                {t('payments.payNow')}
+                {submitting ? '⏳ Processing...' : `Pay ${formatCurrency(selectedInvoice.amount)}`}
               </button>
             </div>
           </div>
         )}
 
-        {renderPaymentChart()}
-
-        <div className="payment-methods-section">
-          <div className="section-header">
-            <h3>{t('payments.paymentMethods')}</h3>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm1"
-              onClick={() => navigate('/tenant/manage-payment-methods')}
-            >
-              {t('payments.managePaymentMethods')}
-            </button>
-          </div>
-          <div className="payment-methods-summary">
-            <p>{t('payments.quickCheckout')}</p>
-          </div>
-        </div>
-
-        <div className="payment-actions-section">
-          <h3>{t('payments.quickActions')}</h3>
-          <div className="quick-actions">
-            <ActionCard
-              onClick={_handleDownloadStatement}
-              icon={<Icon name="document" alt="Download Statement" />}
-              title={t('payments.downloadStatement')}
-              description={t('payments.paymentHistory')}
-            />
-            <ActionCard
-              onClick={() => setShowPaymentForm(true)}
-              icon={<Icon name="payment" alt="Make Payment" />}
-              title={t('payments.makePayment')}
-              description={t('payments.payRentOnline')}
-            />
-          </div>
-        </div>
-
-        {showPaymentForm && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>Make Payment</h3>
-                <button type="button" className="close-btn" onClick={() => setShowPaymentForm(false)}>×</button>
-              </div>
-              <div className="modal-body">
-                <div className="payment-details">
-                  <p><strong>Amount:</strong> {selectedPayment ? formatCurrency(selectedPayment.amount) : 'R0'}</p>
-                  <p><strong>Type:</strong> {selectedPayment?.type || 'Rent'}</p>
-                  <p><strong>Due Date:</strong> {selectedPayment ? formatDate(selectedPayment.dueDate) : 'N/A'}</p>
+        {/* Payment History Tab */}
+        {activeTab === 'history' && (
+          <div>
+            {!payments || payments.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: 'var(--text-secondary)'
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
+                  No payment history
                 </div>
-                <div className="payment-methods">
-                  <h4>Select Payment Method</h4>
-                  {savedPaymentMethods.length > 0 && (
-                    <div className="saved-payment-methods">
-                      <h5>Saved Payment Methods</h5>
-                      <div className="saved-methods-list">
-                        {savedPaymentMethods.map((method) => (
-                          <label key={method.id} className="saved-method-option">
-                            <input
-                              type="radio"
-                              name="savedPaymentMethod"
-                              value={method.id}
-                              checked={paymentMethod === `saved_${method.id}`}
-                              onChange={(e) => setPaymentMethod(`saved_${method.id}`)}
-                            />
-                            <div className="saved-method-info">
-                              <div className="method-header">
-                                <span className="method-icon">
-                                  {method.type === 'bank_account' ? 'Bank' : 
-                                   method.type === 'credit_card' || method.type === 'debit_card' ? 'Card' : 'Mobile'}
-                                </span>
-                                <div className="method-details">
-                                  <span className="method-name">{method.name}</span>
-                                  <span className="method-details-text">{method.details}</span>
-                                </div>
-                                {method.isDefault && (
-                                  <span className="default-badge">Default</span>
-                                )}
-                              </div>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div className="new-payment-methods">
-                    <h5>New Payment Method</h5>
-                    <div className="payment-options">
-                      <label className="payment-option">
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          value="bank_transfer"
-                          checked={paymentMethod === 'bank_transfer'}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                        />
-                        <span>Bank Transfer</span>
-                      </label>
-                      <label className="payment-option">
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          value="card"
-                          checked={paymentMethod === 'card'}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                        />
-                        <span>Credit/Debit Card</span>
-                      </label>
-                      <label className="payment-option">
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          value="eft"
-                          checked={paymentMethod === 'eft'}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                        />
-                        <span>EFT</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowPaymentForm(false)}
-                    disabled={processing}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handlePaymentSubmit}
-                    disabled={processing}
-                  >
-                    {processing ? 'Processing...' : 'Confirm Payment'}
-                  </button>
+                <div style={{ fontSize: '13px' }}>
+                  Your payments will appear here
                 </div>
               </div>
-            </div>
+            ) : (
+              <DataTable
+                title="Payment History"
+                data={payments as any[]}
+                columns={paymentHistoryColumns}
+                actions={null}
+              />
+            )}
           </div>
         )}
       </div>
+
+      {/* Fake Checkout Modal */}
+      {showCheckout && selectedInvoice && (
+        <FakeCheckout
+          amount={selectedInvoice.amount}
+          invoiceNumber={selectedInvoice.invoiceNumber}
+          tenantName={selectedInvoice.tenant?.fullName || 'Tenant'}
+          onComplete={async (reference) => {
+            setGeneratedReference(reference);
+            await handlePaymentComplete(reference);
+          }}
+          onCancel={() => {
+            setShowCheckout(false);
+          }}
+          isLoading={submitting}
+        />
+      )}
+
       <BottomNav items={navItems} responsive={false} />
     </div>
   );
-}
-
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; onError?: () => void },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode; onError?: () => void }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(_error: Error) {
-    return { hasError: true };
-  }
-
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    this.props.onError?.();
-  }
-
-  override render() {
-    if (this.state.hasError) {
-      return null;
-    }
-
-    return this.props.children;
-  }
 }
 
 export default TenantPaymentsPage;

@@ -1,127 +1,171 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ActionCard from '../components/ActionCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
-import PaymentChart from '../components/PaymentChart.tsx';
-import Icon from '../components/Icon.tsx';
-import { paymentsApi, useApi } from '../services/api.ts';
-import { useAuth } from '../contexts/AuthContext.tsx';
+import { paymentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
-// Simple error boundary for chart rendering
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError(_error) {
-    return { hasError: true };
-  }
-  override componentDidCatch(_error, _errorInfo) {}
-  override render() {
-    if (this.state.hasError) {
-      return <div style={{ padding: '24px', textAlign: 'center', color: '#a94442' }}>Unable to render chart. Please check your data.</div>;
-    }
-    return this.props.children;
-  }
+interface Payment {
+  id: string;
+  invoiceNumber?: string;
+  amount: number;
+  dueDate: string;
+  status: string;
+  method?: string;
+  tenant?: { fullName: string };
+  property?: { name: string };
+  proofUrl?: string;
+  reference?: string;
+  notes?: string;
 }
 
 function ManagerPaymentsPage() {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [filteredPayments, setFilteredPayments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
-  const { data: payments, loading: _loading, error: _error, refetch: _refetch } = useApi(
-    () => user?.id ? paymentsApi.getAll({ managerId: user.id }) : Promise.resolve([]),
-    [user?.id]
-  );
-
-  const paymentsData = Array.isArray(payments) ? payments : [];
+  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [approvalNotes, setApprovalNotes] = useState('');
 
   const navItems = [
-    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
     { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
     { path: '/manager/leases', label: t('nav.leases'), icon: 'lease' },
     { path: '/manager/payments', label: t('nav.payments'), icon: 'payment', active: true }
   ];
 
+  // Fetch payments data
+  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = useApi(
+    () => paymentsApi.getAll({ managerId: user?.id }),
+    [user?.id]
+  );
+
+  // Calculate stats
+  const getPaymentStats = () => {
+    if (!payments) return { totalDue: 0, pendingApproval: 0, overdue: 0, paid: 0 };
+
+    const today = new Date();
+    const totalDue = payments
+      .filter(p => p.status !== 'paid')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    const pendingApproval = payments.filter(p => p.status === 'pending_approval').length;
+
+    const overdue = payments.filter(p => {
+      if (p.status === 'paid') return false;
+      const dueDate = new Date(p.dueDate);
+      const daysDue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysDue > 14;
+    }).length;
+
+    const paid = payments.filter(p => p.status === 'paid').length;
+
+    return { totalDue, pendingApproval, overdue, paid };
+  };
+
+  const stats = getPaymentStats();
+
+  // Filter payments
   useEffect(() => {
-    applyFilters(searchTerm, statusFilter);
-  }, [payments, searchTerm, statusFilter]);
+    if (!payments) return;
 
-  const totalRevenue = paymentsData
-    .filter(p => p.status === 'paid')
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
-    
-  const pendingPayments = paymentsData.filter(p => p.status === 'pending').length;
-  const overduePayments = paymentsData.filter(p => p.status === 'overdue').length;
-  const collectedThisMonth = paymentsData
-    .filter(p => {
-      if (!p.paymentDate || p.status !== 'paid') return false;
-      const paymentDate = new Date(p.paymentDate);
-      const currentDate = new Date();
-      return paymentDate.getMonth() === currentDate.getMonth() && 
-             paymentDate.getFullYear() === currentDate.getFullYear();
-    })
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+    let filtered = payments;
 
-  const applyFilters = (search, status) => {
-    let filtered = paymentsData;
-
-    if (search) {
+    if (searchTerm) {
       filtered = filtered.filter(payment =>
-        payment.tenantName?.toLowerCase().includes(search.toLowerCase()) ||
-        payment.propertyName?.toLowerCase().includes(search.toLowerCase()) ||
-        payment.unitNumber?.toLowerCase().includes(search.toLowerCase())
+        (payment.tenant?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (payment.property?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (payment.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
-    if (status !== 'all') {
-      filtered = filtered.filter(payment => payment.status === status);
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(p => p.status === statusFilter);
     }
 
+    // Sort by due date, overdue first
+    filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
     setFilteredPayments(filtered);
+  }, [payments, searchTerm, statusFilter]);
+
+  const handleApprovePayment = async () => {
+    if (!selectedPayment) return;
+
+    try {
+      await paymentsApi.approve(selectedPayment.id, user?.id || '', approvalNotes);
+      alert('Payment approved successfully!');
+      setReviewMode(false);
+      setSelectedPayment(null);
+      setApprovalNotes('');
+      refetchPayments();
+    } catch (error) {
+      alert('Failed to approve payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
-  const handleSearch = (term) => {
-    setSearchTerm(term);
-    applyFilters(term, statusFilter);
+  const handleRejectPayment = async () => {
+    if (!selectedPayment) return;
+    if (!approvalNotes) {
+      alert('Please provide a reason for rejection');
+      return;
+    }
+
+    try {
+      await paymentsApi.reject(selectedPayment.id, user?.id || '', approvalNotes);
+      alert('Payment rejected');
+      setReviewMode(false);
+      setSelectedPayment(null);
+      setApprovalNotes('');
+      refetchPayments();
+    } catch (error) {
+      alert('Failed to reject payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
-  const handleFilterChange = (_key, value) => {
-    setStatusFilter(value);
-    applyFilters(searchTerm, value);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid': return 'status-paid';
+      case 'overdue': return 'status-overdue';
+      case 'pending_approval': return 'status-pending';
+      default: return 'status-pending';
+    }
   };
 
   const paymentColumns = [
-    { key: 'tenantName', label: 'Tenant' },
-    { key: 'propertyName', label: 'Property' },
-    { key: 'unitNumber', label: 'Unit' },
-    { 
-      key: 'amount', 
+    {
+      key: 'tenant',
+      label: t('common.tenant'),
+      render: (value: any) => value?.fullName || 'N/A'
+    },
+    {
+      key: 'property',
+      label: t('common.property'),
+      render: (value: any) => value?.name || 'N/A'
+    },
+    {
+      key: 'amount',
       label: 'Amount',
-      render: (value) => `R${value.toLocaleString()}`
+      render: (value: number) => formatCurrency(value)
     },
-    { 
-      key: 'dueDate', 
+    {
+      key: 'dueDate',
       label: 'Due Date',
-      render: (value) => new Date(value).toLocaleDateString()
+      render: (value: string) => formatDate(value)
     },
-    { 
-      key: 'status', 
-      label: 'Status',
-      render: (value) => (
-        <span className={`status-badge ${
-          value === 'paid' ? 'status-paid' : 
-          value === 'pending' ? 'status-pending' : 'status-overdue'
-        }`}>
-          {value.toUpperCase()}
+    {
+      key: 'status',
+      label: t('common.status'),
+      render: (value: string) => (
+        <span className={`status-badge ${getStatusColor(value)}`}>
+          {value?.toUpperCase() || 'N/A'}
         </span>
       )
     }
@@ -133,121 +177,261 @@ function ManagerPaymentsPage() {
       value: statusFilter,
       options: [
         { value: 'all', label: 'All Statuses' },
-        { value: 'paid', label: 'Paid' },
         { value: 'pending', label: 'Pending' },
+        { value: 'pending_approval', label: 'Pending Approval' },
+        { value: 'paid', label: 'Paid' },
         { value: 'overdue', label: 'Overdue' }
       ]
     }
   ];
 
+  if (paymentsLoading) {
+    return (
+      <div className="app-container mobile-only">
+        <TopNav showLogout showBackButton />
+        <div className="main-content">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>{t('common.loading')}</p>
+          </div>
+        </div>
+        <BottomNav items={navItems} responsive={false} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton />
-      
+      <TopNav showLogout showBackButton />
+
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Payment Management</div>
-          <div className="page-subtitle">Track rent collection and payments</div>
-        </div>
-        
-        <div className="dashboard-grid">
-          <StatCard value={`R${(totalRevenue / 1000).toFixed(0)}k`} label="Total Revenue" />
-          <StatCard value={pendingPayments} label="Pending" />
-          <StatCard value={overduePayments} label="Overdue" />
-          <StatCard value={`R${(collectedThisMonth / 1000).toFixed(0)}k`} label="This Month" />
+          <div className="page-title">Payments</div>
+          <div className="page-subtitle">Manage tenant payments and invoices</div>
         </div>
 
+        {/* Stats */}
+        <div className="dashboard-grid">
+          <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" />
+          <StatCard value={stats.pendingApproval} label="Pending Approval" highlight={stats.pendingApproval > 0} />
+          <StatCard value={stats.overdue} label="Overdue (14+ days)" highlight={stats.overdue > 0} />
+          <StatCard value={stats.paid} label="Paid This Month" />
+        </div>
+
+        {/* Alerts */}
+        {stats.overdue > 0 && (
+          <div style={{
+            background: 'var(--error-light, rgba(231, 76, 60, 0.1))',
+            border: '1px solid var(--error-color, #e74c3c)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '20px',
+            color: 'var(--error-color, #e74c3c)'
+          }}>
+            <strong>⚠️ {stats.overdue} payments are overdue by more than 14 days</strong>
+            <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>
+              Consider sending escalation notices to tenants.
+            </p>
+          </div>
+        )}
+
+        {/* Search & Filter */}
         <SearchFilter
-          placeholder="Search payments..."
-          onSearch={handleSearch}
+          placeholder="Search tenant, property, or invoice..."
+          onSearch={setSearchTerm}
           filters={filters}
-          onFilterChange={handleFilterChange}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
         />
 
+        {/* Payments Table */}
         <DataTable
-          title="Payment Overview"
+          title="Payment Records"
           data={filteredPayments}
           columns={paymentColumns}
           actions={null}
-          onRowClick={(_payment) => {}}
+          onRowClick={(payment) => {
+            setSelectedPayment(payment);
+            setReviewMode(true);
+          }}
         />
 
-        <ChartCard title="Payment Trends">
-          <ErrorBoundary>
-            {Array.isArray(payments) && payments.length > 0 ? (
-              <PaymentChart payments={payments} />
-            ) : (
-              <div style={{ padding: '24px', textAlign: 'center', color: '#888' }}>No payment data available.</div>
-            )}
-          </ErrorBoundary>
-        </ChartCard>
-
-        <div className="quick-actions">
-          <ActionCard
-            to="#"
-            icon={<Icon name="notifications" alt="Send Reminders" />}
-            title="Send Reminders"
-            description="Notify tenants"
-          />
-          <ActionCard
-            to="#"
-            icon={<Icon name="report" alt="Generate Report" />}
-            title="Generate Report"
-            description="Payment summary"
-          />
-          <ActionCard
-            to="#"
-            icon={<Icon name="archive" alt="Export Data" />}
-            title="Export Data"
-            description="Download CSV"
-            onClick={() => {
-              const exportRows = Array.isArray(filteredPayments) && filteredPayments.length > 0
-                ? filteredPayments
-                : Array.isArray(payments)
-                  ? payments
-                  : [];
-
-              if (exportRows.length === 0) {
-                globalThis.alert('No payment data available to export.');
-                return;
-              }
-
-              const headers = ["Tenant", "Property", "Unit", "Amount", "Due Date", "Status"];
-              const csvRows = [headers.join(",")];
-              const wrap = (value: unknown) => {
-                if (value === null || value === undefined) {
-                  return '""';
-                }
-                const normalized = String(value).replace(/"/g, '""');
-                return `"${normalized}"`;
-              };
-
-              exportRows.forEach((p) => {
-                csvRows.push([
-                  wrap(p?.tenantName ?? ''),
-                  wrap(p?.propertyName ?? ''),
-                  wrap(p?.unitNumber ?? ''),
-                  wrap(p?.amount ?? ''),
-                  wrap(p?.dueDate ?? ''),
-                  wrap(p?.status ?? '')
-                ].join(","));
-              });
-
-              const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = "payments.csv";
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-            }}
-          />
-  </div>
-
+        {filteredPayments.length === 0 && !paymentsLoading && (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            color: 'var(--text-secondary)'
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+            <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
+              No payments found
+            </div>
+            <div style={{ fontSize: '13px' }}>
+              {searchTerm ? 'Try adjusting your search' : 'No payments to display'}
+            </div>
+          </div>
+        )}
       </div>
-      
+
+      {/* Payment Review Modal */}
+      {reviewMode && selectedPayment && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--surface)',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: 'var(--shadow-lg)'
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>
+                Review Payment
+              </h2>
+              <button
+                onClick={() => {
+                  setReviewMode(false);
+                  setSelectedPayment(null);
+                  setApprovalNotes('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Payment Details */}
+            <div style={{
+              background: 'var(--background)',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px'
+            }}>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>TENANT</div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>
+                  {selectedPayment.tenant?.fullName}
+                </div>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>PROPERTY</div>
+                <div style={{ fontSize: '16px' }}>
+                  {selectedPayment.property?.name}
+                </div>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>AMOUNT</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: 'var(--primary)' }}>
+                  {formatCurrency(selectedPayment.amount)}
+                </div>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>DUE DATE</div>
+                <div style={{ fontSize: '16px' }}>
+                  {formatDate(selectedPayment.dueDate)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>STATUS</div>
+                <span className={`status-badge ${getStatusColor(selectedPayment.status)}`}>
+                  {selectedPayment.status?.toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            {/* Approval Notes */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                {selectedPayment.status === 'pending_approval' ? 'Approval Notes (optional)' : 'Reason for Action'}
+              </label>
+              <textarea
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                placeholder="Add any notes..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: '8px',
+                  fontFamily: 'inherit',
+                  fontSize: '13px',
+                  minHeight: '80px',
+                  resize: 'none'
+                }}
+              />
+            </div>
+
+            {/* Actions */}
+            {selectedPayment.status === 'pending_approval' && (
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    setReviewMode(false);
+                    setSelectedPayment(null);
+                    setApprovalNotes('');
+                  }}
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleRejectPayment}
+                  className="btn"
+                  style={{ flex: 1, background: 'var(--error-color, #e74c3c)', color: 'white' }}
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={handleApprovePayment}
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                >
+                  Approve
+                </button>
+              </div>
+            )}
+            {selectedPayment.status !== 'pending_approval' && (
+              <button
+                onClick={() => {
+                  setReviewMode(false);
+                  setSelectedPayment(null);
+                  setApprovalNotes('');
+                }}
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+              >
+                Close
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <BottomNav items={navItems} responsive={false} />
     </div>
   );

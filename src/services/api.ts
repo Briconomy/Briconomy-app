@@ -134,6 +134,57 @@ export const documentsApi = {
     method: 'DELETE',
   }),
   getById: (id: string) => apiRequest(`/api/documents/${id}`),
+  uploadPaymentProof: (
+    paymentId: string,
+    fileName: string,
+    fileData: string,
+    mimeType: string,
+    userId: string,
+    invoiceId: string
+  ) => apiRequest('/api/documents', {
+    method: 'POST',
+    body: JSON.stringify({
+      type: 'payment_proof',
+      paymentId,
+      invoiceId,
+      userId,
+      content: fileData,
+      metadata: {
+        fileName,
+        mimeType,
+        uploadedAt: new Date().toISOString(),
+      },
+    }),
+  }),
+};
+
+export const invoicesApi = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    const endpoint = params ? `/api/invoices?${params}` : '/api/invoices';
+    return apiRequest(endpoint);
+  },
+  getById: (id: string) => apiRequest(`/api/invoices/${id}`),
+  create: (data: Record<string, unknown>) => apiRequest('/api/invoices', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id: string, data: Record<string, unknown>) => apiRequest(`/api/invoices/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  delete: (id: string) => apiRequest(`/api/invoices/${id}`, {
+    method: 'DELETE',
+  }),
+  download: (id: string, format: 'pdf' | 'markdown') => apiRequest(`/api/invoices/${id}/${format}`, {
+    method: 'GET',
+  }),
+  generateMonthly: () => apiRequest('/api/invoices/generate-monthly', {
+    method: 'POST',
+  }),
+  processOverdue: () => apiRequest('/api/invoices/process-overdue', {
+    method: 'POST',
+  }),
 };
 
 export const paymentsApi = {
@@ -149,6 +200,14 @@ export const paymentsApi = {
   updateStatus: (id: string, status: string) => apiRequest(`/api/payments/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
+  }),
+  approve: (id: string, managerId: string, notes?: string) => apiRequest(`/api/payments/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ managerId, notes }),
+  }),
+  reject: (id: string, managerId: string, notes?: string) => apiRequest(`/api/payments/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ managerId, notes }),
   }),
 };
 
