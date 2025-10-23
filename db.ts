@@ -1,10 +1,10 @@
-import { MongoClient, Db, Collection } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
+import { MongoClient, Database, Collection } from "mongo";
 
 let client: MongoClient | null = null;
-let db: Db | null = null;
-let connectPromise: Promise<Db> | null = null;
+let db: Database | null = null;
+let connectPromise: Promise<Database> | null = null;
 
-export async function connectToMongoDB(): Promise<Db> {
+export async function connectToMongoDB(): Promise<Database> {
   if (db) return db;
 
   if (connectPromise !== null) return connectPromise;
@@ -17,12 +17,12 @@ export async function connectToMongoDB(): Promise<Db> {
 
     while (attempt < maxAttempts) {
       try {
-        client = new MongoClient();
-        await client.connect(uri);
-  const candidateDb = client.database("briconomy");
-  await candidateDb.listCollectionNames();
+    client = new MongoClient();
+    await client.connect(uri);
+    const candidateDb = client.database("briconomy");
+    await candidateDb.listCollectionNames();
         db = candidateDb;
-        console.log("Connected to M ongoDB");
+    console.log("Connected to MongoDB");
         return db;
       } catch (error) {
         lastError = error;

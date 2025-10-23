@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface StatCardProps {
   value: string | number;
   label: string;

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
-import { propertiesApi, authApi, formatCurrency } from '../services/api.ts';
+import { propertiesApi, authApi } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
@@ -277,34 +277,11 @@ function RentalApplicationPage() {
     setSignUpLoading(true);
 
     try {
-      // Create account
-      const userData = {
-        firstName: signUpForm.firstName,
-        lastName: signUpForm.lastName,
-        email: signUpForm.email,
-        phone: signUpForm.phone,
-        password: signUpForm.password,
-        userType: signUpForm.userType
-      };
-
       // Simulate API call - in real implementation, this would call authApi.register()
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Auto-login after successful registration
-      const loginData = {
-        email: signUpForm.email,
-        password: signUpForm.password
-      };
-
       // Simulate login API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create user object for login
-      const user = {
-        _id: `user_${Date.now()}`,
-        ...userData,
-        createdAt: new Date().toISOString()
-      };
 
       // Login the user
       await login('mock_jwt_token_' + Date.now(), null);
@@ -443,7 +420,7 @@ function RentalApplicationPage() {
       </form>
 
       <div className="login-prompt">
-        <p>Already have an account? <button onClick={() => navigate('/login')} className="link-button">Sign In</button></p>
+  <p>Already have an account? <button type="button" onClick={() => navigate('/login')} className="link-button">Sign In</button></p>
       </div>
     </div>
   );
@@ -906,7 +883,7 @@ function RentalApplicationPage() {
         <div className="main-content">
           <div className="error-state">
             <p>Error: {error}</p>
-            <button onClick={() => navigate('/properties')} className="btn btn-primary">Back to Properties</button>
+            <button type="button" onClick={() => navigate('/properties')} className="btn btn-primary">Back to Properties</button>
           </div>
         </div>
       </div>
@@ -925,10 +902,10 @@ function RentalApplicationPage() {
             <p>Your application reference number is: <strong>APP-{Date.now().toString().slice(-6)}</strong></p>
             <p>We will review your application and contact you within 3-5 business days.</p>
             <div className="success-actions">
-              <button onClick={() => navigate('/properties')} className="btn btn-primary">
+              <button type="button" onClick={() => navigate('/properties')} className="btn btn-primary">
                 Browse More Properties
               </button>
-              <button onClick={() => navigate('/')} className="btn btn-secondary">
+              <button type="button" onClick={() => navigate('/')} className="btn btn-secondary">
                 Return to Home
               </button>
             </div>

@@ -1,4 +1,4 @@
-import { build } from "https://deno.land/x/esbuild@v0.19.8/mod.js";
+import { build } from "esbuild";
 
 const result = await build({
   entryPoints: ["./src/main.tsx"],

@@ -1,5 +1,5 @@
 // Add sample pending applications for testing
-import { MongoClient } from "npm:mongodb@6.1.0";
+import { MongoClient } from "mongodb";
 
 const MONGO_URI = "mongodb://localhost:27017";
 const DB_NAME = "briconomy";

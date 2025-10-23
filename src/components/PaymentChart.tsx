@@ -20,7 +20,17 @@ ChartJS.register(
   Legend
 );
 
-function PaymentChart({ payments = [] }) {
+interface PaymentRecord {
+  status: string;
+  paymentDate?: string;
+  amount: number;
+}
+
+interface PaymentChartProps {
+  payments?: PaymentRecord[];
+}
+
+function PaymentChart({ payments = [] }: PaymentChartProps) {
   const options = {
     responsive: true,
     plugins: {
@@ -35,9 +45,7 @@ function PaymentChart({ payments = [] }) {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
-            return 'R' + value.toLocaleString();
-          }
+          callback: (value: number | string) => `R${Number(value).toLocaleString()}`
         }
       },
     },
@@ -59,8 +67,8 @@ function PaymentChart({ payments = [] }) {
       };
     }
 
-    const paidPayments = payments.filter(p => p.status === 'paid' && p.paymentDate);
-    const monthlyData = {};
+    const paidPayments = payments.filter(payment => payment.status === 'paid' && payment.paymentDate);
+    const monthlyData: Record<string, number> = {};
     
     paidPayments.forEach(payment => {
       const date = new Date(payment.paymentDate);

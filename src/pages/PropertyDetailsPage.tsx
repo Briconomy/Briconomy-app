@@ -933,10 +933,6 @@ function PropertyDetailsPage() {
     };
   };
 
-  const getAvailableUnits = () => {
-    return units.filter(unit => unit.status === 'available');
-  };
-
   const calculateEstimatedRent = (property: { type: string; occupiedUnits: number; totalUnits: number }) => {
     const baseRent = property.type === 'apartment' ? 8000 : 
                     property.type === 'complex' ? 10000 : 12000;
@@ -1057,7 +1053,7 @@ function PropertyDetailsPage() {
         <div className="main-content">
           <div className="error-state">
             <p>Property not found</p>
-            <button onClick={handleBack} className="btn btn-primary">Back to Properties</button>
+            <button type="button" onClick={handleBack} className="btn btn-primary">Back to Properties</button>
           </div>
         </div>
       </div>
@@ -1065,7 +1061,6 @@ function PropertyDetailsPage() {
   }
 
   const rentRange = getEstimatedRentRange();
-  const availableUnits = getAvailableUnits();
   const propertyImages = getPropertyImages();
   const availability = {
     available: property.totalUnits - property.occupiedUnits,
@@ -1143,10 +1138,10 @@ function PropertyDetailsPage() {
               </div>
 
               <div className="form-actions">
-                <button onClick={handleCancelEdit} className="btn btn-secondary">
+                <button type="button" onClick={handleCancelEdit} className="btn btn-secondary">
                   Cancel
                 </button>
-                <button onClick={handleSaveProperty} className="btn btn-primary">
+                <button type="button" onClick={handleSaveProperty} className="btn btn-primary">
                   Save Changes
                 </button>
               </div>
@@ -1200,16 +1195,16 @@ function PropertyDetailsPage() {
               </div>
 
               <div className="manager-actions">
-                <button onClick={handleEditProperty} className="btn btn-primary">
+                <button type="button" onClick={handleEditProperty} className="btn btn-primary">
                   Edit Property
                 </button>
-                <button onClick={handleManageUnits} className="btn btn-secondary">
+                <button type="button" onClick={handleManageUnits} className="btn btn-secondary">
                   Manage Units
                 </button>
-                <button onClick={handleViewTenants} className="btn btn-info">
+                <button type="button" onClick={handleViewTenants} className="btn btn-info">
                   View Tenants
                 </button>
-                <button onClick={handleViewMaintenance} className="btn btn-warning">
+                <button type="button" onClick={handleViewMaintenance} className="btn btn-warning">
                   Maintenance
                 </button>
               </div>
@@ -1280,7 +1275,7 @@ function PropertyDetailsPage() {
 
               <div className="property-actions-section">
                 <div className="action-buttons">
-                  <button onClick={handleBack} className="btn btn-secondary">
+                  <button type="button" onClick={handleBack} className="btn btn-secondary">
                     Back to Properties
                   </button>
                 </div>
@@ -1369,10 +1364,11 @@ function PropertyDetailsPage() {
 
             <div className="property-actions-section">
               <div className="action-buttons">
-                <button onClick={handleBack} className="btn btn-secondary">
+                <button type="button" onClick={handleBack} className="btn btn-secondary">
                   Back to My Properties
                 </button>
                 <button 
+                  type="button"
                   onClick={() => navigate('/tenant/maintenance')}
                   className="btn btn-primary"
                 >

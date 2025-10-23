@@ -1,6 +1,14 @@
 import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
-import { useEffect, useRef } from 'react';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  Title,
+  type ChartOptions,
+  type ChartData,
+  type TooltipItem
+} from 'chart.js';
 
 // Force registration of required elements for Doughnut chart
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
@@ -13,20 +21,9 @@ interface RoleDistributionChartProps {
     caretakers: number;
   };
 }
-
-
 function RoleDistributionChart({ data }: RoleDistributionChartProps) {
-  const chartRef = useRef<any>(null);
 
-  useEffect(() => {
-    return () => {
-      if (chartRef.current) {
-        chartRef.current.destroy();
-      }
-    };
-  }, []);
-
-  const chartData = {
+  const chartData: ChartData<'doughnut'> = {
     labels: ['Admins', 'Managers', 'Tenants', 'Caretakers'],
     datasets: [
       {
@@ -49,7 +46,7 @@ function RoleDistributionChart({ data }: RoleDistributionChartProps) {
     ],
   };
 
-  const options = {
+  const options: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -65,10 +62,11 @@ function RoleDistributionChart({ data }: RoleDistributionChartProps) {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
-            const label = context.label || '';
-            const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+          label: function(context: TooltipItem<'doughnut'>) {
+            const label = context.label ?? '';
+            const value = typeof context.parsed === 'number' ? context.parsed : 0;
+            const dataset = context.dataset.data as number[];
+            const total = dataset.reduce((a, b) => a + b, 0);
             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
             return `${label}: ${value} (${percentage}%)`;
           },
@@ -97,7 +95,6 @@ function RoleDistributionChart({ data }: RoleDistributionChartProps) {
   return (
     <div style={{ height: '300px', position: 'relative' }}>
       <Doughnut 
-        ref={chartRef} 
         data={chartData} 
         options={options}
         key="role-distribution-chart"

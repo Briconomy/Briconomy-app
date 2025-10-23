@@ -46,8 +46,8 @@ function SimpleErrorBoundary({ children, fallback }: { children: React.ReactNode
 function CaretakerDashboard() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [error, setError] = useState(null);
-  const [chartError, setChartError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [chartError, setChartError] = useState<string | null>(null);
   
   const navItems = [
     { path: '/caretaker', label: t('nav.tasks'), icon: 'issue', active: true },
@@ -91,6 +91,8 @@ function CaretakerDashboard() {
       await maintenanceApi.update(requestId, updateData);
       await refetchTasks();
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update status. Please try again.';
+      setError(message);
       console.error('[CaretakerDashboard] Error updating status:', error);
       alert('Failed to update status. Please try again.');
     }
@@ -105,6 +107,8 @@ function CaretakerDashboard() {
       await maintenanceApi.delete(requestId);
       await refetchTasks();
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete request. Please try again.';
+      setError(message);
       console.error('[CaretakerDashboard] Error deleting request:', error);
       alert('Failed to delete request. Please try again.');
     }
@@ -115,7 +119,7 @@ function CaretakerDashboard() {
       // Dashboard initialization
     } catch (err) {
       console.error('Dashboard error:', err);
-      setChartError('Dashboard initialization failed');
+  setChartError('Dashboard initialization failed');
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -9,9 +9,8 @@ import { maintenanceApi, useApi } from '../services/api.ts';
 function CaretakerMaintenancePage() {
   const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, in_progress, completed
-  const [filterPriority, setFilterPriority] = useState('all'); // all, high, medium, low
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
   
   const navItems = [
     { path: '/caretaker', label: 'Dashboard', active: false },
@@ -172,7 +171,7 @@ function CaretakerMaintenancePage() {
 
   const handleStatusChange = async (requestId, newStatus) => {
     try {
-      const updateData: any = { status: newStatus };
+      const updateData: Record<string, unknown> = { status: newStatus };
       // #COMPLETION_DRIVE: When caretaker picks up work, assign it to them
       // #SUGGEST_VERIFY: Verify assignedTo is set to caretaker ID when starting work
       if (newStatus === 'in_progress') {
@@ -180,7 +179,6 @@ function CaretakerMaintenancePage() {
       }
       await maintenanceApi.update(requestId, updateData);
       await refetchMaintenance();
-      setShowDetails(false);
     } catch (error) {
       console.error('Error updating request status:', error);
       alert('Failed to update request status. Please try again.');
@@ -189,7 +187,6 @@ function CaretakerMaintenancePage() {
 
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
-    setShowDetails(true);
   };
 
   const getPriorityColor = (priority) => {
@@ -248,6 +245,10 @@ function CaretakerMaintenancePage() {
       currency: 'ZAR',
       minimumFractionDigits: 0
     }).format(Number(amount) || 0);
+  };
+
+  const closeDetails = () => {
+    setSelectedRequest(null);
   };
 
   if (maintenanceLoading) {
@@ -445,7 +446,76 @@ function CaretakerMaintenancePage() {
           </div>
         </ChartCard>
       </div>
-      
+      {selectedRequest && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{selectedRequest.title}</h3>
+              <button type="button" className="close-btn" onClick={closeDetails}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="text-sm text-gray-600 mb-4">{selectedRequest.description}</p>
+              <div className="detail-grid">
+                <div>
+                  <strong>Property</strong>
+                  <div>{selectedRequest.property} • {selectedRequest.unit}</div>
+                </div>
+                <div>
+                  <strong>Priority</strong>
+                  <div className={getPriorityColor(selectedRequest.priority)}>{selectedRequest.priority.toUpperCase()}</div>
+                </div>
+                <div>
+                  <strong>Status</strong>
+                  <div>{selectedRequest.status}</div>
+                </div>
+                <div>
+                  <strong>Created</strong>
+                  <div>{selectedRequest.createdAt ? formatDateTime(selectedRequest.createdAt) : 'Unknown'}</div>
+                </div>
+                <div>
+                  <strong>Updated</strong>
+                  <div>{selectedRequest.updatedAt ? formatDateTime(selectedRequest.updatedAt) : 'Unknown'}</div>
+                </div>
+                <div>
+                  <strong>Cost</strong>
+                  <div>
+                    {selectedRequest.actualCost ? formatCurrency(selectedRequest.actualCost) : 'Not captured'}
+                  </div>
+                </div>
+              </div>
+              {selectedRequest.notes && (
+                <div className="mt-4 p-3 bg-gray-50 rounded">
+                  <strong>Notes:</strong> {selectedRequest.notes}
+                </div>
+              )}
+              {selectedRequest.images && selectedRequest.images.length > 0 && (
+                <div className="mt-4 text-sm text-blue-600">
+                  {selectedRequest.images.length} image(s) attached
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              {selectedRequest.status !== 'completed' && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    await handleStatusChange(selectedRequest.id, 'completed');
+                    closeDetails();
+                  }}
+                >
+                  Mark Completed
+                </button>
+              )}
+              <button type="button" className="btn btn-secondary" onClick={closeDetails}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <BottomNav items={navItems} responsive={false} />
     </div>
   );

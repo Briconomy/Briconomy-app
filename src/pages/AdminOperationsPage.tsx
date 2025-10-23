@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -6,6 +6,35 @@ import ChartCard from '../components/ChartCard.tsx';
 import Modal from '../components/Modal.tsx';
 import { adminApi, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+
+type SystemStat = {
+  category: string;
+  uptime?: string;
+  responseTime?: string;
+  errorRate?: string;
+  health?: string;
+};
+
+type DatabaseHealth = {
+  metric: string;
+  value: string;
+  status: string;
+  size?: string;
+};
+
+type ApiEndpoint = {
+  endpoint: string;
+  successRate: number;
+  status: string;
+  responseTime: string;
+};
+
+type SystemAlert = {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+};
 
 function AdminOperationsPage() {
   const { t } = useLanguage();
@@ -21,12 +50,12 @@ function AdminOperationsPage() {
     { path: '/admin/reports', label: t('nav.reports'), icon: 'report' }
   ];
 
-  const { data: systemStats, loading: statsLoading, refetch: refetchStats } = useApi(() => adminApi.getSystemStats());
-  const { data: databaseHealth, loading: healthLoading, refetch: refetchHealth } = useApi(() => adminApi.getDatabaseHealth());
-  const { data: apiEndpoints, loading: endpointsLoading } = useApi(() => adminApi.getApiEndpoints());
-  const { data: systemAlerts, loading: alertsLoading } = useApi(() => adminApi.getSystemAlerts());
+  const { data: systemStats, loading: statsLoading, refetch: refetchStats } = useApi<SystemStat[]>(() => adminApi.getSystemStats());
+  const { data: databaseHealth, loading: healthLoading, refetch: refetchHealth } = useApi<DatabaseHealth[]>(() => adminApi.getDatabaseHealth());
+  const { data: apiEndpoints, loading: endpointsLoading } = useApi<ApiEndpoint[]>(() => adminApi.getApiEndpoints());
+  const { data: systemAlerts, loading: alertsLoading } = useApi<SystemAlert[]>(() => adminApi.getSystemAlerts());
 
-  const getFallbackDatabaseHealth = () => [
+  const getFallbackDatabaseHealth = (): DatabaseHealth[] => [
     { metric: 'Connection Status', value: 'Connected to MongoDB', status: 'active', size: '✓ Healthy' },
     { metric: 'Database Size', value: '2.4 GB', status: 'active', size: '2.4 GB' },
     { metric: 'Collections', value: '18 collections', status: 'active', size: '18' },
@@ -34,7 +63,7 @@ function AdminOperationsPage() {
     { metric: 'Last Backup', value: '2 hours ago', status: 'active', size: '2h ago' }
   ];
 
-  const getFallbackApiEndpoints = () => [
+  const getFallbackApiEndpoints = (): ApiEndpoint[] => [
     { endpoint: '/api/auth/login', successRate: 99.2, status: 'active', responseTime: '120ms' },
     { endpoint: '/api/properties', successRate: 98.5, status: 'active', responseTime: '85ms' },
     { endpoint: '/api/payments', successRate: 97.8, status: 'active', responseTime: '140ms' },
@@ -42,7 +71,7 @@ function AdminOperationsPage() {
     { endpoint: '/api/admin/*', successRate: 100, status: 'active', responseTime: '65ms' }
   ];
 
-  const getFallbackSystemAlerts = () => [
+  const getFallbackSystemAlerts = (): SystemAlert[] => [
     { id: '1', title: 'High Memory Usage', message: 'Server memory usage at 78%', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
     { id: '2', title: 'Database Query Optimization', message: 'Some queries taking longer than expected', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
     { id: '3', title: 'API Rate Limit Warning', message: 'Approaching rate limit for external API', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() }
@@ -58,7 +87,7 @@ function AdminOperationsPage() {
       };
     }
     
-    const performanceStats = systemStats.find((stat: any) => stat.category === 'performance');
+  const performanceStats = systemStats.find((stat) => stat.category === 'performance');
     return {
       uptime: performanceStats?.uptime || '99.9%',
       responseTime: performanceStats?.responseTime || '245ms',
@@ -94,7 +123,7 @@ function AdminOperationsPage() {
     setActionResult(null);
     
     try {
-      const result = await adminApi.triggerSystemAction(selectedAction);
+  await adminApi.triggerSystemAction(selectedAction);
       setActionResult(`Action "${selectedAction}" executed successfully`);
       
       if (selectedAction === 'clear-cache' || selectedAction === 'optimize-db') {
@@ -281,7 +310,7 @@ function AdminOperationsPage() {
               </div>
             </div>
           ) : (
-            (databaseHealth && databaseHealth.length > 0 ? databaseHealth : getFallbackDatabaseHealth()).map((health: { metric: string; value: string; status: string; size?: string }, index: number) => (
+            (databaseHealth && databaseHealth.length > 0 ? databaseHealth : getFallbackDatabaseHealth()).map((health, index) => (
               <div key={`health-${health.metric}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{health.metric}</h4>
@@ -307,7 +336,7 @@ function AdminOperationsPage() {
               </div>
             </div>
           ) : (
-            (apiEndpoints && apiEndpoints.length > 0 ? apiEndpoints : getFallbackApiEndpoints()).map((endpoint: { endpoint: string; successRate: number; status: string; responseTime: string }, index: number) => (
+            (apiEndpoints && apiEndpoints.length > 0 ? apiEndpoints : getFallbackApiEndpoints()).map((endpoint, index) => (
               <div key={`endpoint-${endpoint.endpoint}-${index}`} className="list-item">
                 <div className="item-info">
                   <h4>{endpoint.endpoint}</h4>
@@ -332,7 +361,7 @@ function AdminOperationsPage() {
               </div>
             </div>
           ) : (
-            (systemAlerts && systemAlerts.length > 0 ? systemAlerts : getFallbackSystemAlerts()).map((alert: { id: string; title: string; message: string; timestamp: string }, index: number) => (
+            (systemAlerts && systemAlerts.length > 0 ? systemAlerts : getFallbackSystemAlerts()).map((alert, index) => (
               <div key={`alert-${alert.id || index}`} className="list-item">
                 <div className="item-info">
                   <h4>{alert.title}</h4>

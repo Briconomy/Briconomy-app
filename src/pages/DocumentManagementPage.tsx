@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -6,18 +6,71 @@ import ActionCard from '../components/ActionCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import SearchFilter from '../components/SearchFilter.tsx';
 import Icon from '../components/Icon.tsx';
-import { documentsApi } from '../services/api.ts';
 
 function DocumentManagementPage() {
-  const [documents, setDocuments] = useState([]);
-  const [_loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [lastUploadedFile, setLastUploadedFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [documents, setDocuments] = useState([
+    {
+      id: '1',
+      name: 'Lease Agreement - John Tenant',
+      type: 'lease',
+      category: 'legal',
+      uploadedBy: 'John Tenant',
+      uploadDate: '2024-01-01',
+      fileSize: '2.5 MB',
+      status: 'signed',
+      property: 'Blue Hills Apartments',
+      unit: '2A'
+    },
+    {
+      id: '2',
+      name: 'Property Inspection Report',
+      type: 'inspection',
+      category: 'maintenance',
+      uploadedBy: 'Mike Caretaker',
+      uploadDate: '2024-08-15',
+      fileSize: '1.2 MB',
+      status: 'approved',
+      property: 'Blue Hills Apartments'
+    },
+    {
+      id: '3',
+      name: 'Rent Receipt - August 2024',
+      type: 'receipt',
+      category: 'financial',
+      uploadedBy: 'System',
+      uploadDate: '2024-08-01',
+      fileSize: '0.5 MB',
+      status: 'generated',
+      property: 'Blue Hills Apartments',
+      unit: '2A'
+    },
+    {
+      id: '4',
+      name: 'Maintenance Request - AC Repair',
+      type: 'maintenance',
+      category: 'maintenance',
+      uploadedBy: 'John Tenant',
+      uploadDate: '2024-08-25',
+      fileSize: '0.8 MB',
+      status: 'pending',
+      property: 'Blue Hills Apartments',
+      unit: '2A'
+    },
+    {
+      id: '5',
+      name: 'Property Insurance Policy',
+      type: 'insurance',
+      category: 'legal',
+      uploadedBy: 'Sarah Manager',
+      uploadDate: '2024-01-15',
+      fileSize: '4.2 MB',
+      status: 'active',
+      property: 'Blue Hills Apartments'
+    }
+  ]);
+
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [filteredDocuments, setFilteredDocuments] = useState(documents);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -57,12 +110,12 @@ function DocumentManagementPage() {
     return sum + (doc.fileSize / (1024 * 1024));
   }, 0);
 
-  const handleSearch = (term) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
     applyFilters(term, categoryFilter, typeFilter);
   };
 
-  const handleFilterChange = (key, value) => {
+  const handleFilterChange = (key: string, value: string) => {
     if (key === 'category') {
       setCategoryFilter(value);
       applyFilters(searchTerm, value, typeFilter);
@@ -72,7 +125,7 @@ function DocumentManagementPage() {
     }
   };
 
-  const applyFilters = (search, category, type) => {
+  const applyFilters = (search: string, category: string, type: string) => {
     let filtered = documents;
 
     if (search) {
@@ -118,7 +171,7 @@ function DocumentManagementPage() {
     { 
       key: 'uploadDate', 
       label: 'Date',
-      render: (value) => new Date(value).toLocaleDateString()
+      render: (value: string) => new Date(value).toLocaleDateString()
     },
     { 
       key: 'fileSize', 
@@ -128,7 +181,7 @@ function DocumentManagementPage() {
     { 
       key: 'status', 
       label: 'Status',
-      render: (value) => (
+  render: (value: string) => (
         <span className={`status-badge ${
           value === 'signed' ? 'status-paid' : 
           value === 'approved' ? 'status-paid' :
@@ -167,7 +220,7 @@ function DocumentManagementPage() {
     }
   ];
 
-  const handleFileSelect = (e) => {
+  const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
@@ -288,7 +341,7 @@ function DocumentManagementPage() {
               Upload
             </button>
           }
-          onRowClick={(_doc) => {}}
+          onRowClick={(doc) => {}}
         />
 
         <div className="quick-actions">

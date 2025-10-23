@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { notificationService } from '../services/notifications.ts';
 
-interface NotificationManagerProps {
-  userId: string;
-  userRole: string;
-}
-
-const NotificationManager: React.FC<NotificationManagerProps> = ({ userId, userRole }) => {
+const NotificationManager = () => {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isVisible, setIsVisible] = useState(false);
 
@@ -14,7 +9,7 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({ userId, userR
     checkPermission();
   }, []);
 
-  const checkPermission = async () => {
+  const checkPermission = () => {
     if ('Notification' in window) {
       setPermission(Notification.permission);
       if (Notification.permission === 'default') {

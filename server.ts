@@ -1,8 +1,8 @@
 
-import { serveDir, serveFile } from "https://deno.land/std@0.204.0/http/file_server.ts";
-import { existsSync } from "https://deno.land/std@0.204.0/fs/exists.ts";
-import { dirname, fromFileUrl } from "https://deno.land/std@0.204.0/path/mod.ts";
-import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
+import { serveDir, serveFile } from "@std/http/file_server";
+import { existsSync } from "@std/fs/exists";
+import { dirname, fromFileUrl } from "@std/path";
+import { serve } from "@std/http/server";
 
 const PORT = 5173;
 const __dirname = dirname(fromFileUrl(import.meta.url));
