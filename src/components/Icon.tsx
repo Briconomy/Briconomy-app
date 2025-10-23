@@ -56,10 +56,11 @@ function Icon({ name, alt, className = '', size }: IconProps) {
   }
 
   const style = size ? { width: size, height: size } : undefined;
+  const cacheBustPath = `${iconPath}?v=${Date.now()}`;
 
   return (
     <img 
-      src={iconPath} 
+      src={cacheBustPath} 
       alt={alt || name} 
       className={`icon ${className}`}
       style={style}
