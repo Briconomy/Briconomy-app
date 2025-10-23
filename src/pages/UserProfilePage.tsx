@@ -5,7 +5,6 @@ import { LanguageSwitcher, useLanguage } from '../contexts/LanguageContext.tsx';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import ChartCard from '../components/ChartCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import Icon from '../components/Icon.tsx';
 
@@ -153,109 +152,119 @@ function UserProfilePage() {
           </button>
         </div>
 
-        {/* Profile Information */}
-        <ChartCard title={t('profile.personalInfo')}>
-          <div className="caretaker-profile-info">
-            <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">{t('profile.fullName')}</label>
+        <div className="section-card profile-info-section">
+          <div className="section-card-header">
+            <div className="section-title">{t('profile.personalInfo')}</div>
+          </div>
+          <div className="profile-info-grid">
+            <div className="profile-field-block">
+              <label className="profile-field-label">{t('profile.fullName')}</label>
               {isEditing ? (
                 <input
                   type="text"
-                  className="caretaker-field-input"
+                  className="profile-field-input"
                   value={formData.fullName || ''}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.fullName || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.fullName || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">{t('profile.email')}</label>
+            <div className="profile-field-block">
+              <label className="profile-field-label">{t('profile.email')}</label>
               {isEditing ? (
                 <input
                   type="email"
-                  className="caretaker-field-input"
+                  className="profile-field-input"
                   value={formData.email || ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.email || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.email || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">{t('profile.phone')}</label>
+            <div className="profile-field-block">
+              <label className="profile-field-label">{t('profile.phone')}</label>
               {isEditing ? (
                 <input
                   type="tel"
-                  className="caretaker-field-input"
+                  className="profile-field-input"
                   value={formData.phone || ''}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.phone || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.phone || 'Not provided'}</div>
               )}
             </div>
           </div>
-        </ChartCard>
+        </div>
 
-        {/* Emergency Contact */}
-        <ChartCard title={t('profile.emergencyContact')}>
-          <div className="caretaker-profile-info">
-            <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">{t('profile.name')}</label>
+        <div className="section-card profile-info-section">
+          <div className="section-card-header">
+            <div className="section-title">{t('profile.emergencyContact')}</div>
+          </div>
+          <div className="profile-info-grid">
+            <div className="profile-field-block">
+              <label className="profile-field-label">{t('profile.name')}</label>
               {isEditing ? (
                 <input
                   type="text"
-                  className="caretaker-field-input"
+                  className="profile-field-input"
                   value={formData.emergencyContact?.name || ''}
                   onChange={(e) => handleEmergencyContactChange('name', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.emergencyContact?.name || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.name || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">{t('profile.relationship')}</label>
+            <div className="profile-field-block">
+              <label className="profile-field-label">{t('profile.relationship')}</label>
               {isEditing ? (
                 <input
                   type="text"
-                  className="caretaker-field-input"
+                  className="profile-field-input"
                   value={formData.emergencyContact?.relationship || ''}
                   onChange={(e) => handleEmergencyContactChange('relationship', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.emergencyContact?.relationship || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.relationship || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">{t('profile.phone')}</label>
+            <div className="profile-field-block">
+              <label className="profile-field-label">{t('profile.phone')}</label>
               {isEditing ? (
                 <input
                   type="tel"
-                  className="caretaker-field-input"
+                  className="profile-field-input"
                   value={formData.emergencyContact?.phone || ''}
                   onChange={(e) => handleEmergencyContactChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.emergencyContact?.phone || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.phone || 'Not provided'}</div>
               )}
             </div>
           </div>
-        </ChartCard>
-
-        {/* Lease Statistics */}
-        <div className="caretaker-stats-grid">
-          {tenantStats.map(stat => (
-            <StatCard key={stat.label} value={stat.value} label={stat.label} />
-          ))}
         </div>
 
-        {/* Notification Settings */}
-        <ChartCard title={t('profile.accountSettings')}>
+        <div className="section-card profile-stats-section">
+          <div className="section-card-header">
+            <div className="section-title">{t('profile.leaseInfo')}</div>
+          </div>
+          <div className="caretaker-stats-grid">
+            {tenantStats.map(stat => (
+              <StatCard key={stat.label} value={stat.value} label={stat.label} />
+            ))}
+          </div>
+        </div>
+
+        <div className="section-card profile-settings-section">
+          <div className="section-card-header">
+            <div className="section-title">{t('profile.accountSettings')}</div>
+          </div>
           <div className="caretaker-notification-settings">
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
@@ -318,10 +327,12 @@ function UserProfilePage() {
               </div>
             </div>
           </div>
-        </ChartCard>
+        </div>
 
-        {/* Quick Actions */}
-        <ChartCard title="Quick Actions">
+        <div className="section-card profile-actions-section">
+          <div className="section-card-header">
+            <div className="section-title">Quick Actions</div>
+          </div>
           <div className="quick-actions">
             <ActionCard
               to="/tenant/documents"
@@ -336,7 +347,7 @@ function UserProfilePage() {
               description={t('profile.viewActivity')}
             />
           </div>
-        </ChartCard>
+        </div>
       </div>
       
       <BottomNav items={navItems} responsive={false} />

@@ -156,26 +156,28 @@ return (
         </div>
 
         {currentLease && (
-          <div className="lease-info-card">
-            <h3>{t('tenant.lease_information')}</h3>
-            <div className="lease-details">
-              <div className="lease-row">
-                <span>{t('tenant.monthly_rent')}: </span>
-                <span className="lease-value">{formatCurrency(currentLease?.monthlyRent || 0)}</span>
+          <div className="section-card lease-info-section">
+            <div className="section-card-header">
+              <div className="section-title">{t('tenant.lease_information')}</div>
+            </div>
+            <div className="lease-details-grid">
+              <div className="lease-detail-item">
+                <div className="lease-detail-label">{t('tenant.monthly_rent')}</div>
+                <div className="lease-detail-value">{formatCurrency(currentLease?.monthlyRent || 0)}</div>
               </div>
-              <div className="lease-row">
-                <span>{t('tenant.lease_period')}: </span>
-                <span className="lease-value">
+              <div className="lease-detail-item">
+                <div className="lease-detail-label">{t('tenant.security_deposit')}</div>
+                <div className="lease-detail-value">{formatCurrency(currentLease?.deposit || 0)}</div>
+              </div>
+              <div className="lease-detail-item lease-detail-full">
+                <div className="lease-detail-label">{t('tenant.lease_period')}</div>
+                <div className="lease-detail-value">
                   {formatDate(currentLease?.startDate || '')} - {formatDate(currentLease?.endDate || '')}
-                </span>
+                </div>
               </div>
-              <div className="lease-row">
-                <span>{t('tenant.security_deposit')}: </span>
-                <span className="lease-value">{formatCurrency(currentLease?.deposit || 0)}</span>
-              </div>
-              <div className="lease-row">
-                <span>{t('common.status')}: </span>
-                <span className={`lease-status ${currentLease?.status === 'active' ? 'status-active' : ''}`}>
+              <div className="lease-detail-item">
+                <div className="lease-detail-label">{t('common.status')}</div>
+                <span className={`status-pill ${currentLease?.status === 'active' ? 'success' : 'warning'}`}>
                   {(currentLease?.status || 'unknown').charAt(0).toUpperCase() + (currentLease?.status || 'unknown').slice(1)}
                 </span>
               </div>

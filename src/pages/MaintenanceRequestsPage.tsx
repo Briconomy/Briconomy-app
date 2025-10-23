@@ -304,14 +304,16 @@ function MaintenanceRequestsPage() {
 
               <div className="section-card">
                 <div className="section-card-header">
-                  <div>
-                    <div className="section-title">{t('requests.yourRequests')}</div>
+                  <div className="section-header-content">
+                    <div className="section-title-row">
+                      <div className="section-title">{t('requests.yourRequests')}</div>
+                      <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
+                        {isOnline ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
                     <div className="section-subtitle">{t('requests.subtitle')}</div>
                   </div>
                   <div className="action-stack">
-                    <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
-                      {isOnline ? 'Online' : 'Offline'}
-                    </span>
                     {!isOnline && (
                       <button type="button" className="btn btn-secondary btn-xs" onClick={() => syncNow()}>
                         Sync
@@ -451,7 +453,9 @@ function MaintenanceRequestsPage() {
               </div>
 
               <div className="section-card">
-                <div className="section-title">Emergency & Contact</div>
+                <div className="section-card-header">
+                  <div className="section-title">Emergency & Contact</div>
+                </div>
                 <div className="support-grid">
                   <button
                     type="button"
