@@ -8,8 +8,7 @@ import { useLowBandwidthMode } from '../utils/bandwidth.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 type ManagerProperty = {
-  _id?: string;
-  id?: string;
+  id: string;
   name: string;
   address: string;
   totalUnits: number;
@@ -52,6 +51,7 @@ function ManagerPropertiesPage() {
         ? data.map((item) => {
             if (!item || typeof item !== 'object') {
               return {
+                id: 'unknown',
                 name: 'Property',
                 address: '',
                 totalUnits: 0,
@@ -61,8 +61,7 @@ function ManagerPropertiesPage() {
             }
             const record = item as Record<string, unknown>;
             const normalized: ManagerProperty = {
-              _id: typeof record._id === 'string' ? record._id : undefined,
-              id: typeof record.id === 'string' ? record.id : undefined,
+              id: typeof record.id === 'string' ? record.id : 'unknown',
               name: typeof record.name === 'string' ? record.name : 'Property',
               address: typeof record.address === 'string' ? record.address : '',
               totalUnits: typeof record.totalUnits === 'number' ? record.totalUnits : 0,
@@ -212,7 +211,7 @@ function ManagerPropertiesPage() {
         <div className="manager-property-grid">
           {filteredProperties.map((property) => (
             <ManagerPropertyCard
-              key={property._id ?? property.id ?? property.name}
+              key={property.id}
               property={property}
               onViewDetails={handleViewDetails}
               onEditProperty={handleEditProperty}

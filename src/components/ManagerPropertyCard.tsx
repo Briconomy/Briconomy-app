@@ -3,7 +3,7 @@ import { formatCurrency } from '../services/api.ts';
 import { useImageOptimization } from '../utils/bandwidth.ts';
 
 interface ManagerPropertySummary {
-  _id: string;
+  id: string;
   name: string;
   type: string;
   address: string;
