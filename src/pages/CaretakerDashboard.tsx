@@ -57,7 +57,7 @@ function CaretakerDashboard() {
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
-    () => maintenanceApi.getAll({}),
+    () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
     [user?.id]
   );
 

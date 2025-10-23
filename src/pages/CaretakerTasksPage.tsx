@@ -38,8 +38,8 @@ function CaretakerTasksPage() {
   const [repairPhotos, setRepairPhotos] = useState<File[]>([]);
 
   const { data: tasks, loading: tasksLoading, refetch: refetchTasks } = useApi(
-    () => maintenanceApi.getAll({}),
-    []
+    () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
+    [user?.id]
   );
 
   // Log tasks when they change

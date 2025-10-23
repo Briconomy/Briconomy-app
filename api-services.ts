@@ -23,6 +23,7 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
     "leaseId",
     "caretakerId",
     "userId",
+    "assignedTo",
   ]);
   
   // Keys to exclude from database queries (cache-busting, metadata, etc.)
@@ -1466,12 +1467,18 @@ export async function createMaintenanceRequest(requestData: Record<string, unkno
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
     const users = getCollection("users");
-    
-    const requestDoc = { 
-      ...requestData, 
-      status: 'pending', 
-      createdAt: new Date(), 
-      updatedAt: new Date() 
+
+    // #COMPLETION_DRIVE: Default maintenance request dueDate to 7 days from creation
+    // #SUGGEST_VERIFY: Managers can override dueDate when assigning tasks to caretakers
+    const now = new Date();
+    const defaultDueDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const requestDoc = {
+      ...requestData,
+      status: 'pending',
+      dueDate: requestData.dueDate ? new Date(requestData.dueDate as string) : defaultDueDate,
+      createdAt: now,
+      updatedAt: now
     };
     
     const result = await requests.insertOne(requestDoc);

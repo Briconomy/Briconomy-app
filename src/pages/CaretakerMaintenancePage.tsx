@@ -20,7 +20,7 @@ function CaretakerMaintenancePage() {
     { path: '/caretaker/reports', label: 'Reports', active: false }
   ];
 
-  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError } = useApi(
+  const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
     () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
     [user?.id]
   );
@@ -153,11 +153,15 @@ function CaretakerMaintenancePage() {
       return sum + (completed - created);
     }, 0) / completedRequests || 0;
 
-  const handleStatusChange = (requestId, newStatus) => {
-    // In a real app, this would update the backend
-    console.log(`Updating request ${requestId} to status: ${newStatus}`);
-    // Show success message
-    alert(`Request status updated to ${newStatus}`);
+  const handleStatusChange = async (requestId, newStatus) => {
+    try {
+      await maintenanceApi.update(requestId, { status: newStatus });
+      await refetchMaintenance();
+      setShowDetails(false);
+    } catch (error) {
+      console.error('Error updating request status:', error);
+      alert('Failed to update request status. Please try again.');
+    }
   };
 
   const handleViewDetails = (request) => {

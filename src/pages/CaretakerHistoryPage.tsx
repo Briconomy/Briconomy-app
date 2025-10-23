@@ -18,10 +18,9 @@ function CaretakerHistoryPage() {
     { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
-  // Get ALL maintenance requests (not filtered by user)
   const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
-    () => maintenanceApi.getAll({}),
-    []
+    () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
+    [user?.id]
   );
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
@@ -351,6 +350,7 @@ function CaretakerHistoryPage() {
               <option value="all">All</option>
               <option value="completed">Completed</option>
               <option value="in_progress">In Progress</option>
+              <option value="pending">Pending</option>
             </select>
           </div>
         </div>

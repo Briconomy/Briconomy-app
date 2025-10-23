@@ -62,6 +62,9 @@ function CaretakerProfilePage() {
           skills: userData.profile?.skills || [],
           emergencyContact: userData.profile?.emergencyContact || ''
         });
+        if (userData.profile?.notificationSettings) {
+          setNotificationSettings(userData.profile.notificationSettings);
+        }
       }
     } catch (err) {
       console.error('Error loading user data:', err);
@@ -194,7 +197,8 @@ function CaretakerProfilePage() {
         department: formData.department,
         employeeId: formData.employeeId,
         skills: formData.skills,
-        emergencyContact: formData.emergencyContact
+        emergencyContact: formData.emergencyContact,
+        notificationSettings: notificationSettings
       }
     };
 
@@ -502,10 +506,11 @@ function CaretakerProfilePage() {
               <div className="caretaker-setting-label">
                 <div className="caretaker-setting-name">Two-Factor Authentication</div>
                 <div className="caretaker-setting-description">Add an extra layer of security</div>
+                <div className="caretaker-setting-description" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>Coming Soon</div>
               </div>
               <div
                 className="caretaker-toggle-switch caretaker-toggle-off"
-                onClick={() => alert('Two-factor authentication setup coming soon!')}
+                style={{ opacity: '0.5', cursor: 'not-allowed' }}
               >
                 <div className="caretaker-toggle-slider"></div>
               </div>

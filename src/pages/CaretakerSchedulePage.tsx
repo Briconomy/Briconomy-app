@@ -19,7 +19,7 @@ function CaretakerSchedulePage() {
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
-    () => maintenanceApi.getAll({}),
+    () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
     [user?.id]
   );
 
@@ -49,65 +49,11 @@ function CaretakerSchedulePage() {
     }
   };
 
-  const getMockTasks = () => {
-    return [
-      {
-        id: '1',
-        title: 'Weekly property inspection',
-        description: 'Routine inspection of common areas and exterior',
-        property: 'Blue Hills Apartments',
-        priority: 'medium',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 4
-      },
-      {
-        id: '2',
-        title: 'AC repair - Unit 2A',
-        description: 'Air conditioning not working properly',
-        property: 'Blue Hills Apartments',
-        priority: 'high',
-        status: 'in_progress',
-        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 3
-      },
-      {
-        id: '3',
-        title: 'Pool cleaning',
-        description: 'Weekly pool maintenance and chemical balancing',
-        property: 'Sunset Towers',
-        priority: 'medium',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 2
-      },
-      {
-        id: '4',
-        title: 'Garden maintenance',
-        description: 'Trim hedges, water plants, and general landscaping',
-        property: 'Green Valley Complex',
-        priority: 'low',
-        status: 'in_progress',
-        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 6
-      },
-      {
-        id: '5',
-        title: 'Security system check',
-        description: 'Monthly security system inspection and testing',
-        property: 'Blue Hills Apartments',
-        priority: 'high',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        estimatedHours: 2
-      }
-    ];
-  };
-
   // Use real maintenance request data from API
   const tasksData = Array.isArray(tasks) ? tasks : [];
 
-  // Filter tasks based on selected date and view mode
+  // #COMPLETION_DRIVE: Filter tasks by dueDate; handle null dates from existing records
+  // #SUGGEST_VERIFY: Verify backward compatibility with maintenance requests without dueDate
   const getFilteredTasks = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -115,8 +61,10 @@ function CaretakerSchedulePage() {
     const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     return tasksData.filter(task => {
+      if (!task.dueDate) return false;
+
       const taskDate = new Date(task.dueDate);
-      
+
       switch (viewMode) {
         case 'day':
           return taskDate.toDateString() === selectedDate.toDateString();
@@ -133,12 +81,14 @@ function CaretakerSchedulePage() {
   const filteredTasks = getFilteredTasks();
   
   const todayTasks = tasksData.filter(task => {
+    if (!task.dueDate) return false;
     const taskDate = new Date(task.dueDate);
     const today = new Date();
     return taskDate.toDateString() === today.toDateString();
   }).length;
 
   const thisWeekTasks = tasksData.filter(task => {
+    if (!task.dueDate) return false;
     const taskDate = new Date(task.dueDate);
     const now = new Date();
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
@@ -147,6 +97,7 @@ function CaretakerSchedulePage() {
   }).length;
 
   const overdueTasks = tasksData.filter(task => {
+    if (!task.dueDate) return false;
     return task.status === 'pending' && new Date(task.dueDate) < new Date();
   }).length;
 

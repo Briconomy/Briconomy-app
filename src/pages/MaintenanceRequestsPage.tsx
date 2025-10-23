@@ -156,16 +156,21 @@ function MaintenanceRequestsPage() {
       if (isOnline) {
         await maintenanceApi.create(requestData);
         await refetchRequests();
+
+        // #COMPLETION_DRIVE: Wait for refetch to render before closing form
+        // #SUGGEST_VERIFY: 500ms delay ensures data appears in list immediately
+        await new Promise(resolve => setTimeout(resolve, 500));
+        alert('Maintenance request submitted successfully!');
       } else {
         await storeOfflineData('maintenance_request', requestData);
         alert('Request saved offline. It will be submitted when you\'re back online.');
       }
       setShowRequestForm(false);
-      setFormData({ 
-        title: '', 
-        description: '', 
-        priority: 'medium', 
-        category: 'general', 
+      setFormData({
+        title: '',
+        description: '',
+        priority: 'medium',
+        category: 'general',
         photos: []
       });
       setUploadedPhotos([]);
@@ -527,8 +532,28 @@ return (
           <div className="modal-content">
             <div className="modal-header">
               <h3>New Maintenance Request</h3>
-              <button type="button" className="close-btn" onClick={() => setShowRequestForm(false)}>×</button>
+              <button
+                type="button"
+                className="close-btn"
+                onClick={() => setShowRequestForm(false)}
+                disabled={submitting}
+                style={{ opacity: submitting ? 0.5 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}
+              >
+                ×
+              </button>
             </div>
+            {submitting && (
+              <div style={{
+                background: '#e3f2fd',
+                padding: '12px',
+                textAlign: 'center',
+                fontSize: '14px',
+                color: '#1976d2',
+                borderBottom: '1px solid #90caf9'
+              }}>
+                Submitting your request...
+              </div>
+            )}
             <div className="modal-body">
               <form onSubmit={handleSubmitRequest}>
                 <div className="form-group">
