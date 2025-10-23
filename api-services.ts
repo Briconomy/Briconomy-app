@@ -2916,7 +2916,10 @@ export async function getInvoicePdf(id: string) {
     if (!invoice) {
       throw new Error("Invoice not found");
     }
+    
     const artifacts = await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
+    const realPath = await Deno.realPath(artifacts.pdfPath);
+    const realRoot = await Deno.realPath(invoiceArtifactsRoot);
     const filenameBase = typeof (invoice as Record<string, unknown>).invoiceNumber === "string" && (invoice as Record<string, unknown>).invoiceNumber ? (invoice as Record<string, unknown>).invoiceNumber as string : id;
     const bytes = await Deno.readFile(artifacts.pdfPath);
     return { filename: `${sanitizeFileSegment(filenameBase)}.pdf`, bytes };

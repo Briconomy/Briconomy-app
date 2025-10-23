@@ -1,29 +1,60 @@
 // Add sample pending applications for testing
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 
 const MONGO_URI = "mongodb://localhost:27017";
 const DB_NAME = "briconomy";
 
+// Sanitize input to prevent NoSQL injection
+function sanitizeInput(input) {
+  if (typeof input === 'string') {
+    // Remove any MongoDB operators from string input
+    return input.replace(/^\$/, '');
+  }
+  if (typeof input === 'object' && input !== null) {
+    // Reject objects that contain MongoDB operators
+    const keys = Object.keys(input);
+    if (keys.some(key => key.startsWith('$'))) {
+      throw new Error('Invalid input: MongoDB operators not allowed');
+    }
+  }
+  return input;
+}
+
+// Validate and convert to ObjectId safely
+function toObjectId(id) {
+  if (ObjectId.isValid(id)) {
+    return new ObjectId(id);
+  }
+  throw new Error('Invalid ObjectId');
+}
+
 async function addSampleApplications() {
   const client = new MongoClient(MONGO_URI);
-  
+
   try {
     console.log("Connecting to MongoDB...");
     await client.connect();
     console.log("Connected successfully to MongoDB");
-    
+
     const db = client.db(DB_NAME);
-    
+
     // Get manager1's properties (Blue Hills Apartments and Sunset Towers)
-    const manager1 = await db.collection("users").findOne({ email: 'manager1@briconomy.com' });
+    // Sanitize email input to prevent NoSQL injection
+    const sanitizedEmail = sanitizeInput('manager1@briconomy.com');
+    const manager1 = await db.collection("users").findOne({ email: sanitizedEmail });
     if (!manager1) {
       console.log("Manager1 not found. Run init-db.js first.");
       return;
     }
-    
+
+    // Validate that manager1._id is a proper ObjectId before using it in queries
+    if (!manager1._id || !(manager1._id instanceof ObjectId)) {
+      throw new Error('Invalid manager ID retrieved from database');
+    }
+
     const properties = await db.collection("properties").find({ managerId: manager1._id }).toArray();
     if (properties.length === 0) {
-      console.log("No properties found for manager1. Run comprehensive-relational-data.js first.");
+      console.log("No properties found for manager1.");
       return;
     }
     
@@ -107,12 +138,12 @@ async function addSampleApplications() {
     console.log("Inserting sample applications...");
     const result = await db.collection("pending_users").insertMany(sampleApplications);
     
-    console.log(`✅ Successfully created ${result.insertedCount} sample applications:`);
+    console.log(`Successfully created ${result.insertedCount} sample applications:`);
     sampleApplications.forEach((app, index) => {
       console.log(`  ${index + 1}. ${app.fullName} - Applied for ${app.profile.preferredProperty}`);
     });
     
-    console.log("\n🎉 Sample data ready! You can now test the Manager Applications page.");
+    console.log("\n Sample data ready! You can now test the Manager Applications page.");
     
   } catch (error) {
     console.error("Error adding sample applications:", error);

@@ -544,6 +544,12 @@ serve(async (req) => {
     // Invoices endpoints
     if (path[0] === 'api' && path[1] === 'invoices') {
       if (req.method === 'GET' && path[2] && path[3] === 'pdf') {
+         if (!/^[0-9a-fA-F]{24}$/.test(path[2])) {
+        return new Response(JSON.stringify({ error: 'Invalid invoice ID' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
         const pdf = await getInvoicePdf(path[2]);
         return new Response(pdf.bytes, {
           headers: {
