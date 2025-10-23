@@ -1,5 +1,6 @@
 @import './design-tokens.css';
 @import './components.css';
+@import './prospective-tenant.css';
 
 /* Global font enforcement for all form elements */
 * {
@@ -124,9 +125,6 @@ button {
     padding: 0;
     box-sizing: border-box;
 }
-
-/* Import prospective tenant styles */
-@import './prospective-tenant.css';
 
 body {
     font-family: var(--font-family-primary);
