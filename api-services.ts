@@ -1126,8 +1126,11 @@ export async function createUnit(unitData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const units = getCollection("units");
-  const result = await units.insertOne({ ...(unitData as Record<string, unknown>), createdAt: new Date() });
-    return result;
+    const result = await units.insertOne({ ...(unitData as Record<string, unknown>), createdAt: new Date() });
+
+    // Fetch the created unit and return it mapped
+    const createdUnit = await units.findOne({ _id: result });
+    return mapDoc(createdUnit);
   } catch (error) {
     console.error("Error creating unit:", error);
     throw error;
@@ -1224,9 +1227,9 @@ export async function createLease(leaseData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const leases = getCollection("leases");
-    
+
     const leaseDoc = { ...leaseData, createdAt: new Date() };
-    
+
     if (leaseDoc.tenantId && typeof leaseDoc.tenantId === 'string') {
       leaseDoc.tenantId = toId(leaseDoc.tenantId);
     }
@@ -1236,9 +1239,12 @@ export async function createLease(leaseData: Record<string, unknown>) {
     if (leaseDoc.unitId && typeof leaseDoc.unitId === 'string') {
       leaseDoc.unitId = toId(leaseDoc.unitId);
     }
-    
-  const result = await leases.insertOne(leaseDoc);
-    return result;
+
+    const result = await leases.insertOne(leaseDoc);
+
+    // Fetch the created lease and return it mapped
+    const createdLease = await leases.findOne({ _id: result });
+    return mapDoc(createdLease);
   } catch (error) {
     console.error("Error creating lease:", error);
     throw error;
@@ -1337,15 +1343,18 @@ export async function createRenewal(renewalData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const leaseRenewals = getCollection("lease_renewals");
-    
+
     const renewalDoc = {
       ...renewalData,
       leaseId: toId(renewalData.leaseId),
       createdAt: new Date()
     };
-    
+
     const result = await leaseRenewals.insertOne(renewalDoc);
-    return result;
+
+    // Fetch the created renewal and return it mapped
+    const createdRenewal = await leaseRenewals.findOne({ _id: result });
+    return mapDoc(createdRenewal);
   } catch (error) {
     console.error("Error creating renewal:", error);
     throw error;
@@ -1392,7 +1401,10 @@ export async function createPayment(paymentData: Record<string, unknown>, client
     await connectToMongoDB();
     const payments = getCollection("payments");
     const result = await payments.insertOne({ ...(paymentData as Record<string, unknown>), createdAt: new Date() });
-    
+
+    // Fetch the created payment and return it mapped
+    const createdPayment = await payments.findOne({ _id: result });
+
     // Log payment creation
     await logApiAccess(
       'payment_created',
@@ -1406,8 +1418,8 @@ export async function createPayment(paymentData: Record<string, unknown>, client
       },
       clientInfo
     );
-    
-    return result;
+
+    return mapDoc(createdPayment);
   } catch (error) {
     console.error("Error creating payment:", error);
     throw error;
@@ -1772,8 +1784,11 @@ export async function createCaretakerTask(taskData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const tasks = getCollection("caretaker_tasks");
-  const result = await tasks.insertOne({ ...(taskData as Record<string, unknown>), status: 'pending', createdAt: new Date() });
-    return result;
+    const result = await tasks.insertOne({ ...(taskData as Record<string, unknown>), status: 'pending', createdAt: new Date() });
+
+    // Fetch the created task and return it mapped
+    const createdTask = await tasks.findOne({ _id: result });
+    return mapDoc(createdTask);
   } catch (error) {
     console.error("Error creating caretaker task:", error);
     throw error;
@@ -1812,8 +1827,11 @@ export async function createReport(reportData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const reports = getCollection("reports");
-  const result = await reports.insertOne({ ...(reportData as Record<string, unknown>), createdAt: new Date() });
-    return result;
+    const result = await reports.insertOne({ ...(reportData as Record<string, unknown>), createdAt: new Date() });
+
+    // Fetch the created report and return it mapped
+    const createdReport = await reports.findOne({ _id: result });
+    return mapDoc(createdReport);
   } catch (error) {
     console.error("Error creating report:", error);
     throw error;
@@ -3345,13 +3363,13 @@ export async function createDocument(documentData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
     const documents = getCollection("documents");
-    
+
     const docToInsert: Record<string, unknown> = {
       ...documentData,
       createdAt: new Date(),
       status: documentData.status || 'active'
     };
-    
+
     if (docToInsert.leaseId && typeof docToInsert.leaseId === 'string') {
       docToInsert.leaseId = toId(docToInsert.leaseId);
     }
@@ -3367,9 +3385,12 @@ export async function createDocument(documentData: Record<string, unknown>) {
     if (docToInsert.uploadedBy && typeof docToInsert.uploadedBy === 'string') {
       docToInsert.uploadedBy = toId(docToInsert.uploadedBy);
     }
-    
+
     const result = await documents.insertOne(docToInsert);
-    return result;
+
+    // Fetch the created document and return it mapped
+    const createdDocument = await documents.findOne({ _id: result });
+    return mapDoc(createdDocument);
   } catch (error) {
     console.error("Error creating document:", error);
     throw error;
