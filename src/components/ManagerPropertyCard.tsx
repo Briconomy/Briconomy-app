@@ -14,19 +14,13 @@ interface ManagerPropertySummary {
 
 interface ManagerPropertyCardProps {
   property: ManagerPropertySummary;
-  onViewDetails: (propertyId: string) => void;
   onEditProperty: (propertyId: string) => void;
-  onManageUnits: (propertyId: string) => void;
-  onViewTenants: (propertyId: string) => void;
   lowBandwidthMode: boolean;
 }
 
 function ManagerPropertyCard({
   property,
-  onViewDetails,
   onEditProperty,
-  onManageUnits,
-  onViewTenants,
   lowBandwidthMode
 }: ManagerPropertyCardProps) {
   const { optimizeImage } = useImageOptimization();
@@ -265,28 +259,10 @@ function ManagerPropertyCard({
 
           <div style={styles.actions}>
             <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onViewDetails(property.id)}
-            >
-              View
-            </button>
-            <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
+              style={{ ...styles.btn, ...styles.btnPrimary }}
               onClick={() => onEditProperty(property.id)}
             >
-              Edit
-            </button>
-            <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onManageUnits(property.id)}
-            >
-              Units
-            </button>
-            <button type="button"
-              style={{ ...styles.btn, ...styles.btnSecondary }}
-              onClick={() => onViewTenants(property.id)}
-            >
-              Tenants
+              Edit Property
             </button>
           </div>
         </div>

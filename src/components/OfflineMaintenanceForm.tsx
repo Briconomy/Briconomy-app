@@ -208,7 +208,7 @@ const OfflineMaintenanceForm = ({
             <button
               type="submit"
               disabled={loading || !formData.title.trim() || !formData.description.trim()}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="flex-1 btn btn-primary py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {loading ? 'Submitting...' : isOnline ? 'Submit Request' : 'Save Offline'}
             </button>

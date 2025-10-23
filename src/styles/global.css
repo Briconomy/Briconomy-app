@@ -977,27 +977,72 @@ body {
     color: white;
 }
 
-
 .btn-primary:hover {
     background: #0f1f12;
 }
 
-.btn-google {
-    background: #4285f4;
-    color: white;
-}
-
-.btn-google:hover {
-    background: #357ae8;
-}
-
 .btn-secondary {
-    background: var(--text-secondary);
+    background: var(--brand-secondary);
     color: white;
 }
 
 .btn-secondary:hover {
+    background: #e67a3d;
+}
+
+.btn-ai {
+    background: var(--brand-ai);
+    color: white;
+}
+
+.btn-ai:hover {
+    background: #1d4ed8;
+}
+
+.btn-notifications {
+    background: var(--brand-notifications);
+    color: white;
+}
+
+.btn-notifications:hover {
     background: #5a6268;
+}
+
+/* Legacy support - map old classes to brand colors */
+.btn-success {
+    background: var(--brand-primary);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #0f1f12;
+}
+
+.btn-danger {
+    background: var(--brand-secondary);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #e67a3d;
+}
+
+.btn-warning {
+    background: var(--brand-primary);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #0f1f12;
+}
+
+.btn-info {
+    background: var(--brand-secondary);
+    color: white;
+}
+
+.btn-info:hover {
+    background: #e67a3d;
 }
 
 .data-table {
@@ -1177,39 +1222,44 @@ body {
     padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-md);
     transition: all var(--transition-base);
-    color: var(--text-secondary);
+    color: #000000;
     text-decoration: none;
     gap: var(--space-xs);
 }
 
 .nav-item.active {
-    color: var(--brand-primary);
-    background: rgba(22, 47, 27, 0.1);
+    color: #000000;
+    background: transparent;
 }
 
 .nav-icon {
-    width: var(--icon-md);
-    height: var(--icon-md);
-    background: currentColor;
-    border-radius: var(--radius-sm);
-    opacity: 0.7;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--brand-primary);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-base);
+    position: relative;
+    overflow: hidden;
 }
 
-.nav-icon:has(img),
-.nav-icon:has(.icon) {
-    background: transparent;
-    opacity: 1;
+.nav-item.active .nav-icon {
+    background: var(--brand-secondary);
 }
 
 .nav-icon img,
-.nav-icon .icon {
-    width: var(--icon-md);
-    height: var(--icon-md);
+.nav-icon .icon,
+.nav-icon object {
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     display: block;
+    pointer-events: none;
+    mix-blend-mode: lighten;
 }
 
 .nav-label {
@@ -1761,21 +1811,21 @@ body {
 }
 
 .modal-actions .btn-secondary {
-    background: var(--text-secondary);
+    background: var(--brand-secondary);
     color: var(--surface);
 }
 
 .modal-actions .btn-secondary:hover {
-    background: #5a6268;
+    background: #e67a3d;
 }
 
 .modal-actions .btn-danger {
-    background: var(--danger);
+    background: var(--brand-secondary);
     color: var(--surface);
 }
 
 .modal-actions .btn-danger:hover {
-    background: #c0392b;
+    background: #e67a3d;
 }
 
 .image-modal-overlay {

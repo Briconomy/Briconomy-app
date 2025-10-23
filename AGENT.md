@@ -89,6 +89,9 @@ Pages will have specific navigation bar elements based on what page they are on 
 Note that all buttons encapsulated in [] are bottom nav bar buttons.
 Keep colors consistent across each pages.
 When creating documents or files create all the related files associated with each.
+When creating and formatting HTML, please make sure the buttons follow the given colors in the rest of the app. Items should be grouped together by elements with a background behind them. This includes some text as well. 
+It should be laid out in such a way that blocks of text need to be gathered together to create a more full and well-laid-out app. 
+Please pay attention to the font and spacing of elements on the page—no elements should overlap. 
 
 ## User-Facing Routes and Page Layouts
 

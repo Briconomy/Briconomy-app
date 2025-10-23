@@ -489,8 +489,7 @@ function ManagerApplicationsPage() {
                       className="btn btn-secondary"
                       style={{ 
                         flex: 1,
-                        background: processing === application.id ? '#ccc' : '#e74c3c',
-                        color: 'white'
+                        opacity: processing === application.id ? 0.6 : 1
                       }}
                     >
                       {processing === application.id ? 'Processing...' : '✗ Reject'}
@@ -543,9 +542,9 @@ function ManagerApplicationsPage() {
               type="button"
               onClick={handleRejectConfirm}
               disabled={processing === rejectingUserId}
-              className="btn btn-primary"
+              className="btn btn-secondary"
               style={{
-                background: processing === rejectingUserId ? '#ccc' : '#e74c3c'
+                opacity: processing === rejectingUserId ? 0.6 : 1
               }}
             >
               {processing === rejectingUserId ? 'Processing...' : 'Reject Application'}

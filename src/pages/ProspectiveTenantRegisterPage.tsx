@@ -594,13 +594,9 @@ function ProspectiveTenantRegisterPage() {
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 marginBottom: '10px',
-                background: loading ? '#ccc' : '#162F1B',
-                color: 'white',
-                textDecoration: 'none',
-                display: 'inline-block',
-                textAlign: 'center',
                 opacity: loading ? 0.7 : 1
               }}
+              className="btn btn-primary"
             >
               {loading ? 'Submitting Application...' : 'Submit Application'}
             </button>
@@ -616,13 +612,9 @@ function ProspectiveTenantRegisterPage() {
                 fontSize: '16px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                marginBottom: '10px',
-                background: '#6c757d',
-                color: 'white',
-                textDecoration: 'none',
-                display: 'inline-block',
-                textAlign: 'center'
+                marginBottom: '10px'
               }}
+              className="btn btn-secondary"
             >
               Cancel
             </button>

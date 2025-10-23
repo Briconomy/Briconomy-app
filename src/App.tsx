@@ -100,6 +100,7 @@ function App() {
               <Route path="/manager/payments" element={<ManagerRoute><ManagerPaymentsPage /></ManagerRoute>} />
               <Route path="/manager/maintenance" element={<ManagerRoute><ManagerMaintenancePage /></ManagerRoute>} />
               <Route path="/property/new" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
+              <Route path="/property/:id/edit" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id/maintenance" element={<ManagerRoute><PropertyManagementPage /></ManagerRoute>} />
               <Route path="/property/:id" element={<PropertyDetailsPage />} />
               <Route path="/apply/:id" element={<RentalApplicationPage />} />

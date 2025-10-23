@@ -33,10 +33,10 @@ const NotificationManager = () => {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 z-50 shadow-lg">
-      <div className="container mx-auto flex items-center justify-between">
+    <div className="fixed top-0 left-0 right-0 p-4 z-50 shadow-lg" style={{ background: 'var(--brand-notifications)' }}>
+      <div className="container mx-auto flex items-center justify-between text-white">
         <div className="flex items-center space-x-3">
-          <span className="text-xl"></span>
+          <span className="text-xl">🔔</span>
           <div>
             <p className="font-semibold">Enable Notifications</p>
             <p className="text-sm opacity-90">
@@ -47,7 +47,7 @@ const NotificationManager = () => {
         <div className="flex items-center space-x-2">
           <button type="button"
             onClick={requestPermission}
-            className="bg-white text-blue-600 px-4 py-2 rounded font-semibold hover:bg-gray-100 transition-colors"
+            className="btn btn-secondary px-4 py-2 rounded font-semibold"
           >
             Enable
           </button>

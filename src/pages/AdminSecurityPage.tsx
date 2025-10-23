@@ -279,13 +279,6 @@ function AdminSecurityPage() {
           ) : securityConfig && securityConfig.length > 0 ? (
             securityConfig.map((config, index) => {
               const isEnabled = config.status === 'enabled';
-              const buttonStyles = isEnabled ? {
-                background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
-                boxShadow: '0 3px 10px rgba(220, 53, 69, 0.3)'
-              } : {
-                background: 'linear-gradient(135deg, #28a745 0%, #218838 100%)',
-                boxShadow: '0 3px 10px rgba(40, 167, 69, 0.3)'
-              };
 
               return (
                 <div key={`auth-${config.method}-${index}`} className="list-item">
@@ -308,16 +301,11 @@ function AdminSecurityPage() {
                     </span>
                     <button
                       type="button"
+                      className="btn btn-secondary"
                       style={{
-                        ...buttonStyles,
-                        color: 'white',
                         padding: '10px 20px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        fontWeight: '600',
                         fontSize: '14px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
+                        boxShadow: '0 3px 10px rgba(255, 137, 77, 0.3)',
                         width: '120px',
                         textAlign: 'center',
                         marginTop: '5px'
