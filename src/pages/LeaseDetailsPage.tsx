@@ -63,6 +63,7 @@ function LeaseDetailsPage() {
             <div className="page-subtitle">{t('lease.not_found_message')}</div>
           </div>
           <button
+            type="button"
             onClick={() => navigate('/manager/leases')}
             className="btn btn-primary"
             style={{ marginTop: '20px' }}
@@ -194,6 +195,7 @@ function LeaseDetailsPage() {
 
         <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
           <button
+            type="button"
             onClick={() => navigate('/manager/leases')}
             className="btn btn-secondary"
             style={{ flex: 1 }}
@@ -201,6 +203,7 @@ function LeaseDetailsPage() {
             {t('common.back')}
           </button>
           <button
+            type="button"
             onClick={() => navigate(`/manager/renewals`)}
             className="btn btn-primary"
             style={{ flex: 1 }}

@@ -26,14 +26,13 @@ function LeaseRenewalsPage() {
   const [renewals, setRenewals] = useState<Renewal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | RenewalStatus>('all');
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch renewals from API
     fetchRenewals();
   }, []);
 
-  const fetchRenewals = async () => {
+  const fetchRenewals = () => {
     try {
       setLoading(true);
       // TODO: Replace with actual API call

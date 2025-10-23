@@ -16,7 +16,7 @@ db.documents.drop();
 db.lease_renewals.drop();
 
 // Create users with proper ObjectIds
-const users = db.users.insertMany([
+const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     fullName: 'Sarah Johnson',
@@ -396,7 +396,7 @@ const leases = db.leases.insertMany([
 ]);
 
 // Create invoices with proper references
-const invoices = db.invoices.insertMany([
+const _invoices = db.invoices.insertMany([
   // Emma Thompson invoices (Lease 1, 12500/month)
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f1"),
@@ -675,7 +675,7 @@ const invoices = db.invoices.insertMany([
 ]);
 
 // Create lease renewals - using the actual lease IDs
-const leaseRenewals = db.lease_renewals.insertMany([
+const _leaseRenewals = db.lease_renewals.insertMany([
   // Emma Thompson's lease - Pending
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e7a1"),

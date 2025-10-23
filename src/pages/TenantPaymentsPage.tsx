@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -44,7 +44,7 @@ function TenantPaymentsPage() {
   const [paymentReference, setPaymentReference] = useState('');
   const [proofFile, setProofFile] = useState<{ name: string; data: string; mimeType: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [generatedReference, setGeneratedReference] = useState('');
+  const [_generatedReference, setGeneratedReference] = useState('');
 
   const navItems = [
     { path: '/tenant', label: t('nav.home'), icon: 'properties' },
@@ -70,7 +70,7 @@ function TenantPaymentsPage() {
     if (!invoices) return { totalDue: 0, overdue: 0, nextDue: null };
 
     const today = new Date();
-    const pending = invoices.filter(inv => inv.status !== 'paid') as any[];
+    const pending: Invoice[] = invoices.filter(inv => inv.status !== 'paid');
 
     const totalDue = pending.reduce((sum, inv) => sum + (inv.amount || 0), 0);
 
@@ -257,6 +257,7 @@ function TenantPaymentsPage() {
           paddingBottom: '12px'
         }}>
           <button
+            type="button"
             onClick={() => {
               setActiveTab('invoices');
               setPaymentMode(false);
@@ -275,6 +276,7 @@ function TenantPaymentsPage() {
             📋 Invoices
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('history')}
             style={{
               padding: '8px 16px',
@@ -317,7 +319,7 @@ function TenantPaymentsPage() {
                     onDownload={async (id, format) => {
                       try {
                         await invoicesApi.download(id, format);
-                      } catch (error) {
+                      } catch (_error) {
                         alert('Failed to download invoice');
                       }
                     }}
@@ -326,10 +328,10 @@ function TenantPaymentsPage() {
               </div>
             )}
 
-            {/* Quick Action */}
             {(invoices as Invoice[] || []).some(inv => inv.status !== 'paid') && (
               <div style={{ marginTop: '24px' }}>
                 <button
+                  type="button"
                   onClick={() => {
                     setSelectedInvoice((invoices as Invoice[]).find(inv => inv.status !== 'paid') || null);
                     setPaymentMode(true);
@@ -347,8 +349,8 @@ function TenantPaymentsPage() {
         {/* Payment Mode */}
         {activeTab === 'invoices' && paymentMode && selectedInvoice && (
           <div>
-            {/* Back Button */}
             <button
+              type="button"
               onClick={() => {
                 setPaymentMode(false);
                 setSelectedInvoice(null);
@@ -461,9 +463,9 @@ function TenantPaymentsPage() {
               </div>
             )}
 
-            {/* Submit Button */}
             <div style={{ marginBottom: '20px' }}>
               <button
+                type="button"
                 onClick={handleSubmitPayment}
                 disabled={!selectedPaymentMethod || (selectedPaymentMethod !== 'card' && !proofFile) || submitting}
                 className="btn btn-primary"
@@ -495,9 +497,10 @@ function TenantPaymentsPage() {
             ) : (
               <DataTable
                 title="Payment History"
-                data={payments as any[]}
+                data={payments || []}
                 columns={paymentHistoryColumns}
                 actions={null}
+                onRowClick={() => {}}
               />
             )}
           </div>

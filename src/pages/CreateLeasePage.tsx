@@ -33,7 +33,7 @@ function CreateLeasePage() {
       return res.json();
     }), []
   );
-  const { data: units, loading: loadingUnits } = useApi(() => 
+  const { data: units, loading: _loadingUnits } = useApi(() => 
     formData.propertyId ? unitsApi.getAll(formData.propertyId) : Promise.resolve([]), 
     [formData.propertyId]
   );

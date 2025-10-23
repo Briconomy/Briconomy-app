@@ -1,5 +1,3 @@
-import React from 'react';
-
 export type PaymentMethod = 'card' | 'bank_transfer' | 'cash' | 'cheque';
 
 interface PaymentMethodOption {

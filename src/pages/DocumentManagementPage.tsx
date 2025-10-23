@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -220,7 +220,7 @@ function DocumentManagementPage() {
     }
   ];
 
-  const handleFileUpload = (e) => {
+  const _handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
@@ -341,7 +341,7 @@ function DocumentManagementPage() {
               Upload
             </button>
           }
-          onRowClick={(doc) => {}}
+          onRowClick={(_doc) => {}}
         />
 
         <div className="quick-actions">

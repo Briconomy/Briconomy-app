@@ -82,9 +82,7 @@ function CaretakerDashboard() {
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
-      const updateData: any = { status: newStatus };
-      // #COMPLETION_DRIVE: When caretaker picks up work, assign it to them
-      // #SUGGEST_VERIFY: Verify assignedTo is set to caretaker ID when starting work
+      const updateData: { status: string; assignedTo?: string } = { status: newStatus };
       if (newStatus === 'in_progress') {
         updateData.assignedTo = user?.id;
       }

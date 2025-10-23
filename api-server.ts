@@ -31,7 +31,7 @@ import {
   updateNotification,
   deleteNotification,
   getDashboardStats,
-  getUsers,
+  getUsers as _getUsers,
   loginUser,
   registerUser,
   getSystemStats,
