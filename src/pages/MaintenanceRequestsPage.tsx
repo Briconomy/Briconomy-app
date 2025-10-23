@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
+import Icon from '../components/Icon.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -202,38 +203,37 @@ function MaintenanceRequestsPage() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'status-pending';
-      case 'in_progress': return 'status-progress';
-      case 'completed': return 'status-paid';
-      default: return 'status-pending';
+      case 'pending':
+        return 'status-pending';
+      case 'in_progress':
+        return 'status-progress';
+      case 'completed':
+        return 'status-paid';
+      default:
+        return 'status-pending';
     }
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'text-red-700 font-bold';
-      case 'high': return 'text-red-600';
-      case 'medium': return 'text-yellow-600';
-      case 'low': return 'text-green-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getPriorityIcon = (priority) => {
-    switch (priority) {
-      case 'urgent': return '!';
-      case 'high': return '!!';
-      case 'medium': return '•';
-      case 'low': return '·';
-      default: return '-';
+      case 'urgent':
+        return 'priority-badge priority-urgent';
+      case 'high':
+        return 'priority-badge priority-high';
+      case 'medium':
+        return 'priority-badge priority-medium';
+      case 'low':
+        return 'priority-badge priority-low';
+      default:
+        return 'priority-badge priority-medium';
     }
   };
 
   if (requestsLoading || leasesLoading) {
-return (
-       <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton />
-         <div className="main-content">
+    return (
+      <div className="app-container mobile-only page-wrapper">
+        <TopNav showLogout showBackButton />
+        <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p>{t('requests.loadingRequests')}</p>
@@ -246,305 +246,273 @@ return (
 
   const currentLease = leases?.[0];
 
-return (
-     <div className="app-container mobile-only">
-  <TopNav showLogout showBackButton/>
-       
-       <div className="main-content">
-        <div className="page-header">
-          <div className="page-title">{t('requests.title')}</div>
-          <div className="page-subtitle">{t('requests.subtitle')}</div>
-        </div>
-        
-        {activeTab === 'requests' && (
-          <>
-            <div className="dashboard-grid">
-              <StatCard value={stats.pendingCount} label={t('requests.pending')} />
-              <StatCard value={stats.inProgressCount} label={t('requests.inProgress')} />
-              <StatCard value={stats.completedCount} label={t('requests.completed')} />
-              <StatCard value={requestsData.length} label={t('requests.total')} />
-            </div>
+    return (
+      <div className="app-container mobile-only page-wrapper">
+        <TopNav showLogout showBackButton />
 
-            {currentLease && (
-              <div className="unit-info-card">
-                <h3>{t('requests.yourUnit')}</h3>
-                <div className="unit-details">
-                  <p><strong>{t('payments.unit')}</strong> {currentLease.unitId?.unitNumber || 'N/A'}</p>
-                  <p><strong>{t('payments.property')}</strong> {currentLease.propertyId?.name || 'N/A'}</p>
-                  <p><strong>{t('requests.address')}</strong> {currentLease.propertyId?.address || 'N/A'}</p>
-                </div>
+        <div className="main-content">
+          <div className="page-header">
+            <div className="page-title">{t('requests.title')}</div>
+            <div className="page-subtitle">{t('requests.subtitle')}</div>
+          </div>
+
+          <div className="tab-controls">
+            <button
+              type="button"
+              className={`tab-button ${activeTab === 'requests' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('requests')}
+            >
+              Requests
+            </button>
+            <button
+              type="button"
+              className={`tab-button ${activeTab === 'help' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('help')}
+            >
+              Help & Support
+            </button>
+          </div>
+
+          {activeTab === 'requests' && (
+            <>
+              <div className="dashboard-grid">
+                <StatCard value={stats.pendingCount} label={t('requests.pending')} />
+                <StatCard value={stats.inProgressCount} label={t('requests.inProgress')} />
+                <StatCard value={stats.completedCount} label={t('requests.completed')} />
+                <StatCard value={requestsData.length} label={t('requests.total')} />
               </div>
-            )}
 
-            <div className="data-table">
-              <div className="table-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <div className="table-title">{t('requests.yourRequests')}</div>
-                {/* Offline Status Indicator */}
-                <div className="flex items-center space-x-2 ml-4" >
-                  <span className={`px-2 py-1 rounded text-xs ${isOnline ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                    {isOnline ? '🟢 Online' : '🟡 Offline'}
-                  </span>
-                  {!isOnline && (
-                    <button
-                      type="button"
-                      onClick={() => syncNow()}
-                      className="btn btn-secondary btn-xs"
-                      title="Sync when back online"
-                    >
-                       Sync
-                    </button>
-                  )}
+              {currentLease && (
+                <div className="section-card">
+                  <div className="section-title">{t('requests.yourUnit')}</div>
+                  <div className="detail-grid">
+                    <div className="detail-block">
+                      <div className="detail-label">{t('payments.unit')}</div>
+                      <div className="detail-value">{currentLease.unitId?.unitNumber || 'N/A'}</div>
+                    </div>
+                    <div className="detail-block">
+                      <div className="detail-label">{t('payments.property')}</div>
+                      <div className="detail-value">{currentLease.propertyId?.name || 'N/A'}</div>
+                    </div>
+                    <div className="detail-block">
+                      <div className="detail-label">{t('requests.address')}</div>
+                      <div className="detail-value">{currentLease.propertyId?.address || 'N/A'}</div>
+                    </div>
+                  </div>
                 </div>
-                {requestsData.length > 0 && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <button 
-                      type="button"
-                      className="btn btn-primary btn-sm2"
-                      onClick={() => setShowRequestForm(true)}
-                    >
+              )}
+
+              <div className="section-card">
+                <div className="section-card-header">
+                  <div className="section-header-content">
+                    <div className="section-title-row">
+                      <div className="section-title">{t('requests.yourRequests')}</div>
+                      <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
+                        {isOnline ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
+                    <div className="section-subtitle">{t('requests.subtitle')}</div>
+                  </div>
+                  <div className="action-stack">
+                    {!isOnline && (
+                      <button type="button" className="btn btn-secondary btn-xs" onClick={() => syncNow()}>
+                        Sync
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-primary btn-sm2" onClick={() => setShowRequestForm(true)}>
                       {t('requests.newRequest')}
                     </button>
                   </div>
-                )}
-              </div>
-              
-              {requestsData.length === 0 ? (
-                <div className="empty-state">
-                  <p>{t('requests.noRequestsFound')}</p>
-                  <button 
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setShowRequestForm(true)}
-                  >
-                    Maintenance Request
-                  </button>
                 </div>
-              ) : (
-                requestsData.map((request) => (
-                  <div key={request.id} className="list-item">
-                    <div className="item-info">
-                      <div className="request-header">
-                        <h4>{request.title}</h4>
-                        <span className={`priority-badge ${getPriorityColor(request.priority)}`}>
-                          {getPriorityIcon(request.priority)} {request.priority.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{request.description}</p>
-                      <div className="request-meta">
-                        <span className="text-xs text-gray-500">
-                          {formatDate(request.createdAt)} 
-                        </span>
-                        <br />
-                        {request.location && (
-                          <>
-                            <span className="text-xs text-blue-600">
-                               {request.location} {request.unitNumber && `- Unit ${request.unitNumber}`}
-                            </span>
-                            <br />
-                          </>
-                        )}
-                        {request.assignedTo && (
-                          <>
-                            <span className="text-xs text-blue-600">
-                               Assigned to: {request.assignedTo}
-                            </span>
-                            <br />
-                          </>
-                        )}
-                        {request.category && (
-                          <span className="text-xs text-purple-600">
-                             Category: {request.category}
+
+                {requestsData.length === 0 ? (
+                  <div className="empty-state-card">
+                    <Icon name="maintenance" alt="Maintenance" size={40} />
+                    <div className="empty-state-title">{t('requests.noRequestsFound')}</div>
+                    <div className="empty-state-text">Log a request to notify your maintenance team.</div>
+                    <div className="card-actions">
+                      <button
+                        type="button"
+                        className="btn btn-primary full-width-button"
+                        onClick={() => setShowRequestForm(true)}
+                      >
+                        {t('requests.newRequest')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="request-list">
+                    {requestsData.map((request) => (
+                      <div key={request.id} className="request-card">
+                        <div className="request-card-header">
+                          <div>
+                            <div className="record-title">{request.title}</div>
+                            <div className="request-description">{request.description}</div>
+                          </div>
+                          <span className={getPriorityBadgeClass(request.priority)}>
+                            {request.priority.replace('_', ' ').toUpperCase()}
                           </span>
-                        )}
-                        {request.photos && request.photos.length > 0 && (
-                          <>
-                            <br />
-                            <span className="text-xs text-green-600">
-                               {request.photos.length} photo{request.photos.length > 1 ? 's' : ''} attached
-                            </span>
-                          </>
-                        )}
-                        {request.comments && request.comments.length > 0 && (
-                          <>
-                            <br />
-                            <span className="text-xs text-orange-600">
-                               {request.comments.length} comment{request.comments.length > 1 ? 's' : ''}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {request.status === 'completed' && request.completedAt && (
-                        <div className="completion-info">
-                          <span className="text-xs text-green-600">
-                             Completed on {formatDate(request.completedAt)}
-                          </span>
-                          {request.repairPhotos && request.repairPhotos.length > 0 && (
-                            <span className="text-xs text-green-600" style={{ marginLeft: '12px' }}>
-                               {request.repairPhotos.length} repair photo{request.repairPhotos.length > 1 ? 's' : ''}
+                        </div>
+
+                        <div className="request-meta">
+                          <span>Created {formatDate(request.createdAt)}</span>
+                          {request.location && (
+                            <span>
+                              {request.location}
+                              {request.unitNumber ? ` • Unit ${request.unitNumber}` : ''}
                             </span>
                           )}
+                          {request.assignedTo && (
+                            <span>Assigned to {request.assignedTo}</span>
+                          )}
+                          {request.category && (
+                            <span>Category: {request.category}</span>
+                          )}
+                          {request.photos && request.photos.length > 0 && (
+                            <span>
+                              {request.photos.length} attachment{request.photos.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {request.comments && request.comments.length > 0 && (
+                            <span>
+                              {request.comments.length} comment{request.comments.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {request.status === 'completed' && request.completedAt && (
+                            <span>Completed {formatDate(request.completedAt)}</span>
+                          )}
                         </div>
+
+                        <div className="request-footer">
+                          <span className={`status-badge ${getStatusColor(request.status)}`}>
+                            {request.status.replace('_', ' ').toUpperCase()}
+                          </span>
+                          {request.status === 'pending' && !request.assignedTo && (
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-xs"
+                              onClick={() => handleDeleteRequest(request.id, request.title)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <ChartCard title={t('requests.statusOverview')}>
+                <div className="request-stats">
+                  <div className="stat-item">
+                    <div className="stat-value">{stats.pendingCount}</div>
+                    <div className="stat-label">Pending</div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-value">{stats.inProgressCount}</div>
+                    <div className="stat-label">In Progress</div>
+                  </div>
+                  <div className="stat-item">
+                    <div className="stat-value">{stats.completedCount}</div>
+                    <div className="stat-label">Completed</div>
+                  </div>
+                </div>
+              </ChartCard>
+            </>
+          )}
+
+          {activeTab === 'help' && (
+            <div className="support-grid">
+              <div className="section-card">
+                <div className="action-stack">
+                  <button type="button" className="btn btn-secondary btn-xs" onClick={() => setActiveTab('requests')}>
+                    Back to requests
+                  </button>
+                </div>
+                <div className="card-divider">
+                  <div className="section-title">FAQs</div>
+                </div>
+                <div className="record-list">
+                  {faqItems.map(item => (
+                    <div key={item.id} className="record-item">
+                      <button
+                        type="button"
+                        className="accordion-trigger"
+                        onClick={() => toggleFAQ(item.id)}
+                      >
+                        <span>{item.question}</span>
+                        <span className="accordion-trigger-icon">{selectedFAQ === item.id ? '−' : '+'}</span>
+                      </button>
+                      {selectedFAQ === item.id && (
+                        <div className="accordion-content">{item.answer}</div>
                       )}
                     </div>
-                    <div className="item-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className={`status-badge ${getStatusColor(request.status)}`}>
-                        {request.status.replace('_', ' ').toUpperCase()}
-                      </span>
-                      {/* #COMPLETION_DRIVE: Only allow deleting pending requests that haven't been assigned */}
-                      {/* #SUGGEST_VERIFY: Verify tenant can only delete their own pending/unassigned requests */}
-                      {request.status === 'pending' && !request.assignedTo && (
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          style={{ fontSize: '12px', padding: '4px 8px' }}
-                          onClick={() => handleDeleteRequest(request.id, request.title)}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="section-card">
+                <div className="section-card-header">
+                  <div className="section-title">Emergency & Contact</div>
+                </div>
+                <div className="support-grid">
+                  <button
+                    type="button"
+                    className="btn btn-primary full-width-button"
+                    onClick={() => setShowEmergencyModal(true)}
+                  >
+                    Emergency contacts
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary full-width-button"
+                    onClick={() => {
+                      const confirmCall = globalThis.confirm('Call property manager?\n\n+27 11 234 5678');
+                      if (confirmCall) {
+                        globalThis.location.href = 'tel:+27112345678';
+                      }
+                    }}
+                  >
+                    Call property manager
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary full-width-button"
+                    onClick={() => {
+                      globalThis.location.href = '/tenant/messages';
+                    }}
+                  >
+                    Send message
+                  </button>
+                </div>
+              </div>
+
+              <div className="section-card">
+                <div className="section-title">Office hours</div>
+                <div className="record-list">
+                  <div className="record-item">
+                    <div className="record-title">Mon - Fri</div>
+                    <div className="record-meta">8:00 AM - 6:00 PM</div>
                   </div>
-                ))
-              )}
-            </div>
-
-
-
-            <ChartCard title={t('requests.statusOverview')}>
-              <div className="request-stats">
-                <div className="stat-item">
-                  <div className="stat-value">{stats.pendingCount}</div>
-                  <div className="stat-label">Pending</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-value">{stats.inProgressCount}</div>
-                  <div className="stat-label">In Progress</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-value">{stats.completedCount}</div>
-                  <div className="stat-label">Completed</div>
-                </div>
-              </div>
-            </ChartCard>
-          </>
-        )}
-
-        {activeTab === 'help' && (
-          <div className="help-support-section">
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveTab('requests')}
-              style={{ marginBottom: '12px' }}
-            >
-              ← Back
-            </button>
-
-            {/* FAQ Section */}
-            <div className="card" style={{ marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>FAQs</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {faqItems.map(item => (
-                  <div key={item.id} style={{ borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => toggleFAQ(item.id)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'none',
-                        border: 'none',
-                        padding: '8px 0',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        textAlign: 'left',
-                        fontWeight: '500'
-                      }}
-                    >
-                      <span>{item.question}</span>
-                      <span style={{ fontSize: '18px', color: '#666' }}>
-                        {selectedFAQ === item.id ? '−' : '+'}
-                      </span>
-                    </button>
-                    {selectedFAQ === item.id && (
-                      <p style={{ 
-                        margin: '8px 0 0 0', 
-                        fontSize: '13px', 
-                        color: '#666',
-                        lineHeight: '1.5'
-                      }}>
-                        {item.answer}
-                      </p>
-                    )}
+                  <div className="record-item">
+                    <div className="record-title">Saturday</div>
+                    <div className="record-meta">9:00 AM - 2:00 PM</div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Emergency & Contact */}
-            <div className="card" style={{ marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>Emergency & Contact</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setShowEmergencyModal(true)}
-                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-                >
-                  Emergency Contacts
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    const confirmCall = globalThis.confirm('Call property manager?\n\n+27 11 234 5678');
-                    if (confirmCall) {
-                      globalThis.location.href = 'tel:+27112345678';
-                    }
-                  }}
-                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-                >
-                  Call Property Manager
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => globalThis.location.href = '/tenant/messages'}
-                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-                >
-                  Send Message
-                </button>
-              </div>
-            </div>
-
-            {/* Office Hours */}
-            <div className="card">
-              <h3 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>Office Hours</h3>
-              <div style={{ fontSize: '13px', color: '#666' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>Mon - Fri</span>
-                  <strong>8:00 AM - 6:00 PM</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>Saturday</span>
-                  <strong>9:00 AM - 2:00 PM</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span>Sunday</span>
-                  <strong>Closed</strong>
-                </div>
-                <div style={{ borderTop: '1px solid #eee', paddingTop: '12px' }}>
-                  <p style={{ fontSize: '12px', margin: '0 0 4px 0' }}><strong>Office Location</strong></p>
-                  <p style={{ margin: '0', fontSize: '12px' }}>123 Main Street, Blue Hills</p>
-                  <p style={{ margin: '0', fontSize: '12px' }}>Johannesburg, SA 2090</p>
+                  <div className="record-item">
+                    <div className="record-title">Sunday</div>
+                    <div className="record-meta">Closed</div>
+                  </div>
+                  <div className="card-divider">
+                    <div className="section-subtitle">Office location</div>
+                    <div className="support-text">123 Main Street, Blue Hills</div>
+                    <div className="support-text">Johannesburg, SA 2090</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       
       {showRequestForm && !isOnline && (
         <OfflineMaintenanceForm 
@@ -567,20 +535,12 @@ return (
                 className="close-btn"
                 onClick={() => setShowRequestForm(false)}
                 disabled={submitting}
-                style={{ opacity: submitting ? 0.5 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}
               >
                 ×
               </button>
             </div>
             {submitting && (
-              <div style={{
-                background: '#e3f2fd',
-                padding: '12px',
-                textAlign: 'center',
-                fontSize: '14px',
-                color: '#1976d2',
-                borderBottom: '1px solid #90caf9'
-              }}>
+              <div className="modal-progress-banner">
                 Submitting your request...
               </div>
             )}
@@ -648,36 +608,18 @@ return (
                     multiple
                     onChange={handlePhotoUpload}
                     disabled={uploadedPhotos.length >= 5}
-                    style={{ marginBottom: '8px' }}
+                    className="upload-input-control"
                   />
-                  <p className="text-xs text-gray-500">Upload photos to help us understand the issue better</p>
+                  <p className="form-hint">Upload photos to help us understand the issue better</p>
                   {uploadedPhotos.length > 0 && (
-                    <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="upload-preview-list">
                       {uploadedPhotos.map((file, index) => (
-                        <div key={`photo-${index}`} style={{ 
-                          position: 'relative', 
-                          display: 'inline-block',
-                          padding: '8px',
-                          background: '#f0f0f0',
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}>
+                        <div key={`photo-${index}`} className="upload-preview-item">
                           <span>{file.name.substring(0, 20)}{file.name.length > 20 ? '...' : ''}</span>
                           <button
                             type="button"
                             onClick={() => removePhoto(index)}
-                            style={{
-                              marginLeft: '8px',
-                              background: '#ff4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              lineHeight: '1'
-                            }}
+                            className="upload-preview-remove"
                           >
                             ×
                           </button>
@@ -700,7 +642,6 @@ return (
                     type="submit"
                     className="btn btn-primary"
                     disabled={submitting || !formData.title.trim() || !formData.description.trim()}
-                    style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
                     {submitting ? 'Submitting...' : 'Submit'}
                   </button>
@@ -713,46 +654,26 @@ return (
 
       {showEmergencyModal && (
         <div className="modal-overlay" onClick={() => setShowEmergencyModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
+          <div className="modal-content modal-scroll" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Emergency Contacts</h3>
               <button type="button" className="close-btn" onClick={() => setShowEmergencyModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <div style={{ 
-                background: '#fff3cd', 
-                border: '1px solid #ffc107', 
-                borderRadius: '8px', 
-                padding: '12px', 
-                marginBottom: '16px',
-                fontSize: '13px'
-              }}>
+              <div className="modal-warning">
                 <strong>WARNING - Life-threatening emergencies:</strong><br />
                 Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
               </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="contact-grid">
                 {emergencyContacts.map((contact, index) => (
-                  <div 
-                    key={index}
-                    style={{
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      background: '#f9f9f9'
-                    }}
-                  >
-                    <div style={{ marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '14px', margin: '0 0 4px 0', fontWeight: '600' }}>
-                        {contact.name}
-                      </h4>
-                      <p style={{ fontSize: '12px', margin: '0', color: '#666' }}>
-                        {contact.description}
-                      </p>
+                  <div key={index} className="contact-card">
+                    <div>
+                      <div className="contact-card-title">{contact.name}</div>
+                      <div className="contact-card-desc">{contact.description}</div>
                     </div>
                     <button
                       type="button"
-                      className="btn btn-primary btn-sm"
+                      className="btn btn-primary btn-sm full-width-button"
                       onClick={() => {
                         const confirmCall = globalThis.confirm(`Call ${contact.name}?\n\n${contact.phone}`);
                         if (confirmCall) {
@@ -760,24 +681,16 @@ return (
                           setShowEmergencyModal(false);
                         }
                       }}
-                      style={{ 
-                        width: '100%', 
-                        padding: '8px',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}
                     >
                       Call: {contact.phone}
                     </button>
                   </div>
                 ))}
               </div>
-              
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary full-width-button modal-close-action"
                 onClick={() => setShowEmergencyModal(false)}
-                style={{ width: '100%', marginTop: '16px' }}
               >
                 Close
               </button>

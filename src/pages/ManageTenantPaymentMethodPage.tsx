@@ -14,10 +14,10 @@ function ManageTenantPaymentMethodPage() {
   ];
 
   return (
-    <div className="app-container mobile-only" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div className="app-container mobile-only page-wrapper">
       <TopNav showLogout showBackButton />
-      <div className="main-content" style={{ flex: 1, overflowY: 'auto', padding: '16px', paddingBottom: '80px' }}>
-        <div className="page-header" style={{ marginBottom: '16px' }}>
+      <div className="main-content">
+        <div className="page-header">
           <div className="page-title">{t('payments.managePaymentMethods')}</div>
           <div className="page-subtitle">{t('payments.managePaymentMethodsSubtitle')}</div>
         </div>

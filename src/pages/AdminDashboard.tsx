@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -11,9 +11,12 @@ import LanguageSelector from '../components/LanguageSelector.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
 import { adminApi, useApi } from '../services/api.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 function AdminDashboard() {
   const { t } = useLanguage();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   
@@ -55,6 +58,15 @@ function AdminDashboard() {
 
   const stats = getStatsData();
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
   return (
     <div className="app-container mobile-only">
       <TopNav showBackButton showLogout />
@@ -66,6 +78,11 @@ function AdminDashboard() {
             
           </div>
           <div className="page-subtitle">{t('dashboard.system_overview')}</div>
+        </div>
+        <div className="page-header-actions action-stack">
+          <button type="button" className="btn btn-secondary" onClick={handleLogout}>
+            {t('nav.logout')}
+          </button>
         </div>
         
         <div className="dashboard-grid">

@@ -7,6 +7,7 @@ import InvoiceViewer from '../components/InvoiceViewer.tsx';
 import PaymentMethodSelector, { PaymentMethod } from '../components/PaymentMethodSelector.tsx';
 import PaymentProofUploader from '../components/PaymentProofUploader.tsx';
 import FakeCheckout from '../components/FakeCheckout.tsx';
+import Icon from '../components/Icon.tsx';
 import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -86,6 +87,9 @@ function TenantPaymentsPage() {
   };
 
   const stats = getStats();
+  const invoiceList = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
+  const pendingInvoices = invoiceList.filter(inv => inv.status !== 'paid');
+  const overdueLabel = stats.overdue === 1 ? 'invoice' : 'invoices';
 
   const handlePaymentComplete = async (reference: string) => {
     if (!selectedInvoice || !selectedPaymentMethod) {
@@ -198,7 +202,7 @@ function TenantPaymentsPage() {
 
   if (invoicesLoading || paymentsLoading) {
     return (
-      <div className="app-container mobile-only">
+      <div className="app-container mobile-only page-wrapper">
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
@@ -212,7 +216,7 @@ function TenantPaymentsPage() {
   }
 
   return (
-    <div className="app-container mobile-only">
+    <div className="app-container mobile-only page-wrapper">
       <TopNav showLogout showBackButton />
 
       <div className="main-content">
@@ -221,98 +225,59 @@ function TenantPaymentsPage() {
           <div className="page-subtitle">View invoices and manage payments</div>
         </div>
 
-        {/* Stats */}
         <div className="dashboard-grid">
           <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" highlight={stats.totalDue > 0} />
           <StatCard value={stats.overdue} label="Overdue Invoices" highlight={stats.overdue > 0} />
-          <StatCard
-            value={stats.nextDue ? formatDate(stats.nextDue.dueDate) : 'N/A'}
-            label="Next Due Date"
-          />
+          <StatCard value={stats.nextDue ? formatDate(stats.nextDue.dueDate) : 'N/A'} label="Next Due Date" />
         </div>
 
-        {/* Alerts */}
         {stats.overdue > 0 && (
-          <div style={{
-            background: 'var(--error-light, rgba(231, 76, 60, 0.1))',
-            border: '1px solid var(--error-color, #e74c3c)',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '20px',
-            color: 'var(--error-color, #e74c3c)'
-          }}>
-            <strong>⚠️ You have {stats.overdue} overdue invoice(s)</strong>
-            <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>
-              Please submit payment as soon as possible to avoid penalties.
-            </p>
+          <div className="alert-banner">
+            <div className="alert-banner-icon">
+              <Icon name="alert" alt="Overdue invoices" size={20} />
+            </div>
+            <div className="alert-banner-content">
+              <div className="alert-title">{`You have ${stats.overdue} overdue ${overdueLabel}`}</div>
+              <div className="alert-text">Please submit payment to avoid penalties.</div>
+            </div>
           </div>
         )}
 
-        {/* Tabs */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '20px',
-          borderBottom: '1px solid var(--border-primary)',
-          paddingBottom: '12px'
-        }}>
+        <div className="tab-controls">
           <button
             type="button"
+            className={`tab-button ${activeTab === 'invoices' ? 'is-active' : ''}`}
             onClick={() => {
               setActiveTab('invoices');
               setPaymentMode(false);
             }}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: activeTab === 'invoices' ? 'var(--primary)' : 'transparent',
-              color: activeTab === 'invoices' ? 'white' : 'var(--text-secondary)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: activeTab === 'invoices' ? '600' : '500',
-              fontSize: '14px'
-            }}
           >
-            📋 Invoices
+            Invoices
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('history')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: activeTab === 'history' ? 'var(--primary)' : 'transparent',
-              color: activeTab === 'history' ? 'white' : 'var(--text-secondary)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: activeTab === 'history' ? '600' : '500',
-              fontSize: '14px'
+            className={`tab-button ${activeTab === 'history' ? 'is-active' : ''}`}
+            onClick={() => {
+              setActiveTab('history');
+              setPaymentMode(false);
+              setSelectedInvoice(null);
             }}
           >
-            ✅ Payment History
+            Payment History
           </button>
         </div>
 
-        {/* Invoices Tab */}
         {activeTab === 'invoices' && !paymentMode && (
           <div>
-            {!invoices || invoices.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                color: 'var(--text-secondary)'
-              }}>
-                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
-                <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
-                  No invoices
-                </div>
-                <div style={{ fontSize: '13px' }}>
-                  You don't have any outstanding invoices
-                </div>
+            {invoiceList.length === 0 ? (
+              <div className="section-card empty-state-card">
+                <Icon name="invoice" alt="Invoices" size={40} />
+                <div className="empty-state-title">No invoices</div>
+                <div className="empty-state-text">You do not have any outstanding invoices.</div>
               </div>
             ) : (
-              <div>
-                {(invoices as Invoice[]).map(invoice => (
+              <div className="support-grid">
+                {invoiceList.map(invoice => (
                   <InvoiceViewer
                     key={invoice.id}
                     invoice={invoice}
@@ -328,171 +293,114 @@ function TenantPaymentsPage() {
               </div>
             )}
 
-            {(invoices as Invoice[] || []).some(inv => inv.status !== 'paid') && (
-              <div style={{ marginTop: '24px' }}>
+            {pendingInvoices.length > 0 && (
+              <div className="section-card">
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedInvoice((invoices as Invoice[]).find(inv => inv.status !== 'paid') || null);
+                    setSelectedInvoice(pendingInvoices[0] || null);
                     setPaymentMode(true);
                   }}
-                  className="btn btn-primary"
-                  style={{ width: '100%', padding: '14px' }}
+                  className="btn btn-primary full-width-button"
                 >
-                  💳 Pay Now
+                  Start Payment
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Payment Mode */}
         {activeTab === 'invoices' && paymentMode && selectedInvoice && (
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                setPaymentMode(false);
-                setSelectedInvoice(null);
-                setSelectedPaymentMethod(null);
-                setPaymentNotes('');
-                setPaymentReference('');
-                setProofFile(null);
-              }}
-              style={{
-                marginBottom: '20px',
-                padding: '8px 12px',
-                background: 'none',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              ← Back to Invoices
-            </button>
-
-            {/* Selected Invoice */}
-            <div style={{
-              background: 'var(--background)',
-              padding: '16px',
-              borderRadius: '12px',
-              marginBottom: '20px'
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>
-                SELECTED INVOICE
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '12px',
-                background: 'var(--surface)',
-                borderRadius: '8px'
-              }}>
-                <div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {selectedInvoice.invoiceNumber}
-                  </div>
-                  <div style={{ fontSize: '14px', fontWeight: '600' }}>
-                    Due: {formatDate(selectedInvoice.dueDate)}
-                  </div>
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary)' }}>
-                  {formatCurrency(selectedInvoice.amount)}
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Method Selection */}
-            <PaymentMethodSelector
-              selected={selectedPaymentMethod}
-              onChange={setSelectedPaymentMethod}
-            />
-
-            {/* Payment Proof Upload (for manual methods) */}
-            {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
-              <PaymentProofUploader
-                onFileSelected={(name, data, mimeType) => {
-                  setProofFile({ name, data, mimeType });
-                }}
-              />
-            )}
-
-            {/* Notes */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
-                Additional Notes (optional)
-              </label>
-              <textarea
-                value={paymentNotes}
-                onChange={(e) => setPaymentNotes(e.target.value)}
-                placeholder="e.g., 'Payment includes deposit refund'"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '8px',
-                  fontFamily: 'inherit',
-                  fontSize: '13px',
-                  minHeight: '60px',
-                  resize: 'none'
-                }}
-              />
-            </div>
-
-            {/* Manual Payment Reference */}
-            {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
-                  Payment Reference (optional)
-                </label>
-                <input
-                  type="text"
-                  value={paymentReference}
-                  onChange={(e) => setPaymentReference(e.target.value)}
-                  placeholder="e.g., cheque number or bank reference"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '8px',
-                    fontSize: '13px'
+          <div className="support-grid">
+            <div className="section-card">
+              <div className="action-stack">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setPaymentMode(false);
+                    setSelectedInvoice(null);
+                    setSelectedPaymentMethod(null);
+                    setPaymentNotes('');
+                    setPaymentReference('');
+                    setProofFile(null);
                   }}
+                >
+                  Back to invoices
+                </button>
+              </div>
+              <div className="card-divider">
+                <div className="section-title">Selected invoice</div>
+                <div className="section-subtitle">Due {formatDate(selectedInvoice.dueDate)}</div>
+              </div>
+              <div className="invoice-summary">
+                <div className="invoice-meta">
+                  <span>{selectedInvoice.invoiceNumber}</span>
+                  <span>{formatDate(selectedInvoice.issueDate)}</span>
+                </div>
+                <div className="invoice-amount">{formatCurrency(selectedInvoice.amount)}</div>
+              </div>
+            </div>
+
+            <div className="section-card">
+              <PaymentMethodSelector selected={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
+
+              {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
+                <div className="card-divider">
+                  <PaymentProofUploader
+                    onFileSelected={(name, data, mimeType) => {
+                      setProofFile({ name, data, mimeType });
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="card-divider">
+                <label className="form-label" htmlFor="payment-notes">Additional notes</label>
+                <textarea
+                  id="payment-notes"
+                  className="form-textarea"
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  placeholder="Add context for this payment"
                 />
               </div>
-            )}
 
-            <div style={{ marginBottom: '20px' }}>
-              <button
-                type="button"
-                onClick={handleSubmitPayment}
-                disabled={!selectedPaymentMethod || (selectedPaymentMethod !== 'card' && !proofFile) || submitting}
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '14px' }}
-              >
-                {submitting ? '⏳ Processing...' : `Pay ${formatCurrency(selectedInvoice.amount)}`}
-              </button>
+              {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
+                <div className="card-divider">
+                  <label className="form-label" htmlFor="payment-reference">Payment reference</label>
+                  <input
+                    id="payment-reference"
+                    type="text"
+                    className="form-input"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Add a bank or transaction reference"
+                  />
+                </div>
+              )}
+
+              <div className="card-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary full-width-button"
+                  onClick={handleSubmitPayment}
+                  disabled={!selectedPaymentMethod || (selectedPaymentMethod !== 'card' && !proofFile) || submitting}
+                >
+                  {submitting ? 'Processing payment...' : `Pay ${formatCurrency(selectedInvoice.amount)}`}
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Payment History Tab */}
         {activeTab === 'history' && (
           <div>
             {!payments || payments.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                color: 'var(--text-secondary)'
-              }}>
-                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
-                <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
-                  No payment history
-                </div>
-                <div style={{ fontSize: '13px' }}>
-                  Your payments will appear here
-                </div>
+              <div className="section-card empty-state-card">
+                <Icon name="payment" alt="Payments" size={40} />
+                <div className="empty-state-title">No payment history</div>
+                <div className="empty-state-text">Your payments will appear here once processed.</div>
               </div>
             ) : (
               <DataTable
@@ -507,7 +415,6 @@ function TenantPaymentsPage() {
         )}
       </div>
 
-      {/* Fake Checkout Modal */}
       {showCheckout && selectedInvoice && (
         <FakeCheckout
           amount={selectedInvoice.amount}
