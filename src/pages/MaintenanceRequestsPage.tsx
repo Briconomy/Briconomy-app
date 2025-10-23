@@ -137,6 +137,9 @@ function MaintenanceRequestsPage() {
     setSubmitting(true);
     try {
       const currentLease = leases?.[0];
+
+      // #COMPLETION_DRIVE: Extract only IDs from lease objects, not full objects
+      // #SUGGEST_VERIFY: Verify lease objects contain _id field for ID extraction
       const requestData = {
         title: formData.title,
         description: formData.description,
@@ -144,8 +147,8 @@ function MaintenanceRequestsPage() {
         category: formData.category,
         status: 'pending',
         tenantId: user?.id || '507f1f77bcf86cd799439012',
-        unitId: currentLease?.unitId || null,
-        propertyId: currentLease?.propertyId || null,
+        unitId: currentLease?.unitId?._id || currentLease?.unitId || null,
+        propertyId: currentLease?.propertyId?._id || currentLease?.propertyId || null,
         photos: formData.photos,
         location: currentLease?.propertyId?.address || 'Unknown',
         unitNumber: currentLease?.unitId?.unitNumber || 'Unknown',

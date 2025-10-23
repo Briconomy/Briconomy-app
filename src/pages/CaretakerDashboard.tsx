@@ -56,8 +56,27 @@ function CaretakerDashboard() {
     { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
+  // #COMPLETION_DRIVE: Fetch assigned requests + unassigned pending requests
+  // #SUGGEST_VERIFY: Verify unassigned pending requests are properly filtered
   const { data: tasks, loading: tasksLoading, error: tasksError, refetch: refetchTasks } = useApi(
-    () => maintenanceApi.getAll(user?.id ? { assignedTo: user.id } : {}),
+    async () => {
+      if (!user?.id) return [];
+
+      const [assigned, unassigned] = await Promise.all([
+        maintenanceApi.getAll({ assignedTo: user.id }),
+        maintenanceApi.getAll({ status: 'pending' })
+      ]);
+
+      const assignedArray = Array.isArray(assigned) ? assigned : [];
+      const unassignedArray = Array.isArray(unassigned) ? unassigned : [];
+
+      const unassignedPending = unassignedArray.filter(req => !req.assignedTo);
+
+      const assignedIds = new Set(assignedArray.map(r => r.id));
+      const merged = [...assignedArray, ...unassignedPending.filter(r => !assignedIds.has(r.id))];
+
+      return merged;
+    },
     [user?.id]
   );
 

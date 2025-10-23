@@ -1473,8 +1473,12 @@ export async function createMaintenanceRequest(requestData: Record<string, unkno
     const now = new Date();
     const defaultDueDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
+    // #COMPLETION_DRIVE: Normalize ID fields to ObjectId format for consistent database storage
+    // #SUGGEST_VERIFY: Ensure all ID fields are properly converted before storage
+    const normalizedData = normalizeFilters(requestData as Record<string, unknown>);
+
     const requestDoc = {
-      ...requestData,
+      ...normalizedData,
       status: 'pending',
       dueDate: requestData.dueDate ? new Date(requestData.dueDate as string) : defaultDueDate,
       createdAt: now,
