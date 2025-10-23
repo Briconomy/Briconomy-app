@@ -604,94 +604,8 @@ const payments = db.payments.insertMany([
   }
 ]);
 
-// Create maintenance requests with proper references
-const maintenanceRequests = db.maintenance_requests.insertMany([
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f1"),
-    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-    title: 'AC repair',
-    description: 'Air conditioning not working properly, making strange noises and not cooling effectively',
-    priority: 'high',
-    status: 'in_progress',
-    assignedTo: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    estimatedCost: 1500,
-    actualCost: null,
-    completedDate: null,
-    images: ['ac_unit_1.jpg', 'ac_unit_2.jpg'],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f2"),
-    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
-    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-    title: 'Leaky faucet',
-    description: 'Kitchen sink faucet is dripping continuously, wasting water and increasing utility bills',
-    priority: 'medium',
-    status: 'pending',
-    assignedTo: null,
-    estimatedCost: 800,
-    actualCost: null,
-    completedDate: null,
-    images: ['faucet_leak.jpg'],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f3"),
-    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
-    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
-    title: 'Broken window',
-    description: 'Bedroom window lock is broken, window cannot be closed properly',
-    priority: 'high',
-    status: 'completed',
-    assignedTo: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
-    estimatedCost: 1200,
-    actualCost: 1150,
-    completedDate: new Date(Date.now() - 7*24*60*60*1000),
-    images: ['broken_window.jpg'],
-    createdAt: new Date(Date.now() - 10*24*60*60*1000),
-    updatedAt: new Date(Date.now() - 7*24*60*60*1000)
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f4"),
-    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
-    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
-    title: 'Electrical issue',
-    description: 'Light switch in living room is not working, seems to be a wiring problem',
-    priority: 'high',
-    status: 'in_progress',
-    assignedTo: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    estimatedCost: 2000,
-    actualCost: null,
-    completedDate: null,
-    images: ['light_switch.jpg'],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6f5"),
-    tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
-    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
-    title: 'Dishwasher not draining',
-    description: 'Dishwasher is not draining properly, water pooling at bottom',
-    priority: 'medium',
-    status: 'pending',
-    assignedTo: null,
-    estimatedCost: 1000,
-    actualCost: null,
-    completedDate: null,
-    images: ['dishwasher_issue.jpg'],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]);
+// Maintenance requests are created by users through the app, not seeded
+// db.maintenance_requests collection will be empty on init
 
 // Create caretaker tasks with proper references
 const caretakerTasks = db.caretaker_tasks.insertMany([
@@ -889,19 +803,6 @@ const notifications = db.notifications.insertMany([
     updatedAt: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e722"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    title: 'Maintenance Request Update',
-    message: 'Your AC repair request has been assigned to David Mokoena. He will contact you within 24 hours.',
-    type: 'maintenance_update',
-    read: false,
-    priority: 'high',
-    actionRequired: false,
-    actionUrl: '/tenant/requests',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e723"),
     userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     title: 'Lease Renewal Notice',
@@ -926,19 +827,6 @@ const notifications = db.notifications.insertMany([
     actionUrl: '/tenant/payments',
     createdAt: new Date(Date.now() - 2*24*60*60*1000),
     updatedAt: new Date(Date.now() - 2*24*60*60*1000)
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e725"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    title: 'New Maintenance Request',
-    message: 'A new high-priority maintenance request has been assigned to you. Please review and take action.',
-    type: 'task_assignment',
-    read: false,
-    priority: 'high',
-    actionRequired: true,
-    actionUrl: '/caretaker/tasks',
-    createdAt: new Date(),
-    updatedAt: new Date()
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e726"),
@@ -1059,18 +947,6 @@ const auditLogs = db.audit_logs.insertMany([
     timestamp: new Date()
   },
   {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e743"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    action: 'maintenance_request_created',
-    resource: 'maintenance_requests',
-    details: {
-      requestId: maintenanceRequests.insertedIds["67b2a1e0c9e4b8a3d4f5e6f1"],
-      priority: 'high',
-      title: 'AC repair'
-    },
-    timestamp: new Date()
-  },
-  {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e744"),
     userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
     action: 'task_assigned',
@@ -1106,18 +982,6 @@ const auditLogs = db.audit_logs.insertMany([
       newPhone: '+27823456791'
     },
     timestamp: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e747"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
-    action: 'task_completed',
-    resource: 'caretaker_tasks',
-    details: {
-      taskId: maintenanceRequests.insertedIds["67b2a1e0c9e4b8a3d4f5e6f3"],
-      completionTime: '2 hours',
-      cost: 1150
-    },
-    timestamp: new Date(Date.now() - 7*24*60*60*1000)
   },
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e748"),
