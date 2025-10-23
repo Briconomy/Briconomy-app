@@ -95,6 +95,21 @@ function MaintenanceRequestsPage() {
     [user?.id]
   );
 
+  const handleDeleteRequest = async (requestId: string, requestTitle: string) => {
+    if (!confirm(`Are you sure you want to delete the request "${requestTitle}"?`)) {
+      return;
+    }
+
+    try {
+      await maintenanceApi.delete(requestId);
+      await refetchRequests();
+      alert('Request deleted successfully');
+    } catch (error) {
+      console.error('[MaintenanceRequestsPage] Error deleting request:', error);
+      alert('Failed to delete request. Please try again.');
+    }
+  };
+
   const { data: leases, loading: leasesLoading } = useApi(
     () => leasesApi.getAll({ tenantId: user?.id || '507f1f77bcf86cd799439012' }),
     [user?.id]
@@ -371,10 +386,22 @@ return (
                         </div>
                       )}
                     </div>
-                    <div className="item-actions">
+                    <div className="item-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span className={`status-badge ${getStatusColor(request.status)}`}>
                         {request.status.replace('_', ' ').toUpperCase()}
                       </span>
+                      {/* #COMPLETION_DRIVE: Only allow deleting pending requests that haven't been assigned */}
+                      {/* #SUGGEST_VERIFY: Verify tenant can only delete their own pending/unassigned requests */}
+                      {request.status === 'pending' && !request.assignedTo && (
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                          onClick={() => handleDeleteRequest(request.id, request.title)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
