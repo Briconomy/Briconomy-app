@@ -1229,16 +1229,21 @@ export async function createLease(leaseData: Record<string, unknown>) {
     await connectToMongoDB();
     const leases = getCollection("leases");
 
-    const leaseDoc = { ...leaseData, createdAt: new Date() };
+    const leaseDoc: Record<string, unknown> = { ...(leaseData as Record<string, unknown>), createdAt: new Date() };
 
-    if (leaseDoc.tenantId && typeof leaseDoc.tenantId === 'string') {
-      leaseDoc.tenantId = toId(leaseDoc.tenantId);
+    const leaseTenantId = leaseDoc["tenantId"];
+    if (typeof leaseTenantId === 'string') {
+      leaseDoc["tenantId"] = toId(leaseTenantId);
     }
-    if (leaseDoc.propertyId && typeof leaseDoc.propertyId === 'string') {
-      leaseDoc.propertyId = toId(leaseDoc.propertyId);
+
+    const leasePropertyId = leaseDoc["propertyId"];
+    if (typeof leasePropertyId === 'string') {
+      leaseDoc["propertyId"] = toId(leasePropertyId);
     }
-    if (leaseDoc.unitId && typeof leaseDoc.unitId === 'string') {
-      leaseDoc.unitId = toId(leaseDoc.unitId);
+
+    const leaseUnitId = leaseDoc["unitId"];
+    if (typeof leaseUnitId === 'string') {
+      leaseDoc["unitId"] = toId(leaseUnitId);
     }
 
     const result = await leases.insertOne(leaseDoc);
@@ -1393,7 +1398,7 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
     const { managerId, ...otherFilters } = filters;
     
     if (managerId) {
-      const pipeline = [
+      const pipeline: Record<string, unknown>[] = [
         {
           $lookup: {
             from: "leases",
@@ -1466,18 +1471,40 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
       
       if (Object.keys(otherFilters).length > 0) {
         pipeline.unshift({
-          $match: normalizeFilters(otherFilters) as Record<string, unknown>
+          $match: normalizeFilters(otherFilters)
         });
       }
       
-      const rows = await payments.aggregate(pipeline).toArray();
+      const rows = await payments.aggregate(pipeline).toArray() as Array<Record<string, unknown>>;
       return rows.map(row => {
-        const { _id, tenant, property, ...rest } = row;
+        const typedRow = row as Record<string, unknown> & {
+          _id: ObjectId;
+          tenant?: unknown;
+          property?: unknown;
+        };
+
+        const { _id, tenant, property, ...rest } = typedRow;
+
+        const tenantDetails = typeof tenant === 'object' && tenant !== null
+          ? tenant as { fullName?: string }
+          : undefined;
+
+        const propertyDetails = typeof property === 'object' && property !== null
+          ? property as { name?: string; _id?: unknown }
+          : undefined;
+
         return {
           id: String(_id),
           ...rest,
-          tenant: tenant ? { fullName: tenant.fullName } : undefined,
-          property: property ? { name: property.name, id: String(property._id) } : undefined
+          tenant: tenantDetails && typeof tenantDetails.fullName === 'string'
+            ? { fullName: tenantDetails.fullName }
+            : undefined,
+          property: propertyDetails && typeof propertyDetails.name === 'string'
+            ? {
+                name: propertyDetails.name,
+                id: propertyDetails._id !== undefined ? String(propertyDetails._id) : undefined
+              }
+            : undefined
         };
       });
     } else {
@@ -2919,8 +2946,6 @@ export async function getInvoicePdf(id: string) {
     }
     
     const artifacts = await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
-    const realPath = await Deno.realPath(artifacts.pdfPath);
-    const realRoot = await Deno.realPath(invoiceArtifactsRoot);
     const filenameBase = typeof (invoice as Record<string, unknown>).invoiceNumber === "string" && (invoice as Record<string, unknown>).invoiceNumber ? (invoice as Record<string, unknown>).invoiceNumber as string : id;
     const bytes = await Deno.readFile(artifacts.pdfPath);
     return { filename: `${sanitizeFileSegment(filenameBase)}.pdf`, bytes };
@@ -3405,9 +3430,11 @@ export async function getDocuments(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const documents = getCollection("documents");
-    
+
+    const matchFilters = normalizeFilters(filters);
+
     const pipeline = [
-      { $match: normalizeFilters(filters) },
+      { $match: matchFilters },
       {
         $lookup: {
           from: "leases",
@@ -3443,7 +3470,14 @@ export async function getDocuments(filters: Record<string, unknown> = {}) {
         $project: {
           lease: 0,
           property: 0,
-          unit: 0
+          unit: 0,
+          content: 0
+        }
+      },
+      {
+        $sort: {
+          uploadDate: -1,
+          createdAt: -1
         }
       }
     ];
@@ -3461,33 +3495,77 @@ export async function createDocument(documentData: Record<string, unknown>) {
     await connectToMongoDB();
     const documents = getCollection("documents");
 
+    const now = new Date();
+
     const docToInsert: Record<string, unknown> = {
       ...documentData,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
       status: documentData.status || 'active'
     };
 
-    if (docToInsert.leaseId && typeof docToInsert.leaseId === 'string') {
-      docToInsert.leaseId = toId(docToInsert.leaseId);
+    if (!docToInsert.uploadDate) {
+      docToInsert.uploadDate = now;
+    } else if (typeof docToInsert.uploadDate === 'string') {
+      docToInsert.uploadDate = new Date(docToInsert.uploadDate);
     }
-    if (docToInsert.propertyId && typeof docToInsert.propertyId === 'string') {
-      docToInsert.propertyId = toId(docToInsert.propertyId);
+
+    const idFields: Array<keyof Record<string, unknown>> = [
+      'leaseId',
+      'propertyId',
+      'unitId',
+      'tenantId',
+      'uploadedBy',
+      'userId',
+      'paymentId',
+      'invoiceId'
+    ];
+
+    for (const field of idFields) {
+      if (docToInsert[field] && typeof docToInsert[field] === 'string') {
+        docToInsert[field] = toId(docToInsert[field]);
+      }
     }
-    if (docToInsert.unitId && typeof docToInsert.unitId === 'string') {
-      docToInsert.unitId = toId(docToInsert.unitId);
+
+    if (!docToInsert.tenantId && docToInsert.userId instanceof ObjectId) {
+      docToInsert.tenantId = docToInsert.userId;
     }
-    if (docToInsert.tenantId && typeof docToInsert.tenantId === 'string') {
-      docToInsert.tenantId = toId(docToInsert.tenantId);
+
+    if (typeof docToInsert.fileSize === 'string') {
+      const parsedSize = Number(docToInsert.fileSize);
+      docToInsert.fileSize = Number.isNaN(parsedSize) ? undefined : parsedSize;
     }
-    if (docToInsert.uploadedBy && typeof docToInsert.uploadedBy === 'string') {
-      docToInsert.uploadedBy = toId(docToInsert.uploadedBy);
+
+    const metadata = (documentData as { metadata?: Record<string, unknown> }).metadata || {};
+
+    if (!docToInsert.fileName && typeof metadata.fileName === 'string') {
+      docToInsert.fileName = metadata.fileName;
+    }
+    if (!docToInsert.mimeType && typeof metadata.mimeType === 'string') {
+      docToInsert.mimeType = metadata.mimeType;
+    }
+    if (!docToInsert.fileSize && typeof metadata.fileSize === 'number') {
+      docToInsert.fileSize = metadata.fileSize;
+    }
+
+    if (typeof docToInsert.content === 'string' && !docToInsert.fileSize) {
+      const sanitized = docToInsert.content.replace(/[^A-Za-z0-9+/=]/g, '');
+      const estimated = Math.floor((sanitized.length * 3) / 4);
+      docToInsert.fileSize = estimated;
+    }
+
+    if (!docToInsert.uploadedByName && typeof documentData.uploadedByName === 'string') {
+      docToInsert.uploadedByName = documentData.uploadedByName;
     }
 
     const result = await documents.insertOne(docToInsert);
 
-    // Fetch the created document and return it mapped
     const createdDocument = await documents.findOne({ _id: result });
-    return mapDoc(createdDocument);
+    const mapped = mapDoc(createdDocument);
+    if (mapped && Object.prototype.hasOwnProperty.call(mapped, 'content')) {
+      delete (mapped as Record<string, unknown>).content;
+    }
+    return mapped;
   } catch (error) {
     console.error("Error creating document:", error);
     throw error;

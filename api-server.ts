@@ -1259,16 +1259,23 @@ serve(async (req) => {
     if (path[0] === 'api' && path[1] === 'documents') {
       if (req.method === 'GET' && !path[2]) {
         const filters: Record<string, unknown> = {};
-        
-        const typeParam = url.searchParams.get('type');
-        if (typeParam) filters.type = typeParam;
-        
-        const propertyIdParam = url.searchParams.get('propertyId');
-        if (propertyIdParam) filters.propertyId = propertyIdParam;
-        
-        const leaseIdParam = url.searchParams.get('leaseId');
-        if (leaseIdParam) filters.leaseId = leaseIdParam;
-        
+        const filterKeys: Array<[string, string]> = [
+          ['type', 'type'],
+          ['propertyId', 'propertyId'],
+          ['leaseId', 'leaseId'],
+          ['tenantId', 'tenantId'],
+          ['uploadedBy', 'uploadedBy'],
+          ['status', 'status'],
+          ['category', 'category']
+        ];
+
+        for (const [queryKey, filterKey] of filterKeys) {
+          const value = url.searchParams.get(queryKey);
+          if (value) {
+            filters[filterKey] = value;
+          }
+        }
+
         const documents = await getDocuments(filters);
         return new Response(JSON.stringify(documents), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -1277,10 +1284,10 @@ serve(async (req) => {
 
       if (req.method === 'POST' && !path[2]) {
         const body = await req.json();
-        const result = await createDocument(body);
-        const insertedId = (result as { insertedId?: unknown }).insertedId;
-        return new Response(JSON.stringify(insertedId?.toString()), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        const document = await createDocument(body);
+        return new Response(JSON.stringify(document), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
         });
       }
 
