@@ -1420,8 +1420,8 @@ export async function updatePaymentStatus(id: string, status: string) {
     const payments = getCollection("payments");
     const result = await payments.updateOne(
       { _id: new ObjectId(id) },
-      { 
-        $set: { 
+      {
+        $set: {
           status,
           paymentDate: status === 'paid' ? new Date() : null,
           updatedAt: new Date()
@@ -1431,6 +1431,53 @@ export async function updatePaymentStatus(id: string, status: string) {
     return result;
   } catch (error) {
     console.error("Error updating payment status:", error);
+    throw error;
+  }
+}
+
+export async function approvePayment(id: string, managerId: string, notes?: string) {
+  try {
+    await connectToMongoDB();
+    const payments = getCollection("payments");
+    const result = await payments.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status: 'paid',
+          approvedBy: managerId,
+          approvalNotes: notes || '',
+          approvedAt: new Date(),
+          paymentDate: new Date(),
+          updatedAt: new Date()
+        }
+      }
+    );
+    return result;
+  } catch (error) {
+    console.error("Error approving payment:", error);
+    throw error;
+  }
+}
+
+export async function rejectPayment(id: string, managerId: string, notes?: string) {
+  try {
+    await connectToMongoDB();
+    const payments = getCollection("payments");
+    const result = await payments.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status: 'rejected',
+          rejectedBy: managerId,
+          rejectionNotes: notes || '',
+          rejectedAt: new Date(),
+          updatedAt: new Date()
+        }
+      }
+    );
+    return result;
+  } catch (error) {
+    console.error("Error rejecting payment:", error);
     throw error;
   }
 }

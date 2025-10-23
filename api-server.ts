@@ -15,6 +15,8 @@ import {
   getPayments,
   createPayment,
   updatePaymentStatus,
+  approvePayment,
+  rejectPayment,
   getMaintenanceRequests,
   createMaintenanceRequest,
   updateMaintenanceRequest,
@@ -500,6 +502,27 @@ serve(async (req) => {
         const filters = Object.fromEntries(url.searchParams);
         const payments = await getPayments(filters);
         return new Response(JSON.stringify(payments), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST' && path[2] === 'approve' && path[2]) {
+        // POST /api/payments/:id/approve
+        const body = await req.json();
+        const payment = await approvePayment(path[2], body.managerId, body.notes);
+        return new Response(JSON.stringify(payment), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST' && path[3] === 'approve') {
+        // POST /api/payments/:id/approve
+        const body = await req.json();
+        const payment = await approvePayment(path[2], body.managerId, body.notes);
+        return new Response(JSON.stringify(payment), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'POST' && path[3] === 'reject') {
+        // POST /api/payments/:id/reject
+        const body = await req.json();
+        const payment = await rejectPayment(path[2], body.managerId, body.notes);
+        return new Response(JSON.stringify(payment), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else if (req.method === 'POST') {
