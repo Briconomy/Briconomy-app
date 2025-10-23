@@ -7,6 +7,7 @@ import ChartCard from "../components/ChartCard.tsx";
 import AIButton from '../components/AIButton.tsx';
 import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
+import LanguageSelector from '../components/LanguageSelector.tsx';
 import Icon from '../components/Icon.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
@@ -18,6 +19,7 @@ function ManagerDashboard() {
   const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
   // API calls for real-time data - FILTERED BY MANAGER ID
   const { data: dashboardStats, loading: statsLoading, error: statsError } = useApi(
@@ -77,7 +79,7 @@ function ManagerDashboard() {
           <div className="page-subtitle">{t('dashboard.listings_leases_payments')}</div>
           {hasError && (
             <div className="offline-indicator">
-              <span>Some data may be unavailable</span>
+              <span>{t('dashboard.some_data_unavailable')}</span>
             </div>
           )}
         </div>
@@ -93,7 +95,7 @@ function ManagerDashboard() {
           />
           <StatCard 
             value={leases?.filter(l => l.status === 'active')?.length?.toString() || '0'} 
-            label="Active Leases" 
+            label={t('dashboard.active_leases')} 
           />
           <StatCard 
             value={maintenanceRequests?.length?.toString() || '0'} 
@@ -115,8 +117,8 @@ function ManagerDashboard() {
           <ActionCard
             to="/manager/applications"
             icon={<Icon name="users" alt="Applications" />}
-            title="Applications"
-            description="Review tenant applications"
+            title={t('dashboard.applications')}
+            description={t('dashboard.review_tenant_applications')}
           />
           <ActionCard
             to="/manager/leases"
@@ -145,6 +147,12 @@ function ManagerDashboard() {
             title={t('manager.announcements')}
             description={t('manager.property_updates')}
           />
+          <ActionCard
+            onClick={() => setShowLanguageSelector(true)}
+            icon={<Icon name="language" alt="Language" />}
+            title={t('settings.change_language')}
+            description={t('settings.language_description')}
+          />
         </div>
         <div className="ai-button-container">
         <AIButton 
@@ -170,6 +178,14 @@ function ManagerDashboard() {
         <AnnouncementSystem 
           onClose={() => setShowAnnouncements(false)}
           userRole="manager"
+        />
+      )}
+
+      {/* Language Selector Modal */}
+      {showLanguageSelector && (
+        <LanguageSelector
+          isOpen={showLanguageSelector}
+          onClose={() => setShowLanguageSelector(false)}
         />
       )}
     </div>
