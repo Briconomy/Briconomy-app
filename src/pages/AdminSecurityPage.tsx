@@ -269,7 +269,7 @@ function AdminSecurityPage() {
           <div className="table-header">
             <div className="table-title">{t('security.auth_methods')}</div>
           </div>
-          
+
           {configLoading ? (
             <div className="list-item">
               <div className="item-info">
@@ -277,48 +277,67 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : securityConfig && securityConfig.length > 0 ? (
-            securityConfig.map((config, index) => (
-              <div key={`auth-${config.method}-${index}`} className="list-item">
-                <div className="item-info">
-                  <h4>{config.method}</h4>
-                  <p>{config.description}</p>
+            securityConfig.map((config, index) => {
+              const isEnabled = config.status === 'enabled';
+              const buttonStyles = isEnabled ? {
+                background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                boxShadow: '0 3px 10px rgba(220, 53, 69, 0.3)'
+              } : {
+                background: 'linear-gradient(135deg, #28a745 0%, #218838 100%)',
+                boxShadow: '0 3px 10px rgba(40, 167, 69, 0.3)'
+              };
+
+              return (
+                <div key={`auth-${config.method}-${index}`} className="list-item">
+                  <div className="item-info">
+                    <h4>{config.method}</h4>
+                    <p>{config.description}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span
+                      className={`status-badge status-${config.status}`}
+                      style={{
+                        minWidth: '80px',
+                        width: '80px',
+                        textAlign: 'center',
+                        display: 'inline-block',
+                        marginTop: '5px'
+                      }}
+                    >
+                      {config.status}
+                    </span>
+                    <button
+                      type="button"
+                      style={{
+                        ...buttonStyles,
+                        color: 'white',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        width: '120px',
+                        textAlign: 'center',
+                        marginTop: '5px'
+                      }}
+                      onClick={() => handleToggleAuthMethod(config)}
+                    >
+                      {isEnabled ? t('security.disable') : t('security.enable')}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <span className={`status-badge status-${config.status}`}>{config.status}</span>
-                  <button 
-                    type="button" 
-                    style={{
-                      background: config.status === 'enabled' 
-                        ? 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)'
-                        : 'linear-gradient(135deg, #28a745 0%, #218838 100%)',
-                      color: 'white',
-                      padding: '10px 20px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontWeight: '600',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      boxShadow: config.status === 'enabled'
-                        ? '0 3px 10px rgba(220, 53, 69, 0.3)'
-                        : '0 3px 10px rgba(40, 167, 69, 0.3)',
-                      transition: 'all 0.3s ease',
-                      minWidth: '90px'
-                    }}
-                    onClick={() => handleToggleAuthMethod(config)}
-                  >
-                    {config.status === 'enabled' ? t('security.disable') : t('security.enable')}
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="list-item">
               <div className="item-info">
                 <h4>No authentication methods found</h4>
                 <p>Database connection issue or auth_config collection needs initialization. Check console for details.</p>
               </div>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 style={{
                   background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
                   color: 'white',

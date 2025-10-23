@@ -2935,3 +2935,14 @@ body {
     width : 360px;
     margin-top: -5px;
 }
+
+.btn.btn-primary.landing-btn {
+    background: #162F1B;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.btn.btn-secondary.btn-block2{
+    width: 100%;
+    margin-top: 2px
+}

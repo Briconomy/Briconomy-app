@@ -334,7 +334,7 @@ function LoginPage() {
           
           <button 
             type="button" 
-            className="btn btn-secondary btn-block"
+            className="btn btn-secondary btn-block2"
           >
             Biometric Login
           </button>
