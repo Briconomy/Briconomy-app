@@ -82,7 +82,13 @@ function CaretakerDashboard() {
 
   const handleStatusChange = async (requestId: string, newStatus: string) => {
     try {
-      await maintenanceApi.update(requestId, { status: newStatus });
+      const updateData: any = { status: newStatus };
+      // #COMPLETION_DRIVE: When caretaker picks up work, assign it to them
+      // #SUGGEST_VERIFY: Verify assignedTo is set to caretaker ID when starting work
+      if (newStatus === 'in_progress') {
+        updateData.assignedTo = user?.id;
+      }
+      await maintenanceApi.update(requestId, updateData);
       await refetchTasks();
     } catch (error) {
       console.error('[CaretakerDashboard] Error updating status:', error);

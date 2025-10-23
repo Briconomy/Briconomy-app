@@ -1550,16 +1550,20 @@ export async function updateMaintenanceRequest(id: string, updateData: Record<st
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
     const notifications = getCollection("notifications");
-    
+
     const existingRequest = await requests.findOne({ _id: new ObjectId(id) });
-    
+
     if (!existingRequest) {
       throw new Error('Maintenance request not found');
     }
-    
-    const updateDoc: Record<string, unknown> = { 
-      ...updateData, 
-      updatedAt: new Date() 
+
+    // #COMPLETION_DRIVE: Normalize ID fields to ObjectId format for consistent database storage
+    // #SUGGEST_VERIFY: Ensure all ID fields are properly converted before storage (especially assignedTo)
+    const normalizedData = normalizeFilters(updateData);
+
+    const updateDoc: Record<string, unknown> = {
+      ...normalizedData,
+      updatedAt: new Date()
     };
     
     if (updateData.status === 'completed' && !existingRequest.completedAt) {

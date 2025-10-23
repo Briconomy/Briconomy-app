@@ -92,8 +92,10 @@ function CaretakerTasksPage() {
         status: newStatus
       };
       
-      if (user?.id) {
-        updateData.assignedTo = user.fullName || user.id;
+      if (user?.id && newStatus === 'in_progress') {
+        // #COMPLETION_DRIVE: Only assign to caretaker when starting work
+        // #SUGGEST_VERIFY: Ensure assignedTo is set to ObjectId, not name
+        updateData.assignedTo = user.id;
       }
       
       if (newStatus === 'completed') {
