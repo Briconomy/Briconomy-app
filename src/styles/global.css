@@ -187,6 +187,12 @@ body {
     gap: var(--space-sm);
 }
 
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
 .back-btn {
     background: var(--background);
     border: 1px solid var(--border);
