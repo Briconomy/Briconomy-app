@@ -6,6 +6,7 @@ import ManagerPropertyCard from '../components/ManagerPropertyCard.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 type ManagerProperty = {
   id: string;
@@ -14,11 +15,13 @@ type ManagerProperty = {
   totalUnits: number;
   occupiedUnits: number;
   type: string;
+  updatedAt: string | number | Date;
   [key: string]: unknown;
 };
 
 function ManagerPropertiesPage() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [properties, setProperties] = useState<ManagerProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +39,7 @@ function ManagerPropertiesPage() {
 
   useEffect(() => {
     fetchProperties();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     filterProperties();
@@ -46,7 +49,7 @@ function ManagerPropertiesPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await propertiesApi.getAll();
+      const data = await propertiesApi.getAll({ managerId: user?.id });
       const propertyList: ManagerProperty[] = Array.isArray(data)
         ? data.map((item) => {
             if (!item || typeof item !== 'object') {
@@ -57,6 +60,7 @@ function ManagerPropertiesPage() {
                 totalUnits: 0,
                 occupiedUnits: 0,
                 type: 'property',
+                updatedAt: new Date().toISOString(),
               } satisfies ManagerProperty;
             }
             const record = item as Record<string, unknown>;
@@ -67,6 +71,7 @@ function ManagerPropertiesPage() {
               totalUnits: typeof record.totalUnits === 'number' ? record.totalUnits : 0,
               occupiedUnits: typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0,
               type: typeof record.type === 'string' ? record.type : 'property',
+              updatedAt: (typeof record.updatedAt === 'string' || typeof record.updatedAt === 'number' || record.updatedAt instanceof Date) ? record.updatedAt : new Date().toISOString(),
             };
             return { ...record, ...normalized } as ManagerProperty;
           })
@@ -94,20 +99,8 @@ function ManagerPropertiesPage() {
     setFilteredProperties(filtered);
   };
 
-  const handleViewDetails = (propertyId: string) => {
-    globalThis.location.href = `/property/${propertyId}`;
-  };
-
   const handleEditProperty = (propertyId: string) => {
     globalThis.location.href = `/property/${propertyId}/edit`;
-  };
-
-  const handleManageUnits = (propertyId: string) => {
-    globalThis.location.href = `/property/${propertyId}/units`;
-  };
-
-  const handleViewTenants = (propertyId: string) => {
-    globalThis.location.href = `/property/${propertyId}/tenants`;
   };
 
   const handleAddProperty = () => {
@@ -213,10 +206,7 @@ function ManagerPropertiesPage() {
             <ManagerPropertyCard
               key={property.id}
               property={property}
-              onViewDetails={handleViewDetails}
               onEditProperty={handleEditProperty}
-              onManageUnits={handleManageUnits}
-              onViewTenants={handleViewTenants}
               lowBandwidthMode={lowBandwidthMode}
             />
           ))}

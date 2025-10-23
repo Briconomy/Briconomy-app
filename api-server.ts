@@ -5,6 +5,7 @@ import {
   getProperties,
   getPropertyById,
   createProperty,
+  updateProperty,
   getUnits,
   createUnit,
   getLeases,
@@ -431,6 +432,13 @@ serve(async (req) => {
         return new Response(JSON.stringify(property), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
+        });
+      } else if (req.method === 'PUT' && path[2]) {
+        const propertyId = path[2];
+        const body = await req.json();
+        const result = await updateProperty(propertyId, body);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     }

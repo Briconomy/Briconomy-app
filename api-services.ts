@@ -24,6 +24,7 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
     "caretakerId",
     "userId",
     "assignedTo",
+    "managerId",
   ]);
   
   // Keys to exclude from database queries (cache-busting, metadata, etc.)

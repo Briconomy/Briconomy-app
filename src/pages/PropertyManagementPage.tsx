@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -11,6 +11,7 @@ function PropertyManagementPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [loadingProperty, setLoadingProperty] = useState(false);
   const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -18,16 +19,51 @@ function PropertyManagementPage() {
     address: '',
     type: 'apartment',
     totalUnits: '',
+    description: '',
     amenities: []
   });
 
   const isMaintenanceView = location.pathname.includes('/maintenance');
-  const isNewProperty = id === 'new';
+  const isNewProperty = id === 'new' || !id;
+  const isEditMode = id && id !== 'new' && !isMaintenanceView;
 
-  console.log('PropertyManagementPage - id:', id);
-  console.log('PropertyManagementPage - isNewProperty:', isNewProperty);
-  console.log('PropertyManagementPage - isMaintenanceView:', isMaintenanceView);
-  console.log('PropertyManagementPage - pathname:', location.pathname);
+  useEffect(() => {
+    if (isEditMode && id) {
+      loadPropertyData(id);
+    }
+  }, [id, isEditMode]);
+
+  const loadPropertyData = async (propertyId: string) => {
+    try {
+      setLoadingProperty(true);
+      setError(null);
+      const property = await propertiesApi.getById(propertyId);
+      
+      if (!property) {
+        setError('Property not found');
+        return;
+      }
+
+      if (property.managerId !== user?.id) {
+        setError('You do not have permission to edit this property');
+        return;
+      }
+
+      setFormData({
+        name: property.name || '',
+        address: property.address || '',
+        type: property.type || 'apartment',
+        totalUnits: property.totalUnits?.toString() || '',
+        description: property.description || '',
+        amenities: property.amenities || []
+      });
+    } catch (err) {
+      console.error('Error loading property:', err);
+      setError('Failed to load property data');
+    } finally {
+      setLoadingProperty(false);
+    }
+  };
 
   const navItems = [
     { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics' },
@@ -43,26 +79,31 @@ function PropertyManagementPage() {
     
     try {
       const totalUnits = parseInt(formData.totalUnits);
-      const newProperty = {
+      const propertyData = {
         name: formData.name,
         address: formData.address,
         type: formData.type,
         totalUnits,
-        occupiedUnits: 0,
-        status: 'active',
         amenities: formData.amenities,
-        managerId: user?.id || null,
-        description: ''
+        description: formData.description
       };
-      
-      await propertiesApi.create(newProperty);
-      
-      setFormData({ name: '', address: '', type: 'apartment', totalUnits: '', amenities: [] });
+
+      if (isEditMode && id) {
+        await propertiesApi.update(id, propertyData);
+      } else {
+        const newProperty = {
+          ...propertyData,
+          occupiedUnits: 0,
+          status: 'active',
+          managerId: user?.id || null
+        };
+        await propertiesApi.create(newProperty);
+      }
       
       navigate('/manager/properties');
     } catch (err) {
-      console.error('Error creating property:', err);
-      setError('Failed to create property. Please try again.');
+      console.error('Error saving property:', err);
+      setError(isEditMode ? 'Failed to update property. Please try again.' : 'Failed to create property. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -84,10 +125,15 @@ return (
       <TopNav showLogout showBackButton />
       
       <div className="main-content">
-        {loading ? (
+        {loadingProperty ? (
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading...</p>
+            <p>Loading property data...</p>
+          </div>
+        ) : loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Saving...</p>
           </div>
         ) : error ? (
           <div className="error-state">
@@ -109,11 +155,11 @@ return (
               </button>
             </div>
           </>
-        ) : isNewProperty ? (
+        ) : isNewProperty || isEditMode ? (
           <>
             <div className="page-header">
-              <div className="page-title">Add New Property</div>
-              <div className="page-subtitle">Create a new property listing</div>
+              <div className="page-title">{isEditMode ? 'Edit Property' : 'Add New Property'}</div>
+              <div className="page-subtitle">{isEditMode ? 'Update property details' : 'Create a new property listing'}</div>
             </div>
             <div className="form-container">
               <form onSubmit={handleSubmitProperty} className="property-form">
@@ -162,6 +208,16 @@ return (
                     placeholder="Number of units"
                   />
                 </div>
+
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Brief description of the property"
+                    rows={3}
+                  />
+                </div>
                 
                 <div className="form-group">
                   <label>Amenities</label>
@@ -192,7 +248,7 @@ return (
                     className="btn btn-primary"
                     disabled={loading}
                   >
-                    {loading ? 'Creating...' : 'Create Property'}
+                    {loading ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Property')}
                   </button>
                 </div>
               </form>
