@@ -21,6 +21,9 @@ interface Invoice {
   description?: string;
   tenant?: { fullName: string };
   property?: { name: string; address: string };
+  propertyId?: string;
+  managerId?: string;
+  leaseId?: string;
 }
 
 interface PaymentFormData {
@@ -96,11 +99,12 @@ function TenantPaymentsPage() {
 
     setSubmitting(true);
     try {
-      // Create payment record
       const paymentData = {
         tenantId: user?.id,
-        leaseId: selectedInvoice.id,
+        leaseId: selectedInvoice.leaseId || selectedInvoice.id,
         invoiceId: selectedInvoice.id,
+        propertyId: selectedInvoice.propertyId,
+        managerId: selectedInvoice.managerId,
         amount: selectedInvoice.amount,
         dueDate: selectedInvoice.dueDate,
         method: selectedPaymentMethod,
@@ -111,6 +115,11 @@ function TenantPaymentsPage() {
       };
 
       await paymentsApi.create(paymentData);
+
+      await invoicesApi.update(selectedInvoice.id, {
+        status: 'paid',
+        paidAt: new Date().toISOString()
+      });
 
       alert('Payment submitted successfully!');
       setShowCheckout(false);
