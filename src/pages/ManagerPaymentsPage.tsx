@@ -44,6 +44,7 @@ function ManagerPaymentsPage() {
     [user?.id]
   );
 
+
   // Calculate stats
   const getPaymentStats = () => {
     if (!payments) return { totalDue: 0, pendingApproval: 0, overdue: 0, paid: 0 };
@@ -203,8 +204,22 @@ function ManagerPaymentsPage() {
 
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Payments</div>
-          <div className="page-subtitle">Manage tenant payments and invoices</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div className="page-title">Payments</div>
+              <div className="page-subtitle">Manage tenant payments and invoices</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetchPayments()}
+              disabled={paymentsLoading}
+              className="btn btn-secondary"
+              style={{ fontSize: '13px', padding: '8px 12px' }}
+              title="Refresh payment data"
+            >
+              {paymentsLoading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
         </div>
 
         {/* Stats */}

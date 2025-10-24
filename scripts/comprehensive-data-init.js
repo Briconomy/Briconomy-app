@@ -766,7 +766,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e1"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
     amount: 12500,
     paymentDate: new Date('2025-08-05'),
     dueDate: new Date('2025-08-01'),
@@ -780,7 +780,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e2"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
     amount: 12500,
     paymentDate: null,
     dueDate: new Date('2025-09-26'),
@@ -794,7 +794,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e9"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
     amount: 12500,
     paymentDate: null,
     dueDate: new Date('2025-10-31'),
@@ -809,7 +809,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e3"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
     amount: 15000,
     paymentDate: new Date('2025-08-10'),
     dueDate: new Date('2025-08-01'),
@@ -823,7 +823,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e4"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
     amount: 15000,
     paymentDate: null,
     dueDate: new Date('2025-09-16'),
@@ -837,7 +837,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6ea"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
     amount: 15000,
     paymentDate: null,
     dueDate: new Date('2025-10-31'),
@@ -852,7 +852,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e5"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
     amount: 9500,
     paymentDate: new Date('2025-08-05'),
     dueDate: new Date('2025-08-01'),
@@ -866,7 +866,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6eb"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
     amount: 9500,
     paymentDate: null,
     dueDate: new Date('2025-10-31'),
@@ -881,7 +881,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e6"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
     amount: 11500,
     paymentDate: new Date('2025-08-10'),
     dueDate: new Date('2025-08-01'),
@@ -895,7 +895,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6ec"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
     amount: 11500,
     paymentDate: null,
     dueDate: new Date('2025-10-31'),
@@ -910,7 +910,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e7"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
     amount: 18000,
     paymentDate: new Date('2025-08-05'),
     dueDate: new Date('2025-08-01'),
@@ -924,7 +924,7 @@ const payments = db.payments.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6e8"),
     tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
-    leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"],
+    leaseId: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
     amount: 18000,
     paymentDate: null,
     dueDate: new Date('2025-10-31'),
