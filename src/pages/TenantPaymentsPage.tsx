@@ -10,6 +10,7 @@ import Icon from '../components/Icon.tsx';
 import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { notificationService } from '../services/notifications.ts';
 
 interface Invoice {
   id: string;
@@ -120,6 +121,10 @@ function TenantPaymentsPage() {
         status: 'paid',
         paidAt: new Date().toISOString()
       });
+
+      // #COMPLETION_DRIVE: Send payment confirmation notification to trigger manager update
+      // #SUGGEST_VERIFY: Backend creates notification that broadcasts to manager via WebSocket
+      notificationService.sendPaymentConfirmation(selectedInvoice.amount, selectedPaymentMethod.label || 'Unknown');
 
       alert('Payment submitted successfully!');
       setShowCheckout(false);

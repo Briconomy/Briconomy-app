@@ -1120,62 +1120,6 @@ const reports = db.reports.insertMany([
   }
 ]);
 
-// Create notifications with proper references
-const _notifications = db.notifications.insertMany([
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e721"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    title: 'Rent Due Reminder',
-    message: 'Your rent payment for September 2024 is due in 5 days. Please ensure payment is made on time to avoid late fees.',
-    type: 'payment_reminder',
-    read: false,
-    priority: 'medium',
-    actionRequired: true,
-    actionUrl: '/tenant/payments',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e723"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
-    title: 'Lease Renewal Notice',
-    message: 'Your lease expires in 60 days. Please contact management to discuss renewal options.',
-    type: 'lease_renewal',
-    read: true,
-    priority: 'medium',
-    actionRequired: true,
-    actionUrl: '/tenant/profile',
-    createdAt: new Date(Date.now() - 3*24*60*60*1000),
-    updatedAt: new Date(Date.now() - 3*24*60*60*1000)
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e724"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
-    title: 'Payment Confirmation',
-    message: 'Your rent payment for August 2024 has been successfully processed. Thank you for your payment.',
-    type: 'payment_confirmation',
-    read: false,
-    priority: 'low',
-    actionRequired: false,
-    actionUrl: '/tenant/payments',
-    createdAt: new Date(Date.now() - 2*24*60*60*1000),
-    updatedAt: new Date(Date.now() - 2*24*60*60*1000)
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e726"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
-    title: 'Monthly Report Available',
-    message: 'The monthly financial report for Blue Hills Apartments is now available for review.',
-    type: 'report_available',
-    read: false,
-    priority: 'medium',
-    actionRequired: false,
-    actionUrl: '/manager/reports',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]);
-
 // Create settings with proper references
 const _settings = db.settings.insertMany([
   {

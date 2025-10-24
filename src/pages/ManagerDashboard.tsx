@@ -41,7 +41,7 @@ function ManagerDashboard() {
     () => user?.id ? leasesApi.getAll() : Promise.resolve([]),
     [user?.id]
   );
-  
+
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: true },
     { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },

@@ -536,6 +536,20 @@ serve(async (req) => {
       } else if (req.method === 'POST') {
         const body = await req.json();
         const payment = await createPayment(body);
+
+        // #COMPLETION_DRIVE: Create payment notification for manager to trigger auto-refresh
+        // #SUGGEST_VERIFY: Manager page refetches data when notification widget updates
+        if (body.managerId) {
+          const paymentNotification = {
+            userId: body.managerId,
+            type: 'payment_received',
+            title: 'Payment Received',
+            message: `Payment of R${body.amount} has been received`,
+            read: false
+          };
+          await createNotification(paymentNotification, { broadcastToUsers });
+        }
+
         return new Response(JSON.stringify(payment), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
