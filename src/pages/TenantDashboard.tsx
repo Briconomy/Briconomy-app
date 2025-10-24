@@ -28,12 +28,12 @@ function TenantDashboard() {
   ];
 
   // Only make API calls after user is loaded
-  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(
+  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = useApi(
     () => user?.id ? paymentsApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
     [user?.id]
   );
 
-  const { data: lease, loading: leaseLoading, error: leaseError } = useApi(
+  const { data: lease, loading: leaseLoading, error: leaseError, refetch: refetchLease } = useApi(
     () => user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
     [user?.id]
   );
@@ -53,6 +53,11 @@ function TenantDashboard() {
       loadNotifications();
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    refetchPayments();
+    refetchLease();
+  }, []);
 
   const loadNotifications = async () => {
     try {
