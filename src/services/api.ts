@@ -176,9 +176,33 @@ export const invoicesApi = {
   delete: (id: string) => apiRequest(`/api/invoices/${id}`, {
     method: 'DELETE',
   }),
-  download: (id: string, format: 'pdf' | 'markdown') => apiRequest(`/api/invoices/${id}/${format}`, {
-    method: 'GET',
-  }),
+  download: async (id: string, format: 'pdf' | 'markdown') => {
+    const url = `${API_BASE_URL}/api/invoices/${id}/${format}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download invoice: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="?([^"]+)"?/);
+      const filename = filenameMatch ? filenameMatch[1] : `invoice-${id}.${format === 'pdf' ? 'pdf' : 'md'}`;
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Invoice download failed:', error);
+      throw error;
+    }
+  },
   generateMonthly: () => apiRequest('/api/invoices/generate-monthly', {
     method: 'POST',
   }),

@@ -5,7 +5,6 @@ import StatCard from '../components/StatCard.tsx';
 import DataTable from '../components/DataTable.tsx';
 import InvoiceViewer from '../components/InvoiceViewer.tsx';
 import PaymentMethodSelector, { PaymentMethod } from '../components/PaymentMethodSelector.tsx';
-import PaymentProofUploader from '../components/PaymentProofUploader.tsx';
 import FakeCheckout from '../components/FakeCheckout.tsx';
 import Icon from '../components/Icon.tsx';
 import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
@@ -42,8 +41,6 @@ function TenantPaymentsPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentNotes, setPaymentNotes] = useState('');
-  const [paymentReference, setPaymentReference] = useState('');
-  const [proofFile, setProofFile] = useState<{ name: string; data: string; mimeType: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [_generatedReference, setGeneratedReference] = useState('');
 
@@ -107,25 +104,13 @@ function TenantPaymentsPage() {
         amount: selectedInvoice.amount,
         dueDate: selectedInvoice.dueDate,
         method: selectedPaymentMethod,
-        reference: selectedPaymentMethod === 'card' ? reference : (paymentReference || ''),
-        status: proofFile ? 'pending_approval' : 'paid',
+        reference: reference,
+        status: 'paid',
         notes: paymentNotes,
         paymentDate: new Date().toISOString()
       };
 
-      const createdPayment = await paymentsApi.create(paymentData);
-
-      // Upload proof if provided
-      if (proofFile) {
-        await documentsApi.uploadPaymentProof(
-          createdPayment.id,
-          proofFile.name,
-          proofFile.data,
-          proofFile.mimeType,
-          user?.id || '',
-          selectedInvoice.id
-        );
-      }
+      await paymentsApi.create(paymentData);
 
       alert('Payment submitted successfully!');
       setShowCheckout(false);
@@ -133,8 +118,6 @@ function TenantPaymentsPage() {
       setSelectedInvoice(null);
       setSelectedPaymentMethod(null);
       setPaymentNotes('');
-      setPaymentReference('');
-      setProofFile(null);
       setGeneratedReference('');
       refetchInvoices();
       refetchPayments();
@@ -151,22 +134,7 @@ function TenantPaymentsPage() {
       return;
     }
 
-    // For card payments, show fake checkout
-    if (selectedPaymentMethod === 'card') {
-      setShowCheckout(true);
-      return;
-    }
-
-    // For manual methods, require proof
-    if (!proofFile) {
-      alert('Please upload proof of payment');
-      return;
-    }
-
-    // Generate reference for manual payments
-    const ref = `REF-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    setGeneratedReference(ref);
-    await handlePaymentComplete(ref);
+    setShowCheckout(true);
   };
 
   const paymentHistoryColumns = [
@@ -322,8 +290,6 @@ function TenantPaymentsPage() {
                     setSelectedInvoice(null);
                     setSelectedPaymentMethod(null);
                     setPaymentNotes('');
-                    setPaymentReference('');
-                    setProofFile(null);
                   }}
                 >
                   Back to invoices
@@ -345,16 +311,6 @@ function TenantPaymentsPage() {
             <div className="section-card">
               <PaymentMethodSelector selected={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
 
-              {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
-                <div className="card-divider">
-                  <PaymentProofUploader
-                    onFileSelected={(name, data, mimeType) => {
-                      setProofFile({ name, data, mimeType });
-                    }}
-                  />
-                </div>
-              )}
-
               <div className="card-divider">
                 <label className="form-label" htmlFor="payment-notes">Additional notes</label>
                 <textarea
@@ -366,26 +322,12 @@ function TenantPaymentsPage() {
                 />
               </div>
 
-              {selectedPaymentMethod && selectedPaymentMethod !== 'card' && (
-                <div className="card-divider">
-                  <label className="form-label" htmlFor="payment-reference">Payment reference</label>
-                  <input
-                    id="payment-reference"
-                    type="text"
-                    className="form-input"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Add a bank or transaction reference"
-                  />
-                </div>
-              )}
-
               <div className="card-actions">
                 <button
                   type="button"
                   className="btn btn-primary full-width-button"
                   onClick={handleSubmitPayment}
-                  disabled={!selectedPaymentMethod || (selectedPaymentMethod !== 'card' && !proofFile) || submitting}
+                  disabled={!selectedPaymentMethod || submitting}
                 >
                   {submitting ? 'Processing payment...' : `Pay ${formatCurrency(selectedInvoice.amount)}`}
                 </button>

@@ -5,16 +5,10 @@ import BottomNav from '../components/BottomNav.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 
 interface PaymentMethodFormData {
-  type: 'bank_account' | 'credit_card' | 'debit_card' | 'eft';
+  type: 'credit_card';
   name: string;
   details: string;
   isDefault: boolean;
-  // Bank Account specific fields
-  bankName?: string;
-  accountNumber?: string;
-  branchCode?: string;
-  accountType?: string;
-  // Card specific fields
   cardNumber?: string;
   expiryDate?: string;
   cvv?: string;
@@ -27,14 +21,10 @@ function EditPaymentMethodPage() {
   const { id } = useParams<{ id: string }>();
   
   const [formData, setFormData] = useState<PaymentMethodFormData>({
-    type: 'bank_account',
+    type: 'credit_card',
     name: '',
     details: '',
     isDefault: false,
-    bankName: '',
-    accountNumber: '',
-    branchCode: '',
-    accountType: 'cheque',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -88,29 +78,17 @@ function EditPaymentMethodPage() {
       newErrors.name = 'Payment method name is required';
     }
 
-    if (formData.type === 'bank_account') {
-      if (!formData.bankName?.trim()) {
-        newErrors.bankName = 'Bank name is required';
-      }
-      if (!formData.accountNumber?.trim()) {
-        newErrors.accountNumber = 'Account number is required';
-      }
-      if (!formData.branchCode?.trim()) {
-        newErrors.branchCode = 'Branch code is required';
-      }
-    } else if (formData.type === 'credit_card' || formData.type === 'debit_card') {
-      if (!formData.cardNumber?.trim()) {
-        newErrors.cardNumber = 'Card number is required';
-      }
-      if (!formData.expiryDate?.trim()) {
-        newErrors.expiryDate = 'Expiry date is required';
-      }
-      if (!formData.cvv?.trim()) {
-        newErrors.cvv = 'CVV is required';
-      }
-      if (!formData.cardholderName?.trim()) {
-        newErrors.cardholderName = 'Cardholder name is required';
-      }
+    if (!formData.cardNumber?.trim()) {
+      newErrors.cardNumber = 'Card number is required';
+    }
+    if (!formData.expiryDate?.trim()) {
+      newErrors.expiryDate = 'Expiry date is required';
+    }
+    if (!formData.cvv?.trim()) {
+      newErrors.cvv = 'CVV is required';
+    }
+    if (!formData.cardholderName?.trim()) {
+      newErrors.cardholderName = 'Cardholder name is required';
     }
 
     setErrors(newErrors);
@@ -127,20 +105,11 @@ function EditPaymentMethodPage() {
     setIsLoading(true);
     
     try {
-      // Generate details string based on type
-      let details = '';
-      if (formData.type === 'bank_account') {
-        details = `${formData.bankName} - **** **** **** ${formData.accountNumber?.slice(-4)}`;
-      } else if (formData.type === 'credit_card' || formData.type === 'debit_card') {
-        details = `**** **** **** ${formData.cardNumber?.slice(-4)}`;
-      } else {
-        details = formData.details;
-      }
+      const details = `**** **** **** ${formData.cardNumber?.slice(-4)}`;
 
-      // Update payment method in localStorage
       const existingMethods = JSON.parse(localStorage.getItem('paymentMethods') || '[]');
       const methodIndex = existingMethods.findIndex((m: { id: string }) => m.id === id);
-      
+
       if (methodIndex !== -1) {
         const updatedMethod = {
           ...formData,
@@ -148,8 +117,7 @@ function EditPaymentMethodPage() {
           details,
           updatedAt: new Date().toISOString()
         };
-        
-        // If this is set as default, unset other defaults
+
         if (formData.isDefault) {
           existingMethods.forEach((method: { isDefault: boolean }, index: number) => {
             if (index !== methodIndex) {
@@ -157,12 +125,11 @@ function EditPaymentMethodPage() {
             }
           });
         }
-        
+
         existingMethods[methodIndex] = updatedMethod;
         localStorage.setItem('paymentMethods', JSON.stringify(existingMethods));
       }
 
-      // Navigate back to payment methods page
       navigate('/tenant/manage-payment-methods');
     } catch (error) {
       console.error('Error updating payment method:', error);
@@ -184,15 +151,6 @@ function EditPaymentMethodPage() {
     }
   };
 
-  const getMethodTypeName = (type: string) => {
-    switch (type) {
-      case 'bank_account': return 'Bank Account';
-      case 'credit_card': return 'Credit Card';
-      case 'debit_card': return 'Debit Card';
-      case 'eft': return 'EFT';
-      default: return 'Other';
-    }
-  };
 
   const formatCardNumber = (value: string) => {
     // Remove all non-digits
@@ -232,8 +190,8 @@ function EditPaymentMethodPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Edit Payment Method</div>
-          <div className="page-subtitle">Update your payment method details</div>
+          <div className="page-title">Edit Credit Card</div>
+          <div className="page-subtitle">Update your credit card details</div>
         </div>
 
         <form onSubmit={handleSubmit} className="form-container">
@@ -251,106 +209,21 @@ function EditPaymentMethodPage() {
 
           <div className="form-section">
             <div className="form-group">
-              <label htmlFor="type" className="form-label">Payment Method Type</label>
-              <select
-                id="type"
-                value={formData.type}
-                onChange={(e) => updateFormData('type', e.target.value)}
-                className="form-input"
-              >
-                <option value="bank_account">Bank Account</option>
-                <option value="credit_card">Credit Card</option>
-                <option value="debit_card">Debit Card</option>
-                <option value="eft">EFT</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="name" className="form-label">Method Name</label>
+              <label htmlFor="name" className="form-label">Card Nickname</label>
               <input
                 id="name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => updateFormData('name', e.target.value)}
                 className={`form-input ${errors.name ? 'form-input-error' : ''}`}
-                placeholder="e.g., Primary Bank Account"
+                placeholder="e.g., Primary Credit Card"
               />
               {errors.name && <div className="form-error">{errors.name}</div>}
             </div>
           </div>
 
-          {formData.type === 'bank_account' && (
-            <div className="form-section">
-              <h3 className="section-title">Bank Account Details</h3>
-              
-              <div className="form-group">
-                <label htmlFor="bankName" className="form-label">Bank Name</label>
-                <select
-                  id="bankName"
-                  value={formData.bankName}
-                  onChange={(e) => updateFormData('bankName', e.target.value)}
-                  className={`form-input ${errors.bankName ? 'form-input-error' : ''}`}
-                >
-                  <option value="">Select Bank</option>
-                  <option value="Standard Bank">Standard Bank</option>
-                  <option value="FNB">First National Bank (FNB)</option>
-                  <option value="ABSA">ABSA</option>
-                  <option value="Nedbank">Nedbank</option>
-                  <option value="Capitec">Capitec Bank</option>
-                  <option value="Discovery Bank">Discovery Bank</option>
-                  <option value="African Bank">African Bank</option>
-                  <option value="Investec">Investec</option>
-                </select>
-                {errors.bankName && <div className="form-error">{errors.bankName}</div>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="accountType" className="form-label">Account Type</label>
-                <select
-                  id="accountType"
-                  value={formData.accountType}
-                  onChange={(e) => updateFormData('accountType', e.target.value)}
-                  className="form-input"
-                >
-                  <option value="cheque">Cheque Account</option>
-                  <option value="savings">Savings Account</option>
-                  <option value="transmission">Transmission Account</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="accountNumber" className="form-label">Account Number</label>
-                <input
-                  id="accountNumber"
-                  type="text"
-                  value={formData.accountNumber}
-                  onChange={(e) => updateFormData('accountNumber', e.target.value.replace(/\D/g, ''))}
-                  className={`form-input ${errors.accountNumber ? 'form-input-error' : ''}`}
-                  placeholder="Enter account number"
-                  maxLength={12}
-                />
-                {errors.accountNumber && <div className="form-error">{errors.accountNumber}</div>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="branchCode" className="form-label">Branch Code</label>
-                <input
-                  id="branchCode"
-                  type="text"
-                  value={formData.branchCode}
-                  onChange={(e) => updateFormData('branchCode', e.target.value.replace(/\D/g, ''))}
-                  className={`form-input ${errors.branchCode ? 'form-input-error' : ''}`}
-                  placeholder="Enter branch code"
-                  maxLength={6}
-                />
-                {errors.branchCode && <div className="form-error">{errors.branchCode}</div>}
-              </div>
-            </div>
-          )}
-
-          {(formData.type === 'credit_card' || formData.type === 'debit_card') && (
-            <div className="form-section">
-              <h3 className="section-title">{getMethodTypeName(formData.type)} Details</h3>
+          <div className="form-section">
+            <h3 className="section-title">Credit Card Details</h3>
               
               <div className="form-group">
                 <label htmlFor="cardholderName" className="form-label">Cardholder Name</label>
@@ -409,7 +282,6 @@ function EditPaymentMethodPage() {
                 </div>
               </div>
             </div>
-          )}
 
           <div className="form-section">
             <div className="form-group">
