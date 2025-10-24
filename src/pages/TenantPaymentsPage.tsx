@@ -265,23 +265,12 @@ function TenantPaymentsPage() {
                         alert('Failed to download invoice');
                       }
                     }}
+                    onPay={(selectedInv) => {
+                      setSelectedInvoice(selectedInv);
+                      setPaymentMode(true);
+                    }}
                   />
                 ))}
-              </div>
-            )}
-
-            {pendingInvoices.length > 0 && (
-              <div className="section-card">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedInvoice(pendingInvoices[0] || null);
-                    setPaymentMode(true);
-                  }}
-                  className="btn btn-primary full-width-button"
-                >
-                  Start Payment
-                </button>
               </div>
             )}
           </div>

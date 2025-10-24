@@ -15,10 +15,11 @@ interface Invoice {
 interface InvoiceViewerProps {
   invoice: Invoice;
   onDownload?: (id: string, format: 'pdf' | 'markdown') => void;
+  onPay?: (invoice: Invoice) => void;
   isLoading?: boolean;
 }
 
-function InvoiceViewer({ invoice, onDownload, isLoading }: InvoiceViewerProps) {
+function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerProps) {
   const [expandedDetails, setExpandedDetails] = useState(false);
 
   const getStatusColor = (status: string) => {
@@ -182,25 +183,37 @@ function InvoiceViewer({ invoice, onDownload, isLoading }: InvoiceViewerProps) {
         gap: '8px',
         marginTop: '16px',
         paddingTop: '16px',
-        borderTop: '1px solid var(--border-primary)'
+        borderTop: '1px solid var(--border-primary)',
+        flexWrap: 'wrap'
       }}>
+        {invoice.status !== 'paid' && onPay && (
+          <button
+            type="button"
+            onClick={() => onPay(invoice)}
+            disabled={isLoading}
+            className="btn btn-primary"
+            style={{ flex: 1, minWidth: '100px', fontSize: '13px' }}
+          >
+            {isLoading ? '...' : 'Pay'}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onDownload?.(invoice.id, 'pdf')}
           disabled={isLoading}
           className="btn btn-secondary"
-          style={{ flex: 1, fontSize: '13px' }}
+          style={{ flex: 1, minWidth: '80px', fontSize: '13px' }}
         >
-          {isLoading ? '...' : '📄 PDF'}
+          {isLoading ? '...' : 'PDF'}
         </button>
         <button
           type="button"
           onClick={() => onDownload?.(invoice.id, 'markdown')}
           disabled={isLoading}
           className="btn btn-secondary"
-          style={{ flex: 1, fontSize: '13px' }}
+          style={{ flex: 1, minWidth: '80px', fontSize: '13px' }}
         >
-          {isLoading ? '...' : '📋 Details'}
+          {isLoading ? '...' : 'Details'}
         </button>
       </div>
     </div>
