@@ -21,6 +21,8 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.client.local
+.env.server.local
 
 # Logs
 logs

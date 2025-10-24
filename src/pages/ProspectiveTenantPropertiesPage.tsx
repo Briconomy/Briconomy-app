@@ -1,4 +1,4 @@
-import { useState, useEffect, SyntheticEvent } from 'react';
+import { useState, useEffect, SyntheticEvent, useMemo, useRef } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
@@ -7,6 +7,8 @@ import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import PropertyMap from '../components/PropertyMap.tsx';
+import { getRuntimeEnvValue } from '../utils/runtimeEnv.ts';
 
 type ProspectiveProperty = {
   id: string;
@@ -20,6 +22,11 @@ type ProspectiveProperty = {
   yearBuilt?: string | number;
   lastRenovation?: string | number;
   amenities: string[];
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+  rawAddress?: string;
+  placeId?: string;
   [key: string]: unknown;
 };
 
@@ -36,6 +43,10 @@ function ProspectiveTenantPropertiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [priceRange, setPriceRange] = useState<PriceRange>({ min: '', max: '' });
+  const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
+  const propertyRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const previousPreferenceSnapshot = useRef<string | null>(null);
+  const mapsApiKey = useMemo(() => getRuntimeEnvValue('VITE_GOOGLE_MAPS_API_KEY') ?? '', []);
 
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
@@ -60,12 +71,25 @@ function ProspectiveTenantPropertiesPage() {
 
   // Update search preferences in session when they change
   useEffect(() => {
-    updateSearchPreferences({
-      searchTerm,
-      selectedType,
-      priceRange
-    });
+    const snapshot = JSON.stringify({ searchTerm, selectedType, priceRange });
+    if (previousPreferenceSnapshot.current !== snapshot) {
+      previousPreferenceSnapshot.current = snapshot;
+      updateSearchPreferences({
+        searchTerm,
+        selectedType,
+        priceRange
+      });
+    }
   }, [searchTerm, selectedType, priceRange, updateSearchPreferences]);
+
+  useEffect(() => {
+    if (!activePropertyId) {
+      return;
+    }
+    if (!filteredProperties.some(property => property.id === activePropertyId)) {
+      setActivePropertyId(null);
+    }
+  }, [filteredProperties, activePropertyId]);
 
   const fetchProperties = async () => {
     try {
@@ -78,6 +102,42 @@ function ProspectiveTenantPropertiesPage() {
         setFilteredProperties([]);
         return;
       }
+
+      const parseNumeric = (value: unknown): number | null => {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          return value;
+        }
+        if (typeof value === 'string' && value.trim().length > 0) {
+          const parsed = Number.parseFloat(value.trim());
+          if (Number.isFinite(parsed)) {
+            return parsed;
+          }
+        }
+        return null;
+      };
+
+      const extractLocationDetails = (value: unknown) => {
+        if (!value || typeof value !== 'object') {
+          return { latitude: null, longitude: null, formattedAddress: undefined, placeId: undefined };
+        }
+        const source = value as Record<string, unknown>;
+        const latCandidate = parseNumeric(source.lat ?? source.latitude);
+        const lngCandidate = parseNumeric(source.lng ?? source.longitude);
+        const coordinatesArray = Array.isArray(source.coordinates) ? source.coordinates : undefined;
+        const formattedAddress = typeof source.formattedAddress === 'string' ? source.formattedAddress : undefined;
+        const placeId = typeof source.placeId === 'string' ? source.placeId : undefined;
+        if (latCandidate !== null && lngCandidate !== null) {
+          return { latitude: latCandidate, longitude: lngCandidate, formattedAddress, placeId };
+        }
+        if (coordinatesArray && coordinatesArray.length >= 2) {
+          const lngFromArray = parseNumeric(coordinatesArray[0]);
+          const latFromArray = parseNumeric(coordinatesArray[1]);
+          if (latFromArray !== null && lngFromArray !== null) {
+            return { latitude: latFromArray, longitude: lngFromArray, formattedAddress, placeId };
+          }
+        }
+        return { latitude: null, longitude: null, formattedAddress, placeId };
+      };
 
       const normalized: ProspectiveProperty[] = data.map((item) => {
         if (!item || typeof item !== 'object') {
@@ -101,11 +161,23 @@ function ProspectiveTenantPropertiesPage() {
         const amenities = Array.isArray(record.amenities)
           ? record.amenities.filter((value): value is string => typeof value === 'string')
           : [];
+        const rawAddress = typeof record.address === 'string' ? record.address : '';
+        const formattedAddress = typeof record.formattedAddress === 'string' ? record.formattedAddress : undefined;
+        const locationDetails = extractLocationDetails((record as { location?: unknown }).location);
+        const latitudeCandidate = parseNumeric(record.latitude);
+        const longitudeCandidate = parseNumeric(record.longitude);
+        const latitudeValue = latitudeCandidate ?? locationDetails.latitude;
+        const longitudeValue = longitudeCandidate ?? locationDetails.longitude;
+        const normalizedLatitude = latitudeValue !== null ? latitudeValue : undefined;
+        const normalizedLongitude = longitudeValue !== null ? longitudeValue : undefined;
+        const displayAddress = formattedAddress ?? locationDetails.formattedAddress ?? rawAddress;
 
         return {
           id,
           name: typeof record.name === 'string' ? record.name : 'Property',
-          address: typeof record.address === 'string' ? record.address : '',
+          address: displayAddress,
+          rawAddress,
+          formattedAddress: formattedAddress ?? locationDetails.formattedAddress,
           type: typeof record.type === 'string' ? record.type : 'apartment',
           totalUnits: typeof record.totalUnits === 'number' ? record.totalUnits : 0,
           occupiedUnits: typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0,
@@ -114,6 +186,9 @@ function ProspectiveTenantPropertiesPage() {
           yearBuilt: typeof record.yearBuilt === 'number' || typeof record.yearBuilt === 'string' ? record.yearBuilt : undefined,
           lastRenovation: typeof record.lastRenovation === 'number' || typeof record.lastRenovation === 'string' ? record.lastRenovation : undefined,
           amenities,
+          latitude: normalizedLatitude,
+          longitude: normalizedLongitude,
+          placeId: locationDetails.placeId,
         } satisfies ProspectiveProperty;
       });
 
@@ -222,6 +297,23 @@ function ProspectiveTenantPropertiesPage() {
       // Logged in - go to rental application
       navigate(`/apply/${propertyId}`);
     }
+  };
+
+  const handleMarkerSelect = (propertyId: string) => {
+    if (activePropertyId !== propertyId) {
+      setActivePropertyId(propertyId);
+    }
+    const element = propertyRefs.current[propertyId];
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleCardHover = (propertyId: string) => {
+    if (activePropertyId === propertyId) {
+      return;
+    }
+    setActivePropertyId(propertyId);
   };
 
   const getPropertyImage = (property: ProspectiveProperty) => {
@@ -347,13 +439,44 @@ function ProspectiveTenantPropertiesPage() {
           )}
         </div>
 
+        <div className="map-section">
+          <div className="map-section-header">
+            <div className="map-section-title">{t('prospect.map_view')}</div>
+            <div className="map-section-subtitle">{t('prospect.map_section_subtitle')}</div>
+          </div>
+          <PropertyMap
+            properties={filteredProperties}
+            apiKey={mapsApiKey}
+            activePropertyId={activePropertyId}
+            onMarkerSelect={handleMarkerSelect}
+            labels={{
+              unavailable: t('prospect.map_unavailable'),
+              loading: t('prospect.map_loading'),
+              noResults: t('prospect.map_no_results'),
+              interactionHint: t('prospect.map_interaction_hint'),
+            }}
+          />
+        </div>
+
         <div className="property-grid">
           {filteredProperties.map((property) => {
             const estimatedRent = calculateEstimatedRent(property);
             const availability = getPropertyAvailability(property);
+            const displayAddress = property.address || property.rawAddress || '';
 
             return (
-              <div key={property.id} className="property-card">
+              <div
+                key={property.id}
+                className={`property-card${activePropertyId === property.id ? ' is-active' : ''}`}
+                onMouseEnter={() => handleCardHover(property.id)}
+                ref={(element) => {
+                  if (element) {
+                    propertyRefs.current[property.id] = element;
+                  } else {
+                    delete propertyRefs.current[property.id];
+                  }
+                }}
+              >
                 <div className="property-image-container">
                   <div className="property-image">
                     <img 
@@ -374,7 +497,7 @@ function ProspectiveTenantPropertiesPage() {
                 <div className="property-info">
                   <div className="property-price">{formatCurrency(estimatedRent)}/month</div>
                   <div className="property-title">{property.name}</div>
-                  <div className="property-location">{property.address}</div>
+                  <div className="property-location">{displayAddress}</div>
                   
                   <div className="property-details">
                     <span className="property-type">{property.type}</span>

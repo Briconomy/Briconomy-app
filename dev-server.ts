@@ -196,7 +196,8 @@ async function handler(request: Request): Promise<Response> {
 
     // Build env script for client-side access to VITE variables
     const envVars = {
-      VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || ''
+      VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || '',
+      VITE_GOOGLE_MAPS_API_KEY: Deno.env.get('VITE_GOOGLE_MAPS_API_KEY') || ''
     };
     const envScript = `const __BRICONOMY_ENV__ = ${JSON.stringify(envVars)};`;
 

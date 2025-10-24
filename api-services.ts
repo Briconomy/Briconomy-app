@@ -391,6 +391,180 @@ function getDeletedCount(result: unknown): number {
   return typeof value === "number" ? value : 0;
 }
 
+type PropertyLocationPayload = {
+  latitude: number;
+  longitude: number;
+  formattedAddress?: string;
+  placeId?: string;
+  precision?: string;
+  source: "payload" | "geocoded";
+};
+
+function normalizeCoordinate(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.trim());
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function extractCoordinatesFromLocation(value: unknown): {
+  latitude: number | null;
+  longitude: number | null;
+  formattedAddress?: string;
+  placeId?: string;
+} {
+  if (!value || typeof value !== "object") {
+    return { latitude: null, longitude: null };
+  }
+  const source = value as Record<string, unknown>;
+  const latCandidate = normalizeCoordinate(source.lat ?? source.latitude);
+  const lngCandidate = normalizeCoordinate(source.lng ?? source.longitude);
+  const coordinatesArray = Array.isArray(source.coordinates) ? source.coordinates : undefined;
+  const formattedAddress = typeof source.formattedAddress === "string" ? source.formattedAddress : undefined;
+  const placeId = typeof source.placeId === "string" ? source.placeId : undefined;
+  if (latCandidate !== null && lngCandidate !== null) {
+    return { latitude: latCandidate, longitude: lngCandidate, formattedAddress, placeId };
+  }
+  if (coordinatesArray && coordinatesArray.length >= 2) {
+    const lngFromArray = normalizeCoordinate(coordinatesArray[0]);
+    const latFromArray = normalizeCoordinate(coordinatesArray[1]);
+    if (latFromArray !== null && lngFromArray !== null) {
+      return { latitude: latFromArray, longitude: lngFromArray, formattedAddress, placeId };
+    }
+  }
+  return { latitude: null, longitude: null, formattedAddress, placeId };
+}
+
+async function geocodeAddressWithGoogle(address: string): Promise<PropertyLocationPayload | null> {
+  const apiKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
+  if (!apiKey) {
+    return null;
+  }
+  const trimmed = address.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  try {
+    const params = new URLSearchParams({ address: trimmed, key: apiKey });
+    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`);
+    if (!response.ok) {
+      return null;
+    }
+    const payload = await response.json() as { status?: string; results?: Array<Record<string, unknown>> };
+    if (payload.status !== "OK" || !Array.isArray(payload.results) || payload.results.length === 0) {
+      return null;
+    }
+    const primary = payload.results[0];
+    const geometry = primary?.geometry as Record<string, unknown> | undefined;
+    const location = geometry?.location as Record<string, unknown> | undefined;
+    const lat = normalizeCoordinate(location?.lat);
+    const lng = normalizeCoordinate(location?.lng);
+    if (lat === null || lng === null) {
+      return null;
+    }
+    const formattedAddress = typeof primary?.formatted_address === "string" ? primary.formatted_address : undefined;
+    const placeId = typeof primary?.place_id === "string" ? primary.place_id : undefined;
+    const precision = typeof geometry?.location_type === "string" ? geometry.location_type : undefined;
+    return {
+      latitude: lat,
+      longitude: lng,
+      formattedAddress,
+      placeId,
+      precision,
+      source: "geocoded"
+    };
+  } catch (error) {
+    console.error("Google geocoding failed:", error);
+    return null;
+  }
+}
+
+async function resolvePropertyLocation(
+  propertyData: Record<string, unknown>,
+  existing?: Record<string, unknown>
+): Promise<PropertyLocationPayload | null> {
+  const directLat = normalizeCoordinate(propertyData.latitude);
+  const directLng = normalizeCoordinate(propertyData.longitude);
+  const directFormatted = typeof propertyData.formattedAddress === "string" ? propertyData.formattedAddress : undefined;
+  const directPlaceId = typeof (propertyData as { placeId?: unknown }).placeId === "string" ? (propertyData as { placeId: string }).placeId : undefined;
+  if (directLat !== null && directLng !== null) {
+    return {
+      latitude: directLat,
+      longitude: directLng,
+      formattedAddress: directFormatted ?? (typeof propertyData.address === "string" ? propertyData.address : undefined),
+      placeId: directPlaceId,
+      source: "payload"
+    };
+  }
+
+  const locationField = extractCoordinatesFromLocation((propertyData as { location?: unknown }).location);
+  if (locationField.latitude !== null && locationField.longitude !== null) {
+    return {
+      latitude: locationField.latitude,
+      longitude: locationField.longitude,
+      formattedAddress: locationField.formattedAddress ?? directFormatted ?? (typeof propertyData.address === "string" ? propertyData.address : undefined),
+      placeId: locationField.placeId ?? directPlaceId,
+      source: "payload"
+    };
+  }
+
+  const address = typeof propertyData.address === "string" ? propertyData.address.trim() : undefined;
+  const existingAddress = typeof existing?.address === "string" ? existing.address.trim() : undefined;
+  const existingLat = normalizeCoordinate(existing?.latitude ?? (existing?.location as { coordinates?: unknown[] } | undefined)?.coordinates?.[1]);
+  const existingLng = normalizeCoordinate(existing?.longitude ?? (existing?.location as { coordinates?: unknown[] } | undefined)?.coordinates?.[0]);
+
+  if (!address || (!existing && !address)) {
+    return null;
+  }
+
+  const shouldGeocode = !existing || existingLat === null || existingLng === null || address !== existingAddress;
+  if (!shouldGeocode) {
+    return null;
+  }
+
+  const geocoded = await geocodeAddressWithGoogle(address);
+  if (!geocoded) {
+    return null;
+  }
+  if (!geocoded.formattedAddress) {
+    geocoded.formattedAddress = directFormatted ?? address;
+  }
+  if (directPlaceId && !geocoded.placeId) {
+    geocoded.placeId = directPlaceId;
+  }
+  return geocoded;
+}
+
+function assignLocation(target: Record<string, unknown>, location: PropertyLocationPayload) {
+  target.latitude = location.latitude;
+  target.longitude = location.longitude;
+  if (location.formattedAddress) {
+    target.formattedAddress = location.formattedAddress;
+  }
+  const geoDoc: Record<string, unknown> = {
+    type: "Point",
+    coordinates: [location.longitude, location.latitude],
+    provider: location.source,
+    updatedAt: new Date()
+  };
+  if (location.placeId) {
+    geoDoc.placeId = location.placeId;
+  }
+  if (location.formattedAddress) {
+    geoDoc.formattedAddress = location.formattedAddress;
+  }
+  if (location.precision) {
+    geoDoc.precision = location.precision;
+  }
+  target.location = geoDoc;
+}
+
 // Users API
 export async function getUsers(filters: Record<string, unknown> = {}) {
   try {
@@ -1068,7 +1242,7 @@ export async function createProperty(propertyData: Record<string, unknown>) {
     await connectToMongoDB();
     const properties = getCollection("properties");
     
-    const propertyDoc = {
+    const propertyDoc: Record<string, unknown> = {
       name: propertyData.name,
       address: propertyData.address,
       type: propertyData.type || 'apartment',
@@ -1083,6 +1257,15 @@ export async function createProperty(propertyData: Record<string, unknown>) {
       createdAt: new Date(),
       updatedAt: new Date()
     };
+
+    if (typeof propertyData.formattedAddress === 'string' && propertyData.formattedAddress.trim().length > 0) {
+      propertyDoc.formattedAddress = propertyData.formattedAddress.trim();
+    }
+
+    const locationData = await resolvePropertyLocation(propertyData);
+    if (locationData) {
+      assignLocation(propertyDoc, locationData);
+    }
     
     const result = await properties.insertOne(propertyDoc);
     
@@ -1098,11 +1281,57 @@ export async function updateProperty(id: string, propertyData: Record<string, un
   try {
     await connectToMongoDB();
     const properties = getCollection("properties");
-    const result = await properties.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { ...propertyData, updatedAt: new Date() } }
-    );
-    return result;
+    const objectId = new ObjectId(id);
+    const existing = await properties.findOne({ _id: objectId });
+    if (!existing) {
+      return null;
+    }
+
+    const locationData = await resolvePropertyLocation(propertyData, existing as Record<string, unknown>);
+    const updateDoc: Record<string, unknown> = { ...propertyData, updatedAt: new Date() };
+
+    delete (updateDoc as { location?: unknown }).location;
+    delete (updateDoc as { placeId?: unknown }).placeId;
+
+    if (propertyData.managerId === null) {
+      updateDoc.managerId = null;
+    } else if (propertyData.managerId !== undefined) {
+      updateDoc.managerId = toId(propertyData.managerId);
+    }
+
+    if (typeof propertyData.formattedAddress === 'string' && propertyData.formattedAddress.trim().length > 0) {
+      updateDoc.formattedAddress = propertyData.formattedAddress.trim();
+    }
+
+    if (locationData) {
+      assignLocation(updateDoc, locationData);
+    } else {
+      if ('latitude' in propertyData) {
+        const latValue = normalizeCoordinate(propertyData.latitude);
+        if (latValue !== null) {
+          updateDoc.latitude = latValue;
+        } else if (propertyData.latitude === null) {
+          updateDoc.latitude = null;
+        }
+      }
+      if ('longitude' in propertyData) {
+        const lngValue = normalizeCoordinate(propertyData.longitude);
+        if (lngValue !== null) {
+          updateDoc.longitude = lngValue;
+        } else if (propertyData.longitude === null) {
+          updateDoc.longitude = null;
+        }
+      }
+    }
+
+    const result = await properties.updateOne({ _id: objectId }, { $set: updateDoc });
+    const matchedCount = typeof result === 'number' ? result : result?.matchedCount ?? 0;
+    if (matchedCount === 0) {
+      return null;
+    }
+
+    const updated = await properties.findOne({ _id: objectId });
+    return mapDoc(updated);
   } catch (error) {
     console.error("Error updating property:", error);
     throw error;

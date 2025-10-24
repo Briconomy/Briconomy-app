@@ -63,7 +63,21 @@ async function handler(request: Request): Promise<Response> {
   const hasExtension = pathname.includes(".");
   if (pathname === "/" || !hasExtension) {
     try {
-      const indexFile = await Deno.readTextFile("./public/index.html");
+      let indexFile = await Deno.readTextFile("./public/index.html");
+      const envVars = {
+        VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || '',
+        VITE_GOOGLE_MAPS_API_KEY: Deno.env.get('VITE_GOOGLE_MAPS_API_KEY') || ''
+      };
+      const envScript = `const __BRICONOMY_ENV__ = ${JSON.stringify(envVars)};`;
+      const googleClientId = envVars.VITE_GOOGLE_CLIENT_ID;
+      let googleScript = '';
+      if (googleClientId) {
+        googleScript = `    <script src="https://accounts.google.com/gsi/client" async defer></script>`;
+      }
+      indexFile = indexFile.replace(
+        '<div id="root"></div>',
+        `<div id="root"></div>\n    <script>\n${envScript}\n    </script>\n${googleScript}`
+      );
       return new Response(indexFile, {
         headers: { "content-type": "text/html" },
       });

@@ -436,8 +436,14 @@ serve(async (req) => {
       } else if (req.method === 'PUT' && path[2]) {
         const propertyId = path[2];
         const body = await req.json();
-        const result = await updateProperty(propertyId, body);
-        return new Response(JSON.stringify(result), {
+        const updated = await updateProperty(propertyId, body);
+        if (!updated) {
+          return new Response(JSON.stringify({ error: 'Property not found' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404
+          });
+        }
+        return new Response(JSON.stringify(updated), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
