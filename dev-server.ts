@@ -4,6 +4,14 @@ import * as esbuild from "esbuild";
 import { registerUser, loginUser } from "./api.ts";
 
 const PORT = 5173;
+const transformCache = new Map<string, { mtimeMs: number | null; code: string }>();
+
+function disableCache(response: Response): Response {
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
 
 async function transpileTypeScript(code: string, filename: string): Promise<string> {
   const result = await esbuild.transform(code, {
@@ -27,6 +35,19 @@ async function transpileTypeScript(code: string, filename: string): Promise<stri
   .replace(/import\s+['"](\.\/.*\.css)['"];?/g, '// CSS import removed: $1');
     
   return transpiledCode;
+}
+
+async function getTranspiledModule(filePath: string): Promise<string> {
+  const stat = await Deno.stat(filePath);
+  const mtimeMs = stat.mtime ? stat.mtime.getTime() : null;
+  const cached = transformCache.get(filePath);
+  if (cached && cached.mtimeMs === mtimeMs) {
+    return cached.code;
+  }
+  const source = await Deno.readTextFile(filePath);
+  const transpiled = await transpileTypeScript(source, filePath);
+  transformCache.set(filePath, { mtimeMs, code: transpiled });
+  return transpiled;
 }
 
 async function handler(request: Request): Promise<Response> {
@@ -88,15 +109,14 @@ async function handler(request: Request): Promise<Response> {
   if (pathname.startsWith("/src/") && (pathname.endsWith(".tsx") || pathname.endsWith(".ts"))) {
     try {
       const filePath = `.${pathname}`;
-      const code = await Deno.readTextFile(filePath);
-      const transpiledCode = await transpileTypeScript(code, filePath);
+      const transpiledCode = await getTranspiledModule(filePath);
       
-      return new Response(transpiledCode, {
-        headers: { 
-          "content-type": "application/javascript",
-          "cache-control": "no-cache"
-        },
-      });
+        const response = new Response(transpiledCode, {
+          headers: { 
+            "content-type": "application/javascript"
+          }
+        });
+        return disableCache(response);
     } catch (error) {
       console.error(`Error transpiling ${pathname}:`, error);
       return new Response(`console.error('Failed to load ${pathname}');`, {
@@ -110,24 +130,22 @@ async function handler(request: Request): Promise<Response> {
     const tsxPath = `.${pathname}.tsx`;
     const tsPath = `.${pathname}.ts`;
     try {
-      const code = await Deno.readTextFile(tsxPath);
-      const transpiledCode = await transpileTypeScript(code, tsxPath);
-      return new Response(transpiledCode, {
-        headers: {
-          "content-type": "application/javascript",
-          "cache-control": "no-cache",
-        },
-      });
+      const transpiledCode = await getTranspiledModule(tsxPath);
+        const response = new Response(transpiledCode, {
+          headers: {
+            "content-type": "application/javascript"
+          }
+        });
+        return disableCache(response);
     } catch (_) {
       try {
-        const code = await Deno.readTextFile(tsPath);
-        const transpiledCode = await transpileTypeScript(code, tsPath);
-        return new Response(transpiledCode, {
-          headers: {
-            "content-type": "application/javascript",
-            "cache-control": "no-cache",
-          },
-        });
+        const transpiledCode = await getTranspiledModule(tsPath);
+          const response = new Response(transpiledCode, {
+            headers: {
+              "content-type": "application/javascript"
+            }
+          });
+          return disableCache(response);
       } catch (__) {
         return new Response("console.error('Module not found')", {
           status: 404,
@@ -142,12 +160,12 @@ async function handler(request: Request): Promise<Response> {
       const filePath = `.${pathname}`;
       const css = await Deno.readTextFile(filePath);
       
-      return new Response(css, {
-        headers: { 
-          "content-type": "text/css",
-          "cache-control": "no-cache"
-        },
-      });
+        const response = new Response(css, {
+          headers: { 
+            "content-type": "text/css"
+          }
+        });
+        return disableCache(response);
     } catch (error) {
       console.error(`Error loading CSS ${pathname}:`, error);
       return new Response(`/* Failed to load CSS */`, {
@@ -158,20 +176,23 @@ async function handler(request: Request): Promise<Response> {
   }
   
   if (pathname.startsWith("/src/") && !pathname.endsWith(".tsx") && !pathname.endsWith(".ts") && !pathname.endsWith(".css")) {
-    return serveDir(request, {
-      fsRoot: ".",
-    });
+      const response = await serveDir(request, {
+        fsRoot: ".",
+      });
+      return disableCache(response);
   }
   
   if (pathname.startsWith("/public/")) {
-    return serveDir(request, {
-      fsRoot: ".",
-    });
+      const response = await serveDir(request, {
+        fsRoot: ".",
+      });
+      return disableCache(response);
   }
   
   if (pathname === "/favicon.ico" || pathname.startsWith("/icon-") || pathname === "/manifest.json") {
     try {
-      return await serveDir(request, { fsRoot: "./public" });
+        const response = await serveDir(request, { fsRoot: "./public" });
+        return disableCache(response);
     } catch {
       return new Response(null, { status: 404 });
     }
@@ -180,13 +201,16 @@ async function handler(request: Request): Promise<Response> {
   if (pathname === "/apple-touch-icon.png") {
     try {
       const file = await Deno.readFile("./public/apple-touch-icon.png");
-      return new Response(file, { headers: { "content-type": "image/png" } });
+        const response = new Response(file, { headers: { "content-type": "image/png" } });
+        return disableCache(response);
     } catch {
       try {
         const fallback = await Deno.readFile("./public/icon-192x192.png");
-        return new Response(fallback, { headers: { "content-type": "image/png" } });
+          const response = new Response(fallback, { headers: { "content-type": "image/png" } });
+          return disableCache(response);
       } catch {
-        return new Response(null, { status: 404 });
+          const response = new Response(null, { status: 404 });
+          return disableCache(response);
       }
     }
   }
@@ -213,14 +237,16 @@ async function handler(request: Request): Promise<Response> {
       `<div id="root"></div>\n    <script>\n${envScript}\n    </script>\n${googleScript}`
     );
 
-    return new Response(indexFile, {
-      headers: { "content-type": "text/html" },
-    });
+      const response = new Response(indexFile, {
+        headers: { "content-type": "text/html" },
+      });
+      return disableCache(response);
   }
   
-  return serveDir(request, {
-    fsRoot: "./public",
-  });
+    const response = await serveDir(request, {
+      fsRoot: "./public",
+    });
+    return disableCache(response);
 }
 
 console.log(`Briconomy Development Server running on http://localhost:${PORT}/`);

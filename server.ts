@@ -7,6 +7,13 @@ import { serve } from "@std/http/server";
 const PORT = 5173;
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
+function disableCache(response: Response): Response {
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
+
 async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const pathname = url.pathname;
@@ -15,18 +22,21 @@ async function handler(request: Request): Promise<Response> {
   if (pathname.match(/^\/icon-\d+x\d+\.png$/)) {
     const filePath = `public${pathname}`;
     if (existsSync(filePath)) {
-      return serveFile(request, filePath);
+      const response = await serveFile(request, filePath);
+      return disableCache(response);
     } else {
       const genericIconPath = `public/icon.png`;
       if (existsSync(genericIconPath)) {
         console.warn(`[404] Specific icon not found: ${pathname}. Serving generic icon.`);
-        return serveFile(request, genericIconPath);
+        const response = await serveFile(request, genericIconPath);
+        return disableCache(response);
       } else {
         console.error(`[404] Neither specific nor generic icon found for ${pathname}.`);
-        return new Response("Not Found", {
+        const response = new Response("Not Found", {
           status: 404,
           headers: { "Content-Type": "text/plain" },
         });
+        return disableCache(response);
       }
     }
   }
@@ -40,23 +50,25 @@ async function handler(request: Request): Promise<Response> {
         fsRoot: ".",
       });
       if (pathname.endsWith(".tsx") || pathname.endsWith(".ts")) {
-        return new Response(response.body, {
+        const rewritten = new Response(response.body, {
           status: response.status,
           headers: {
             ...Object.fromEntries(response.headers),
             "content-type": "application/javascript",
           },
         });
+        return disableCache(rewritten);
       }
-      return response;
+      return disableCache(response);
     }
   }
 
   // 2. Serve static files from the public directory
   if (pathname.startsWith("/public/")) {
-    return serveDir(request, {
+    const response = await serveDir(request, {
       fsRoot: ".",
     });
+    return disableCache(response);
   }
 
   // 3. SPA Fallback: Serve index.html for root and client-side routes
@@ -78,11 +90,13 @@ async function handler(request: Request): Promise<Response> {
         '<div id="root"></div>',
         `<div id="root"></div>\n    <script>\n${envScript}\n    </script>\n${googleScript}`
       );
-      return new Response(indexFile, {
+      const response = new Response(indexFile, {
         headers: { "content-type": "text/html" },
       });
+      return disableCache(response);
     } catch {
-      return new Response("Server Error: index.html not found.", { status: 500 });
+      const response = new Response("Server Error: index.html not found.", { status: 500 });
+      return disableCache(response);
     }
   }
 
@@ -93,13 +107,14 @@ async function handler(request: Request): Promise<Response> {
 
   // 5. Correctly handle the 404 response if the file is not found
   if (response.status === 404) {
-    return new Response("Not Found", {
+    const notFound = new Response("Not Found", {
       status: 404,
       headers: { "Content-Type": "text/plain" },
     });
+    return disableCache(notFound);
   }
 
-  return response;
+  return disableCache(response);
 }
 
 console.log(`Briconomy PWA Server running on http://localhost:${PORT}/`);
