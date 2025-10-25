@@ -82,8 +82,8 @@ function LandingPage() {
           </a>
         </div>
 
-        <div className="landing-card" style={{ marginTop: '32px', borderTop: '2px solid #3498db', paddingTop: '24px' }}>
-          <h3 className="landing-card-title" style={{ color: '#3498db' }}>
+        <div className="landing-card" style={{ marginTop: '32px', borderTop: '2px solid #FF894D', paddingTop: '24px' }}>
+          <h3 className="landing-card-title" style={{ color: '#FF894D' }}>
             Want to Join Briconomy?
           </h3>
           <p className="landing-card-text">
@@ -91,7 +91,7 @@ function LandingPage() {
             Become a manager on Briconomy and take advantage of our powerful property management platform.
           </p>
           <p className="landing-card-text" style={{ marginTop: '12px', fontSize: '16px', fontWeight: '500' }}>
-            Contact us at: <a href="mailto:info@briconomy.com" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '600' }}>info@briconomy.com</a>
+            Contact us at: <a href="mailto:info@briconomy.com" style={{ color: '#FF894D', textDecoration: 'none', fontWeight: '600' }}>info@briconomy.com</a>
           </p>
         </div>
       </div>
