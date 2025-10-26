@@ -53,7 +53,7 @@ function LoginPage() {
     setSubmitting(true);
     
     if (!formData.email || !formData.password) {
-      setAuthError('Please fill in both email and password');
+      setAuthError(t('auth.validation_both_required'));
       setSubmitting(false);
       return;
     }
@@ -69,12 +69,12 @@ function LoginPage() {
         }
 
         const userName = result.user?.fullName || 'User';
-        
+
         if (result.restricted && result.redirectTo) {
-          showToast(`${userName}, your property application was not approved. You can browse and apply for other properties.`, 'info', 5000);
+          showToast(t('auth.app_not_approved').replace('{name}', userName), 'info', 5000);
           navigate(result.redirectTo);
         } else {
-          showToast(`Welcome back, ${userName}`, 'success', 3000);
+          showToast(`${t('auth.welcome_back')}, ${userName}`, 'success', 3000);
           const dashboards = {
             admin: '/admin',
             manager: '/manager',
@@ -87,7 +87,7 @@ function LoginPage() {
         setAuthError(result.message);
       }
   } catch (_error) {
-      setAuthError('Login failed. Please try again.');
+      setAuthError(t('auth.login_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -230,7 +230,7 @@ function LoginPage() {
                     color: '#6c757d',
                     fontSize: '18px'
                   }}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t('common.hide_password') : t('common.show_password')}
                 >
                   {showPassword ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -314,7 +314,7 @@ function LoginPage() {
                 color: '#4285f4',
                 fontSize: '14px'
               }}>
-                Signing in with Google...
+                {t('auth.google_signing_in')}
               </div>
             )}
           </div>
@@ -324,7 +324,7 @@ function LoginPage() {
             className="btn btn-secondary btn-block2"
             style={{ marginTop: '12px' }}
           >
-            Biometric Login
+            {t('auth.biometric_login')}
           </button>
         </div>
       </div>
