@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -11,12 +11,9 @@ import LanguageSelector from '../components/LanguageSelector.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
 import { adminApi, useApi } from '../services/api.ts';
-import { useAuth } from '../contexts/AuthContext.tsx';
 
 function AdminDashboard() {
   const { t } = useLanguage();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   
