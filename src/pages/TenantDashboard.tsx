@@ -217,15 +217,15 @@ return (
           />
         </div>
         <div className="ai-button-container">
-        <AIButton 
-              userId={user?.id || 'fallback-user'} 
+        <AIButton
+              userId={user?.id || 'fallback-user'}
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
             />
         </div>
-        
+
         <NotificationWidget />
       </div>
-      
+
       <BottomNav items={navItems} responsive={false} />
       
       {/* Onboarding Tutorial */}

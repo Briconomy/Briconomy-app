@@ -282,26 +282,6 @@ function MaintenanceRequestsPage() {
                 <StatCard value={requestsData.length} label={t('requests.total')} />
               </div>
 
-              {currentLease && (
-                <div className="section-card">
-                  <div className="section-title">{t('requests.yourUnit')}</div>
-                  <div className="detail-grid">
-                    <div className="detail-block">
-                      <div className="detail-label">{t('payments.unit')}</div>
-                      <div className="detail-value">{currentLease.unitId?.unitNumber || 'N/A'}</div>
-                    </div>
-                    <div className="detail-block">
-                      <div className="detail-label">{t('payments.property')}</div>
-                      <div className="detail-value">{currentLease.propertyId?.name || 'N/A'}</div>
-                    </div>
-                    <div className="detail-block">
-                      <div className="detail-label">{t('requests.address')}</div>
-                      <div className="detail-value">{currentLease.propertyId?.address || 'N/A'}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="section-card">
                 <div className="section-card-header">
                   <div className="section-header-content">
