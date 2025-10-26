@@ -336,13 +336,13 @@ function UserProfilePage() {
           <div className="quick-actions">
             <ActionCard
               to="/tenant/documents"
-              icon={<Icon name="docs" alt="Documents" />}
+              icon={<Icon name="docs" alt="Documents" size={48} />}
               title={t('profile.documents')}
               description={t('profile.viewDocuments')}
             />
             <ActionCard
               to="/tenant/activity"
-              icon={<Icon name="activityLog" alt="Activity Log" />}
+              icon={<Icon name="activityLog" alt="Activity Log" size={48} />}
               title={t('profile.activityLog')}
               description={t('profile.viewActivity')}
             />

@@ -45,7 +45,7 @@ function ProspectiveTenantPropertiesPage() {
   const { user } = useAuth();
 
   const navItems = [
-    { path: '/', label: t('nav.home'), icon: 'logo', active: false },
+    { path: '/', label: t('nav.home'), icon: 'properties', active: false },
     { path: '/browse-properties', label: t('nav.properties'), icon: 'properties', active: true },
     { path: '/login', label: t('auth.login'), icon: 'profile', active: false }
   ];

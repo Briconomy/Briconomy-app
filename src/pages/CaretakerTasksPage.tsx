@@ -354,19 +354,19 @@ function CaretakerTasksPage() {
         <div className="quick-actions">
           <ActionCard
             onClick={() => {}}
-            icon={<Icon name="properties" alt="Property Inspections" />}
+            icon={<Icon name="properties" alt="Property Inspections" size={48} />}
             title="Property Inspections"
             description="Schedule and conduct inspections"
           />
           <ActionCard
             onClick={() => {}}
-            icon={<Icon name="maintenance" alt="Maintenance Logs" />}
+            icon={<Icon name="maintenance" alt="Maintenance Logs" size={48} />}
             title="Maintenance Logs"
             description="View maintenance history"
           />
           <ActionCard
             onClick={() => {}}
-            icon={<Icon name="report" alt="Reports" />}
+            icon={<Icon name="report" alt="Reports" size={48} />}
             title="Reports"
             description="Generate activity reports"
           />

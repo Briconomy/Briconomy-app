@@ -226,7 +226,7 @@ body {
 .logo-icon {
     width: 32px;
     height: 32px;
-    background: var(--brand-primary);
+    background: transparent;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;

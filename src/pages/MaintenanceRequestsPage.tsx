@@ -305,15 +305,15 @@ function MaintenanceRequestsPage() {
                   </div>
                 </div>
 
-                {requestsData.length === 0 ? (
-                  <div className="empty-state-card">
-                    <Icon name="maintenance" alt="Maintenance" size={40} />
-                    <div className="empty-state-title">{t('requests.noRequestsFound')}</div>
-                    <div className="empty-state-text">Log a request to notify your maintenance team.</div>
-                    <div className="card-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary full-width-button"
+              {requestsData.length === 0 ? (
+                <div className="empty-state-card">
+                  <Icon name="maintenance" alt="Maintenance" size={48} />
+                  <div className="empty-state-title">{t('requests.noRequestsFound')}</div>
+                  <div className="empty-state-text">Log a request to notify your maintenance team.</div>
+                  <div className="card-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary full-width-button"
                         onClick={() => setShowRequestForm(true)}
                       >
                         {t('requests.newRequest')}

@@ -130,7 +130,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="users" alt="Users" />
+              <Icon name="users" alt="Users" size={48} />
             </div>
             <div className="action-title">{t('nav.users')}</div>
             <div className="action-desc">{t('dashboard.manage_users')}</div>
@@ -141,7 +141,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="security" alt="Security" />
+              <Icon name="security" alt="Security" size={48} />
             </div>
             <div className="action-title">{t('nav.security')}</div>
             <div className="action-desc">{t('dashboard.system_security')}</div>
@@ -152,7 +152,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="manage" alt="Operations" />
+              <Icon name="manage" alt="Operations" size={48} />
             </div>
             <div className="action-title">{t('dashboard.operations')}</div>
             <div className="action-desc">{t('dashboard.performance_health')}</div>
@@ -163,7 +163,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="report" alt="Reports" />
+              <Icon name="report" alt="Reports" size={48} />
             </div>
             <div className="action-title">{t('nav.reports')}</div>
             <div className="action-desc">{t('dashboard.analytics_insights')}</div>
@@ -175,7 +175,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="announcements" alt="Announcements" />
+              <Icon name="announcements" alt="Announcements" size={48} />
             </div>
             <div className="action-title">{t('dashboard.announcements')}</div>
             <div className="action-desc">{t('dashboard.system_wide_notifications')}</div>
@@ -187,7 +187,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="language" alt="Language" />
+              <Icon name="language" alt="Language" size={48} />
             </div>
             <div className="action-title">{t('settings.change_language')}</div>
             <div className="action-desc">{t('settings.language_description')}</div>

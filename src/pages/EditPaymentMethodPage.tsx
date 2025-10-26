@@ -36,10 +36,10 @@ function EditPaymentMethodPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const navItems = [
-    { path: '/tenant', label: t('nav.home'), active: false },
-    { path: '/tenant/payments', label: t('nav.payments'), active: false },
-    { path: '/tenant/requests', label: t('nav.requests'), active: false },
-    { path: '/tenant/profile', label: t('nav.profile'), active: false }
+    { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
+    { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment', active: false },
+    { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance', active: false },
+    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile', active: false }
   ];
 
   useEffect(() => {

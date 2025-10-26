@@ -193,25 +193,25 @@ return (
         <div className="quick-actions quick-actions-spaced">
           <ActionCard
             onClick={() => navigate('/tenant/payments')}
-            icon={<Icon name="payment" alt="Pay Rent" />}
+            icon={<Icon name="payment" alt="Pay Rent" size={48} />}
             title={t('dashboard.pay_rent')}
             description={t('dashboard.make_payment')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/requests')}
-            icon={<Icon name="maintenance" alt="Maintenance" />}
+            icon={<Icon name="maintenance" alt="Maintenance" size={48} />}
             title={t('dashboard.maintenance')}
             description={t('dashboard.report_issue')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/messages')}
-            icon={<Icon name="contact" alt="Contact" />}
+            icon={<Icon name="contact" alt="Contact" size={48} />}
             title="Contact Information"
             description="Emergency contacts & general help"
           />
           <ActionCard
             onClick={() => navigate('/tenant/profile')}
-            icon={<Icon name="profile" alt="Profile" />}
+            icon={<Icon name="profile" alt="Profile" size={48} />}
             title={t('common.profile')}
             description={t('dashboard.update_info')}
           />

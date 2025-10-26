@@ -27,14 +27,14 @@ function PropertiesPage() {
   const isTenant = user?.userType === 'tenant';
 
   const navItems = isManager ? [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties', active: true },
-    { path: '/manager/leases', label: 'Leases', active: false },
-    { path: '/manager/payments', label: 'Payments', active: false }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties', active: true },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: false },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment', active: false }
   ] : [
-    { path: '/', label: 'Home', active: false },
-    { path: '/properties', label: 'Properties', active: true },
-    { path: '/login', label: 'Login', active: false }
+    { path: '/', label: 'Home', icon: 'logo', active: false },
+    { path: '/browse-properties', label: 'Properties', icon: 'properties', active: true },
+    { path: '/login', label: 'Login', icon: 'profile', active: false }
   ];
 
   useEffect(() => {

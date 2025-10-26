@@ -95,7 +95,7 @@ function LeaseRenewalsPage() {
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
-    { path: '/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
     { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
     { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];

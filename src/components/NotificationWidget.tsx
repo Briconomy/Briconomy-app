@@ -240,19 +240,7 @@ const NotificationWidget: React.FC = () => {
           onClick={() => setExpanded(!expanded)}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div
-              style={{
-                width: '24px',
-                height: '24px',
-                backgroundColor: '#007bff',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Icon name="notifications" alt="Notifications" size={16} />
-            </div>
+            <Icon name="notifications" alt="Notifications" size={32} color="#3b82f6" />
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#333' }}>
               Notifications
             </h3>
@@ -300,7 +288,7 @@ const NotificationWidget: React.FC = () => {
               }}
               title="Refresh notifications"
             >
-              <Icon name="refresh" size={16} />
+              <Icon name="refresh" size={32} color="#3b82f6" />
             </button>
             <span
               style={{
@@ -421,7 +409,7 @@ const NotificationWidget: React.FC = () => {
                               }}
                               title="Delete notification"
                             >
-                              <Icon name="trash" size={20} />
+                              <Icon name="trash" size={20} noBackground />
                             </button>
                             {!notification.read && (
                               <div

@@ -87,9 +87,9 @@ function RentalApplicationPage() {
   const [signUpError, setSignUpError] = useState(null);
 
   const navItems = [
-    { path: '/', label: 'Home', active: false },
-    { path: '/properties', label: 'Properties', active: true },
-    { path: '/login', label: 'Login', active: false }
+    { path: '/', label: 'Home', icon: 'logo', active: false },
+    { path: '/browse-properties', label: 'Properties', icon: 'properties', active: true },
+    { path: '/login', label: 'Login', icon: 'profile', active: false }
   ];
 
   // Check if user is authenticated and validate propertyId

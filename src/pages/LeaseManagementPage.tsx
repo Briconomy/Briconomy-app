@@ -246,19 +246,19 @@ function LeaseManagementPage() {
         <div className="quick-actions">
           <ActionCard
             to="/manager/leases/new"
-            icon={<Icon name="createLease" alt={t('lease.create_lease')} />}
+            icon={<Icon name="createLease" alt={t('lease.create_lease')} size={48} />}
             title={t('lease.create_lease')}
             description={t('lease.new_lease_agreement')}
           />  
           <ActionCard
             to="/manager/renewals"
-            icon={<Icon name="renewals" alt={t('lease.renewals')} />}
+            icon={<Icon name="renewals" alt={t('lease.renewals')} size={48} />}
             title={t('lease.renewals')}
             description={t('lease.manage_renewals')}
           />
           <ActionCard
             to="/manager/documents"
-            icon={<Icon name="docLease" alt={t('common.documents')} />}
+            icon={<Icon name="docLease" alt={t('common.documents')} size={48} />}
             title={t('common.documents')}
             description={t('lease.agreements')}
           />

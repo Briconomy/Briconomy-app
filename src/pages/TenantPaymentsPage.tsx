@@ -216,7 +216,7 @@ function TenantPaymentsPage() {
         {stats.overdue > 0 && (
           <div className="alert-banner">
             <div className="alert-banner-icon">
-              <Icon name="alert" alt="Overdue invoices" size={20} />
+              <Icon name="alert" alt="Overdue invoices" size={40} />
             </div>
             <div className="alert-banner-content">
               <div className="alert-title">{`You have ${stats.overdue} overdue ${overdueLabel}`}</div>
@@ -253,7 +253,7 @@ function TenantPaymentsPage() {
           <div>
             {invoiceList.length === 0 ? (
               <div className="section-card empty-state-card">
-                <Icon name="invoice" alt="Invoices" size={40} />
+                <Icon name="invoice" alt="Invoices" size={48} />
                 <div className="empty-state-title">No invoices</div>
                 <div className="empty-state-text">You do not have any outstanding invoices.</div>
               </div>
@@ -343,7 +343,7 @@ function TenantPaymentsPage() {
           <div>
             {!payments || payments.length === 0 ? (
               <div className="section-card empty-state-card">
-                <Icon name="payment" alt="Payments" size={40} />
+                <Icon name="payment" alt="Payments" size={48} />
                 <div className="empty-state-title">No payment history</div>
                 <div className="empty-state-text">Your payments will appear here once processed.</div>
               </div>

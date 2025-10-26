@@ -110,31 +110,31 @@ function ManagerDashboard() {
         <div className="quick-actions">
           <ActionCard
             to="/manager/properties"
-            icon={<Icon name="properties" alt="Properties" />}
+            icon={<Icon name="properties" alt="Properties" size={48} />}
             title={t('nav.properties')}
             description={t('manager.manage_listings')}
           />
           <ActionCard
             to="/manager/applications"
-            icon={<Icon name="users" alt="Applications" />}
+            icon={<Icon name="users" alt="Applications" size={48} />}
             title={t('dashboard.applications')}
             description={t('dashboard.review_tenant_applications')}
           />
           <ActionCard
             to="/manager/leases"
-            icon={<Icon name="lease" alt="Leases" />}
+            icon={<Icon name="lease" alt="Leases" size={48} />}
             title={t('nav.leases')}
             description={t('manager.contracts')}
           />
           <ActionCard
             to="/manager/payments"
-            icon={<Icon name="payment" alt="Payments" />}
+            icon={<Icon name="payment" alt="Payments" size={48} />}
             title={t('nav.payments')}
             description={t('manager.rent_collection')}
           />
           <ActionCard
             to="/manager/maintenance"
-            icon={<Icon name="emergency" alt="Issues" />}
+            icon={<Icon name="emergency" alt="Issues" size={48} />}
             title={t('manager.issues')} 
             description={t('manager.handle_escalations')}
           />
@@ -143,13 +143,13 @@ function ManagerDashboard() {
               console.log('Announcements button clicked');
               setShowAnnouncements(true);
             }}
-            icon={<Icon name="announcements" alt="Announcements" />}
+            icon={<Icon name="announcements" alt="Announcements" size={48} />}
             title={t('manager.announcements')}
             description={t('manager.property_updates')}
           />
           <ActionCard
             onClick={() => setShowLanguageSelector(true)}
-            icon={<Icon name="language" alt="Language" />}
+            icon={<Icon name="language" alt="Language" size={48} />}
             title={t('settings.change_language')}
             description={t('settings.language_description')}
           />
