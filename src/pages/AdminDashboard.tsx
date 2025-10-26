@@ -58,15 +58,6 @@ function AdminDashboard() {
 
   const stats = getStatsData();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (error) {
-      console.error('Failed to log out:', error);
-    }
-  };
-
   return (
     <div className="app-container mobile-only">
       <TopNav showBackButton showLogout />
@@ -75,16 +66,11 @@ function AdminDashboard() {
         <div className="page-header">
           <div className="page-title-wrapper">
             <div className="page-title">{t('dashboard.admin')}</div>
-            
+
           </div>
           <div className="page-subtitle">{t('dashboard.system_overview')}</div>
         </div>
-        <div className="page-header-actions action-stack">
-          <button type="button" className="btn btn-secondary" onClick={handleLogout}>
-            {t('nav.logout')}
-          </button>
-        </div>
-        
+
         <div className="dashboard-grid">
           <StatCard value={stats.totalUsers} label={t('dashboard.total_users')} />
           <StatCard value={stats.totalProperties} label={t('nav.properties')} />
