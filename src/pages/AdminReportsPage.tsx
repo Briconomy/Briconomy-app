@@ -286,51 +286,36 @@ function AdminReportsPage() {
         </div>
 
         <ChartCard title={t('reports.financial_overview')}>
-          <div className="chart-placeholder">
-            Chart.js {t('reports.financial')}
-          </div>
-        </ChartCard>
-
-        <div className="data-table">
-          <div className="table-header">
-            <div className="table-title">{t('reports.available')}</div>
-          </div>
-          
-          {reportsLoading ? (
-            <div className="list-item">
-              <div className="item-info">
-                <h4>{t('common.loading')}...</h4>
+          <div style={{ padding: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#2c3e50' }}>
+                {t('reports.financial_overview')}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Total Revenue Generated</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#27ae60' }}>R2.85M</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 12.5% {t('dashboard.from_last_week')}</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Reports Generated</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#3498db' }}>342</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 8.3% {t('dashboard.from_last_week')}</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Avg Generation Time</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#2563eb' }}>4.2s</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↓ 15.6% {t('dashboard.faster')}</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Data Processed</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#f39c12' }}>52.3 GB</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>Monthly total</div>
+                </div>
               </div>
             </div>
-          ) : (
-            (availableReports || getFallbackReports()).map((report: { title: string; description: string; status: string }, index: number) => (
-              <div key={`report-${report.title}-${index}`} className="list-item">
-                <div className="item-info">
-                  <h4>{report.title}</h4>
-                  <p>{report.description}</p>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <span className={`status-badge status-${report.status}`}>{report.status}</span>
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{
-                      padding: '10px 18px',
-                      fontSize: '14px',
-                      boxShadow: '0 3px 10px rgba(255, 137, 77, 0.3)'
-                    }}
-                    onClick={() => {
-                      setSelectedReport(report.title);
-                      setShowExportModal(true);
-                    }}
-                  >
-                    Export
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+          </div>
+        </ChartCard>
 
         <div className="data-table">
           <div className="table-header">
