@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -7,6 +7,8 @@ import SearchFilter from '../components/SearchFilter.tsx';
 import { paymentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
+import { WebSocketManager } from '../utils/websocket-manager.ts';
 
 interface Payment {
   id: string;
@@ -25,6 +27,8 @@ interface Payment {
 function ManagerPaymentsPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const wsManagerRef = useRef<WebSocketManager | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
@@ -44,6 +48,41 @@ function ManagerPaymentsPage() {
     [user?.id]
   );
 
+  const refetchPaymentsRef = useRef(refetchPayments);
+  useEffect(() => {
+    refetchPaymentsRef.current = refetchPayments;
+  }, [refetchPayments]);
+
+  // #COMPLETION_DRIVE: WebSocket listener to auto-refetch payment list on new payment received
+  // #SUGGEST_VERIFY: Verify all managers receive real-time updates when tenant pays
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleWebSocketMessage = (data: unknown) => {
+      const message = data as Record<string, unknown>;
+      if (message.type === 'notification') {
+        const notifData = message.data as Record<string, unknown> | undefined;
+        if (notifData && (notifData.type === 'payment_received' || notifData.type === 'payment_submitted')) {
+          refetchPaymentsRef.current();
+        }
+      }
+    };
+
+    wsManagerRef.current = new WebSocketManager({
+      userId: user.id,
+      onMessage: handleWebSocketMessage,
+      maxReconnectAttempts: 10,
+      heartbeatInterval: 30000
+    });
+
+    wsManagerRef.current.connect();
+
+    return () => {
+      if (wsManagerRef.current) {
+        wsManagerRef.current.disconnect();
+      }
+    };
+  }, [user?.id]);
 
   // Calculate stats
   const getPaymentStats = () => {
@@ -99,32 +138,32 @@ function ManagerPaymentsPage() {
 
     try {
       await paymentsApi.approve(selectedPayment.id, user?.id || '', approvalNotes);
-      alert('Payment approved successfully!');
+      showToast('Payment approved successfully!', 'success');
       setReviewMode(false);
       setSelectedPayment(null);
       setApprovalNotes('');
       refetchPayments();
     } catch (error) {
-      alert('Failed to approve payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showToast('Failed to approve payment: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     }
   };
 
   const handleRejectPayment = async () => {
     if (!selectedPayment) return;
     if (!approvalNotes) {
-      alert('Please provide a reason for rejection');
+      showToast('Please provide a reason for rejection', 'error');
       return;
     }
 
     try {
       await paymentsApi.reject(selectedPayment.id, user?.id || '', approvalNotes);
-      alert('Payment rejected');
+      showToast('Payment rejected', 'success');
       setReviewMode(false);
       setSelectedPayment(null);
       setApprovalNotes('');
       refetchPayments();
     } catch (error) {
-      alert('Failed to reject payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showToast('Failed to reject payment: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     }
   };
 

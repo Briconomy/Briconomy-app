@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -10,7 +10,9 @@ import Icon from '../components/Icon.tsx';
 import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 import { notificationService } from '../services/notifications.ts';
+import { WebSocketManager } from '../utils/websocket-manager.ts';
 
 interface Invoice {
   id: string;
@@ -39,6 +41,8 @@ interface PaymentFormData {
 function TenantPaymentsPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const wsManagerRef = useRef<WebSocketManager | null>(null);
   const [activeTab, setActiveTab] = useState<'invoices' | 'history'>('invoices');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [paymentMode, setPaymentMode] = useState(false);
@@ -67,6 +71,42 @@ function TenantPaymentsPage() {
     [user?.id]
   );
 
+  const refetchPaymentsRef = useRef(refetchPayments);
+  useEffect(() => {
+    refetchPaymentsRef.current = refetchPayments;
+  }, [refetchPayments]);
+
+  // #COMPLETION_DRIVE: WebSocket listener to auto-refetch payment history on payment creation
+  // #SUGGEST_VERIFY: Verify real-time updates work across multiple tenant sessions
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleWebSocketMessage = (data: unknown) => {
+      const message = data as Record<string, unknown>;
+      if (message.type === 'notification') {
+        const notifData = message.data as Record<string, unknown> | undefined;
+        if (notifData && (notifData.type === 'payment_received' || notifData.type === 'payment_submitted')) {
+          refetchPaymentsRef.current();
+        }
+      }
+    };
+
+    wsManagerRef.current = new WebSocketManager({
+      userId: user.id,
+      onMessage: handleWebSocketMessage,
+      maxReconnectAttempts: 10,
+      heartbeatInterval: 30000
+    });
+
+    wsManagerRef.current.connect();
+
+    return () => {
+      if (wsManagerRef.current) {
+        wsManagerRef.current.disconnect();
+      }
+    };
+  }, [user?.id]);
+
   // Calculate stats
   const getStats = () => {
     if (!invoices) return { totalDue: 0, overdue: 0, nextDue: null };
@@ -94,7 +134,7 @@ function TenantPaymentsPage() {
 
   const handlePaymentComplete = async (reference: string) => {
     if (!selectedInvoice || !selectedPaymentMethod) {
-      alert('Missing payment information');
+      showToast('Missing payment information', 'error');
       return;
     }
 
@@ -104,6 +144,7 @@ function TenantPaymentsPage() {
         tenantId: user?.id,
         leaseId: selectedInvoice.leaseId || selectedInvoice.id,
         invoiceId: selectedInvoice.id,
+        invoiceNumber: selectedInvoice.invoiceNumber,
         propertyId: selectedInvoice.propertyId,
         managerId: selectedInvoice.managerId,
         amount: selectedInvoice.amount,
@@ -126,7 +167,7 @@ function TenantPaymentsPage() {
       // #SUGGEST_VERIFY: Backend creates notification that broadcasts to manager via WebSocket
       notificationService.sendPaymentConfirmation(selectedInvoice.amount, selectedPaymentMethod.label || 'Unknown');
 
-      alert('Payment submitted successfully!');
+      showToast('Payment submitted successfully!', 'success');
       setShowCheckout(false);
       setPaymentMode(false);
       setSelectedInvoice(null);
@@ -136,7 +177,7 @@ function TenantPaymentsPage() {
       refetchInvoices();
       refetchPayments();
     } catch (error) {
-      alert('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showToast('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -144,7 +185,7 @@ function TenantPaymentsPage() {
 
   const handleSubmitPayment = async () => {
     if (!selectedInvoice || !selectedPaymentMethod) {
-      alert('Please select a payment method');
+      showToast('Please select a payment method', 'error');
       return;
     }
 
@@ -267,7 +308,7 @@ function TenantPaymentsPage() {
                       try {
                         await invoicesApi.download(id, format);
                       } catch (_error) {
-                        alert('Failed to download invoice');
+                        showToast('Failed to download invoice', 'error');
                       }
                     }}
                     onPay={(selectedInv) => {
