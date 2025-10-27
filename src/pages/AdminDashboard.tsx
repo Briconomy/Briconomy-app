@@ -130,7 +130,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="users" alt="Users" size={48} />
+              <Icon name="users" alt="Users" size={48} color="#162F1B" />
             </div>
             <div className="action-title">{t('nav.users')}</div>
             <div className="action-desc">{t('dashboard.manage_users')}</div>
@@ -175,7 +175,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="announcements" alt="Announcements" size={48} />
+              <Icon name="announcements" alt="Announcements" size={48} color="#162F1B" />
             </div>
             <div className="action-title">{t('dashboard.announcements')}</div>
             <div className="action-desc">{t('dashboard.system_wide_notifications')}</div>
@@ -187,7 +187,7 @@ function AdminDashboard() {
             className="action-card"
           >
             <div className="action-icon">
-              <Icon name="language" alt="Language" size={48} />
+              <Icon name="language" alt="Language" size={48} color="#162F1B" />
             </div>
             <div className="action-title">{t('settings.change_language')}</div>
             <div className="action-desc">{t('settings.language_description')}</div>
