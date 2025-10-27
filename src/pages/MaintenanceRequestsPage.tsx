@@ -283,27 +283,29 @@ function MaintenanceRequestsPage() {
               </div>
 
               <div className="section-card">
-                <div className="section-card-header">
-                  <div className="section-header-content">
-                    <div className="section-title-row">
-                      <div className="section-title">{t('requests.yourRequests')}</div>
-                      <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
-                        {isOnline ? 'Online' : 'Offline'}
-                      </span>
+                {requestsData.length > 0 && (
+                  <div className="section-card-header">
+                    <div className="section-header-content">
+                      <div className="section-title-row">
+                        <div className="section-title">{t('requests.yourRequests')}</div>
+                        <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
+                          {isOnline ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
+                      <div className="section-subtitle">{t('requests.subtitle')}</div>
                     </div>
-                    <div className="section-subtitle">{t('requests.subtitle')}</div>
-                  </div>
-                  <div className="action-stack">
-                    {!isOnline && (
-                      <button type="button" className="btn btn-secondary btn-xs" onClick={() => syncNow()}>
-                        Sync
+                    <div className="action-stack">
+                      {!isOnline && (
+                        <button type="button" className="btn btn-secondary btn-xs" onClick={() => syncNow()}>
+                          Sync
+                        </button>
+                      )}
+                      <button type="button" className="btn btn-primary btn-sm2" onClick={() => setShowRequestForm(true)}>
+                        {t('requests.newRequest')}
                       </button>
-                    )}
-                    <button type="button" className="btn btn-primary btn-sm2" onClick={() => setShowRequestForm(true)}>
-                      {t('requests.newRequest')}
-                    </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
               {requestsData.length === 0 ? (
                 <div className="empty-state-card">

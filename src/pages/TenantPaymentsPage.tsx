@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import DataTable from '../components/DataTable.tsx';
 import InvoiceViewer from '../components/InvoiceViewer.tsx';
 import PaymentMethodSelector, { PaymentMethod } from '../components/PaymentMethodSelector.tsx';
 import FakeCheckout from '../components/FakeCheckout.tsx';
 import Icon from '../components/Icon.tsx';
-import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
+import { invoicesApi, paymentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 import { notificationService } from '../services/notifications.ts';
+import { WebSocketManager } from '../utils/websocket-manager.ts';
 
 interface Invoice {
   id: string;
@@ -39,6 +40,8 @@ interface PaymentFormData {
 function TenantPaymentsPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const wsManagerRef = useRef<WebSocketManager | null>(null);
   const [activeTab, setActiveTab] = useState<'invoices' | 'history'>('invoices');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [paymentMode, setPaymentMode] = useState(false);
@@ -55,17 +58,47 @@ function TenantPaymentsPage() {
     { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
-  // Fetch invoices
+  // Fetch invoices (used for both tabs)
   const { data: invoices, loading: invoicesLoading, refetch: refetchInvoices } = useApi(
     () => invoicesApi.getAll({ tenantId: user?.id }),
     [user?.id]
   );
 
-  // Fetch payment history
-  const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi(
-    () => paymentsApi.getAll({ tenantId: user?.id }),
-    [user?.id]
-  );
+  const refetchInvoicesRef = useRef(refetchInvoices);
+  useEffect(() => {
+    refetchInvoicesRef.current = refetchInvoices;
+  }, [refetchInvoices]);
+
+  // #COMPLETION_DRIVE: WebSocket listener to auto-refetch invoices across both tabs on payment status change
+  // #SUGGEST_VERIFY: Verify real-time updates sync invoices and payment history tabs simultaneously
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleWebSocketMessage = (data: unknown) => {
+      const message = data as Record<string, unknown>;
+      if (message.type === 'notification') {
+        const notifData = message.data as Record<string, unknown> | undefined;
+        if (notifData && (notifData.type === 'payment_received' || notifData.type === 'payment_submitted')) {
+          refetchInvoicesRef.current();
+        }
+      }
+    };
+
+    wsManagerRef.current = new WebSocketManager({
+      userId: user.id,
+      onMessage: handleWebSocketMessage,
+      maxReconnectAttempts: 10,
+      heartbeatInterval: 30000
+    });
+
+    wsManagerRef.current.connect();
+
+    return () => {
+      if (wsManagerRef.current) {
+        wsManagerRef.current.disconnect();
+      }
+    };
+  }, [user?.id]);
 
   // Calculate stats
   const getStats = () => {
@@ -82,19 +115,19 @@ function TenantPaymentsPage() {
     }).length;
 
     const nextDue = pending
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] || null;
+      .toSorted((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] || null;
 
     return { totalDue, overdue, nextDue };
   };
 
   const stats = getStats();
   const invoiceList = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
-  const pendingInvoices = invoiceList.filter(inv => inv.status !== 'paid');
+  const paidInvoices = invoiceList.filter(inv => inv.status === 'paid');
   const overdueLabel = stats.overdue === 1 ? 'invoice' : 'invoices';
 
   const handlePaymentComplete = async (reference: string) => {
     if (!selectedInvoice || !selectedPaymentMethod) {
-      alert('Missing payment information');
+      showToast('Missing payment information', 'error');
       return;
     }
 
@@ -104,6 +137,7 @@ function TenantPaymentsPage() {
         tenantId: user?.id,
         leaseId: selectedInvoice.leaseId || selectedInvoice.id,
         invoiceId: selectedInvoice.id,
+        invoiceNumber: selectedInvoice.invoiceNumber,
         propertyId: selectedInvoice.propertyId,
         managerId: selectedInvoice.managerId,
         amount: selectedInvoice.amount,
@@ -126,7 +160,7 @@ function TenantPaymentsPage() {
       // #SUGGEST_VERIFY: Backend creates notification that broadcasts to manager via WebSocket
       notificationService.sendPaymentConfirmation(selectedInvoice.amount, selectedPaymentMethod.label || 'Unknown');
 
-      alert('Payment submitted successfully!');
+      showToast('Payment submitted successfully!', 'success');
       setShowCheckout(false);
       setPaymentMode(false);
       setSelectedInvoice(null);
@@ -134,9 +168,8 @@ function TenantPaymentsPage() {
       setPaymentNotes('');
       setGeneratedReference('');
       refetchInvoices();
-      refetchPayments();
     } catch (error) {
-      alert('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showToast('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -144,45 +177,14 @@ function TenantPaymentsPage() {
 
   const handleSubmitPayment = async () => {
     if (!selectedInvoice || !selectedPaymentMethod) {
-      alert('Please select a payment method');
+      showToast('Please select a payment method', 'error');
       return;
     }
 
     setShowCheckout(true);
   };
 
-  const paymentHistoryColumns = [
-    {
-      key: 'invoiceNumber',
-      label: 'Invoice',
-      render: (value: string) => value || 'N/A'
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      render: (value: number) => formatCurrency(value)
-    },
-    {
-      key: 'paymentDate',
-      label: 'Date Paid',
-      render: (value?: string) => value ? formatDate(value) : 'Pending'
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value: string) => (
-        <span className={`status-badge ${
-          value === 'paid' ? 'status-paid' :
-          value === 'pending_approval' ? 'status-pending' :
-          value === 'overdue' ? 'status-overdue' : 'status-pending'
-        }`}>
-          {value?.toUpperCase()}
-        </span>
-      )
-    }
-  ];
-
-  if (invoicesLoading || paymentsLoading) {
+  if (invoicesLoading) {
     return (
       <div className="app-container mobile-only page-wrapper">
         <TopNav showLogout showBackButton />
@@ -266,8 +268,9 @@ function TenantPaymentsPage() {
                     onDownload={async (id, format) => {
                       try {
                         await invoicesApi.download(id, format);
-                      } catch (_error) {
-                        alert('Failed to download invoice');
+                      } catch (error) {
+                        console.error('Download failed:', error);
+                        showToast('Failed to download invoice', 'error');
                       }
                     }}
                     onPay={(selectedInv) => {
@@ -341,20 +344,30 @@ function TenantPaymentsPage() {
 
         {activeTab === 'history' && (
           <div>
-            {!payments || payments.length === 0 ? (
+            {paidInvoices.length === 0 ? (
               <div className="section-card empty-state-card">
                 <Icon name="payment" alt="Payments" size={48} />
                 <div className="empty-state-title">No payment history</div>
                 <div className="empty-state-text">Your payments will appear here once processed.</div>
               </div>
             ) : (
-              <DataTable
-                title="Payment History"
-                data={payments || []}
-                columns={paymentHistoryColumns}
-                actions={null}
-                onRowClick={() => {}}
-              />
+              <div className="support-grid">
+                {paidInvoices.map(invoice => (
+                  <InvoiceViewer
+                    key={invoice.id}
+                    invoice={invoice}
+                    onDownload={async (id, format) => {
+                      try {
+                        await invoicesApi.download(id, format);
+                      } catch (error) {
+                        console.error('Download failed:', error);
+                        showToast('Failed to download invoice', 'error');
+                      }
+                    }}
+                    onPay={() => {}}
+                  />
+                ))}
+              </div>
             )}
           </div>
         )}

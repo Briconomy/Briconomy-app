@@ -1451,6 +1451,8 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
             _id: 1,
             tenantId: 1,
             leaseId: 1,
+            invoiceId: 1,
+            invoiceNumber: 1,
             amount: 1,
             paymentDate: 1,
             dueDate: 1,
@@ -1508,8 +1510,27 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
         };
       });
     } else {
-      const rows = await payments.find(normalizeFilters(otherFilters) as Record<string, unknown>).toArray();
-      return mapDocs(rows);
+      const pipeline: Record<string, unknown>[] = [];
+
+      if (Object.keys(otherFilters).length > 0) {
+        pipeline.push({
+          $match: normalizeFilters(otherFilters)
+        });
+      }
+
+      const rows = await payments.aggregate(pipeline).toArray() as Array<Record<string, unknown>>;
+      return rows.map(row => {
+        const typedRow = row as Record<string, unknown> & {
+          _id: ObjectId;
+        };
+
+        const { _id, ...rest } = typedRow;
+
+        return {
+          id: String(_id),
+          ...rest
+        };
+      });
     }
   } catch (error) {
     console.error("Error fetching payments:", error);

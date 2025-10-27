@@ -1,4 +1,5 @@
 import { serve } from "@std/http/server";
+import { ObjectId } from "mongo";
 import { connectToMongoDB, getCollection } from "./db.ts";
 import { bricllmHandler } from "./bricllm-handler.ts";
 import {
@@ -537,17 +538,57 @@ serve(async (req) => {
         const body = await req.json();
         const payment = await createPayment(body);
 
-        // #COMPLETION_DRIVE: Create payment notification for manager to trigger auto-refresh
-        // #SUGGEST_VERIFY: Manager page refetches data when notification widget updates
-        if (body.managerId) {
-          const paymentNotification = {
-            userId: body.managerId,
-            type: 'payment_received',
-            title: 'Payment Received',
-            message: `Payment of R${body.amount} has been received`,
-            read: false
-          };
-          await createNotification(paymentNotification, { broadcastToUsers });
+        // #COMPLETION_DRIVE: Broadcast to all managers of the property, not just primary manager
+        // #SUGGEST_VERIFY: Test with multiple managers to ensure all receive real-time updates
+        if (body.propertyId) {
+          try {
+            await connectToMongoDB();
+            const properties = getCollection("properties");
+            const property = await properties.findOne({ _id: new ObjectId(body.propertyId) }) as Record<string, unknown> | null;
+
+            const managerIds: string[] = [];
+
+            if (property) {
+              if (property.managerId) {
+                managerIds.push(String(property.managerId));
+              }
+              if (Array.isArray(property.managers)) {
+                managerIds.push(...(property.managers as unknown[]).map(m => String(m)));
+              }
+            }
+
+            if (body.managerId && !managerIds.includes(String(body.managerId))) {
+              managerIds.push(String(body.managerId));
+            }
+
+            const uniqueManagerIds = [...new Set(managerIds)];
+
+            for (const managerId of uniqueManagerIds) {
+              const paymentNotification = {
+                userId: managerId,
+                type: 'payment_received',
+                title: 'Payment Received',
+                message: `Payment of R${body.amount} has been received`,
+                read: false
+              };
+              await createNotification(paymentNotification, { broadcastToUsers });
+            }
+
+            // #COMPLETION_DRIVE: Also notify tenant so their payment history updates in real-time
+            // #SUGGEST_VERIFY: Tenant receives WebSocket notification after payment submission
+            if (body.tenantId) {
+              const tenantNotification = {
+                userId: body.tenantId,
+                type: 'payment_submitted',
+                title: 'Payment Submitted',
+                message: `Your payment of R${body.amount} has been submitted`,
+                read: false
+              };
+              await createNotification(tenantNotification, { broadcastToUsers });
+            }
+          } catch (error) {
+            console.error("Error broadcasting payment notification to managers:", error);
+          }
         }
 
         return new Response(JSON.stringify(payment), {
