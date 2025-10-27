@@ -54,7 +54,7 @@ function ManagerPaymentsPage() {
   }, [refetchPayments]);
 
   // #COMPLETION_DRIVE: WebSocket listener to auto-refetch payment list on new payment received
-  // #SUGGEST_VERIFY: Verify all managers receive real-time updates when tenant pays
+  // #SUGGEST_VERIFY: Verify all managers receive real-time updates when tenant pays (synced with tenant and history pages)
   useEffect(() => {
     if (!user?.id) return;
 

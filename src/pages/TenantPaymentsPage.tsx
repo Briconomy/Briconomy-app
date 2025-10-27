@@ -59,25 +59,19 @@ function TenantPaymentsPage() {
     { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
   ];
 
-  // Fetch invoices
+  // Fetch invoices (used for both tabs)
   const { data: invoices, loading: invoicesLoading, refetch: refetchInvoices } = useApi(
     () => invoicesApi.getAll({ tenantId: user?.id }),
     [user?.id]
   );
 
-  // Fetch payment history
-  const { data: payments, loading: paymentsLoading, refetch: refetchPayments } = useApi(
-    () => paymentsApi.getAll({ tenantId: user?.id }),
-    [user?.id]
-  );
-
-  const refetchPaymentsRef = useRef(refetchPayments);
+  const refetchInvoicesRef = useRef(refetchInvoices);
   useEffect(() => {
-    refetchPaymentsRef.current = refetchPayments;
-  }, [refetchPayments]);
+    refetchInvoicesRef.current = refetchInvoices;
+  }, [refetchInvoices]);
 
-  // #COMPLETION_DRIVE: WebSocket listener to auto-refetch payment history on payment creation
-  // #SUGGEST_VERIFY: Verify real-time updates work across multiple tenant sessions
+  // #COMPLETION_DRIVE: WebSocket listener to auto-refetch invoices across both tabs on payment status change
+  // #SUGGEST_VERIFY: Verify real-time updates sync invoices and payment history tabs simultaneously
   useEffect(() => {
     if (!user?.id) return;
 
@@ -86,7 +80,7 @@ function TenantPaymentsPage() {
       if (message.type === 'notification') {
         const notifData = message.data as Record<string, unknown> | undefined;
         if (notifData && (notifData.type === 'payment_received' || notifData.type === 'payment_submitted')) {
-          refetchPaymentsRef.current();
+          refetchInvoicesRef.current();
         }
       }
     };
@@ -130,6 +124,7 @@ function TenantPaymentsPage() {
   const stats = getStats();
   const invoiceList = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
   const pendingInvoices = invoiceList.filter(inv => inv.status !== 'paid');
+  const paidInvoices = invoiceList.filter(inv => inv.status === 'paid');
   const overdueLabel = stats.overdue === 1 ? 'invoice' : 'invoices';
 
   const handlePaymentComplete = async (reference: string) => {
@@ -175,7 +170,6 @@ function TenantPaymentsPage() {
       setPaymentNotes('');
       setGeneratedReference('');
       refetchInvoices();
-      refetchPayments();
     } catch (error) {
       showToast('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     } finally {
@@ -192,38 +186,7 @@ function TenantPaymentsPage() {
     setShowCheckout(true);
   };
 
-  const paymentHistoryColumns = [
-    {
-      key: 'invoiceNumber',
-      label: 'Invoice',
-      render: (value: string) => value || 'N/A'
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      render: (value: number) => formatCurrency(value)
-    },
-    {
-      key: 'paymentDate',
-      label: 'Date Paid',
-      render: (value?: string) => value ? formatDate(value) : 'Pending'
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value: string) => (
-        <span className={`status-badge ${
-          value === 'paid' ? 'status-paid' :
-          value === 'pending_approval' ? 'status-pending' :
-          value === 'overdue' ? 'status-overdue' : 'status-pending'
-        }`}>
-          {value?.toUpperCase()}
-        </span>
-      )
-    }
-  ];
-
-  if (invoicesLoading || paymentsLoading) {
+  if (invoicesLoading) {
     return (
       <div className="app-container mobile-only page-wrapper">
         <TopNav showLogout showBackButton />
@@ -382,20 +345,29 @@ function TenantPaymentsPage() {
 
         {activeTab === 'history' && (
           <div>
-            {!payments || payments.length === 0 ? (
+            {paidInvoices.length === 0 ? (
               <div className="section-card empty-state-card">
                 <Icon name="payment" alt="Payments" size={48} />
                 <div className="empty-state-title">No payment history</div>
                 <div className="empty-state-text">Your payments will appear here once processed.</div>
               </div>
             ) : (
-              <DataTable
-                title="Payment History"
-                data={payments || []}
-                columns={paymentHistoryColumns}
-                actions={null}
-                onRowClick={() => {}}
-              />
+              <div className="support-grid">
+                {paidInvoices.map(invoice => (
+                  <InvoiceViewer
+                    key={invoice.id}
+                    invoice={invoice}
+                    onDownload={async (id, format) => {
+                      try {
+                        await invoicesApi.download(id, format);
+                      } catch (_error) {
+                        showToast('Failed to download invoice', 'error');
+                      }
+                    }}
+                    onPay={() => {}}
+                  />
+                ))}
+              </div>
             )}
           </div>
         )}
