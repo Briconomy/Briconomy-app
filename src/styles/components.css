@@ -161,11 +161,11 @@
 .input {
   width: 100%;
   height: var(--height-input);
-  padding: 0 var(--space-md);
+  padding: 10px var(--space-md);
   font-size: var(--text-base);
   font-family: inherit;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text-primary);
   transition: all var(--transition-base);
@@ -194,12 +194,13 @@
   font-size: var(--text-base);
   font-family: var(--font-family-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text-primary);
   transition: all var(--transition-base);
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
+  line-height: 1.5;
 }
 
 .textarea::placeholder {
@@ -215,11 +216,11 @@
 .select {
   width: 100%;
   height: var(--height-input);
-  padding: 0 var(--space-md);
+  padding: 10px var(--space-md);
   font-size: var(--text-base);
   font-family: var(--font-family-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text-primary);
   cursor: pointer;
@@ -237,13 +238,13 @@
 }
 
 .form-group {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .form-label {
   display: block;
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-weight: var(--font-semibold);
   color: var(--text-primary);
   margin-bottom: var(--space-sm);
 }
@@ -530,25 +531,41 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
 }
 
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+    margin-bottom: var(--space-xl);
+  }
+
+  .form-row .form-group {
+    margin-bottom: var(--space-md);
+  }
+
+  .form-row .form-group:last-child {
+    margin-bottom: 0;
   }
 }
 
 .form-actions {
   display: flex;
   gap: var(--space-md);
-  justify-content: flex-end;
+  justify-content: stretch;
   margin-top: var(--space-xl);
   padding-top: var(--space-lg);
   border-top: 1px solid var(--border-primary);
 }
 
 .form-actions .btn {
-  min-width: 120px;
+  flex: 1;
+  min-height: 44px;
+  font-size: var(--text-base);
 }
 
 .language-selector-content {
@@ -606,4 +623,3 @@
   color: var(--secondary);
   font-weight: bold;
 }
-
