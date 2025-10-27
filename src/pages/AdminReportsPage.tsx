@@ -368,7 +368,7 @@ function AdminReportsPage() {
           
             <button 
               type="button" 
-              className="btn btn-primary" 
+              className="btn btn-primary generateReport-btn" 
               style={{ 
                 width: '100%',
                 padding: '14px',

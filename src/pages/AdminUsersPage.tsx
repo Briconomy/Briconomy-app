@@ -64,13 +64,13 @@ function AdminUsersPage() {
         </div>
 
         <div className="data-table">
-          <div className="table-header">
+          <div className="table-header" style={{ flexDirection: 'column', gap: '16px', alignItems: 'flex-start' }}>
             <div className="table-title">{t('admin.user_list')}</div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
               <button
                 type="button"
                 onClick={() => navigate('/admin/pending-users')}
-                className="btn btn-secondary"
+                className="btn btn-secondary user-pending-btn"
                 style={{
                   background: '#f39c12',
                   color: 'white',
@@ -79,20 +79,20 @@ function AdminUsersPage() {
                   border: 'none',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: '12px'
+                  fontSize: '15px'
                 }}
               >
                 {t('admin.pending')} ({stats.pendingUsers})
               </button>
-              <a href="/admin/add-user" className="btn btn-primary">
+              <a href="/admin/add-user" className="btn btn-primary adduser-btn">
                 {t('common.add_user')}
                 <span style={{
-                  padding: '10px 16px',
+                  padding: '10px 1px',
                   borderRadius: '6px',
                   border: 'none',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: '6px'
+                  fontSize: '6px',
                 }}>
                 </span>
               </a>

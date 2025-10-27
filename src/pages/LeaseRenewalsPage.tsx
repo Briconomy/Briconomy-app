@@ -174,7 +174,7 @@ function LeaseRenewalsPage() {
         <div className="action-buttons">
           {!row.renewalOfferSent && (
             <button type="button"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary sendRenewal-offer-btn"
               onClick={() => handleSendRenewalOffer(row.id)}
             >
               {t('renewals.send_offer')}

@@ -612,7 +612,7 @@ function MaintenanceRequestsPage() {
                 <div className="form-actions">
                   <button 
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-secondary newRequest-btn"
                     onClick={() => setShowRequestForm(false)}
                     disabled={submitting}
                   >
@@ -620,7 +620,7 @@ function MaintenanceRequestsPage() {
                   </button>
                   <button 
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary newRequest2-btn"
                     disabled={submitting || !formData.title.trim() || !formData.description.trim()}
                   >
                     {submitting ? 'Submitting...' : 'Submit'}

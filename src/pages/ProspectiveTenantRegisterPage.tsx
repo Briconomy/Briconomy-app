@@ -593,13 +593,15 @@ function ProspectiveTenantRegisterPage() {
                 fontSize: '16px',
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                marginBottom: '10px',
+                marginTop: '10px',
+                marginBottom: '25px',
                 opacity: loading ? 0.7 : 1
               }}
               className="btn btn-primary"
             >
               {loading ? 'Submitting Application...' : 'Submit Application'}
             </button>
+
             
             <button 
               type="button"

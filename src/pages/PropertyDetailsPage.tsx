@@ -6,6 +6,7 @@ import { propertiesApi, unitsApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
 
 // Add styles for the image modal and gallery
 const modalStyles = `
@@ -135,6 +136,21 @@ const modalStyles = `
     cursor: not-allowed;
   }
   
+.backtoProperties-btn {
+    width: 295px;
+    font-size: 13px;
+    margin-top: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .applyNow-btn {
+    width: 190px;
+    font-size: 15px;
+    margin-top: 10px;
+  }
+
   .thumbnail-grid {
     display: flex;
     gap: 10px;
@@ -328,45 +344,6 @@ const modalStyles = `
     gap: 8px;
   }
 
-  .btn-sm {
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-    transition: all 0.3s ease;
-    flex: 1;
-  }
-
-  .btn-sm:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .btn-secondary.btn-sm {
-    background: #f8f9fa;
-    color: #495057;
-    border: 2px solid #e9ecef;
-  }
-
-  .btn-secondary.btn-sm:hover:not(:disabled) {
-    background: #e9ecef;
-    border-color: #dee2e6;
-  }
-
-  .btn-primary.btn-sm {
-    background: #162F1B;
-    color: white;
-  }
-
-  .btn-primary.btn-sm:hover:not(:disabled) {
-    background: #1a3a20;
-  }
-
   /* Unit cards styling */
   .units-grid {
     display: grid;
@@ -417,9 +394,9 @@ const modalStyles = `
   }
 
   .final-action-section .property-actions {
-    justify-content: center;
-    max-width: 300px;
-    margin: 0 auto;
+    justify-content: flex-start;
+    max-width: none;
+    margin: 0;
   }
   
   .price-subtitle {
@@ -778,9 +755,11 @@ function PropertyDetailsPage() {
   const { optimizeImage } = useImageOptimization();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { addViewedProperty } = useProspectiveTenant();
 
   const isManager = user?.userType === 'manager';
   const isTenant = user?.userType === 'tenant';
+  const isProspectiveTenant = !isManager && !isTenant;
 
   const navItems = isManager ? [
     { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
@@ -807,6 +786,13 @@ function PropertyDetailsPage() {
       setLoading(false);
     }
   }, [propertyId]);
+
+  // Track viewed property for prospective tenants
+  useEffect(() => {
+    if (propertyId && isProspectiveTenant && property) {
+      addViewedProperty(propertyId);
+    }
+  }, [propertyId, isProspectiveTenant, property]);
 
   const fetchPropertyDetails = async () => {
     try {
@@ -1053,7 +1039,7 @@ function PropertyDetailsPage() {
         <div className="main-content">
           <div className="error-state">
             <p>Property not found</p>
-            <button type="button" onClick={handleBack} className="btn btn-primary">Back to Properties</button>
+            <button type="button" onClick={handleBack} className="btn btn-primary backToProperties-btn">Back to Properties</button>
           </div>
         </div>
       </div>
@@ -1275,7 +1261,7 @@ function PropertyDetailsPage() {
 
               <div className="property-actions-section">
                 <div className="action-buttons">
-                  <button type="button" onClick={handleBack} className="btn btn-secondary">
+                  <button type="button" onClick={handleBack} className="btn btn-secondary backtoProperties-btn">
                     Back to Properties
                   </button>
                 </div>
@@ -1590,13 +1576,13 @@ function PropertyDetailsPage() {
             <div className="property-actions">
               <button type="button"
                 onClick={() => globalThis.location.href = '/browse-properties'}
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary backtoProperties-btn"
               >
                 {t('prospect.back_to_properties')}
               </button>
               <button type="button"
                 onClick={handleApplyNow}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary applyNow-btn"
                 disabled={availability.available === 0}
               >
                 {availability.available > 0 ? t('prospect.apply_now') : t('prospect.join_waitlist')}
@@ -1724,16 +1710,16 @@ function PropertyDetailsPage() {
                 </div>
               </div>
               <div className="property-actions">
-                <button type="button" 
-                  onClick={handleBack} 
-                  className="btn btn-secondary btn-sm"
+                <button type="button"
+                  onClick={handleBack}
+                  className="btn btn-secondary backtoProperties-btn"
                 >
                   {t('prospect.back_to_properties')}
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={handleApplyNow}
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary applyNow-btn"
                   disabled={availability.available === 0}
                 >
                   {availability.available > 0 ? t('prospect.apply_now') : t('prospect.join_waitlist')}
