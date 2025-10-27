@@ -2,12 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import DataTable from '../components/DataTable.tsx';
 import InvoiceViewer from '../components/InvoiceViewer.tsx';
 import PaymentMethodSelector, { PaymentMethod } from '../components/PaymentMethodSelector.tsx';
 import FakeCheckout from '../components/FakeCheckout.tsx';
 import Icon from '../components/Icon.tsx';
-import { invoicesApi, paymentsApi, documentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
+import { invoicesApi, paymentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
@@ -116,14 +115,13 @@ function TenantPaymentsPage() {
     }).length;
 
     const nextDue = pending
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] || null;
+      .toSorted((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] || null;
 
     return { totalDue, overdue, nextDue };
   };
 
   const stats = getStats();
   const invoiceList = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
-  const pendingInvoices = invoiceList.filter(inv => inv.status !== 'paid');
   const paidInvoices = invoiceList.filter(inv => inv.status === 'paid');
   const overdueLabel = stats.overdue === 1 ? 'invoice' : 'invoices';
 
@@ -270,7 +268,8 @@ function TenantPaymentsPage() {
                     onDownload={async (id, format) => {
                       try {
                         await invoicesApi.download(id, format);
-                      } catch (_error) {
+                      } catch (error) {
+                        console.error('Download failed:', error);
                         showToast('Failed to download invoice', 'error');
                       }
                     }}
@@ -360,7 +359,8 @@ function TenantPaymentsPage() {
                     onDownload={async (id, format) => {
                       try {
                         await invoicesApi.download(id, format);
-                      } catch (_error) {
+                      } catch (error) {
+                        console.error('Download failed:', error);
                         showToast('Failed to download invoice', 'error');
                       }
                     }}
