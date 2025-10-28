@@ -473,6 +473,28 @@ serve(async (req) => {
       } else if (req.method === 'POST') {
         const body = await req.json();
         const lease = await createLease(body);
+
+        try {
+          const startDate = new Date(lease.startDate || new Date());
+          const month = startDate.toLocaleString('default', { month: 'long' });
+          const year = startDate.getFullYear();
+
+          await createInvoice({
+            tenantId: lease.tenantId,
+            leaseId: lease.id,
+            amount: lease.monthlyRent || 0,
+            issueDate: startDate.toISOString().split('T')[0],
+            dueDate: 'monthly',
+            month: month,
+            year: year,
+            status: 'active',
+            description: `Monthly rent for ${month} ${year}`,
+            source: 'lease'
+          });
+        } catch (invoiceError) {
+          console.error('Failed to create automatic invoice for lease:', invoiceError);
+        }
+
         return new Response(JSON.stringify(lease), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
