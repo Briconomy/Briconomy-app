@@ -188,14 +188,14 @@ export const invoicesApi = {
       const filenameMatch = contentDisposition?.match(/filename="?([^"]+)"?/);
       const filename = filenameMatch ? filenameMatch[1] : `invoice-${id}.${format === 'pdf' ? 'pdf' : 'md'}`;
 
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const downloadUrl = globalThis.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      globalThis.URL.revokeObjectURL(downloadUrl);
 
       return { success: true };
     } catch (error) {
@@ -313,9 +313,9 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
-  updateSecuritySetting: (settingName: string, value: string) => apiRequest('/admin/security-settings', {
+  updateSecuritySetting: (id: string | null, settingName: string, value: string) => apiRequest('/admin/security-settings', {
     method: 'PUT',
-    body: JSON.stringify({ setting: settingName, value }),
+    body: JSON.stringify({ id, setting: settingName, value }),
   }),
   updateAuthMethod: (method: string, enabled: boolean) => apiRequest('/admin/auth-methods', {
     method: 'PUT',
