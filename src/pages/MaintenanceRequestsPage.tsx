@@ -158,6 +158,12 @@ function MaintenanceRequestsPage() {
 
       // #COMPLETION_DRIVE: Extract only IDs from lease objects, not full objects
       // #SUGGEST_VERIFY: Verify lease objects contain _id field for ID extraction
+      const unitId = currentLease?.unitId;
+      const propertyId = currentLease?.propertyId;
+      const propertyName = currentLease?.property?.name;
+      const propertyAddress = currentLease?.property?.address;
+      const unitNumber = currentLease?.unit?.unitNumber;
+
       const requestData = {
         title: formData.title,
         description: formData.description,
@@ -165,11 +171,11 @@ function MaintenanceRequestsPage() {
         category: formData.category,
         status: 'pending',
         tenantId: user?.id || '507f1f77bcf86cd799439012',
-        unitId: currentLease?.unitId?._id || currentLease?.unitId || null,
-        propertyId: currentLease?.propertyId?._id || currentLease?.propertyId || null,
+        unitId: unitId || null,
+        propertyId: propertyId || null,
         photos: formData.photos,
-        location: currentLease?.propertyId?.address || 'Unknown',
-        unitNumber: currentLease?.unitId?.unitNumber || 'Unknown',
+        location: propertyName || propertyAddress || 'Unknown',
+        unitNumber: unitNumber || 'Unknown',
         createdAt: new Date(),
         updatedAt: new Date()
       };
