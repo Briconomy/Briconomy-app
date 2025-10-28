@@ -568,6 +568,12 @@
   font-size: var(--text-base);
 }
 
+.form-actions .button {
+  flex: 1;
+  min-height: 44px;
+  font-size: var(--text-base);
+}
+
 .language-selector-content {
   padding: var(--space-md) 0;
 }
