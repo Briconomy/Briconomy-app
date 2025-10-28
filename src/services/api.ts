@@ -89,10 +89,30 @@ export const leasesApi = {
     const endpoint = params ? `/api/leases?${params}` : '/api/leases';
     return apiRequest(endpoint);
   },
+  getMyLease: (tenantId: string) => apiRequest(`/api/leases?tenantId=${tenantId}`).then((leases: unknown) => {
+    const leaseArray = Array.isArray(leases) ? leases : [];
+    const activeLease = leaseArray.find((l: Record<string, unknown>) => l.status === 'active');
+    return activeLease || null;
+  }),
   create: (data: Record<string, unknown>) => apiRequest('/api/leases', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+  downloadDocument: async (leaseId: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/leases/${leaseId}/document`);
+    if (!response.ok) {
+      throw new Error(`Failed to download lease document: ${response.status}`);
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lease-${leaseId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export const renewalsApi = {

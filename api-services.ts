@@ -3584,6 +3584,13 @@ export async function createDocument(documentData: Record<string, unknown>) {
     await connectToMongoDB();
     const documents = getCollection("documents");
 
+    console.log('[createDocument] Incoming data:', {
+      name: documentData.name,
+      hasContent: !!documentData.content,
+      contentLength: typeof documentData.content === 'string' ? documentData.content.length : 0,
+      contentPreview: typeof documentData.content === 'string' ? documentData.content.substring(0, 50) : 'N/A'
+    });
+
     const now = new Date();
 
     const docToInsert: Record<string, unknown> = {
@@ -3681,11 +3688,22 @@ export async function getDocumentById(documentId: string) {
   try {
     await connectToMongoDB();
     const documents = getCollection("documents");
-    
+
     const doc = await documents.findOne({
       _id: toId(documentId)
     });
-    
+
+    if (doc) {
+      console.log('[getDocumentById] Document found:', {
+        _id: (doc as Record<string, unknown>)._id,
+        name: (doc as Record<string, unknown>).name,
+        hasContent: !!(doc as Record<string, unknown>).content,
+        contentLength: typeof (doc as Record<string, unknown>).content === 'string' ? ((doc as Record<string, unknown>).content as string).length : 0
+      });
+    } else {
+      console.log('[getDocumentById] Document not found:', documentId);
+    }
+
     return doc ? mapDoc(doc) : null;
   } catch (error) {
     console.error("Error fetching document:", error);
