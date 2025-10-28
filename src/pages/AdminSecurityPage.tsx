@@ -376,7 +376,9 @@ function AdminSecurityPage() {
                     cursor: 'pointer',
                     boxShadow: '0 3px 10px rgba(108, 117, 125, 0.3)',
                     transition: 'all 0.3s ease',
-                    minWidth: '80px'
+                    minWidth: '80px',
+                    marginTop: '5px',
+                    marginBottom: '-15px'
                   }}
                   onClick={() => handleClearAlert(alert.id)}
                 >

@@ -238,14 +238,14 @@ return (
                 <div className="form-actions">
                   <button 
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-secondary newProperty-cancel-btn"
                     onClick={() => navigate('/manager/properties')}
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary newProperty-create-btn"
                     disabled={loading}
                   >
                     {loading ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Property')}

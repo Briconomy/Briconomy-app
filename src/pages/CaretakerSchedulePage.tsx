@@ -213,21 +213,21 @@ function CaretakerSchedulePage() {
         <div className="view-mode-selector">
           <button 
             type="button"
-            className={`btn btn-sm ${viewMode === 'day' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${viewMode === 'day' ? 'btn-primary date-btn' : 'btn-secondary date2-btn'}`}
             onClick={() => setViewMode('day')}
           >
             Day
           </button>
           <button 
             type="button"
-            className={`btn btn-sm ${viewMode === 'week' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${viewMode === 'week' ? 'btn-primary date-btn' : 'btn-secondary date2-btn'}`}
             onClick={() => setViewMode('week')}
           >
             Week
           </button>
           <button 
             type="button"
-            className={`btn btn-sm ${viewMode === 'month' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${viewMode === 'month' ? 'btn-primary date-btn' : 'btn-secondary date2-btn'}`}
             onClick={() => setViewMode('month')}
           >
             Month

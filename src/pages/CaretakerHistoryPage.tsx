@@ -300,7 +300,8 @@ function CaretakerHistoryPage() {
                       marginTop: '12px', 
                       display: 'grid', 
                       gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
-                      gap: '8px' 
+                      gap: '8px',
+                      marginBottom: '-10px' 
                     }}>
                       {request.status === 'pending' && (
                         <button
@@ -325,7 +326,7 @@ function CaretakerHistoryPage() {
                       {request.status === 'completed' && (
                         <button
                           type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-secondary reopen-btn"
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(request.id, 'pending')}
                         >
@@ -334,7 +335,7 @@ function CaretakerHistoryPage() {
                       )}
                       <button
                         type="button"
-                        className="btn btn-danger"
+                        className="btn btn-danger delete-btn"
                         style={{ fontSize: '13px', padding: '6px 12px' }}
                         onClick={() => handleDeleteRequest(request.id)}
                       >

@@ -264,14 +264,14 @@ function CreateLeasePage() {
           <div className="form-actions">
             <button 
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary createLease-cancel-btn"
               onClick={() => navigate('/manager/leases')}
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary createLease-btn"
               disabled={submitting}
             >
               {submitting ? 'Creating...' : 'Create Lease'}
