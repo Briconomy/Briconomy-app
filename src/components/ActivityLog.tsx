@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Icon from './Icon.tsx';
 
 interface ActivityItem {
   id: string;
@@ -9,6 +10,17 @@ interface ActivityItem {
   details?: Record<string, unknown>;
   status?: 'success' | 'pending' | 'failed';
 }
+
+type ActivityFilterKey = 'all' | ActivityItem['type'];
+
+const activityTypeConfig: Record<ActivityItem['type'], { label: string; icon: string; color: string }> = {
+  login: { label: 'Logins', icon: 'activityLog', color: 'var(--brand-primary)' },
+  payment: { label: 'Payments', icon: 'payment', color: 'var(--brand-secondary)' },
+  maintenance_request: { label: 'Maintenance', icon: 'maintenance', color: 'var(--brand-ai)' },
+  profile_update: { label: 'Profile', icon: 'profile', color: 'var(--info)' },
+  document_upload: { label: 'Documents', icon: 'document', color: 'var(--primary)' },
+  lease_action: { label: 'Lease', icon: 'lease', color: 'var(--success)' }
+};
 
 function ActivityLog() {
   const [activities, _setActivities] = useState<ActivityItem[]>([
@@ -68,34 +80,14 @@ function ActivityLog() {
     }
   ]);
 
-  const [filter, setFilter] = useState<'all' | 'login' | 'payment' | 'maintenance_request' | 'profile_update' | 'document_upload' | 'lease_action'>('all');
+  const [filter, setFilter] = useState<ActivityFilterKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const getActivityIcon = (type: ActivityItem['type']) => {
-    switch (type) {
-      case 'login': return 'Login';
-      case 'payment': return 'Payment';
-      case 'maintenance_request': return 'Maintenance';
-      case 'profile_update': return 'Profile';
-      case 'document_upload': return 'Document';
-      case 'lease_action': return 'Lease';
-      default: return 'Activity';
-    }
-  };
+  const getActivityIconName = (type: ActivityItem['type']) => activityTypeConfig[type].icon;
 
-  const getActivityColor = (type: ActivityItem['type']) => {
-    switch (type) {
-      case 'login': return 'activity-login';
-      case 'payment': return 'activity-payment';
-      case 'maintenance_request': return 'activity-maintenance';
-      case 'profile_update': return 'activity-profile';
-      case 'document_upload': return 'activity-document';
-      case 'lease_action': return 'activity-lease';
-      default: return 'activity-default';
-    }
-  };
+  const getActivityAccentColor = (type: ActivityItem['type']) => activityTypeConfig[type].color;
 
   const getStatusColor = (status?: ActivityItem['status']) => {
     switch (status) {
@@ -108,7 +100,8 @@ function ActivityLog() {
 
   const filteredActivities = activities.filter(activity => {
     const matchesFilter = filter === 'all' || activity.type === filter;
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch =
+      searchTerm === '' ||
       activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
@@ -116,8 +109,6 @@ function ActivityLog() {
 
   const handleExport = () => {
     setExporting(true);
-    
-    // Simulate export process
     setTimeout(() => {
       const exportData = {
         export_date: new Date().toISOString(),
@@ -149,237 +140,120 @@ function ActivityLog() {
     });
   };
 
-  const getActivityTypeName = (type: ActivityItem['type']) => {
-    switch (type) {
-      case 'login': return 'Login';
-      case 'payment': return 'Payment';
-      case 'maintenance_request': return 'Maintenance Request';
-      case 'profile_update': return 'Profile Update';
-      case 'document_upload': return 'Document Upload';
-      case 'lease_action': return 'Lease Action';
-      default: return 'Activity';
-    }
-  };
+  const getActivityTypeName = (type: ActivityItem['type']) => activityTypeConfig[type].label;
 
-  const activityCounts = {
-    all: activities.length,
-    login: activities.filter(a => a.type === 'login').length,
-    payment: activities.filter(a => a.type === 'payment').length,
-    maintenance_request: activities.filter(a => a.type === 'maintenance_request').length,
-    profile_update: activities.filter(a => a.type === 'profile_update').length,
-    document_upload: activities.filter(a => a.type === 'document_upload').length,
-    lease_action: activities.filter(a => a.type === 'lease_action').length
-  };
+  const activityCounts = activities.reduce((acc, activity) => {
+    acc.all += 1;
+    acc[activity.type] += 1;
+    return acc;
+  }, {
+    all: 0,
+    login: 0,
+    payment: 0,
+    maintenance_request: 0,
+    profile_update: 0,
+    document_upload: 0,
+    lease_action: 0
+  } as Record<ActivityFilterKey, number>);
+
+  const filterOptions: Array<{ key: ActivityFilterKey; label: string }> = [
+    { key: 'all', label: 'All' },
+    ...Object.entries(activityTypeConfig).map(([key, value]) => ({
+      key: key as ActivityItem['type'],
+      label: value.label
+    }))
+  ];
 
   return (
     <div className="activity-log">
-      <div className="activity-header">
-        <h3>Activity Log</h3>
-        <div className="search-box" style={{ marginBottom: '16px' }}>
+      <section className="activity-card activity-log-controls">
+        <div className="activity-search-row">
           <input
-            type="text"
-            placeholder="Search activities..."
+            type="search"
+            className="input activity-search-input"
+            placeholder="Search activities"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              backgroundColor: '#fff',
-              outline: 'none',
-              transition: 'border-color 0.2s ease',
-              boxSizing: 'border-box'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#162F1B'}
-            onBlur={(e) => e.target.style.borderColor = '#ddd'}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            aria-label="Search activities"
           />
-        </div>
-        <div className="activity-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-          <button 
+          <button
             type="button"
-            className="btn btn-primary btn-sm"
+            className="button button-md button-primary activity-export-button"
             onClick={handleExport}
             disabled={exporting}
           >
             {exporting ? 'Exporting...' : 'Export'}
           </button>
         </div>
-      </div>
+        <div className="activity-filter-list">
+          {filterOptions.map((option) => {
+            const isActive = filter === option.key;
+            const buttonClass = [
+              'activity-filter-button',
+              option.key !== 'all' ? `activity-filter-${option.key}` : '',
+              isActive ? 'active' : ''
+            ].filter(Boolean).join(' ');
 
-      <div className="activity-filters">
-        <div className="filter-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-          <button
-            type="button"
-            className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('all')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            All ({activityCounts.all})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'login' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('login')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Logins ({activityCounts.login})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'payment' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('payment')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Payments ({activityCounts.payment})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'maintenance_request' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('maintenance_request')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Maintenance ({activityCounts.maintenance_request})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'profile_update' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('profile_update')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Profile ({activityCounts.profile_update})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'document_upload' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('document_upload')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Documents ({activityCounts.document_upload})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'lease_action' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('lease_action')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Lease ({activityCounts.lease_action})
-          </button>
+            return (
+              <button
+                key={option.key}
+                type="button"
+                className={buttonClass}
+                onClick={() => setFilter(option.key)}
+              >
+                {`${option.label} (${activityCounts[option.key]})`}
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
       <div className="activity-list">
         {filteredActivities.length === 0 ? (
-          <div className="empty-state">
+          <div className="activity-card activity-empty">
             <p>No activities found</p>
             {searchTerm && (
-              <button 
+              <button
                 type="button"
-                className="btn btn-secondary"
+                className="button button-sm button-secondary"
                 onClick={() => setSearchTerm('')}
               >
-                Clear Search
+                Clear search
               </button>
             )}
           </div>
         ) : (
           filteredActivities.map((activity) => (
-            <div key={activity.id} className="activity-item">
-              <div className="activity-main">
-                <div className="activity-icon">
-                  <span className={`icon-wrapper ${getActivityColor(activity.type)}`}>
-                    {getActivityIcon(activity.type)}
-                  </span>
+            <div key={activity.id} className="activity-card activity-item">
+              <div className="activity-item-top">
+                <div className="activity-item-icon">
+                  <Icon
+                    name={getActivityIconName(activity.type)}
+                    size={40}
+                    color={getActivityAccentColor(activity.type)}
+                    borderRadius="50%"
+                  />
                 </div>
-                <div className="activity-content">
-                  <div className="activity-header-info">
-                    <h4>{activity.title}</h4>
+                <div className="activity-item-body">
+                  <div className="activity-item-heading">
+                    <h4 className="activity-item-title">{activity.title}</h4>
                     {activity.status && (
                       <span className={`status-badge ${getStatusColor(activity.status)}`}>
                         {activity.status.toUpperCase()}
                       </span>
                     )}
                   </div>
-                  <p className="activity-description">{activity.description}</p>
-                  <p className="activity-meta">
-                    {getActivityTypeName(activity.type)} • {formatDateTime(activity.timestamp)}
-                  </p>
+                  <p className="activity-item-description">{activity.description}</p>
+                  <div className="activity-item-meta">
+                    <span>{getActivityTypeName(activity.type)}</span>
+                    <span className="activity-item-meta-separator" aria-hidden="true">•</span>
+                    <span>{formatDateTime(activity.timestamp)}</span>
+                  </div>
                 </div>
-                <div className="activity-actions">
-                  <button 
+                <div className="activity-item-actions">
+                  <button
                     type="button"
-                    className="btn btn-sm btn-secondary"
+                    className="button button-sm button-secondary activity-details-button"
                     onClick={() => setSelectedActivity(activity)}
                   >
                     Details
@@ -393,7 +267,7 @@ function ActivityLog() {
 
       {selectedActivity && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content modal-large">
             <div className="modal-header">
               <h3>Activity Details</h3>
               <button 
@@ -442,7 +316,7 @@ function ActivityLog() {
               <div className="form-actions">
                 <button 
                   type="button"
-                  className="btn btn-secondary"
+                  className="button button-md button-secondary"
                   onClick={() => setSelectedActivity(null)}
                 >
                   Close
