@@ -3,15 +3,76 @@ import { useParams, useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import { leasesApi, formatCurrency } from '../services/api.ts';
+import { leasesApi, documentsApi, formatCurrency } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
 function LeaseDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const [lease, setLease] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sendingDocument, setSendingDocument] = useState(false);
+
+  const handleSendDocument = async () => {
+    if (!lease) {
+      showToast('Lease information not available', 'error');
+      return;
+    }
+
+    setSendingDocument(true);
+    try {
+      const leaseContent = `LEASE AGREEMENT
+
+Tenant: ${lease.tenant?.fullName || 'N/A'}
+Property: ${lease.property?.name || 'N/A'}
+Address: ${lease.property?.address || 'N/A'}
+Unit: ${lease.unit?.unitNumber || 'N/A'}
+
+LEASE TERMS:
+Start Date: ${lease.startDate ? new Date(lease.startDate).toLocaleDateString() : 'N/A'}
+End Date: ${lease.endDate ? new Date(lease.endDate).toLocaleDateString() : 'N/A'}
+Duration: ${lease.leaseLength ? lease.leaseLength + ' months' : 'N/A'}
+
+FINANCIAL TERMS:
+Monthly Rent: ${lease.monthlyRent ? `$${lease.monthlyRent.toLocaleString()}` : 'N/A'}
+Security Deposit: ${lease.deposit ? `$${lease.deposit.toLocaleString()}` : 'N/A'}
+
+ADDITIONAL TERMS:
+${lease.terms || 'No additional terms specified'}
+
+Lease Number: ${lease.leaseNumber || 'N/A'}
+Status: ${lease.status?.toUpperCase() || 'N/A'}
+Renewal Option: ${lease.renewalOption ? 'Yes' : 'No'}`;
+
+      const base64Content = btoa(unescape(encodeURIComponent(leaseContent)));
+
+      const payload = {
+        name: `Lease Agreement - ${lease.leaseNumber || lease.tenant?.fullName || 'Lease'}`,
+        type: 'lease',
+        category: 'legal',
+        tenantId: lease.tenantId,
+        leaseId: lease.id,
+        uploadedBy: 'manager',
+        fileName: `lease-${lease.id}.txt`,
+        fileSize: leaseContent.length,
+        mimeType: 'text/plain',
+        content: base64Content,
+        uploadDate: new Date().toISOString(),
+        status: 'active'
+      };
+
+      await documentsApi.upload(payload);
+      showToast('Lease sent to tenant successfully', 'success');
+    } catch (error) {
+      console.error('Error sending document:', error);
+      showToast('Failed to send lease. Please try again.', 'error');
+    } finally {
+      setSendingDocument(false);
+    }
+  };
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
@@ -190,6 +251,34 @@ function LeaseDetailsPage() {
           <div className="detail-row">
             <span className="detail-label">{t('lease.terms')}:</span>
             <span className="detail-value">{lease.terms || 'N/A'}</span>
+          </div>
+        </div>
+
+        <div className="details-card" style={{
+          background: 'var(--surface)',
+          padding: '20px',
+          borderRadius: '12px',
+          marginBottom: '20px',
+          marginTop: '20px',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ margin: 0, marginBottom: '8px', fontSize: '18px', fontWeight: '600' }}>
+                Send Lease to Tenant
+              </h3>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
+                Tenant will receive a copy of this lease in their documents
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSendDocument}
+              disabled={sendingDocument}
+              className="btn btn-primary"
+            >
+              {sendingDocument ? 'Sending...' : 'Send Lease'}
+            </button>
           </div>
         </div>
 

@@ -256,12 +256,6 @@ function LeaseManagementPage() {
             title={t('lease.renewals')}
             description={t('lease.manage_renewals')}
           />
-          <ActionCard
-            to="/manager/documents"
-            icon={<Icon name="docLease" alt={t('common.documents')} size={48} />}
-            title={t('common.documents')}
-            description={t('lease.agreements')}
-          />
         </div>
       </div>
       
