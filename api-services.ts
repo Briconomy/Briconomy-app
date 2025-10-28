@@ -3247,18 +3247,53 @@ export async function deleteAnnouncementByContent(announcementData: {
   }
 }
 
-export async function updateSecuritySetting(settingName: string, value: string) {
+const readOnlySecuritySettings = new Set([
+  "audit logging",
+  "encryption standard"
+]);
+
+export async function updateSecuritySetting(settingId: string | undefined, settingName: string, value: string) {
   try {
     await connectToMongoDB();
     const settings = getCollection("security_settings");
-    
-    const result = await settings.updateOne(
-      { setting: settingName },
-      { $set: { value, updatedAt: new Date() } },
-      { upsert: true }
-    );
-    
-    return { success: true, setting: settingName, value, modified: result.modifiedCount };
+    const now = new Date();
+    const normalizedName = typeof settingName === "string" ? settingName.trim() : String(settingName);
+    const normalizedValue = typeof value === "string" ? value.trim() : String(value);
+    const slug = normalizedName.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    const objectId = settingId ? toObjectId(settingId) : undefined;
+    const filter: Record<string, unknown> = objectId ? { _id: objectId } : { setting: normalizedName };
+    const existing = await settings.findOne(filter);
+    const existingConfigurable = (existing as { configurable?: unknown } | null)?.configurable;
+    const configurable = typeof existingConfigurable === "boolean"
+      ? existingConfigurable
+      : !readOnlySecuritySettings.has(normalizedName.toLowerCase());
+    const existingKey = (existing as { key?: string } | null)?.key;
+    const updatePayload = {
+      $set: {
+        setting: normalizedName,
+        value: normalizedValue,
+        configurable,
+        updatedAt: now,
+        key: existingKey ?? slug
+      },
+      $setOnInsert: {
+        createdAt: now
+      }
+    };
+    const result = await settings.updateOne(filter, updatePayload, { upsert: true });
+    const lookupFilter = objectId ? { _id: objectId } : { setting: normalizedName };
+    const updatedDoc = await settings.findOne(lookupFilter);
+    const formatted = updatedDoc ? mapDoc(updatedDoc) : null;
+    const modifiedCount = typeof (result as { modifiedCount?: number }).modifiedCount === "number"
+      ? (result as { modifiedCount?: number }).modifiedCount
+      : 0;
+    const upserted = (result as { upsertedId?: ObjectId }).upsertedId;
+    return {
+      success: true,
+      modified: modifiedCount,
+      upsertedId: upserted instanceof ObjectId ? upserted.toString() : null,
+      setting: formatted
+    };
   } catch (error) {
     console.error("Error updating security setting:", error);
     throw error;

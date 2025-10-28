@@ -1011,7 +1011,13 @@ serve(async (req) => {
       if (path[1] === 'security-settings' && req.method === 'GET') {
         const settings = await getSecuritySettings();
         return new Response(JSON.stringify(settings), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0'
+          }
         });
       }
       
@@ -1088,9 +1094,15 @@ serve(async (req) => {
       // Update security setting
       if (path[1] === 'security-settings' && req.method === 'PUT') {
         const body = await req.json();
-        const result = await updateSecuritySetting(body.setting, body.value);
+        const result = await updateSecuritySetting(body.id, body.setting, body.value);
         return new Response(JSON.stringify(result), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0'
+          }
         });
       }
       

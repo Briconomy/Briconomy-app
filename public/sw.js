@@ -61,20 +61,23 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
+
   const url = new URL(event.request.url);
-   
+
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return;
   }
-  
-  // Don't cache API requests - they should always be fresh
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-  
+
   const isDoc = event.request.destination === 'document' || event.request.mode === 'navigate';
   const isModule = event.request.destination === 'script' || url.pathname.startsWith('/src/');
+
+  if (url.origin !== self.location.origin && !isDoc) {
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/') || (url.pathname.startsWith('/admin/') && !isDoc)) {
+    return;
+  }
 
   if (isDoc || isModule) {
     event.respondWith(
