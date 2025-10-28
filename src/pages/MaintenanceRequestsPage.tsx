@@ -9,11 +9,13 @@ import { useOffline } from '../hooks/useOffline.ts';
 import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
 function MaintenanceRequestsPage() {
   const { t } = useLanguage();
   const { isOnline, storeOfflineData, syncNow } = useOffline();
   const { user } = useAuth();
+  const { showToast } = useToast();
   
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -104,10 +106,10 @@ function MaintenanceRequestsPage() {
     try {
       await maintenanceApi.delete(requestId);
       await refetchRequests();
-      alert('Request deleted successfully');
+      showToast('Request deleted successfully', 'success');
     } catch (error) {
       console.error('[MaintenanceRequestsPage] Error deleting request:', error);
-      alert('Failed to delete request. Please try again.');
+      showToast('Failed to delete request. Please try again.', 'error');
     }
   };
 
@@ -179,10 +181,10 @@ function MaintenanceRequestsPage() {
         // #COMPLETION_DRIVE: Wait for refetch to render before closing form
         // #SUGGEST_VERIFY: 500ms delay ensures data appears in list immediately
         await new Promise(resolve => setTimeout(resolve, 500));
-        alert('Maintenance request submitted successfully!');
+        showToast('Maintenance request submitted successfully!', 'success');
       } else {
         await storeOfflineData('maintenance_request', requestData);
-        alert('Request saved offline. It will be submitted when you\'re back online.');
+        showToast('Request saved offline. It will be submitted when you\'re back online.', 'info');
       }
       setShowRequestForm(false);
       setFormData({
@@ -195,7 +197,7 @@ function MaintenanceRequestsPage() {
       setUploadedPhotos([]);
     } catch (error) {
       console.error('Error submitting request:', error);
-      alert('Failed to submit request. Please try again.');
+      showToast('Failed to submit request. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -502,7 +504,7 @@ function MaintenanceRequestsPage() {
           propertyId={leases?.[0]?.propertyId || '507f1f77bcf86cd799439013'}
           onSuccess={(_data) => {
             setShowRequestForm(false);
-            alert('Request saved offline. It will be submitted when you\'re back online.');
+            showToast('Request saved offline. It will be submitted when you\'re back online.', 'info');
           }}
         />
       )}
@@ -521,11 +523,6 @@ function MaintenanceRequestsPage() {
                 ×
               </button>
             </div>
-            {submitting && (
-              <div className="modal-progress-banner">
-                Submitting your request...
-              </div>
-            )}
             <div className="modal-body">
               <form onSubmit={handleSubmitRequest}>
                 <div className="form-group">
