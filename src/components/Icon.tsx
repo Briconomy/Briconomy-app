@@ -7,6 +7,8 @@ interface IconProps {
   size?: number;
   color?: string;
   noBackground?: boolean;
+  borderRadius?: number | string;
+  preserveColor?: boolean;
 }
 
 const iconMap: Record<string, string> = {
@@ -97,7 +99,7 @@ const getDefaultIconColor = (iconName: string): string => {
   return colorMap[iconName] || '#162F1B';
 };
 
-function Icon({ name, alt, className = '', size, color, noBackground }: IconProps) {
+function Icon({ name, alt, className = '', size, color, noBackground, borderRadius, preserveColor = false }: IconProps) {
   const iconPath = iconMap[name];
   
   if (!iconPath) {
@@ -121,8 +123,8 @@ function Icon({ name, alt, className = '', size, color, noBackground }: IconProp
       width: finalSize,
       height: finalSize,
       objectFit: 'contain',
-      filter: name === 'logo' ? 'none' : 'brightness(0) invert(1)',
-      WebkitFilter: name === 'logo' ? 'none' : 'brightness(0) invert(1)',
+      filter: name === 'logo' || preserveColor ? 'none' : 'brightness(0) invert(1)',
+      WebkitFilter: name === 'logo' || preserveColor ? 'none' : 'brightness(0) invert(1)',
     };
 
     return (
@@ -137,11 +139,17 @@ function Icon({ name, alt, className = '', size, color, noBackground }: IconProp
     );
   }
 
+  const finalRadius = borderRadius === undefined
+    ? '8px'
+    : typeof borderRadius === 'number'
+      ? `${borderRadius}px`
+      : borderRadius;
+
   const containerStyle: CSSProperties = {
     width: finalSize,
     height: finalSize,
     backgroundColor: finalColor,
-    borderRadius: '8px',
+    borderRadius: finalRadius,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -153,7 +161,7 @@ function Icon({ name, alt, className = '', size, color, noBackground }: IconProp
     width: '100%',
     height: '100%',
     objectFit: 'contain',
-    filter: 'brightness(0) invert(1)',
+    filter: preserveColor ? 'none' : 'brightness(0) invert(1)',
   };
 
   return (

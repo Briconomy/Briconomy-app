@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import Icon from './Icon.tsx';
 
 interface AuditLogItem {
   id: string;
@@ -81,30 +82,30 @@ function AccessLogs({ userId, resourceFilter, maxItems = 50, showFilters = true 
     fetchAuditLogs();
   }, [userId, actionFilter, resourceFilterState, dateFilter, maxItems]);
 
-  const getActionIcon = (action: string) => {
+  const getActionIconName = (action: string) => {
     switch (action.toLowerCase()) {
       case 'user_login':
       case 'login':
-        return '🔑';
+        return 'security';
       case 'user_logout':
       case 'logout':
-        return '🚪';
+        return 'refresh';
       case 'payment_created':
       case 'payment':
-        return '💳';
+        return 'payment';
       case 'maintenance_request_created':
       case 'maintenance':
-        return '🔧';
+        return 'maintenance';
       case 'profile_update':
-        return '👤';
+        return 'profile';
       case 'document_upload':
-        return '📄';
+        return 'uploadDoc';
       case 'security_change':
-        return '🔒';
+        return 'security';
       case 'admin_action':
-        return '⚙️';
+        return 'manage';
       default:
-        return '📝';
+        return 'activityLog';
     }
   };
 
@@ -370,20 +371,25 @@ function AccessLogs({ userId, resourceFilter, maxItems = 50, showFilters = true 
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span 
-                    className="action-icon"
+                  <span
+                    className="log-action-icon"
                     style={{
-                      fontSize: '16px',
-                      width: '24px',
-                      height: '24px',
+                      width: '32px',
+                      height: '32px',
                       borderRadius: '50%',
-                      backgroundColor: getActionColor(log.action) + '20',
+                      backgroundColor: getActionColor(log.action),
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      boxShadow: '0 0 0 2px rgba(255,255,255,0.9)'
                     }}
                   >
-                    {getActionIcon(log.action)}
+                    <Icon
+                      name={getActionIconName(log.action)}
+                      size={18}
+                      noBackground
+                      preserveColor
+                    />
                   </span>
                   <span style={{ 
                     fontWeight: '600',
