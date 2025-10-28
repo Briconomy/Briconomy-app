@@ -69,7 +69,17 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
 function mapDoc<T extends { _id?: ObjectId }>(doc: T | null): (Omit<T, "_id"> & { id: string }) | null {
   if (!doc) return null;
   const { _id, ...rest } = doc as T & { _id?: ObjectId };
-  return { id: String(_id ?? ""), ...(rest as Omit<T, "_id">) };
+
+  const serialized = Object.entries(rest).reduce((acc, [key, value]) => {
+    if (value instanceof ObjectId) {
+      acc[key] = value.toString();
+    } else {
+      acc[key] = value;
+    }
+    return acc;
+  }, {} as any);
+
+  return { id: String(_id ?? ""), ...serialized };
 }
 
 function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> & { id: string }> {
@@ -572,40 +582,63 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
-    
+    const units = getCollection("units");
+
     const existingUser = await users.findOne({ email: userData.email });
     if (existingUser) {
       console.log('[registerPendingTenant] User already exists');
       return { success: false, message: "User with this email already exists" };
     }
-    
+
     const existingPending = await pendingUsers.findOne({ email: userData.email });
     if (existingPending) {
       console.log('[registerPendingTenant] Application already pending');
       return { success: false, message: "Application with this email already pending" };
     }
-    
+
+    const unitId = toObjectId(userData.unitId as string);
+    if (unitId) {
+      const unit = await units.findOne({ _id: unitId });
+      if (!unit) {
+        return { success: false, message: "Selected unit not found" };
+      }
+      if (unit.status !== 'vacant') {
+        return { success: false, message: "Selected unit is no longer available" };
+      }
+    }
+
     const password = String(userData.password ?? "");
     const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
     const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
+
     const toInsert = {
       ...userData,
       password: hashedPasswordHex,
       status: 'pending',
+      unitId: unitId,
+      propertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
+      appliedPropertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
       appliedAt: new Date(),
       createdAt: new Date()
     };
-    
+
+    console.log('[registerPendingTenant] Marking unit as pending...');
+    if (unitId) {
+      await units.updateOne(
+        { _id: unitId },
+        { $set: { status: 'pending' } }
+      );
+    }
+
     console.log('[registerPendingTenant] Inserting into DB...');
     await pendingUsers.insertOne(toInsert);
     console.log('[registerPendingTenant] Success');
-    
+
     return {
       success: true,
-      message: "Application submitted successfully. Awaiting admin approval."
+      message: "Application submitted successfully. Awaiting approval."
     };
   } catch (error) {
     console.error("[registerPendingTenant] Error:", error);
@@ -777,19 +810,20 @@ export async function approvePendingUser(userId: string) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid pending user identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Pending user not found");
     }
-    
-  const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
-    
+
+    const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+
     const newUser = {
       ...userDataToInsert,
       userType: 'tenant',
@@ -797,24 +831,32 @@ export async function approvePendingUser(userId: string) {
       adminApproved: true,
       managerApprovalStatus: 'pending',
       appliedPropertyId: appliedPropertyId,
+      unitId: unitId,
+      propertyId: propertyId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     await users.insertOne(newUser);
-    
+
+    if (unitId) {
+      await units.updateOne(
+        { _id: unitId },
+        { $set: { status: 'occupied', tenantId: newUser._id } }
+      );
+    }
+
     await pendingUsers.updateOne(
       { _id: userObjectId },
-      { $set: { 
-        status: 'admin_approved', 
-        adminApprovedAt: new Date(),
-        managerApprovalStatus: 'pending'
+      { $set: {
+        status: 'approved',
+        approvedAt: new Date()
       } }
     );
-    
+
     return {
       success: true,
-      message: "User approved by admin. Account created. Awaiting manager approval for property access.",
+      message: "User approved. Account created and unit assigned.",
       user: mapDoc(await users.findOne({ email: pendingUser.email }))
     };
   } catch (error) {
@@ -827,20 +869,33 @@ export async function declinePendingUser(userId: string) {
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
+    const units = getCollection("units");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid pending user identifier");
     }
-    
+
+    const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
+    if (!pendingUser) {
+      throw new Error("Pending user not found");
+    }
+
+    if (pendingUser.unitId) {
+      await units.updateOne(
+        { _id: pendingUser.unitId },
+        { $set: { status: 'vacant' }, $unset: { tenantId: 1 } }
+      );
+    }
+
     const result = await pendingUsers.updateOne(
       { _id: userObjectId },
       { $set: { status: 'declined', declinedAt: new Date() } }
     );
-    
+
     if (result.modifiedCount === 0) {
       throw new Error("Pending user not found or already processed");
     }
-    
+
     return {
       success: true,
       message: "User application declined"
@@ -861,22 +916,22 @@ export async function getPendingApplicationsForManager(managerId: string) {
     
     // First, get all properties managed by this manager
     const managerProperties = await properties.find({ managerId: managerMatch }).toArray();
-    
+
     const propertyIds = managerProperties.map(p => p._id.toString());
-    
+
     if (propertyIds.length === 0) {
       return []; // Manager has no properties, so no applications
     }
-    
+
     // Get pending applications for those properties - check both pending and admin_approved
-    const applications = await pendingUsers.find({ 
+    const applications = await pendingUsers.find({
       $or: [
         { status: 'pending' },
         { status: 'admin_approved' }
       ],
       appliedPropertyId: { $in: propertyIds }
     }).sort({ appliedAt: -1 }).toArray();
-    
+
     // Enrich applications with property details
     const enrichedApplications = applications.map(app => {
       const property = managerProperties.find(p => p._id.toString() === app.appliedPropertyId);
@@ -898,65 +953,75 @@ export async function approveApplicationByManager(userId: string, managerId: str
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const properties = getCollection("properties");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid application identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Application not found");
     }
-    
+
     const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
     const managerObjectId = toObjectId(managerId);
     if (!appliedPropertyObjectId || !managerObjectId) {
       throw new Error("Invalid property reference for pending application");
     }
 
-    const property = await properties.findOne({ 
+    const property = await properties.findOne({
       _id: appliedPropertyObjectId,
       managerId: { $in: [managerObjectId, managerId] }
     });
-    
+
     if (!property) {
       throw new Error("Unauthorized: You can only approve applications for your properties");
     }
-    
+
     const existingUser = await users.findOne({ email: pendingUser.email });
-    
+
     if (existingUser) {
       await users.updateOne(
         { _id: existingUser._id },
-        { $set: { 
+        { $set: {
           managerApprovalStatus: 'approved',
           managerApprovedBy: managerId,
           managerApprovedAt: new Date(),
           assignedPropertyId: pendingUser.appliedPropertyId,
+          propertyId: pendingUser.appliedPropertyId,
+          unitId: pendingUser.unitId,
           isActive: true,
           updatedAt: new Date()
         } }
       );
-      
+
+      if (pendingUser.unitId) {
+        await units.updateOne(
+          { _id: pendingUser.unitId },
+          { $set: { status: 'occupied', tenantId: existingUser._id } }
+        );
+      }
+
       await pendingUsers.updateOne(
         { _id: userObjectId },
-        { $set: { 
-          status: 'fully_approved',
-          managerApprovedAt: new Date(),
-          managerApprovedBy: managerId
+        { $set: {
+          status: 'approved',
+          approvedAt: new Date(),
+          approvedBy: managerId
         } }
       );
-      
+
       return {
         success: true,
-        message: "Application approved. Tenant now has full access to the property.",
+        message: "Application approved. Tenant account activated.",
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     } else {
-      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
-      
+      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+
       const newUser = {
         ...userDataToInsert,
         userType: 'tenant',
@@ -966,24 +1031,33 @@ export async function approveApplicationByManager(userId: string, managerId: str
         managerApprovedBy: managerId,
         managerApprovedAt: new Date(),
         assignedPropertyId: appliedPropertyId,
+        unitId: unitId,
+        propertyId: propertyId,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       await users.insertOne(newUser);
-      
+
+      if (unitId) {
+        await units.updateOne(
+          { _id: unitId },
+          { $set: { status: 'occupied', tenantId: newUser._id } }
+        );
+      }
+
       await pendingUsers.updateOne(
         { _id: userObjectId },
-        { $set: { 
-          status: 'approved', 
+        { $set: {
+          status: 'approved',
           approvedAt: new Date(),
           approvedBy: managerId
         } }
       );
-      
+
       return {
         success: true,
-        message: "Application approved successfully. Account created with full property access.",
+        message: "Application approved. Account created and tenant activated.",
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     }
@@ -998,39 +1072,40 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const properties = getCollection("properties");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid application identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Application not found");
     }
-    
+
     const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
     const managerObjectId = toObjectId(managerId);
     if (!appliedPropertyObjectId || !managerObjectId) {
       throw new Error("Invalid property reference for pending application");
     }
 
-    const property = await properties.findOne({ 
+    const property = await properties.findOne({
       _id: appliedPropertyObjectId,
       managerId: { $in: [managerObjectId, managerId] }
     });
-    
+
     if (!property) {
       throw new Error("Unauthorized: You can only reject applications for your properties");
     }
-    
+
     const existingUser = await users.findOne({ email: pendingUser.email });
-    
+
     if (existingUser) {
       await users.updateOne(
         { _id: existingUser._id },
-        { $set: { 
+        { $set: {
           managerApprovalStatus: 'rejected',
           managerRejectedBy: managerId,
           managerRejectedAt: new Date(),
@@ -1040,21 +1115,28 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
         } }
       );
     }
-    
+
+    if (pendingUser.unitId) {
+      await units.updateOne(
+        { _id: pendingUser.unitId },
+        { $set: { status: 'vacant' }, $unset: { tenantId: 1 } }
+      );
+    }
+
     const result = await pendingUsers.updateOne(
       { _id: userObjectId },
-      { $set: { 
-        status: 'manager_rejected', 
+      { $set: {
+        status: 'manager_rejected',
         managerRejectedAt: new Date(),
         managerRejectedBy: managerId,
         managerRejectionReason: reason || 'No reason provided'
       } }
     );
-    
+
     if (result.modifiedCount === 0) {
       throw new Error("Application not found or already processed");
     }
-    
+
     return {
       success: true,
       message: "Application rejected successfully"
@@ -1147,6 +1229,22 @@ export async function getUnits(propertyId?: string) {
   return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching units:", error);
+    throw error;
+  }
+}
+
+export async function getAvailableUnits(propertyId: string) {
+  try {
+    await connectToMongoDB();
+    const units = getCollection("units");
+    const filter = {
+      propertyId: toId(propertyId),
+      status: 'vacant'
+    };
+    const rows = await units.find(filter).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching available units:", error);
     throw error;
   }
 }

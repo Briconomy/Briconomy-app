@@ -8,6 +8,7 @@ import {
   createProperty,
   updateProperty,
   getUnits,
+  getAvailableUnits,
   createUnit,
   getLeases,
   createLease,
@@ -445,6 +446,16 @@ serve(async (req) => {
     }
 
     // Units endpoints
+    if (path[0] === 'api' && path[1] === 'units' && path[2] === 'available' && path[3]) {
+      if (req.method === 'GET') {
+        const propertyId = path[3];
+        const units = await getAvailableUnits(propertyId);
+        return new Response(JSON.stringify(units), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     if (path[0] === 'api' && path[1] === 'units') {
       if (req.method === 'GET') {
         const propertyId = url.searchParams.get('propertyId');

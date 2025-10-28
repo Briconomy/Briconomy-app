@@ -905,24 +905,24 @@ function PropertyDetailsPage() {
     }));
   };
 
-  const getEstimatedRentRange = () => {
+  const getEstimatedRentRange = (currentOccupiedCount?: number) => {
     if (!property) return { min: 0, max: 0 };
-    
-    const baseRent = property.type === 'apartment' ? 8000 : 
+
+    const baseRent = property.type === 'apartment' ? 8000 :
                     property.type === 'complex' ? 10000 : 12000;
-    const occupancyMultiplier = property.occupiedUnits / property.totalUnits;
+    const occupancyMultiplier = (currentOccupiedCount ?? property.occupiedUnits) / property.totalUnits;
     const avgRent = Math.round(baseRent * (1 + occupancyMultiplier * 0.5));
-    
+
     return {
       min: Math.round(avgRent * 0.8),
       max: Math.round(avgRent * 1.2)
     };
   };
 
-  const calculateEstimatedRent = (property: { type: string; occupiedUnits: number; totalUnits: number }) => {
-    const baseRent = property.type === 'apartment' ? 8000 : 
-                    property.type === 'complex' ? 10000 : 12000;
-    const occupancyMultiplier = property.occupiedUnits / property.totalUnits;
+  const calculateEstimatedRent = (propertyObj: { type: string; occupiedUnits?: number; totalUnits: number }, currentOccupiedCount?: number) => {
+    const baseRent = propertyObj.type === 'apartment' ? 8000 :
+                    propertyObj.type === 'complex' ? 10000 : 12000;
+    const occupancyMultiplier = (currentOccupiedCount ?? propertyObj.occupiedUnits ?? 0) / propertyObj.totalUnits;
     return Math.round(baseRent * (1 + occupancyMultiplier * 0.5));
   };
 
@@ -1046,19 +1046,25 @@ function PropertyDetailsPage() {
     );
   }
 
-  const rentRange = getEstimatedRentRange();
   const propertyImages = getPropertyImages();
+
+  const vacantCount = units.filter((u: any) => u.status === 'vacant').length;
+  const occupiedCount = units.filter((u: any) => u.status === 'occupied').length;
+  const maintenanceCount = units.filter((u: any) => u.status === 'maintenance').length;
+
+  const rentRange = getEstimatedRentRange(occupiedCount);
+
   const availability = {
-    available: property.totalUnits - property.occupiedUnits,
+    available: vacantCount,
     total: property.totalUnits,
-    percentage: Math.round(((property.totalUnits - property.occupiedUnits) / property.totalUnits) * 100)
+    percentage: Math.round((vacantCount / property.totalUnits) * 100)
   };
 
   // Manager View - Property Management Interface
   if (isManager) {
-    const estimatedMonthlyRevenue = property.occupiedUnits * (property.type === 'apartment' ? 8000 : 
+    const estimatedMonthlyRevenue = occupiedCount * (property.type === 'apartment' ? 8000 :
                                  property.type === 'complex' ? 10000 : 12000);
-    const occupancyRate = Math.round((property.occupiedUnits / property.totalUnits) * 100);
+    const occupancyRate = Math.round((occupiedCount / property.totalUnits) * 100);
 
     return (
       <div className="app-container mobile-only">
@@ -1487,7 +1493,7 @@ function PropertyDetailsPage() {
         <div className="property-pricing-section">
           <div className="pricing-highlight">
             <div className="main-price">
-              <span className="price">{formatCurrency(calculateEstimatedRent(property))}</span>
+              <span className="price">{formatCurrency(calculateEstimatedRent(property, occupiedCount))}</span>
               <span className="period">/month</span>
             </div>
             <div className="price-subtitle">{t('prospect.average_rent')}</div>
@@ -1525,7 +1531,7 @@ function PropertyDetailsPage() {
         {/* Property Overview Card */}
         <div className="property-card">
           <div className="property-info">
-            <div className="property-price">{formatCurrency(calculateEstimatedRent(property))}/month</div>
+            <div className="property-price">{formatCurrency(calculateEstimatedRent(property, occupiedCount))}/month</div>
             <div className="property-title">{property.name}</div>
             <div className="property-location">{property.address}</div>
             
@@ -1591,12 +1597,12 @@ function PropertyDetailsPage() {
           </div>
         </div>
 
-        {units.length > 0 && (
+        {units.filter((u: any) => u.status === 'vacant').length > 0 && (
           <div className="property-card">
             <div className="property-info">
               <h3 className="section-heading" style={{ marginBottom: '16px' }}>{t('prospect.available_units')} ({units.filter(u => u.status === 'vacant').length})</h3>
               <div className="units-grid">
-                {units.map((unit, index) => (
+                {units.filter((u: any) => u.status === 'vacant').map((unit, index) => (
                   <div key={unit.id || `unit-${index}`} className="property-card unit-detail-card">
                     <div className="property-info">
                       <div className="unit-header-info">
@@ -1689,7 +1695,7 @@ function PropertyDetailsPage() {
                 textAlign: 'center',
                 border: '2px dashed #dee2e6'
               }}>
-                <div className="map-placeholder-icon">📍</div>
+                <div className="map-placeholder-icon" style={{ marginBottom: '8px', fontSize: '24px', color: '#162F1B', fontWeight: '600' }}>MAP</div>
                 <p style={{ color: '#6c757d', margin: '0 0 4px 0', fontWeight: '500' }}>{t('prospect.interactive_map')}</p>
                 <p className="map-placeholder-text">{t('prospect.maps_coming_soon')}</p>
               </div>
