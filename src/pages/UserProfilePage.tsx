@@ -7,12 +7,20 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import Icon from '../components/Icon.tsx';
+import { leasesApi, useApi } from '../services/api.ts';
 
 function UserProfilePage() {
   const navigate = useNavigate();
   const { user, loading, updateUser } = useAuth();
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
+
+  const { data: leases } = useApi(
+    () => leasesApi.getAll({ tenantId: user?.id }),
+    [user?.id]
+  );
+
+  const currentLease = Array.isArray(leases) ? leases[0] : null;
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -126,13 +134,13 @@ function UserProfilePage() {
   const leaseDaysRemaining = Math.ceil((leaseEndDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   const tenantStats = [
-    { value: user.unit || 'N/A', label: t('property.unit') },
-    { value: `R${(user.rent || 0).toLocaleString()}`, label: t('property.monthlyRent') },
+    { value: currentLease?.unit?.unitNumber || 'N/A', label: t('property.unit') },
+    { value: `R${(currentLease?.monthlyRent || 0).toLocaleString()}`, label: t('property.monthlyRent') },
     { value: `${leaseDaysRemaining} ${t('property.days')}`, label: t('property.leaseRemaining') },
     { value: t('status.active'), label: t('common.status') },
     { value: new Date(user.leaseStart || new Date()).toLocaleDateString(), label: t('profile.leaseStart') },
     { value: new Date(user.leaseEnd || new Date()).toLocaleDateString(), label: t('profile.leaseEnd') },
-    { value: user.property || 'N/A', label: t('profile.property') },
+    { value: currentLease?.property?.name || 'N/A', label: t('profile.property') },
     { value: new Date(user.joinDate || new Date()).toLocaleDateString(), label: t('profile.memberSince') }
   ];
 
