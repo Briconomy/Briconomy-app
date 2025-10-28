@@ -378,6 +378,34 @@ function serializeInvoice(doc: RawInvoiceDoc | null) {
   return result;
 }
 
+async function enrichInvoiceWithRelations(invoice: Record<string, unknown>) {
+  try {
+    const users = getCollection("users");
+    const properties = getCollection("properties");
+
+    if (invoice.tenantId) {
+      const tenant = await users.findOne({ _id: toId(invoice.tenantId) });
+      if (tenant) {
+        invoice.tenant = { fullName: (tenant as Record<string, unknown>).fullName || "" };
+      }
+    }
+
+    if (invoice.propertyId) {
+      const property = await properties.findOne({ _id: toId(invoice.propertyId) });
+      if (property) {
+        invoice.property = {
+          name: (property as Record<string, unknown>).name || "",
+          address: (property as Record<string, unknown>).address || ""
+        };
+      }
+    }
+  } catch (_error) {
+    // Silently fail enrichment, return invoice as-is
+  }
+
+  return invoice;
+}
+
 function toInsertedIdString(result: unknown): string {
   const inserted = (result as { insertedId?: ObjectId }).insertedId ?? result;
   return inserted instanceof ObjectId ? inserted.toString() : String(inserted);
@@ -2712,7 +2740,8 @@ export async function getInvoices(filters: Record<string, unknown> = {}) {
       const refreshed = await invoices.findOne({ _id: (entry as RawInvoiceDoc)._id });
       const mapped = serializeInvoice(refreshed as RawInvoiceDoc);
       if (mapped) {
-        serialized.push(mapped);
+        const enriched = await enrichInvoiceWithRelations(mapped);
+        serialized.push(enriched);
       }
     }
     return serialized;
@@ -2732,7 +2761,11 @@ export async function getInvoiceById(id: string) {
     }
     await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
     const refreshed = await invoices.findOne({ _id: (invoice as RawInvoiceDoc)._id });
-    return serializeInvoice(refreshed as RawInvoiceDoc);
+    const serialized = serializeInvoice(refreshed as RawInvoiceDoc);
+    if (serialized) {
+      return await enrichInvoiceWithRelations(serialized);
+    }
+    return serialized;
   } catch (error) {
     console.error("Error fetching invoice:", error);
     throw error;

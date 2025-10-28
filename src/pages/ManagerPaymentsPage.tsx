@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import InvoiceViewer from '../components/InvoiceViewer.tsx';
+import ManagerInvoiceViewer from '../components/ManagerInvoiceViewer.tsx';
 import Icon from '../components/Icon.tsx';
 import { invoicesApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -30,6 +30,11 @@ function ManagerPaymentsPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const wsManagerRef = useRef<WebSocketManager | null>(null);
+  const [searchTenant, setSearchTenant] = useState('');
+  const [searchProperty, setSearchProperty] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
@@ -102,7 +107,24 @@ function ManagerPaymentsPage() {
   };
 
   const stats = getStats();
-  const invoiceList = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
+  const allInvoices = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
+
+  const filteredInvoices = allInvoices.filter(inv => {
+    const tenantMatch = !searchTenant || (inv.tenant?.fullName || '').toLowerCase().includes(searchTenant.toLowerCase());
+    const propertyMatch = !searchProperty || (inv.property?.name || '').toLowerCase().includes(searchProperty.toLowerCase());
+    const minPriceMatch = !minPrice || inv.amount >= parseFloat(minPrice);
+    const maxPriceMatch = !maxPrice || inv.amount <= parseFloat(maxPrice);
+    return tenantMatch && propertyMatch && minPriceMatch && maxPriceMatch;
+  });
+
+  const hasActiveFilters = searchTenant || searchProperty || minPrice || maxPrice;
+
+  const clearFilters = () => {
+    setSearchTenant('');
+    setSearchProperty('');
+    setMinPrice('');
+    setMaxPrice('');
+  };
 
   if (invoicesLoading) {
     return (
@@ -125,22 +147,8 @@ function ManagerPaymentsPage() {
 
       <div className="main-content">
         <div className="page-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div className="page-title">Payments</div>
-              <div className="page-subtitle">Manage tenant payments and invoices</div>
-            </div>
-            <button
-              type="button"
-              onClick={() => refetchInvoices()}
-              disabled={invoicesLoading}
-              className="btn btn-secondary"
-              style={{ fontSize: '13px', padding: '8px 12px' }}
-              title="Refresh payment data"
-            >
-              {invoicesLoading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </div>
+          <div className="page-title">Payments</div>
+          <div className="page-subtitle">Manage tenant payments and invoices</div>
         </div>
 
         <div className="dashboard-grid">
@@ -161,16 +169,134 @@ function ManagerPaymentsPage() {
           </div>
         )}
 
-        {invoiceList.length === 0 ? (
+        <div className="section-card" style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className="btn btn-secondary"
+              style={{ fontSize: '13px', padding: '8px 12px' }}
+            >
+              {showFilters ? '▼ Filters' : '▶ Filters'} {hasActiveFilters && `(${searchTenant || searchProperty || minPrice || maxPrice ? '1' : '0'})`}
+            </button>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="btn btn-secondary"
+                style={{ fontSize: '12px', padding: '6px 10px', color: 'var(--error-color)' }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {showFilters && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px',
+              padding: '12px 0',
+              borderTop: '1px solid var(--border-primary)',
+              paddingTop: '12px'
+            }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                  Tenant Name
+                </label>
+                <input
+                  type="text"
+                  value={searchTenant}
+                  onChange={(e) => setSearchTenant(e.target.value)}
+                  placeholder="Search tenant..."
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                  Property Name
+                </label>
+                <input
+                  type="text"
+                  value={searchProperty}
+                  onChange={(e) => setSearchProperty(e.target.value)}
+                  placeholder="Search property..."
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                  Min Price
+                </label>
+                <input
+                  type="number"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder="Min amount..."
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                  Max Price
+                </label>
+                <input
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="Max amount..."
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {filteredInvoices.length === 0 ? (
           <div className="section-card empty-state-card">
             <Icon name="invoice" alt="Invoices" size={48} />
-            <div className="empty-state-title">No invoices</div>
-            <div className="empty-state-text">No invoices to display</div>
+            <div className="empty-state-title">
+              {allInvoices.length === 0 ? 'No invoices' : 'No matching invoices'}
+            </div>
+            <div className="empty-state-text">
+              {allInvoices.length === 0 ? 'No invoices to display' : 'Try adjusting your filters'}
+            </div>
           </div>
         ) : (
           <div className="support-grid">
-            {invoiceList.map(invoice => (
-              <InvoiceViewer
+            {filteredInvoices.map(invoice => (
+              <ManagerInvoiceViewer
                 key={invoice.id}
                 invoice={invoice}
                 onDownload={async (id, format) => {
