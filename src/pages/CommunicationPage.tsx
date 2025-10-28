@@ -84,7 +84,7 @@ const CommunicationPage = () => {
       await notificationsApi.create({
         userId: property.managerId,
         title: `Message from Tenant: ${messageSubject}`,
-        message: `From: ${user.fullName || user.email}\nUnit: ${currentLease.unitId?.unitNumber || 'N/A'}\n\n${messageContent}`,
+        message: `From: ${user.fullName || user.email}\nUnit: ${currentLease.unit?.unitNumber || 'N/A'}\n\n${messageContent}`,
         type: 'system',
         read: false
       });
