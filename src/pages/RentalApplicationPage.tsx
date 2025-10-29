@@ -58,7 +58,8 @@ function RentalApplicationPage() {
       petDetails: '',
       specialRequirements: '',
       emergencyContact: '',
-      emergencyPhone: ''
+      emergencyPhone: '',
+      emergencyRelationship: ''
     },
     documents: {
       idDocument: null,
@@ -224,8 +225,12 @@ function RentalApplicationPage() {
           occupation: formData.employmentInfo.position,
           monthlyIncome: formData.employmentInfo.income,
           emergencyContact: formData.additionalInfo.emergencyContact
-            ? `${formData.additionalInfo.emergencyContact} (${formData.additionalInfo.emergencyPhone})`
-            : '',
+            ? {
+                name: formData.additionalInfo.emergencyContact,
+                phone: formData.additionalInfo.emergencyPhone,
+                relationship: formData.additionalInfo.emergencyRelationship || ''
+              }
+            : null,
           moveInDate: formData.additionalInfo.moveInDate,
           idNumber: formData.personalInfo.idNumber,
           dateOfBirth: formData.personalInfo.dateOfBirth,
@@ -813,6 +818,21 @@ function RentalApplicationPage() {
             value={formData.additionalInfo.emergencyPhone}
             onChange={(e) => handleInputChange('additionalInfo', 'emergencyPhone', e.target.value)}
           />
+        </div>
+        <div className="form-group">
+          <label>Emergency Contact Relationship</label>
+          <select
+            value={formData.additionalInfo.emergencyRelationship}
+            onChange={(e) => handleInputChange('additionalInfo', 'emergencyRelationship', e.target.value)}
+          >
+            <option value="">Select relationship</option>
+            <option value="Parent">Parent</option>
+            <option value="Spouse">Spouse</option>
+            <option value="Sibling">Sibling</option>
+            <option value="Child">Child</option>
+            <option value="Friend">Friend</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
       </div>
     </div>
