@@ -8,7 +8,7 @@ export interface ActionCardProps {
   onClick?: () => void;
 }
 
-function ActionCard({ to = '#', icon, title, description = '', onClick }: ActionCardProps) {
+function ActionCard({ to = '#', icon, title, description = '', onClick }: Readonly<ActionCardProps>) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (onClick) {
       e.preventDefault();
