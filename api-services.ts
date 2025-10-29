@@ -613,6 +613,8 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
+    // #COMPLETION_DRIVE: Store the applied unit information in addition to unitId for lease creation context
+    // #SUGGEST_VERIFY: Verify that appliedUnitId and appliedUnitNumber match the unit document
     const toInsert = {
       ...userData,
       password: hashedPasswordHex,
@@ -620,6 +622,8 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
       unitId: unitId,
       propertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
       appliedPropertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
+      appliedUnitId: unitId,
+      appliedUnitNumber: userData.profile?.unitNumber || null,
       appliedAt: new Date(),
       createdAt: new Date()
     };
@@ -796,9 +800,32 @@ export async function getPendingUsers() {
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
-    const users = await pendingUsers.find({ status: 'pending' }).sort({ appliedAt: -1 }).toArray();
-    const mapped = mapDocs(users);
-    return mapped;
+    const properties = getCollection("properties");
+
+    // #COMPLETION_DRIVE: Fetch both pending and admin_approved applications for admin view
+    // #SUGGEST_VERIFY: Ensure admins see all applications that need attention
+    const users = await pendingUsers.find({
+      $or: [
+        { status: 'pending' },
+        { status: 'admin_approved' }
+      ]
+    }).sort({ appliedAt: -1 }).toArray();
+
+    // #COMPLETION_DRIVE: Enrich applications with property details like manager view does
+    // #SUGGEST_VERIFY: Property lookup works for both string and ObjectId appliedPropertyId formats
+    const allProperties = await properties.find({}).toArray();
+
+    const enriched = users.map(app => {
+      const property = allProperties.find(p =>
+        p._id.toString() === (typeof app.appliedPropertyId === 'string' ? app.appliedPropertyId : app.appliedPropertyId?.toString())
+      );
+      return {
+        ...mapDoc(app),
+        property: property ? { id: property._id.toString(), name: property.name, address: property.address } : null
+      };
+    });
+
+    return enriched;
   } catch (error) {
     console.error("Error fetching pending users:", error);
     throw error;
@@ -822,8 +849,10 @@ export async function approvePendingUser(userId: string) {
       throw new Error("Pending user not found");
     }
 
-    const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+    const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, appliedUnitId, appliedUnitNumber, ...userDataToInsert } = pendingUser as any;
 
+    // #COMPLETION_DRIVE: Preserve application data (applied unit info) in user record for lease creation reference
+    // #SUGGEST_VERIFY: Ensure appliedUnitNumber is available from pending_users document
     const newUser = {
       ...userDataToInsert,
       userType: 'tenant',
@@ -833,6 +862,8 @@ export async function approvePendingUser(userId: string) {
       appliedPropertyId: appliedPropertyId,
       unitId: unitId,
       propertyId: propertyId,
+      appliedUnitId: appliedUnitId || unitId,
+      appliedUnitNumber: appliedUnitNumber,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -846,10 +877,12 @@ export async function approvePendingUser(userId: string) {
       );
     }
 
+    // #COMPLETION_DRIVE: Set status to admin_approved so managers can still see and use application data for lease creation
+    // #SUGGEST_VERIFY: Verify manager's getPendingApplicationsForManager filter includes 'admin_approved' status
     await pendingUsers.updateOne(
       { _id: userObjectId },
       { $set: {
-        status: 'approved',
+        status: 'admin_approved',
         approvedAt: new Date()
       } }
     );
@@ -917,7 +950,10 @@ export async function getPendingApplicationsForManager(managerId: string) {
     // First, get all properties managed by this manager
     const managerProperties = await properties.find({ managerId: managerMatch }).toArray();
 
-    const propertyIds = managerProperties.map(p => p._id.toString());
+    // #COMPLETION_DRIVE: Keep propertyIds as ObjectIds for MongoDB query matching
+    // #SUGGEST_VERIFY: Ensure appliedPropertyId in pending_users is stored as ObjectId
+    const propertyIds = managerProperties.map(p => p._id);
+    const propertyIdsString = managerProperties.map(p => p._id.toString());
 
     if (propertyIds.length === 0) {
       return []; // Manager has no properties, so no applications
@@ -934,7 +970,7 @@ export async function getPendingApplicationsForManager(managerId: string) {
 
     // Enrich applications with property details
     const enrichedApplications = applications.map(app => {
-      const property = managerProperties.find(p => p._id.toString() === app.appliedPropertyId);
+      const property = managerProperties.find(p => p._id.toString() === (typeof app.appliedPropertyId === 'string' ? app.appliedPropertyId : app.appliedPropertyId?.toString()));
       return {
         ...mapDoc(app),
         property: property ? { id: property._id.toString(), name: property.name, address: property.address } : null
@@ -1020,8 +1056,10 @@ export async function approveApplicationByManager(userId: string, managerId: str
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     } else {
-      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, appliedUnitId, appliedUnitNumber, ...userDataToInsert } = pendingUser as any;
 
+      // #COMPLETION_DRIVE: Preserve application data (applied unit info) in user record for lease creation reference
+      // #SUGGEST_VERIFY: Ensure appliedUnitNumber exists in profile or as separate field
       const newUser = {
         ...userDataToInsert,
         userType: 'tenant',
@@ -1033,6 +1071,8 @@ export async function approveApplicationByManager(userId: string, managerId: str
         assignedPropertyId: appliedPropertyId,
         unitId: unitId,
         propertyId: propertyId,
+        appliedUnitId: appliedUnitId || unitId,
+        appliedUnitNumber: appliedUnitNumber,
         createdAt: new Date(),
         updatedAt: new Date()
       };
