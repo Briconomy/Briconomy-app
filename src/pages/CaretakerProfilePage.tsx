@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
 import { LanguageSwitcher } from '../contexts/LanguageContext.tsx';
+import { biometricService } from '../services/biometric.ts';
 
 function CaretakerProfilePage() {
   const [user, setUser] = useState(null);
@@ -22,8 +23,11 @@ function CaretakerProfilePage() {
     email: true,
     push: true,
     taskReminders: true,
-    maintenanceUpdates: true
+    maintenanceUpdates: true,
+    biometric: false
   });
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricProcessing, setBiometricProcessing] = useState(false);
 
   const navItems = [
     { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
@@ -43,6 +47,8 @@ function CaretakerProfilePage() {
   );
 
   useEffect(() => {
+    // Check biometric support
+    setBiometricSupported(biometricService.isSupported());
     loadUserData();
   }, []);
 
@@ -64,6 +70,10 @@ function CaretakerProfilePage() {
         });
         if (userData.profile?.notificationSettings) {
           setNotificationSettings(userData.profile.notificationSettings);
+        }
+        // Load biometric status from user object
+        if (userData.biometricEnabled) {
+          setNotificationSettings(prev => ({ ...prev, biometric: true }));
         }
       }
     } catch (err) {
@@ -232,6 +242,77 @@ function CaretakerProfilePage() {
       ...prev,
       [setting]: !prev[setting]
     }));
+  };
+
+  const handleBiometricToggle = async () => {
+    if (!user) return;
+
+    setBiometricProcessing(true);
+
+    try {
+      const currentlyEnabled = notificationSettings.biometric;
+
+      if (!currentlyEnabled) {
+        // Enable biometric - trigger enrollment
+        await biometricService.register(user.id, user.fullName, user.email);
+
+        setNotificationSettings(prev => ({ ...prev, biometric: true }));
+
+        // Update user in storage
+        const updatedUser = {
+          ...user,
+          biometricEnabled: true,
+          profile: {
+            ...user.profile,
+            notificationSettings: {
+              ...notificationSettings,
+              biometric: true
+            }
+          }
+        };
+
+        if (localStorage.getItem('briconomy_user')) {
+          localStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+        } else if (sessionStorage.getItem('briconomy_user')) {
+          sessionStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+        }
+
+        setUser(updatedUser);
+        alert('Biometric authentication enabled successfully!');
+      } else {
+        // Disable biometric
+        await biometricService.toggleBiometric(user.id, false);
+
+        setNotificationSettings(prev => ({ ...prev, biometric: false }));
+
+        // Update user in storage
+        const updatedUser = {
+          ...user,
+          biometricEnabled: false,
+          profile: {
+            ...user.profile,
+            notificationSettings: {
+              ...notificationSettings,
+              biometric: false
+            }
+          }
+        };
+
+        if (localStorage.getItem('briconomy_user')) {
+          localStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+        } else if (sessionStorage.getItem('briconomy_user')) {
+          sessionStorage.setItem('briconomy_user', JSON.stringify(updatedUser));
+        }
+
+        setUser(updatedUser);
+        alert('Biometric authentication disabled successfully!');
+      }
+    } catch (error) {
+      console.error('Biometric toggle error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update biometric setting');
+    } finally {
+      setBiometricProcessing(false);
+    }
   };
 
   function formatDate(dateString: string) {
@@ -455,6 +536,33 @@ function CaretakerProfilePage() {
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.maintenanceUpdates ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
                 onClick={() => handleNotificationChange('maintenanceUpdates')}
+              >
+                <div className="caretaker-toggle-slider"></div>
+              </div>
+            </div>
+
+            <div className="caretaker-setting-item">
+              <div className="caretaker-setting-info">
+                <div className="caretaker-setting-title">Biometric Login</div>
+                <div className="caretaker-setting-desc">Use Face ID or fingerprint to sign in</div>
+                {!biometricSupported && (
+                  <div className="caretaker-setting-desc" style={{ color: '#ff6b6b', fontSize: '12px', marginTop: '4px' }}>
+                    Not supported on this device
+                  </div>
+                )}
+                {biometricProcessing && (
+                  <div className="caretaker-setting-desc" style={{ color: '#4a90e2', fontSize: '12px', marginTop: '4px' }}>
+                    Processing...
+                  </div>
+                )}
+              </div>
+              <div
+                className={`caretaker-toggle-switch ${notificationSettings.biometric ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
+                onClick={biometricSupported && !biometricProcessing ? handleBiometricToggle : undefined}
+                style={{
+                  opacity: biometricSupported && !biometricProcessing ? '1' : '0.5',
+                  cursor: biometricSupported && !biometricProcessing ? 'pointer' : 'not-allowed'
+                }}
               >
                 <div className="caretaker-toggle-slider"></div>
               </div>

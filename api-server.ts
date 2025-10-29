@@ -91,7 +91,12 @@ import {
   resetPassword,
   savePushSubscription,
   getPushSubscription,
-  deletePushSubscription
+  deletePushSubscription,
+  generateBiometricRegistrationOptions,
+  verifyBiometricRegistration,
+  generateBiometricAuthenticationOptions,
+  verifyBiometricAuthentication,
+  toggleUserBiometric
 } from "./api-services.ts";
 
 const corsHeaders = {
@@ -360,31 +365,64 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: result.success ? 200 : 400
         });
+      } else if (path[2] === 'biometric' && path[3] === 'register-options' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await generateBiometricRegistrationOptions(data.userId, data.userName, data.userEmail);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'biometric' && path[3] === 'register-verify' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await verifyBiometricRegistration(data.userId, data.credential);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'biometric' && path[3] === 'login-options' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await generateBiometricAuthenticationOptions(data.email);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (path[2] === 'biometric' && path[3] === 'login-verify' && req.method === 'POST') {
+        const data = await req.json();
+        const result = await verifyBiometricAuthentication(data.email, data.credential);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
     }
 
     // Users endpoints
     if (path[0] === 'api' && path[1] === 'users') {
-      if (req.method === 'GET') {
+      if (path[2] && path[3] === 'biometric' && req.method === 'POST') {
+        // Toggle biometric for specific user: /api/users/:userId/biometric
+        const userId = path[2];
+        const data = await req.json();
+        const result = await toggleUserBiometric(userId, data.enabled);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET') {
         try {
           await connectToMongoDB();
           const users = getCollection("users");
           const userType = url.searchParams.get('userType');
-          
+
           let query = {};
           if (userType) {
             query = { userType };
           }
-          
+
           const result = await users.find(query).toArray();
           const sanitizedUsers = result.map(user => ({
             id: user._id?.toString(),
             fullName: user.fullName,
             email: user.email,
             userType: user.userType,
-            phone: user.phone
+            phone: user.phone,
+            biometricEnabled: user.biometricEnabled || false
           }));
-          
+
           return new Response(JSON.stringify(sanitizedUsers), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });

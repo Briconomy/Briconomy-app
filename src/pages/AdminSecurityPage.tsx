@@ -238,16 +238,16 @@ function AdminSecurityPage() {
 
   const handleUpdateAuthMethod = async (enabled: boolean) => {
     if (!selectedAuthMethod) return;
-    
+
     setProcessing(true);
     try {
       await adminApi.updateAuthMethod(selectedAuthMethod.method, enabled);
-      
+
       // Force refresh of the config data with a small delay to ensure database update
       setTimeout(async () => {
         await refetchConfig();
       }, 100);
-      
+
       setShowAuthModal(false);
       setSelectedAuthMethod(null);
       alert(`Authentication method ${enabled ? 'enabled' : 'disabled'} successfully`);

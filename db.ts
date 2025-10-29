@@ -66,6 +66,8 @@ export interface User {
   userType: 'admin' | 'manager' | 'caretaker' | 'tenant';
   password: string;
   createdAt: Date;
+  biometricEnabled?: boolean;
+  biometricCredentialId?: string;
 }
 
 export interface Property {
@@ -181,4 +183,15 @@ export interface AuditLog {
   resource: string;
   details: Record<string, unknown>;
   timestamp: Date;
+}
+
+export interface BiometricCredential {
+  _id?: string;
+  userId: string;
+  credentialId: string;
+  publicKey: Uint8Array;
+  counter: number;
+  transports?: string[];
+  createdAt: Date;
+  lastUsedAt?: Date;
 }

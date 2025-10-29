@@ -5,6 +5,7 @@ import { useToast } from '../contexts/ToastContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
 import { GoogleLogin } from '@react-oauth/google';
+import { biometricService } from '../services/biometric.ts';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricSubmitting, setBiometricSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
@@ -34,6 +37,9 @@ function LoginPage() {
   }, [isAuthenticated, user, loading, navigate]);
 
   useEffect(() => {
+    // Check biometric support
+    setBiometricSupported(biometricService.isSupported());
+
     const rememberedEmail = localStorage.getItem('briconomy_remembered_email');
     if (rememberedEmail) {
       setFormData(prev => ({ ...prev, email: rememberedEmail }));
@@ -90,6 +96,62 @@ function LoginPage() {
       setAuthError(t('auth.login_failed'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!biometricSupported) {
+      setAuthError('Biometric authentication is not supported on this device');
+      return;
+    }
+
+    if (!formData.email) {
+      setAuthError('Please enter your email address first');
+      return;
+    }
+
+    setAuthError('');
+    setBiometricSubmitting(true);
+
+    try {
+      const result = await biometricService.authenticate(formData.email);
+
+      if (result.success && result.user) {
+        // Store user in context using the login result
+        const userWithId = {
+          id: result.user.id,
+          email: result.user.email,
+          fullName: result.user.fullName,
+          userType: result.user.userType
+        };
+
+        // Store in localStorage/sessionStorage like regular login
+        if (rememberMe) {
+          localStorage.setItem('briconomy_user', JSON.stringify(userWithId));
+          localStorage.setItem('briconomy_token', result.token || 'mock-token');
+        } else {
+          sessionStorage.setItem('briconomy_user', JSON.stringify(userWithId));
+          sessionStorage.setItem('briconomy_token', result.token || 'mock-token');
+        }
+
+        const userName = result.user.fullName || 'User';
+        showToast(`${t('auth.welcome_back')}, ${userName}`, 'success', 3000);
+
+        const dashboards = {
+          admin: '/admin',
+          manager: '/manager',
+          tenant: '/tenant',
+          caretaker: '/caretaker'
+        };
+        navigate(dashboards[result.user.userType as keyof typeof dashboards] || '/tenant');
+      } else {
+        setAuthError('Biometric authentication failed');
+      }
+    } catch (error) {
+      console.error('Biometric login error:', error);
+      setAuthError(error instanceof Error ? error.message : 'Biometric authentication failed');
+    } finally {
+      setBiometricSubmitting(false);
     }
   };
 
@@ -322,9 +384,16 @@ function LoginPage() {
           <button
             type="button"
             className="btn btn-secondary btn-block2"
-            style={{ marginTop: '12px' }}
+            style={{
+              marginTop: '12px',
+              opacity: biometricSupported && !biometricSubmitting ? '1' : '0.6',
+              cursor: biometricSupported && !biometricSubmitting ? 'pointer' : 'not-allowed'
+            }}
+            onClick={biometricSupported && !biometricSubmitting ? handleBiometricLogin : undefined}
+            disabled={!biometricSupported || biometricSubmitting}
           >
-            {t('auth.biometric_login')}
+            {biometricSubmitting ? t('common.processing') || 'Processing...' : t('auth.biometric_login')}
+            {!biometricSupported && ' (Not supported)'}
           </button>
         </div>
       </div>

@@ -27,6 +27,8 @@
     "esbuild": "https://deno.land/x/esbuild@v0.19.8/mod.js",
     "mongo": "https://deno.land/x/mongo@v0.32.0/mod.ts",
     "mongodb": "npm:mongodb@6.1.0",
+    "@simplewebauthn/browser": "https://esm.sh/@simplewebauthn/browser@9.0.0",
+    "@simplewebauthn/server": "https://esm.sh/@simplewebauthn/server@9.0.0",
     "pdf-lib": "https://esm.sh/pdf-lib@1.17.1?target=deno"
   },
   "compilerOptions": {

@@ -4,6 +4,17 @@ import { join } from "@std/path";
 import { ensureDir } from "@std/fs";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { PDFFont } from "pdf-lib";
+import { Buffer } from "node:buffer";
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse
+} from "@simplewebauthn/server";
+import type {
+  VerifiedRegistrationResponse,
+  VerifiedAuthenticationResponse
+} from "@simplewebauthn/server";
 
 function toId(id: unknown) {
   try {
@@ -725,6 +736,298 @@ export async function resetPassword(token: string, newPassword: string) {
     };
   } catch (error) {
     console.error("Error resetting password:", error);
+    throw error;
+  }
+}
+
+// WebAuthn configuration
+const RP_NAME = "Briconomy";
+const RP_ID = Deno.env.get("RP_ID") || "192.168.0.135"; // Can be set via environment variable
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://192.168.0.135:5173"
+];
+
+// Generate registration options for biometric
+export async function generateBiometricRegistrationOptions(userId: string, userName: string, _userEmail: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+
+    const user = await users.findOne({ _id: toId(userId) });
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    const options = await generateRegistrationOptions({
+      rpName: RP_NAME,
+      rpID: RP_ID,
+      userID: userId,
+      userName: userName,
+      userDisplayName: userName,
+      attestationType: 'none',
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',
+        requireResidentKey: false,
+        residentKey: 'preferred',
+        userVerification: 'required',
+      },
+      timeout: 60000,
+    });
+
+    // Store the challenge temporarily for verification
+    await users.updateOne(
+      { _id: toId(userId) },
+      { $set: { currentChallenge: options.challenge } }
+    );
+
+    return options;
+  } catch (error) {
+    console.error("Error generating biometric registration options:", error);
+    throw error;
+  }
+}
+
+// Verify biometric registration
+export async function verifyBiometricRegistration(userId: string, credential: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const biometricCreds = getCollection("biometric_credentials");
+
+    const user = await users.findOne({ _id: toId(userId) });
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    const expectedChallenge = (user as Record<string, unknown>).currentChallenge as string;
+    if (!expectedChallenge) {
+      return { success: false, message: "No challenge found" };
+    }
+
+    let verification: VerifiedRegistrationResponse;
+    try {
+      verification = await verifyRegistrationResponse({
+        response: credential,
+        expectedChallenge,
+        expectedOrigin: ALLOWED_ORIGINS,
+        expectedRPID: RP_ID,
+      });
+    } catch (error) {
+      console.error("Verification error:", error);
+      return { success: false, message: "Verification failed" };
+    }
+
+    const { verified, registrationInfo } = verification;
+
+    if (verified && registrationInfo) {
+      // Store the credential
+      const { credentialPublicKey, credentialID, counter } = registrationInfo;
+
+      await biometricCreds.insertOne({
+        userId: toId(userId) ?? userId,
+        credentialId: Buffer.from(credentialID).toString('base64'),
+        publicKey: Buffer.from(credentialPublicKey).toString('base64'),
+        counter: counter,
+        transports: (credential as { transports?: string[] }).transports || [],
+        createdAt: new Date(),
+        lastUsedAt: new Date()
+      });
+
+      // Update user to mark biometric as enabled
+      await users.updateOne(
+        { _id: toId(userId) },
+        {
+          $set: { biometricEnabled: true },
+          $unset: { currentChallenge: "" }
+        }
+      );
+
+      return { success: true, verified: true };
+    }
+
+    return { success: false, message: "Verification failed" };
+  } catch (error) {
+    console.error("Error verifying biometric registration:", error);
+    return { success: false, message: "Registration verification failed" };
+  }
+}
+
+// Generate authentication options for biometric login
+export async function generateBiometricAuthenticationOptions(email: string) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const biometricCreds = getCollection("biometric_credentials");
+
+    const user = await users.findOne({ email });
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    const userId = String((user as Record<string, unknown>)._id);
+
+    // Get user's credentials
+    const credentials = await biometricCreds.find({ userId: toId(userId) }).toArray();
+
+    if (credentials.length === 0) {
+      return { success: false, message: "No biometric credentials registered" };
+    }
+
+    const allowCredentials = credentials.map(cred => ({
+      id: Uint8Array.from(Buffer.from((cred as Record<string, unknown>).credentialId as string, 'base64')),
+      type: 'public-key' as const,
+      transports: (cred as Record<string, unknown>).transports as ("ble" | "cable" | "hybrid" | "internal" | "nfc" | "smart-card" | "usb")[] | undefined,
+    }));
+
+    const options = await generateAuthenticationOptions({
+      rpID: RP_ID,
+      allowCredentials,
+      userVerification: 'required',
+      timeout: 60000,
+    });
+
+    // Store challenge for verification
+    await users.updateOne(
+      { _id: toId(userId) },
+      { $set: { currentChallenge: options.challenge } }
+    );
+
+    return options;
+  } catch (error) {
+    console.error("Error generating biometric authentication options:", error);
+    throw error;
+  }
+}
+
+// Verify biometric authentication
+export async function verifyBiometricAuthentication(email: string, credential: Record<string, unknown>) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const biometricCreds = getCollection("biometric_credentials");
+
+    const user = await users.findOne({ email });
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    const userId = String((user as Record<string, unknown>)._id);
+    const expectedChallenge = (user as Record<string, unknown>).currentChallenge as string;
+
+    if (!expectedChallenge) {
+      return { success: false, message: "No challenge found" };
+    }
+
+    // Get the credential from database
+    const credentialId = (credential as { id?: string }).id;
+    const dbCredential = await biometricCreds.findOne({
+      credentialId: credentialId
+    });
+
+    if (!dbCredential) {
+      return { success: false, message: "Credential not found" };
+    }
+
+    const authenticator = {
+      credentialPublicKey: Uint8Array.from(
+        Buffer.from((dbCredential as Record<string, unknown>).publicKey as string, 'base64')
+      ),
+      credentialID: Uint8Array.from(
+        Buffer.from((dbCredential as Record<string, unknown>).credentialId as string, 'base64')
+      ),
+      counter: (dbCredential as Record<string, unknown>).counter as number,
+    };
+
+    let verification: VerifiedAuthenticationResponse;
+    try {
+      verification = await verifyAuthenticationResponse({
+        response: credential,
+        expectedChallenge,
+        expectedOrigin: ALLOWED_ORIGINS,
+        expectedRPID: RP_ID,
+        authenticator,
+      });
+    } catch (error) {
+      console.error("Authentication verification error:", error);
+      return { success: false, message: "Authentication verification failed" };
+    }
+
+    const { verified, authenticationInfo } = verification;
+
+    if (verified) {
+      // Update counter
+      await biometricCreds.updateOne(
+        { credentialId: credentialId },
+        {
+          $set: {
+            counter: authenticationInfo.newCounter,
+            lastUsedAt: new Date()
+          }
+        }
+      );
+
+      // Clear challenge
+      await users.updateOne(
+        { _id: toId(userId) },
+        { $unset: { currentChallenge: "" } }
+      );
+
+      // Create audit log
+      await createAuditLog({
+        userId: userId,
+        action: 'user_login',
+        resource: 'authentication',
+        details: {
+          email,
+          method: 'biometric',
+          role: (user as Record<string, unknown>).userType || 'unknown'
+        }
+      });
+
+      // Return user data
+      const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
+      const mappedUser = {
+        id: String(rest._id ?? ""),
+        ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id"))
+      };
+
+      return {
+        success: true,
+        verified: true,
+        user: mappedUser,
+        token: "mock-jwt-token"
+      };
+    }
+
+    return { success: false, message: "Authentication failed" };
+  } catch (error) {
+    console.error("Error verifying biometric authentication:", error);
+    return { success: false, message: "Authentication verification failed" };
+  }
+}
+
+// Toggle biometric setting for a user
+export async function toggleUserBiometric(userId: string, enabled: boolean) {
+  try {
+    await connectToMongoDB();
+    const users = getCollection("users");
+    const biometricCreds = getCollection("biometric_credentials");
+
+    await users.updateOne(
+      { _id: toId(userId) },
+      { $set: { biometricEnabled: enabled } }
+    );
+
+    // If disabling, remove all biometric credentials
+    if (!enabled) {
+      await biometricCreds.deleteMany({ userId: toId(userId) });
+    }
+
+    return { success: true, enabled };
+  } catch (error) {
+    console.error("Error toggling biometric:", error);
     throw error;
   }
 }
@@ -3847,4 +4150,8 @@ export async function getDocumentById(documentId: string) {
     console.error("Error fetching document:", error);
     throw error;
   }
+}
+
+function getDatabase() {
+  throw new Error("Function not implemented.");
 }
