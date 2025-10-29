@@ -84,7 +84,23 @@ const _users = db.users.insertMany([
     phone: '+27821234568',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
-    profile: {"emergencyContact":"+27821234569","occupation":"Software Developer","moveInDate":"2023-06-01T00:00:00.000Z"},
+    profile: {
+      emergencyContact: {
+        name: "John Thompson",
+        phone: "+27821234569",
+        relationship: "Brother"
+      },
+      occupation: "Software Developer",
+      moveInDate: "2023-06-01",
+      leaseDuration: "12",
+      unitNumber: "2A",
+      monthlyIncome: 65000
+    },
+    assignedPropertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+    appliedUnitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+    appliedUnitNumber: "2A",
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -96,7 +112,23 @@ const _users = db.users.insertMany([
     phone: '+27823456790',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
-    profile: {"emergencyContact":"+27823456791","occupation":"Teacher","moveInDate":"2023-07-15T00:00:00.000Z"},
+    profile: {
+      emergencyContact: {
+        name: "Mary Smith",
+        phone: "+27823456791",
+        relationship: "Wife"
+      },
+      occupation: "Teacher",
+      moveInDate: "2023-07-15",
+      leaseDuration: "12",
+      unitNumber: "3C",
+      monthlyIncome: 48000
+    },
+    assignedPropertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+    appliedUnitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+    appliedUnitNumber: "3C",
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -108,7 +140,23 @@ const _users = db.users.insertMany([
     phone: '+27825678902',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
-    profile: {"emergencyContact":"+27825678903","occupation":"Nurse","moveInDate":"2023-08-20T00:00:00.000Z"},
+    profile: {
+      emergencyContact: {
+        name: "David Anderson",
+        phone: "+27825678903",
+        relationship: "Brother"
+      },
+      occupation: "Nurse",
+      moveInDate: "2023-08-20",
+      leaseDuration: "12",
+      unitNumber: "A1",
+      monthlyIncome: 55000
+    },
+    assignedPropertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+    appliedUnitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
+    appliedUnitNumber: "A1",
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -120,7 +168,23 @@ const _users = db.users.insertMany([
     phone: '+27827890124',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
-    profile: {"emergencyContact":"+27827890125","occupation":"Engineer","moveInDate":"2023-09-10T00:00:00.000Z"},
+    profile: {
+      emergencyContact: {
+        name: "Susan Brown",
+        phone: "+27827890125",
+        relationship: "Sister"
+      },
+      occupation: "Engineer",
+      moveInDate: "2023-09-10",
+      leaseDuration: "12",
+      unitNumber: "B2",
+      monthlyIncome: 72000
+    },
+    assignedPropertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+    appliedUnitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+    appliedUnitNumber: "B2",
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -132,7 +196,23 @@ const _users = db.users.insertMany([
     phone: '+27829012346',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
-    profile: {"emergencyContact":"+27829012347","occupation":"Designer","moveInDate":"2023-10-05T00:00:00.000Z"},
+    profile: {
+      emergencyContact: {
+        name: "Carlos Garcia",
+        phone: "+27829012347",
+        relationship: "Father"
+      },
+      occupation: "Designer",
+      moveInDate: "2023-10-05",
+      leaseDuration: "12",
+      unitNumber: "P1",
+      monthlyIncome: 52000
+    },
+    assignedPropertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
+    unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
+    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
+    appliedUnitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c7"),
+    appliedUnitNumber: "P1",
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date()
