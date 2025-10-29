@@ -69,7 +69,17 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
 function mapDoc<T extends { _id?: ObjectId }>(doc: T | null): (Omit<T, "_id"> & { id: string }) | null {
   if (!doc) return null;
   const { _id, ...rest } = doc as T & { _id?: ObjectId };
-  return { id: String(_id ?? ""), ...(rest as Omit<T, "_id">) };
+
+  const serialized = Object.entries(rest).reduce((acc, [key, value]) => {
+    if (value instanceof ObjectId) {
+      acc[key] = value.toString();
+    } else {
+      acc[key] = value;
+    }
+    return acc;
+  }, {} as any);
+
+  return { id: String(_id ?? ""), ...serialized };
 }
 
 function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> & { id: string }> {
@@ -572,40 +582,63 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
-    
+    const units = getCollection("units");
+
     const existingUser = await users.findOne({ email: userData.email });
     if (existingUser) {
       console.log('[registerPendingTenant] User already exists');
       return { success: false, message: "User with this email already exists" };
     }
-    
+
     const existingPending = await pendingUsers.findOne({ email: userData.email });
     if (existingPending) {
       console.log('[registerPendingTenant] Application already pending');
       return { success: false, message: "Application with this email already pending" };
     }
-    
+
+    const unitId = toObjectId(userData.unitId as string);
+    if (unitId) {
+      const unit = await units.findOne({ _id: unitId });
+      if (!unit) {
+        return { success: false, message: "Selected unit not found" };
+      }
+      if (unit.status !== 'vacant') {
+        return { success: false, message: "Selected unit is no longer available" };
+      }
+    }
+
     const password = String(userData.password ?? "");
     const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
     const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
+
     const toInsert = {
       ...userData,
       password: hashedPasswordHex,
       status: 'pending',
+      unitId: unitId,
+      propertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
+      appliedPropertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
       appliedAt: new Date(),
       createdAt: new Date()
     };
-    
+
+    console.log('[registerPendingTenant] Marking unit as pending...');
+    if (unitId) {
+      await units.updateOne(
+        { _id: unitId },
+        { $set: { status: 'pending' } }
+      );
+    }
+
     console.log('[registerPendingTenant] Inserting into DB...');
     await pendingUsers.insertOne(toInsert);
     console.log('[registerPendingTenant] Success');
-    
+
     return {
       success: true,
-      message: "Application submitted successfully. Awaiting admin approval."
+      message: "Application submitted successfully. Awaiting approval."
     };
   } catch (error) {
     console.error("[registerPendingTenant] Error:", error);
@@ -777,19 +810,20 @@ export async function approvePendingUser(userId: string) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid pending user identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Pending user not found");
     }
-    
-  const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
-    
+
+    const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+
     const newUser = {
       ...userDataToInsert,
       userType: 'tenant',
@@ -797,24 +831,32 @@ export async function approvePendingUser(userId: string) {
       adminApproved: true,
       managerApprovalStatus: 'pending',
       appliedPropertyId: appliedPropertyId,
+      unitId: unitId,
+      propertyId: propertyId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     await users.insertOne(newUser);
-    
+
+    if (unitId) {
+      await units.updateOne(
+        { _id: unitId },
+        { $set: { status: 'occupied', tenantId: newUser._id } }
+      );
+    }
+
     await pendingUsers.updateOne(
       { _id: userObjectId },
-      { $set: { 
-        status: 'admin_approved', 
-        adminApprovedAt: new Date(),
-        managerApprovalStatus: 'pending'
+      { $set: {
+        status: 'approved',
+        approvedAt: new Date()
       } }
     );
-    
+
     return {
       success: true,
-      message: "User approved by admin. Account created. Awaiting manager approval for property access.",
+      message: "User approved. Account created and unit assigned.",
       user: mapDoc(await users.findOne({ email: pendingUser.email }))
     };
   } catch (error) {
@@ -827,20 +869,33 @@ export async function declinePendingUser(userId: string) {
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
+    const units = getCollection("units");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid pending user identifier");
     }
-    
+
+    const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
+    if (!pendingUser) {
+      throw new Error("Pending user not found");
+    }
+
+    if (pendingUser.unitId) {
+      await units.updateOne(
+        { _id: pendingUser.unitId },
+        { $set: { status: 'vacant' }, $unset: { tenantId: 1 } }
+      );
+    }
+
     const result = await pendingUsers.updateOne(
       { _id: userObjectId },
       { $set: { status: 'declined', declinedAt: new Date() } }
     );
-    
+
     if (result.modifiedCount === 0) {
       throw new Error("Pending user not found or already processed");
     }
-    
+
     return {
       success: true,
       message: "User application declined"
@@ -861,22 +916,22 @@ export async function getPendingApplicationsForManager(managerId: string) {
     
     // First, get all properties managed by this manager
     const managerProperties = await properties.find({ managerId: managerMatch }).toArray();
-    
+
     const propertyIds = managerProperties.map(p => p._id.toString());
-    
+
     if (propertyIds.length === 0) {
       return []; // Manager has no properties, so no applications
     }
-    
+
     // Get pending applications for those properties - check both pending and admin_approved
-    const applications = await pendingUsers.find({ 
+    const applications = await pendingUsers.find({
       $or: [
         { status: 'pending' },
         { status: 'admin_approved' }
       ],
       appliedPropertyId: { $in: propertyIds }
     }).sort({ appliedAt: -1 }).toArray();
-    
+
     // Enrich applications with property details
     const enrichedApplications = applications.map(app => {
       const property = managerProperties.find(p => p._id.toString() === app.appliedPropertyId);
@@ -898,65 +953,75 @@ export async function approveApplicationByManager(userId: string, managerId: str
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const properties = getCollection("properties");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid application identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Application not found");
     }
-    
+
     const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
     const managerObjectId = toObjectId(managerId);
     if (!appliedPropertyObjectId || !managerObjectId) {
       throw new Error("Invalid property reference for pending application");
     }
 
-    const property = await properties.findOne({ 
+    const property = await properties.findOne({
       _id: appliedPropertyObjectId,
       managerId: { $in: [managerObjectId, managerId] }
     });
-    
+
     if (!property) {
       throw new Error("Unauthorized: You can only approve applications for your properties");
     }
-    
+
     const existingUser = await users.findOne({ email: pendingUser.email });
-    
+
     if (existingUser) {
       await users.updateOne(
         { _id: existingUser._id },
-        { $set: { 
+        { $set: {
           managerApprovalStatus: 'approved',
           managerApprovedBy: managerId,
           managerApprovedAt: new Date(),
           assignedPropertyId: pendingUser.appliedPropertyId,
+          propertyId: pendingUser.appliedPropertyId,
+          unitId: pendingUser.unitId,
           isActive: true,
           updatedAt: new Date()
         } }
       );
-      
+
+      if (pendingUser.unitId) {
+        await units.updateOne(
+          { _id: pendingUser.unitId },
+          { $set: { status: 'occupied', tenantId: existingUser._id } }
+        );
+      }
+
       await pendingUsers.updateOne(
         { _id: userObjectId },
-        { $set: { 
-          status: 'fully_approved',
-          managerApprovedAt: new Date(),
-          managerApprovedBy: managerId
+        { $set: {
+          status: 'approved',
+          approvedAt: new Date(),
+          approvedBy: managerId
         } }
       );
-      
+
       return {
         success: true,
-        message: "Application approved. Tenant now has full access to the property.",
+        message: "Application approved. Tenant account activated.",
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     } else {
-      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
-      
+      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+
       const newUser = {
         ...userDataToInsert,
         userType: 'tenant',
@@ -966,24 +1031,33 @@ export async function approveApplicationByManager(userId: string, managerId: str
         managerApprovedBy: managerId,
         managerApprovedAt: new Date(),
         assignedPropertyId: appliedPropertyId,
+        unitId: unitId,
+        propertyId: propertyId,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       await users.insertOne(newUser);
-      
+
+      if (unitId) {
+        await units.updateOne(
+          { _id: unitId },
+          { $set: { status: 'occupied', tenantId: newUser._id } }
+        );
+      }
+
       await pendingUsers.updateOne(
         { _id: userObjectId },
-        { $set: { 
-          status: 'approved', 
+        { $set: {
+          status: 'approved',
           approvedAt: new Date(),
           approvedBy: managerId
         } }
       );
-      
+
       return {
         success: true,
-        message: "Application approved successfully. Account created with full property access.",
+        message: "Application approved. Account created and tenant activated.",
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     }
@@ -998,39 +1072,40 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const properties = getCollection("properties");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid application identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Application not found");
     }
-    
+
     const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
     const managerObjectId = toObjectId(managerId);
     if (!appliedPropertyObjectId || !managerObjectId) {
       throw new Error("Invalid property reference for pending application");
     }
 
-    const property = await properties.findOne({ 
+    const property = await properties.findOne({
       _id: appliedPropertyObjectId,
       managerId: { $in: [managerObjectId, managerId] }
     });
-    
+
     if (!property) {
       throw new Error("Unauthorized: You can only reject applications for your properties");
     }
-    
+
     const existingUser = await users.findOne({ email: pendingUser.email });
-    
+
     if (existingUser) {
       await users.updateOne(
         { _id: existingUser._id },
-        { $set: { 
+        { $set: {
           managerApprovalStatus: 'rejected',
           managerRejectedBy: managerId,
           managerRejectedAt: new Date(),
@@ -1040,21 +1115,28 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
         } }
       );
     }
-    
+
+    if (pendingUser.unitId) {
+      await units.updateOne(
+        { _id: pendingUser.unitId },
+        { $set: { status: 'vacant' }, $unset: { tenantId: 1 } }
+      );
+    }
+
     const result = await pendingUsers.updateOne(
       { _id: userObjectId },
-      { $set: { 
-        status: 'manager_rejected', 
+      { $set: {
+        status: 'manager_rejected',
         managerRejectedAt: new Date(),
         managerRejectedBy: managerId,
         managerRejectionReason: reason || 'No reason provided'
       } }
     );
-    
+
     if (result.modifiedCount === 0) {
       throw new Error("Application not found or already processed");
     }
-    
+
     return {
       success: true,
       message: "Application rejected successfully"
@@ -1147,6 +1229,22 @@ export async function getUnits(propertyId?: string) {
   return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching units:", error);
+    throw error;
+  }
+}
+
+export async function getAvailableUnits(propertyId: string) {
+  try {
+    await connectToMongoDB();
+    const units = getCollection("units");
+    const filter = {
+      propertyId: toId(propertyId),
+      status: 'vacant'
+    };
+    const rows = await units.find(filter).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching available units:", error);
     throw error;
   }
 }
@@ -3515,201 +3613,6 @@ export async function exportReport(reportId: string, format: string) {
   }
 }
 
-type RawDocumentRecord = Record<string, unknown> & {
-  _id?: ObjectId;
-  id?: string;
-  content?: unknown;
-  fallbackGeneratedAt?: unknown;
-  fallbackMessage?: unknown;
-  fallbackArtifactPaths?: { markdown?: string; pdf?: string };
-  fallbackGenerated?: unknown;
-  fallbackContentSource?: unknown;
-  fileName?: unknown;
-  name?: unknown;
-  mimeType?: unknown;
-  uploadDate?: unknown;
-  description?: unknown;
-  leaseId?: unknown;
-  propertyId?: unknown;
-  unitId?: unknown;
-  type?: unknown;
-  fileSize?: unknown;
-};
-
-const documentFallbackRoot = join(Deno.cwd(), "generated", "documents");
-
-function stripFileExtension(value: string): string {
-  const trimmed = value.trim();
-  const index = trimmed.lastIndexOf(".");
-  if (index > 0) {
-    return trimmed.slice(0, index);
-  }
-  return trimmed;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  if (bytes.length === 0) {
-    return "";
-  }
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let index = 0; index < bytes.length; index += chunkSize) {
-    const chunk = bytes.subarray(index, index + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-  return btoa(binary);
-}
-
-function toTitleCase(value: unknown): string {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    return "Document";
-  }
-  return value
-    .toLowerCase()
-    .split(/[\s_-]+/)
-    .filter((part) => part.length > 0)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function resolveDocumentBaseName(doc: RawDocumentRecord, fallbackId: string): string {
-  if (typeof doc.fileName === "string" && doc.fileName.trim().length > 0) {
-    return sanitizeFileSegment(stripFileExtension(doc.fileName));
-  }
-  if (typeof doc.name === "string" && doc.name.trim().length > 0) {
-    return sanitizeFileSegment(stripFileExtension(doc.name));
-  }
-  return sanitizeFileSegment(`document-${fallbackId}`);
-}
-
-function buildFallbackDocumentMarkdown(doc: RawDocumentRecord, generatedAt: Date): string {
-  const lines: Array<string | null> = [
-    `# ${(typeof doc.name === "string" && doc.name.trim().length > 0 ? doc.name.trim() : "Tenant Document")} (Temporary Copy)`,
-    "The original file for this document is currently missing from the system.",
-    "---",
-    `**Generated On:** ${generatedAt.toISOString().split("T")[0]}`,
-    `**Document Type:** ${toTitleCase(doc.type)}`,
-    typeof doc.fileName === "string" && doc.fileName.trim().length > 0 ? `**Expected Filename:** ${doc.fileName.trim()}` : null,
-    doc.uploadDate instanceof Date
-      ? `**Original Upload Date:** ${toIsoDateString(doc.uploadDate)}`
-      : typeof doc.uploadDate === "string" && doc.uploadDate.trim().length > 0
-        ? `**Original Upload Date:** ${toIsoDateString(doc.uploadDate)}`
-        : null,
-    typeof doc.description === "string" && doc.description.trim().length > 0 ? `**Summary:** ${doc.description.trim()}` : null,
-    valueToString(doc.leaseId) ? `**Lease ID:** ${valueToString(doc.leaseId)}` : null,
-    valueToString(doc.propertyId) ? `**Property ID:** ${valueToString(doc.propertyId)}` : null,
-    valueToString(doc.unitId) ? `**Unit ID:** ${valueToString(doc.unitId)}` : null,
-    "---",
-    "This temporary PDF was generated so you can keep a reference copy while the original document is being restored.",
-    "Please contact your property manager if you need the signed version or if this placeholder is incorrect."
-  ];
-  return lines.filter((line): line is string => Boolean(line)).join("\n\n");
-}
-
-async function ensureFallbackDocumentAvailability(
-  doc: RawDocumentRecord,
-  documentsCollection: ReturnType<typeof getCollection>
-) {
-  const primaryId = valueToString(doc._id) ?? (typeof doc.id === "string" && doc.id.length > 0 ? doc.id : crypto.randomUUID());
-  const existingPaths = doc.fallbackArtifactPaths;
-  let markdownPath = existingPaths?.markdown;
-  let pdfPath = existingPaths?.pdf;
-  let pdfBytes: Uint8Array | null = null;
-
-  if (pdfPath && (await fileExists(pdfPath))) {
-    pdfBytes = await Deno.readFile(pdfPath);
-  }
-
-  let generatedAt: Date | null = null;
-  if (doc.fallbackGeneratedAt instanceof Date) {
-    generatedAt = doc.fallbackGeneratedAt;
-  } else if (typeof doc.fallbackGeneratedAt === "string" && doc.fallbackGeneratedAt.trim().length > 0) {
-    const parsed = new Date(doc.fallbackGeneratedAt);
-    if (!Number.isNaN(parsed.getTime())) {
-      generatedAt = parsed;
-    }
-  }
-
-  let fallbackMessage = typeof doc.fallbackMessage === "string" && doc.fallbackMessage.trim().length > 0
-    ? doc.fallbackMessage.trim()
-    : null;
-
-  const directory = join(documentFallbackRoot, sanitizeFileSegment(primaryId));
-
-  if (!pdfBytes) {
-    await ensureDir(directory);
-    const baseName = resolveDocumentBaseName(doc, primaryId);
-    markdownPath = join(directory, `${baseName}.md`);
-    const now = new Date();
-    generatedAt = now;
-    const markdownContent = buildFallbackDocumentMarkdown(doc, now);
-    await Deno.writeTextFile(markdownPath, markdownContent);
-    pdfPath = join(directory, `${baseName}.pdf`);
-    pdfBytes = await markdownToPdf(markdownContent);
-    await Deno.writeFile(pdfPath, pdfBytes);
-    fallbackMessage = `Original document file is missing. Temporary copy generated on ${now.toLocaleString()}.`;
-  } else {
-    if (!markdownPath || !(await fileExists(markdownPath))) {
-      await ensureDir(directory);
-      const baseName = resolveDocumentBaseName(doc, primaryId);
-      markdownPath = join(directory, `${baseName}.md`);
-      const referenceDate = generatedAt ?? new Date();
-      const markdownContent = buildFallbackDocumentMarkdown(doc, referenceDate);
-      await Deno.writeTextFile(markdownPath, markdownContent);
-    }
-    if (!generatedAt) {
-      generatedAt = new Date();
-    }
-    if (!fallbackMessage) {
-      fallbackMessage = `Original document file is missing. Temporary copy generated on ${generatedAt.toLocaleString()}.`;
-    }
-  }
-
-  if (!pdfBytes || !pdfPath || !markdownPath || !fallbackMessage || !generatedAt) {
-    return null;
-  }
-
-  const baseName = resolveDocumentBaseName(doc, primaryId);
-  const fileName = typeof doc.fileName === "string" && doc.fileName.trim().length > 0
-    ? doc.fileName.trim()
-    : `${baseName}.pdf`;
-
-  const mimeType = typeof doc.mimeType === "string" && doc.mimeType.trim().length > 0
-    ? doc.mimeType.trim()
-    : "application/pdf";
-
-  const fileSize = pdfBytes.byteLength;
-  const base64 = bytesToBase64(pdfBytes);
-
-  const updateFilter = doc._id ? { _id: doc._id } : { id: primaryId };
-
-  await documentsCollection.updateOne(
-    updateFilter as Record<string, unknown>,
-    {
-      $set: {
-        fallbackGenerated: true,
-        fallbackGeneratedAt: generatedAt,
-        fallbackArtifactPaths: { markdown: markdownPath, pdf: pdfPath },
-        fallbackMessage,
-        fallbackContentSource: "generated",
-        mimeType,
-        fileName,
-        fileSize
-      }
-    }
-  );
-
-  return {
-    base64,
-    fileName,
-    mimeType,
-    fileSize,
-    fallbackMessage,
-    generatedAt: generatedAt.toISOString(),
-    artifactPaths: { markdown: markdownPath, pdf: pdfPath }
-  };
-}
-
 export async function getDocuments(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
@@ -3889,28 +3792,12 @@ export async function getDocumentById(documentId: string) {
     });
 
     if (doc) {
-      const rawDoc = doc as RawDocumentRecord;
       console.log('[getDocumentById] Document found:', {
-        _id: rawDoc._id,
-        name: rawDoc.name,
-        hasContent: typeof rawDoc.content === 'string' && rawDoc.content.trim().length > 0,
-        contentLength: typeof rawDoc.content === 'string' ? rawDoc.content.length : 0
+        _id: (doc as Record<string, unknown>)._id,
+        name: (doc as Record<string, unknown>).name,
+        hasContent: !!(doc as Record<string, unknown>).content,
+        contentLength: typeof (doc as Record<string, unknown>).content === 'string' ? ((doc as Record<string, unknown>).content as string).length : 0
       });
-      const existingContent = typeof rawDoc.content === 'string' ? rawDoc.content.trim() : '';
-      if (!existingContent) {
-        const fallback = await ensureFallbackDocumentAvailability(rawDoc, documents);
-        if (fallback) {
-          rawDoc.content = fallback.base64;
-          rawDoc.mimeType = fallback.mimeType;
-          rawDoc.fileName = fallback.fileName;
-          rawDoc.fileSize = fallback.fileSize;
-          rawDoc.fallbackGenerated = true;
-          rawDoc.fallbackMessage = fallback.fallbackMessage;
-          rawDoc.fallbackGeneratedAt = fallback.generatedAt;
-          rawDoc.fallbackContentSource = 'generated';
-          rawDoc.fallbackArtifactPaths = fallback.artifactPaths;
-        }
-      }
     } else {
       console.log('[getDocumentById] Document not found:', documentId);
     }

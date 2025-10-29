@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from './Icon.tsx';
 import { documentsApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -66,10 +66,6 @@ interface DocumentListItem {
 	createdAt?: string;
 	status?: string;
 	uploadedByName?: string;
-	fallbackGenerated?: boolean;
-	fallbackGeneratedAt?: string;
-	fallbackMessage?: string;
-	fallbackContentSource?: string;
 }
 
 interface DocumentDetail extends DocumentListItem {
@@ -170,8 +166,8 @@ function DocumentViewer() {
 		return items
 			.slice()
 			.sort((a, b) => {
-				const aDate = new Date(a.uploadDate ?? a.createdAt ?? a.fallbackGeneratedAt ?? 0).getTime();
-				const bDate = new Date(b.uploadDate ?? b.createdAt ?? b.fallbackGeneratedAt ?? 0).getTime();
+				const aDate = new Date(a.uploadDate ?? a.createdAt ?? 0).getTime();
+				const bDate = new Date(b.uploadDate ?? b.createdAt ?? 0).getTime();
 				return bDate - aDate;
 			});
 	}, []);
@@ -199,10 +195,6 @@ function DocumentViewer() {
 		const createdAtValue = input['createdAt'];
 		const statusValue = input['status'];
 		const uploadedByNameValue = input['uploadedByName'];
-		const fallbackGeneratedValue = input['fallbackGenerated'];
-		const fallbackGeneratedAtValue = input['fallbackGeneratedAt'];
-		const fallbackMessageValue = input['fallbackMessage'];
-		const fallbackContentSourceValue = input['fallbackContentSource'];
 
 		let sizeNumber: number | undefined;
 		if (typeof sizeValue === 'number' && Number.isFinite(sizeValue)) {
@@ -230,27 +222,7 @@ function DocumentViewer() {
 
 		const fallbackGeneratedId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-		const fallbackGenerated =
-			fallbackGeneratedValue === true ||
-			(typeof fallbackGeneratedValue === 'string' &&
-				['true', '1', 'yes'].includes(fallbackGeneratedValue.toLowerCase()));
-
-		const fallbackGeneratedAt =
-			fallbackGeneratedAtValue instanceof Date
-				? fallbackGeneratedAtValue.toISOString()
-				: typeof fallbackGeneratedAtValue === 'string' && fallbackGeneratedAtValue
-					? fallbackGeneratedAtValue
-					: undefined;
-
-		const fallbackMessage =
-			typeof fallbackMessageValue === 'string' && fallbackMessageValue ? fallbackMessageValue : undefined;
-
-		const fallbackContentSource =
-			typeof fallbackContentSourceValue === 'string' && fallbackContentSourceValue
-				? fallbackContentSourceValue
-				: undefined;
-
-		const normalized: DocumentListItem = {
+		return {
 			id: resolvedId || fallbackGeneratedId,
 			name,
 			description: typeof descriptionValue === 'string' ? descriptionValue : undefined,
@@ -264,21 +236,6 @@ function DocumentViewer() {
 			status: typeof statusValue === 'string' ? statusValue : undefined,
 			uploadedByName: typeof uploadedByNameValue === 'string' ? uploadedByNameValue : undefined
 		};
-
-		if (fallbackGenerated) {
-			normalized.fallbackGenerated = true;
-		}
-		if (fallbackGeneratedAt) {
-			normalized.fallbackGeneratedAt = fallbackGeneratedAt;
-		}
-		if (fallbackMessage) {
-			normalized.fallbackMessage = fallbackMessage;
-		}
-		if (fallbackContentSource) {
-			normalized.fallbackContentSource = fallbackContentSource;
-		}
-
-		return normalized;
 	}, []);
 
 	const coerceDetail = useCallback((input: Record<string, unknown>): DocumentDetail => {
@@ -357,31 +314,10 @@ function DocumentViewer() {
 				showToast(msg, 'info');
 				console.log('[DocumentViewer] No content in detail:', detail);
 			}
-			if (detail.fallbackGenerated && detail.fallbackMessage) {
-				showToast(detail.fallbackMessage, 'info');
-			}
 			if (previewState?.url) {
 				URL.revokeObjectURL(previewState.url);
 			}
 			setPreviewState({ detail, url: objectUrl });
-			if (detail.fallbackGenerated) {
-				setDocuments((previous) =>
-					previous.map((item) =>
-						item.id === detail.id
-							? {
-								...item,
-								fallbackGenerated: true,
-								fallbackMessage: detail.fallbackMessage || item.fallbackMessage,
-								fallbackGeneratedAt: detail.fallbackGeneratedAt || item.fallbackGeneratedAt,
-								fallbackContentSource: detail.fallbackContentSource || item.fallbackContentSource,
-								fileSize: detail.fileSize ?? item.fileSize,
-								mimeType: detail.mimeType ?? item.mimeType,
-								fileName: detail.fileName ?? item.fileName
-							}
-							: item
-					)
-				);
-			}
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Unable to open document';
 			setError(errorMessage);
@@ -425,28 +361,7 @@ function DocumentViewer() {
 			link.click();
 			document.body.removeChild(link);
 			URL.revokeObjectURL(url);
-			const successMessage = detail.fallbackGenerated
-				? detail.fallbackMessage ?? `${detail.name} downloaded as a temporary copy`
-				: `${detail.name} downloaded successfully`;
-			showToast(successMessage, detail.fallbackGenerated ? 'info' : 'success');
-			if (detail.fallbackGenerated) {
-				setDocuments((previous) =>
-					previous.map((item) =>
-						item.id === detail.id
-							? {
-								...item,
-								fallbackGenerated: true,
-								fallbackMessage: detail.fallbackMessage || item.fallbackMessage,
-								fallbackGeneratedAt: detail.fallbackGeneratedAt || item.fallbackGeneratedAt,
-								fallbackContentSource: detail.fallbackContentSource || item.fallbackContentSource,
-								fileSize: detail.fileSize ?? item.fileSize,
-								mimeType: detail.mimeType ?? item.mimeType,
-								fileName: detail.fileName ?? item.fileName
-							}
-							: item
-					)
-				);
-			}
+			showToast(`${detail.name} downloaded successfully`, 'success');
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Unable to download document';
 			setError(errorMessage);
@@ -497,14 +412,8 @@ function DocumentViewer() {
 					) : (
 						<div className="documents-list">
 							{documents.map((doc) => {
-								const hasTags = Boolean(doc.type) || Boolean(doc.status) || Boolean(doc.fallbackGenerated);
-								const hasFooter =
-									doc.fileSize !== undefined ||
-									Boolean(doc.uploadDate) ||
-									Boolean(doc.uploadedByName) ||
-									Boolean(doc.fallbackGeneratedAt);
-								const fallbackText =
-									doc.fallbackGenerated && doc.fallbackMessage ? doc.fallbackMessage : null;
+								const hasTags = Boolean(doc.type) || Boolean(doc.status);
+								const hasFooter = doc.fileSize !== undefined || Boolean(doc.uploadDate) || Boolean(doc.uploadedByName);
 								return (
 									<div key={doc.id} className="document-card">
 										<div className="document-card-header">
@@ -521,9 +430,6 @@ function DocumentViewer() {
 															)}
 															{doc.status && (
 																<span className={`status-badge ${getStatusClass(doc.status)}`}>{startCase(doc.status)}</span>
-															)}
-															{doc.fallbackGenerated && (
-																<span className="status-badge status-pending">Temporary Copy</span>
 															)}
 														</div>
 													)}
@@ -549,7 +455,6 @@ function DocumentViewer() {
 											</div>
 										</div>
 										{doc.description && <p className="document-card-description">{doc.description}</p>}
-										{fallbackText && <p className="document-card-description">{fallbackText}</p>}
 										{hasFooter && (
 											<div className="document-card-footer">
 												{doc.fileSize !== undefined && (
@@ -560,9 +465,6 @@ function DocumentViewer() {
 												)}
 												{doc.uploadedByName && (
 													<span className="document-card-footnote">by {doc.uploadedByName}</span>
-												)}
-												{doc.fallbackGeneratedAt && (
-													<span className="document-card-footnote">Temporary copy generated {formatDate(doc.fallbackGeneratedAt)}</span>
 												)}
 											</div>
 										)}
@@ -596,11 +498,6 @@ function DocumentViewer() {
 					</div>
 
 					<div className="modal-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
-						{previewState.detail.fallbackGenerated && previewState.detail.fallbackMessage && (
-							<div className="alert alert-info" style={{ marginBottom: '20px' }}>
-								{previewState.detail.fallbackMessage}
-							</div>
-						)}
 						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--border-primary)' }}>
 							<div>
 								<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Type</div>
@@ -622,12 +519,6 @@ function DocumentViewer() {
 									<span className={`status-badge ${getStatusClass(previewState.detail.status)}`}>
 										{startCase(previewState.detail.status)}
 									</span>
-								</div>
-							)}
-							{previewState.detail.fallbackGenerated && (
-								<div>
-									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Copy Status</div>
-									<span className="status-badge status-pending">Temporary Copy</span>
 								</div>
 							)}
 						</div>

@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="src/Icons/BriconomyReadMELogo.svg" alt="Briconomy Logo" width="1000"/>
+</div>
+
 ## Contributors
 
 <table align="center">
@@ -37,9 +41,7 @@
 
 ---
 
-<div align="center">
-  <img src="src/Icons/BriconomyReadMELogo.svg" alt="Briconomy Logo" width="300"/>
-</div>
+
 
 # Briconomy - Property Management & Tenant Portal
 
