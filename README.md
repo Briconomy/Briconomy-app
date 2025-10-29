@@ -37,6 +37,10 @@
 
 ---
 
+<div align="center">
+  <img src="src/Icons/BriconomyReadMELogo.svg" alt="Briconomy Logo" width="300"/>
+</div>
+
 # Briconomy - Property Management & Tenant Portal
 
 Full-stack property management application built with React, Deno, and MongoDB. Enables property managers, tenants, caretakers, and administrators to collaborate in managing rental properties, leases, payments, and maintenance.
