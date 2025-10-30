@@ -70,16 +70,16 @@ function mapDoc<T extends { _id?: ObjectId }>(doc: T | null): (Omit<T, "_id"> & 
   if (!doc) return null;
   const { _id, ...rest } = doc as T & { _id?: ObjectId };
 
-  const serialized = Object.entries(rest).reduce((acc, [key, value]) => {
+  const serialized = Object.entries(rest).reduce<Record<string, unknown>>((acc, [key, value]) => {
     if (value instanceof ObjectId) {
       acc[key] = value.toString();
     } else {
       acc[key] = value;
     }
     return acc;
-  }, {} as any);
+  }, {});
 
-  return { id: String(_id ?? ""), ...serialized };
+  return { id: String(_id ?? ""), ...(serialized as Omit<T, "_id">) };
 }
 
 function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> & { id: string }> {
@@ -822,7 +822,16 @@ export async function approvePendingUser(userId: string) {
       throw new Error("Pending user not found");
     }
 
-    const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+    const pendingUserRecord = pendingUser as Record<string, unknown>;
+    const {
+      _id,
+      appliedAt: _appliedAt,
+      appliedPropertyId,
+      status: _status,
+      unitId,
+      propertyId,
+      ...userDataToInsert
+    } = pendingUserRecord;
 
     const newUser = {
       ...userDataToInsert,
@@ -837,12 +846,12 @@ export async function approvePendingUser(userId: string) {
       updatedAt: new Date()
     };
 
-    await users.insertOne(newUser);
+    const insertedUserId = await users.insertOne(newUser);
 
     if (unitId) {
       await units.updateOne(
         { _id: unitId },
-        { $set: { status: 'occupied', tenantId: newUser._id } }
+        { $set: { status: 'occupied', tenantId: insertedUserId } }
       );
     }
 
@@ -1020,7 +1029,16 @@ export async function approveApplicationByManager(userId: string, managerId: str
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     } else {
-      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, unitId, propertyId, ...userDataToInsert } = pendingUser as any;
+      const pendingUserRecord = pendingUser as Record<string, unknown>;
+      const {
+        _id,
+        appliedAt: _appliedAt,
+        appliedPropertyId,
+        status: _status,
+        unitId,
+        propertyId,
+        ...userDataToInsert
+      } = pendingUserRecord;
 
       const newUser = {
         ...userDataToInsert,
@@ -1037,12 +1055,12 @@ export async function approveApplicationByManager(userId: string, managerId: str
         updatedAt: new Date()
       };
 
-      await users.insertOne(newUser);
+      const insertedId = await users.insertOne(newUser);
 
       if (unitId) {
         await units.updateOne(
           { _id: unitId },
-          { $set: { status: 'occupied', tenantId: newUser._id } }
+          { $set: { status: 'occupied', tenantId: insertedId } }
         );
       }
 

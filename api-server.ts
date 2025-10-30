@@ -486,14 +486,24 @@ serve(async (req) => {
         const lease = await createLease(body);
 
         try {
-          const startDate = new Date(lease.startDate || new Date());
+          const leaseRecord = lease as Record<string, unknown>;
+          const rawStartDate = leaseRecord.startDate;
+          let startDateInput: string | number | Date = new Date();
+
+          if (rawStartDate instanceof Date) {
+            startDateInput = rawStartDate;
+          } else if (typeof rawStartDate === 'string' || typeof rawStartDate === 'number') {
+            startDateInput = rawStartDate;
+          }
+
+          const startDate = new Date(startDateInput);
           const month = startDate.toLocaleString('default', { month: 'long' });
           const year = startDate.getFullYear();
 
           await createInvoice({
-            tenantId: lease.tenantId,
-            leaseId: lease.id,
-            amount: lease.monthlyRent || 0,
+            tenantId: leaseRecord.tenantId,
+            leaseId: leaseRecord.id,
+            amount: (leaseRecord.monthlyRent as number | undefined) ?? 0,
             issueDate: startDate.toISOString().split('T')[0],
             dueDate: 'monthly',
             month: month,
