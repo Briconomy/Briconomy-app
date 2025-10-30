@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
-import { propertiesApi, authApi } from '../services/api.ts';
+import { propertiesApi, authApi, unitsApi, useApi } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
@@ -52,11 +52,14 @@ function RentalApplicationPage() {
       moveInDate: '',
       leaseDuration: '12',
       occupants: '1',
+      appliedUnitId: '',
+      appliedUnitNumber: '',
       pets: 'no',
       petDetails: '',
       specialRequirements: '',
       emergencyContact: '',
-      emergencyPhone: ''
+      emergencyPhone: '',
+      emergencyRelationship: ''
     },
     documents: {
       idDocument: null,
@@ -71,6 +74,13 @@ function RentalApplicationPage() {
 
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { user, login } = useAuth();
+
+  // #COMPLETION_DRIVE: Fetch units for the property when property details are loaded
+  // #SUGGEST_VERIFY: Verify property ID is valid before fetching units
+  const { data: availableUnits } = useApi(() =>
+    propertyId && propertyId !== 'undefined' ? unitsApi.getAll(propertyId) : Promise.resolve([]),
+    [propertyId]
+  );
 
   // Account creation states
   const [showAccountCreation, setShowAccountCreation] = useState(false);
@@ -170,7 +180,7 @@ function RentalApplicationPage() {
         return formData.references.reference1Name && 
                formData.references.reference1Phone;
       case 5:
-        return formData.additionalInfo.moveInDate;
+        return formData.additionalInfo.moveInDate && formData.additionalInfo.appliedUnitId;
       default:
         return true;
     }
@@ -205,15 +215,22 @@ function RentalApplicationPage() {
         phone: formData.personalInfo.phone,
         password: formData.personalInfo.idNumber,
         userType: 'tenant',
+        propertyId: propertyId,
         appliedPropertyId: propertyId,
+        unitId: formData.additionalInfo.appliedUnitId,
         profile: {
           property: property?.name,
-          unitNumber: formData.additionalInfo.occupants,
+          unitNumber: formData.additionalInfo.appliedUnitNumber,
+          occupants: formData.additionalInfo.occupants,
           occupation: formData.employmentInfo.position,
           monthlyIncome: formData.employmentInfo.income,
-          emergencyContact: formData.additionalInfo.emergencyContact 
-            ? `${formData.additionalInfo.emergencyContact} (${formData.additionalInfo.emergencyPhone})`
-            : '',
+          emergencyContact: formData.additionalInfo.emergencyContact
+            ? {
+                name: formData.additionalInfo.emergencyContact,
+                phone: formData.additionalInfo.emergencyPhone,
+                relationship: formData.additionalInfo.emergencyRelationship || ''
+              }
+            : null,
           moveInDate: formData.additionalInfo.moveInDate,
           idNumber: formData.personalInfo.idNumber,
           dateOfBirth: formData.personalInfo.dateOfBirth,
@@ -700,6 +717,29 @@ function RentalApplicationPage() {
       <h3>Additional Information</h3>
       <div className="form-grid">
         <div className="form-group">
+          <label>Preferred Unit/Apartment *</label>
+          <select
+            value={formData.additionalInfo.appliedUnitId}
+            onChange={(e) => {
+              const unitId = e.target.value;
+              const selectedUnit = availableUnits?.find(u => (u._id || u.id) === unitId);
+              // #COMPLETION_DRIVE: Extract and store unit number whenever a unit is selected
+              // #SUGGEST_VERIFY: Ensure selected unit object has unitNumber property before storing
+              const unitNumber = selectedUnit?.unitNumber || `Unit-${unitId?.slice(-4)}`;
+              handleInputChange('additionalInfo', 'appliedUnitId', unitId);
+              handleInputChange('additionalInfo', 'appliedUnitNumber', unitNumber);
+            }}
+            required
+          >
+            <option value="">Select a Unit</option>
+            {availableUnits?.map(unit => (
+              <option key={unit._id || unit.id} value={unit._id || unit.id}>
+                {unit.unitNumber} {unit.bedrooms && unit.bathrooms ? `(${unit.bedrooms}BR/${unit.bathrooms}BA)` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
           <label>Preferred Move-in Date *</label>
           <input
             type="date"
@@ -778,6 +818,21 @@ function RentalApplicationPage() {
             value={formData.additionalInfo.emergencyPhone}
             onChange={(e) => handleInputChange('additionalInfo', 'emergencyPhone', e.target.value)}
           />
+        </div>
+        <div className="form-group">
+          <label>Emergency Contact Relationship</label>
+          <select
+            value={formData.additionalInfo.emergencyRelationship}
+            onChange={(e) => handleInputChange('additionalInfo', 'emergencyRelationship', e.target.value)}
+          >
+            <option value="">Select relationship</option>
+            <option value="Parent">Parent</option>
+            <option value="Spouse">Spouse</option>
+            <option value="Sibling">Sibling</option>
+            <option value="Child">Child</option>
+            <option value="Friend">Friend</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
       </div>
     </div>

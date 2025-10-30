@@ -12,17 +12,13 @@ function AdminAddUserPage() {
     fullName: '',
     email: '',
     phone: '',
-    userType: 'tenant',
+    userType: 'manager',
     password: '',
     confirmPassword: '',
     profile: {
       department: '',
       employeeId: '',
       joinDate: '',
-      emergencyContact: '',
-      property: '',
-      unitNumber: '',
-      moveInDate: '',
       skills: [] as string[],
       assignedProperty: '',
       managedProperties: [] as string[]
@@ -134,19 +130,6 @@ const handleCreateUser = async () => {
       profileData.joinDate = new Date(formData.profile.joinDate);
       profileData.skills = formData.profile.skills;
       profileData.assignedProperty = formData.profile.assignedProperty || null;
-    }
-
-    if (formData.userType === 'tenant') {
-      if (!formData.profile.emergencyContact || !formData.profile.property || !formData.profile.unitNumber || !formData.profile.moveInDate) {
-        setError(t('admin.fill_tenant_fields'));
-        setLoading(false);
-        return;
-      }
-      profileData.emergencyContact = formData.profile.emergencyContact;
-      profileData.property = formData.profile.property;
-      profileData.unitNumber = formData.profile.unitNumber;
-      profileData.moveInDate = new Date(formData.profile.moveInDate);
-      profileData.leaseId = null;
     }
     
     try {
@@ -290,7 +273,6 @@ const handleCreateUser = async () => {
                 boxSizing: 'border-box'
               }}
             >
-              <option value="tenant">{t('admin.tenant')}</option>
               <option value="manager">{t('admin.manager')}</option>
               <option value="caretaker">{t('admin.caretaker')}</option>
               <option value="admin">{t('admin.admin')}</option>
@@ -385,148 +367,6 @@ const handleCreateUser = async () => {
                 type="date" 
                 id="profile.joinDate"
                 value={formData.profile.joinDate}
-                onChange={handleInputChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  border: '2px solid #e9ecef',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  background: '#f8f9fa',
-                  color: '#2c3e50',
-                  transition: 'all 0.3s ease',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          )}
-
-          {formData.userType === 'tenant' && (
-<div style={{ marginBottom: '16px' }}>
-            <label
-              htmlFor="profile.emergencyContact"
-              style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                fontSize: '14px'
-              }}
-            >
-              {t('admin.emergency_contact')}
-            </label>
-            <input
-              type="tel"
-              id="profile.emergencyContact"
-              value={formData.profile.emergencyContact}
-              onChange={handleInputChange}
-              placeholder={t('admin.enter_emergency_contact')}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                transition: 'all 0.3s ease',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-          )}
-
-{formData.userType === 'tenant' && (
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                htmlFor="profile.property"
-                style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '14px'
-                }}
-              >
-                {t('admin.property')}
-              </label>
-              <select
-                id="profile.property"
-                value={formData.profile.property || ''}
-                onChange={handleInputChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  border: '2px solid #e9ecef',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  background: '#f8f9fa',
-                  color: '#2c3e50',
-                  transition: 'all 0.3s ease',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="">{t('admin.select_property')}</option>
-                <option value="Blue Hills Apartments">Blue Hills Apartments</option>
-                <option value="Green Valley Complex">Green Valley Complex</option>
-                <option value="Sunset Towers">Sunset Towers</option>
-              </select>
-            </div>
-          )}
-
-          {formData.userType === 'tenant' && (
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                htmlFor="profile.unitNumber"
-                style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '14px'
-                }}
-              >
-                {t('admin.unit_number')}
-              </label>
-              <input
-                type="text"
-                id="profile.unitNumber"
-                value={formData.profile.unitNumber || ''}
-                onChange={handleInputChange}
-                placeholder={t('admin.enter_unit_number')}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  border: '2px solid #e9ecef',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  background: '#f8f9fa',
-                  color: '#2c3e50',
-                  transition: 'all 0.3s ease',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          )}
-
-          {formData.userType === 'tenant' && (
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                htmlFor="profile.moveInDate"
-                style={{
-                  display: 'block',
-                  marginBottom: '6px',
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '14px'
-                }}
-              >
-                {t('admin.move_in_date')}
-              </label>
-              <input 
-                type="date" 
-                id="profile.moveInDate"
-                value={formData.profile.moveInDate}
                 onChange={handleInputChange}
                 style={{
                   width: '100%',

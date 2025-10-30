@@ -487,7 +487,7 @@ function ManagerApplicationsPage() {
                       onClick={() => handleRejectClick(application.id, application.fullName)}
                       disabled={processing === application.id}
                       className="btn btn-secondary"
-                      style={{ 
+                      style={{
                         flex: 1,
                         opacity: processing === application.id ? 0.6 : 1
                       }}

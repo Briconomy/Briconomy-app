@@ -14,9 +14,10 @@ interface PendingUser {
     property?: string;
     unitNumber?: string;
     occupation?: string;
-    monthlyIncome?: string;
-    emergencyContact?: string;
+    monthlyIncome?: string | number;
+    emergencyContact?: string | { name?: string; phone?: string; relationship?: string };
     moveInDate?: string;
+    leaseDuration?: string;
   };
   appliedAt?: string;
   status: string;
@@ -100,11 +101,22 @@ function AdminPendingUsersPage() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
+  };
+
+  const formatEmergencyContact = (contact?: string | { name?: string; phone?: string; relationship?: string }) => {
+    if (!contact) return 'N/A';
+    if (typeof contact === 'string') {
+      return contact;
+    }
+    if (contact.name && contact.phone && contact.relationship) {
+      return `${contact.name} (${contact.phone}) - ${contact.relationship}`;
+    }
+    return JSON.stringify(contact);
   };
 
   return (
@@ -253,7 +265,7 @@ function AdminPendingUsersPage() {
                   {user.profile.emergencyContact && (
                     <div>
                       <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.emergency_contact')}</div>
-                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{user.profile.emergencyContact}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{formatEmergencyContact(user.profile.emergencyContact)}</div>
                     </div>
                   )}
                 </div>
