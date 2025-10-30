@@ -1,4 +1,4 @@
-import { useState, type FormEvent, useEffect } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -152,16 +152,6 @@ function CreateLeasePage() {
   const getTenantLabel = (tenant: { fullName?: string; name?: string; email?: string } | null | undefined) => {
     if (!tenant) return 'Tenant';
     return tenant.fullName || tenant.name || tenant.email || 'Tenant';
-  };
-
-  const getPropertyName = (property: { name?: string; title?: string } | null | undefined) => {
-    if (!property) return 'Property';
-    return property.name || property.title || 'Property';
-  };
-
-  const getUnitLabel = (unit: { unitNumber?: string; name?: string } | null | undefined) => {
-    if (!unit) return 'Unit';
-    return unit.unitNumber || unit.name || 'Unit';
   };
 
   return (

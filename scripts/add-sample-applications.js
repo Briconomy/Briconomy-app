@@ -20,14 +20,6 @@ function sanitizeInput(input) {
   return input;
 }
 
-// Validate and convert to ObjectId safely
-function toObjectId(id) {
-  if (ObjectId.isValid(id)) {
-    return new ObjectId(id);
-  }
-  throw new Error('Invalid ObjectId');
-}
-
 async function addSampleApplications() {
   const client = new MongoClient(MONGO_URI);
 

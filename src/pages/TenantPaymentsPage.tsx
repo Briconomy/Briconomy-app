@@ -3,7 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import InvoiceViewer from '../components/InvoiceViewer.tsx';
-import PaymentMethodSelector, { PaymentMethod } from '../components/PaymentMethodSelector.tsx';
+import PaymentMethodSelector, { PaymentMethod, PAYMENT_METHODS } from '../components/PaymentMethodSelector.tsx';
 import FakeCheckout from '../components/FakeCheckout.tsx';
 import Icon from '../components/Icon.tsx';
 import { invoicesApi, paymentsApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
@@ -158,7 +158,8 @@ function TenantPaymentsPage() {
 
       // #COMPLETION_DRIVE: Send payment confirmation notification to trigger manager update
       // #SUGGEST_VERIFY: Backend creates notification that broadcasts to manager via WebSocket
-      notificationService.sendPaymentConfirmation(selectedInvoice.amount, selectedPaymentMethod.label || 'Unknown');
+  const methodLabel = PAYMENT_METHODS.find(method => method.id === selectedPaymentMethod)?.label ?? 'Unknown';
+  notificationService.sendPaymentConfirmation(selectedInvoice.amount, methodLabel);
 
       showToast('Payment submitted successfully!', 'success');
       setShowCheckout(false);
@@ -175,7 +176,7 @@ function TenantPaymentsPage() {
     }
   };
 
-  const handleSubmitPayment = async () => {
+  const handleSubmitPayment = () => {
     if (!selectedInvoice || !selectedPaymentMethod) {
       showToast('Please select a payment method', 'error');
       return;
@@ -210,8 +211,8 @@ function TenantPaymentsPage() {
         </div>
 
         <div className="dashboard-grid">
-          <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" highlight={stats.totalDue > 0} />
-          <StatCard value={stats.overdue} label="Overdue Invoices" highlight={stats.overdue > 0} />
+          <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" />
+          <StatCard value={stats.overdue} label="Overdue Invoices" />
           <StatCard value={stats.nextDue ? formatDate(stats.nextDue.dueDate) : 'N/A'} label="Next Due Date" />
         </div>
 

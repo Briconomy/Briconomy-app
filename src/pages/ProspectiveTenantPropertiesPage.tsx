@@ -28,6 +28,11 @@ type PriceRange = {
   max: string;
 };
 
+type PropertyUnit = {
+  status?: string;
+  [key: string]: unknown;
+};
+
 function ProspectiveTenantPropertiesPage() {
   const [properties, setProperties] = useState<ProspectiveProperty[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,8 +110,13 @@ function ProspectiveTenantPropertiesPage() {
         let occupiedUnits = 0;
         try {
           const units = await unitsApi.getAll(id);
-          occupiedUnits = Array.isArray(units) ? units.filter((u: any) => u.status === 'occupied').length : 0;
-        } catch (err) {
+          if (Array.isArray(units)) {
+            const processedUnits = units.filter((unit): unit is PropertyUnit => typeof unit === 'object' && unit !== null);
+            occupiedUnits = processedUnits.filter(unit => unit.status === 'occupied').length;
+          } else {
+            occupiedUnits = 0;
+          }
+        } catch {
           occupiedUnits = typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0;
         }
 

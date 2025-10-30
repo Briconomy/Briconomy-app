@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator.tsx';
 import { authApi, propertiesApi } from '../services/api.ts';
 
 function ProspectiveTenantRegisterPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [step, setStep] = useState(1);
   const [properties, setProperties] = useState<Array<{ id: string; name: string }>>([]);
@@ -210,7 +209,7 @@ function ProspectiveTenantRegisterPage() {
 
   return (
     <div className="app-container mobile-only">
-      <TopNav showBackButton backLink={'/browse-properties'} />
+      <TopNav showBackButton backLink="/browse-properties" />
 
       <div className="main-content">
         <div className="page-header">

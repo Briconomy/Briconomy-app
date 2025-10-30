@@ -252,9 +252,7 @@ function MaintenanceRequestsPage() {
     );
   }
 
-  const currentLease = leases?.[0];
-
-    return (
+  return (
       <div className="app-container mobile-only page-wrapper">
         <TopNav showLogout showBackButton />
 

@@ -33,7 +33,7 @@ const CommunicationPage = () => {
     { path: '/tenant/messages', label: t('nav.communication'), icon: 'contact', active: true }
   ];
 
-  const { data: notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(
+  const { data: _notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(
     () => user?.id ? notificationsApi.getAll(user.id) : Promise.resolve([]),
     [user?.id]
   );
@@ -118,8 +118,6 @@ const CommunicationPage = () => {
     );
   }
 
-  const currentLease = leases?.[0];
-  const unreadNotifications = notifications?.filter((n: { read: boolean }) => !n.read) || [];
   const pendingRequests = requests?.filter((r: { status: string }) => r.status === 'pending') || [];
 
   return (

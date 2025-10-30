@@ -961,8 +961,7 @@ export async function getPendingApplicationsForManager(managerId: string) {
 
     // #COMPLETION_DRIVE: Keep propertyIds as ObjectIds for MongoDB query matching
     // #SUGGEST_VERIFY: Ensure appliedPropertyId in pending_users is stored as ObjectId
-    const propertyIds = managerProperties.map(p => p._id);
-    const propertyIdsString = managerProperties.map(p => p._id.toString());
+  const propertyIds = managerProperties.map(p => p._id);
 
     if (propertyIds.length === 0) {
       return []; // Manager has no properties, so no applications

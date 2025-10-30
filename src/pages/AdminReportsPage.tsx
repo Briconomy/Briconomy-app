@@ -285,6 +285,38 @@ function AdminReportsPage() {
           <StatCard value={stats.activeReports} label={t('reports.active_reports')} />
         </div>
 
+        <div className="data-table">
+          <div className="table-header">
+            <div className="table-title">{t('admin_reports.available_reports')}</div>
+          </div>
+          {reportsLoading ? (
+            <div className="list-item">
+              <div className="item-info">
+                <h4>{t('common.loading')}...</h4>
+              </div>
+            </div>
+          ) : (
+            (Array.isArray(availableReports) && availableReports.length > 0 ? availableReports : getFallbackReports()).map((report, index) => {
+              const entry = report as Record<string, unknown>;
+              const keyValue = entry.reportId ?? entry.id ?? entry.title ?? index;
+              const title = typeof entry.title === 'string' ? entry.title : `${t('admin_reports.title')} ${index + 1}`;
+              const description = typeof entry.description === 'string' ? entry.description : 'No description available';
+              const rawStatus = typeof entry.status === 'string' ? entry.status : 'ready';
+              const statusClass = rawStatus.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+
+              return (
+                <div key={`available-${String(keyValue)}`} className="list-item">
+                  <div className="item-info">
+                    <h4>{title}</h4>
+                    <p>{description}</p>
+                  </div>
+                  <span className={`status-badge status-${statusClass}`}>{rawStatus}</span>
+                </div>
+              );
+            })
+          )}
+        </div>
+
         <ChartCard title={t('reports.financial_overview')}>
           <div style={{ padding: '20px' }}>
             <div style={{ marginBottom: '20px' }}>

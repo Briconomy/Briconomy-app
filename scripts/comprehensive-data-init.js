@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 db = db.getSiblingDB('briconomy');
 
 db.users.drop();
@@ -220,7 +221,7 @@ const _users = db.users.insertMany([
 ]);
 
 // Create properties with proper manager assignments
-const properties = db.properties.insertMany([
+db.properties.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
     name: 'Blue Hills Apartments',
@@ -269,7 +270,7 @@ const properties = db.properties.insertMany([
 ]);
 
 // Create units with proper property references
-const units = db.units.insertMany([
+db.units.insertMany([
   // Blue Hills Apartments units
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),

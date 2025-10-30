@@ -8,6 +8,21 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
 
+type PropertyUnit = {
+  id?: string;
+  _id?: string;
+  unitNumber?: string;
+  status?: string;
+  rent?: number;
+  floor?: string | number;
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number | string;
+  features?: string[];
+  maintenanceNotes?: string;
+  propertyId?: string;
+};
+
 // Add styles for the image modal and gallery
 const modalStyles = `
   .image-modal-overlay {
@@ -735,7 +750,7 @@ function PropertyDetailsPage() {
   const { id: propertyId } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
-  const [units, setUnits] = useState([]);
+  const [units, setUnits] = useState<PropertyUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -1048,9 +1063,8 @@ function PropertyDetailsPage() {
 
   const propertyImages = getPropertyImages();
 
-  const vacantCount = units.filter((u: any) => u.status === 'vacant').length;
-  const occupiedCount = units.filter((u: any) => u.status === 'occupied').length;
-  const maintenanceCount = units.filter((u: any) => u.status === 'maintenance').length;
+  const vacantCount = units.filter(unit => unit.status === 'vacant').length;
+  const occupiedCount = units.filter(unit => unit.status === 'occupied').length;
 
   const rentRange = getEstimatedRentRange(occupiedCount);
 
@@ -1597,12 +1611,12 @@ function PropertyDetailsPage() {
           </div>
         </div>
 
-        {units.filter((u: any) => u.status === 'vacant').length > 0 && (
+  {units.filter(unit => unit.status === 'vacant').length > 0 && (
           <div className="property-card">
             <div className="property-info">
               <h3 className="section-heading" style={{ marginBottom: '16px' }}>{t('prospect.available_units')} ({units.filter(u => u.status === 'vacant').length})</h3>
               <div className="units-grid">
-                {units.filter((u: any) => u.status === 'vacant').map((unit, index) => (
+                {units.filter(unit => unit.status === 'vacant').map((unit, index) => (
                   <div key={unit.id || `unit-${index}`} className="property-card unit-detail-card">
                     <div className="property-info">
                       <div className="unit-header-info">

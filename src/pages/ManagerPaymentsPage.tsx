@@ -4,7 +4,7 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ManagerInvoiceViewer from '../components/ManagerInvoiceViewer.tsx';
 import Icon from '../components/Icon.tsx';
-import { invoicesApi, useApi, formatCurrency, formatDate } from '../services/api.ts';
+import { invoicesApi, useApi, formatCurrency } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
