@@ -108,7 +108,7 @@ function UserProfilePage() {
 
     updateUser(updatedUser);
     setIsEditing(false);
-    alert('Profile updated successfully!');
+  alert(t('profile.updateSuccess'));
   };
 
   if (loading) {
@@ -175,7 +175,7 @@ function UserProfilePage() {
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.fullName || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.fullName || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -189,7 +189,7 @@ function UserProfilePage() {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.email || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.email || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -203,7 +203,7 @@ function UserProfilePage() {
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.phone || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.phone || t('profile.notProvided')}</div>
               )}
             </div>
           </div>
@@ -224,7 +224,7 @@ function UserProfilePage() {
                   onChange={(e) => handleEmergencyContactChange('name', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.emergencyContact?.name || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.name || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -238,7 +238,7 @@ function UserProfilePage() {
                   onChange={(e) => handleEmergencyContactChange('relationship', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.emergencyContact?.relationship || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.relationship || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -252,7 +252,7 @@ function UserProfilePage() {
                   onChange={(e) => handleEmergencyContactChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.emergencyContact?.phone || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.phone || t('profile.notProvided')}</div>
               )}
             </div>
           </div>
@@ -276,8 +276,8 @@ function UserProfilePage() {
           <div className="caretaker-notification-settings">
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Email Notifications</div>
-                <div className="caretaker-setting-desc">Receive updates via email</div>
+                <div className="caretaker-setting-title">{t('profile.emailNotificationsTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.emailNotificationsDescription')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.email ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -289,8 +289,8 @@ function UserProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Push Notifications</div>
-                <div className="caretaker-setting-desc">Receive push notifications</div>
+                <div className="caretaker-setting-title">{t('profile.pushNotificationsTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.pushNotificationsDescription')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.push ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -302,8 +302,8 @@ function UserProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">SMS Notifications</div>
-                <div className="caretaker-setting-desc">Receive text message alerts</div>
+                <div className="caretaker-setting-title">{t('profile.smsNotificationsTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.smsNotificationsDescription')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.sms ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -315,17 +315,17 @@ function UserProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Language Preference</div>
-                <div className="caretaker-setting-desc">Choose your preferred language</div>
+                <div className="caretaker-setting-title">{t('profile.languagePreferenceTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.languagePreferenceDescription')}</div>
               </div>
               <LanguageSwitcher />
             </div>
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Two-Factor Authentication</div>
-                <div className="caretaker-setting-desc">Add an extra layer of security</div>
-                <div className="caretaker-setting-desc" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>Coming Soon</div>
+                <div className="caretaker-setting-title">{t('profile.twoFactorTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.twoFactorDescription')}</div>
+                <div className="caretaker-setting-desc" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>{t('profile.comingSoon')}</div>
               </div>
               <div
                 className="caretaker-toggle-switch caretaker-toggle-off"
@@ -339,18 +339,18 @@ function UserProfilePage() {
 
         <div className="section-card profile-actions-section">
           <div className="section-card-header">
-            <div className="section-title">Quick Actions</div>
+            <div className="section-title">{t('profile.quickActions')}</div>
           </div>
           <div className="quick-actions">
             <ActionCard
               to="/tenant/documents"
-              icon={<Icon name="docs" alt="Documents" size={48} />}
+              icon={<Icon name="docs" alt={t('profile.documents')} size={48} />}
               title={t('profile.documents')}
               description={t('profile.viewDocuments')}
             />
             <ActionCard
               to="/tenant/activity"
-              icon={<Icon name="activityLog" alt="Activity Log" size={48} />}
+              icon={<Icon name="activityLog" alt={t('profile.activityLog')} size={48} />}
               title={t('profile.activityLog')}
               description={t('profile.viewActivity')}
             />

@@ -1,20 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Icon from './Icon.tsx';
 import { documentsApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
 
-const typeLabels: Record<string, string> = {
-	lease: 'Lease Agreement',
-	payment_receipt: 'Payment Receipt',
-	maintenance_report: 'Maintenance Report',
-	inspection: 'Inspection Report',
-	insurance: 'Insurance Policy',
-	payment_proof: 'Payment Proof',
-	contract: 'Contract',
-	id: 'Identification',
-	other: 'Other Document'
+const typeLabelKeys: Record<string, string> = {
+	lease: 'documents.type.lease',
+	payment_receipt: 'documents.type.paymentReceipt',
+	maintenance_report: 'documents.type.maintenanceReport',
+	inspection: 'documents.type.inspection',
+	insurance: 'documents.type.insurance',
+	payment_proof: 'documents.type.paymentProof',
+	contract: 'documents.type.contract',
+	id: 'documents.type.identification',
+	other: 'documents.type.other'
 };
 
 const iconMap: Record<string, string> = {
@@ -120,11 +120,31 @@ const estimateSizeFromBase64 = (encoded?: string) => {
 	return Math.floor((length * 3) / 4) - padding;
 };
 
-const getTypeLabel = (type?: string) => {
+const statusLabelKeys: Record<string, string> = {
+	active: 'status.active',
+	signed: 'status.signed',
+	approved: 'status.approved',
+	pending: 'status.pending',
+	processing: 'status.processing',
+	submitted: 'status.submitted',
+	rejected: 'status.rejected',
+	expired: 'status.expired'
+};
+
+const getTypeLabel = (type: string | undefined, translate: (key: string) => string) => {
 	if (!type) {
-		return 'General';
+		return translate('documents.type.general');
 	}
-	return typeLabels[type] ?? startCase(type);
+	const key = typeLabelKeys[type];
+	return key ? translate(key) : startCase(type);
+};
+
+const getStatusLabel = (status: string | undefined, translate: (key: string) => string) => {
+	if (!status) {
+		return translate('status.pending');
+	}
+	const key = statusLabelKeys[status];
+	return key ? translate(key) : startCase(status);
 };
 
 const getIconName = (type?: string) => {
@@ -265,12 +285,14 @@ function DocumentViewer() {
 			const normalized = sortByDate(list.map((item) => coerceDocument(item)));
 			setDocuments(normalized);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Unable to fetch documents');
+			const fetchErrorMessage = t('documents.error.fetch') || 'Unable to fetch documents';
+			console.error('[DocumentViewer] Fetch error:', err);
+			setError(fetchErrorMessage);
 			setDocuments([]);
 		} finally {
 			setLoading(false);
 		}
-	}, [coerceDocument, sortByDate, user?.id]);
+	}, [coerceDocument, sortByDate, t, user?.id]);
 
 	useEffect(() => {
 		fetchDocuments();
@@ -310,8 +332,8 @@ function DocumentViewer() {
 			if (detail.content) {
 				objectUrl = URL.createObjectURL(buildBlob(detail.content, detail.mimeType));
 			} else {
-				const msg = 'Preview content not available. The document may not have been uploaded correctly.';
-				showToast(msg, 'info');
+				const previewMessage = t('documents.error.previewContent') || 'Preview content not available. The document may not have been uploaded correctly.';
+				showToast(previewMessage, 'info');
 				console.log('[DocumentViewer] No content in detail:', detail);
 			}
 			if (previewState?.url) {
@@ -319,9 +341,9 @@ function DocumentViewer() {
 			}
 			setPreviewState({ detail, url: objectUrl });
 		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Unable to open document';
-			setError(errorMessage);
-			showToast(errorMessage, 'error');
+			const openErrorMessage = t('documents.error.open') || 'Unable to open document';
+			setError(openErrorMessage);
+			showToast(openErrorMessage, 'error');
 			console.error('[DocumentViewer] Preview error:', err);
 		} finally {
 			setPreviewTargetId(null);
@@ -347,23 +369,25 @@ function DocumentViewer() {
 			}
 			if (!detail || !detail.content) {
 				console.error('[DocumentViewer] Download failed - no content:', { detail: detail ? { ...detail, content: detail.content ? '(present)' : '(missing)' } : 'null' });
-				throw new Error('Document content not available');
+				throw new Error(t('documents.error.contentMissing') || 'Document content not available');
 			}
-			const blob = buildBlob(detail.content, detail.mimeType);
+			const resolvedDetail = detail as DocumentDetail;
+			const blob = buildBlob(resolvedDetail.content, resolvedDetail.mimeType);
 			if (!blob) {
-				throw new Error('Failed to process document');
+				throw new Error(t('documents.error.processFailed') || 'Failed to process document');
 			}
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = detail.fileName || detail.name || 'document';
+			link.download = resolvedDetail.fileName || resolvedDetail.name || 'document';
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
 			URL.revokeObjectURL(url);
-			showToast(`${detail.name} downloaded successfully`, 'success');
+			const successMessage = (t('documents.downloadSuccess') || '{name} downloaded successfully').replace('{name}', resolvedDetail.name || t('documents.genericName') || 'Document');
+			showToast(successMessage, 'success');
 		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Unable to download document';
+			const errorMessage = t('documents.error.download') || 'Unable to download document';
 			setError(errorMessage);
 			showToast(errorMessage, 'error');
 			console.error('[DocumentViewer] Download error:', err);
@@ -380,11 +404,18 @@ function DocumentViewer() {
 	};
 
 	const documentsTitle = t('documents.title') || 'Documents';
-	const emptyStateText = t('documents.emptyAll') || 'No documents received yet';
+	const emptyStateText = t('documents.emptyDescription') || 'No documents received yet';
 	const totalCount = documents.length;
-	const totalLabel = totalCount === 0 ? 'No documents received yet' : `${totalCount} ${totalCount === 1 ? 'document stored' : 'documents stored'}`;
-	const baseWord = totalCount === 1 ? 'document' : 'documents';
-	const showingLabel = totalCount === 0 ? 'No documents yet' : `Showing ${totalCount} ${baseWord}`;
+	const totalLabel = totalCount === 0
+		? t('documents.noneReceived')
+		: (totalCount === 1
+			? (t('documents.singleStored') || '{count} document stored').replace('{count}', totalCount.toString())
+			: (t('documents.multiStored') || '{count} documents stored').replace('{count}', totalCount.toString()));
+	const showingLabel = totalCount === 0
+		? t('documents.noneYet')
+		: (t('documents.showingCount') || 'Showing {count} {label}')
+			.replace('{count}', totalCount.toString())
+			.replace('{label}', totalCount === 1 ? t('documents.singleLabel') || 'document' : t('documents.pluralLabel') || 'documents');
 
 	return (
 		<div className="document-viewer">
@@ -402,11 +433,11 @@ function DocumentViewer() {
 					</div>
 
 					{loading ? (
-						<div className="loading-state">Loading documents...</div>
+						<div className="loading-state">{t('documents.loading') || 'Loading documents...'}</div>
 					) : documents.length === 0 ? (
 						<div className="empty-state-card">
-							<Icon name="docs" alt="Documents" size={48} />
-							<div className="empty-state-title">No documents found</div>
+							<Icon name="docs" alt={documentsTitle} size={48} />
+							<div className="empty-state-title">{t('documents.emptyTitle') || 'No documents found'}</div>
 							<div className="empty-state-text">{emptyStateText}</div>
 						</div>
 					) : (
@@ -419,17 +450,17 @@ function DocumentViewer() {
 										<div className="document-card-header">
 											<div className="document-card-leading">
 												<div className="document-card-icon">
-													<Icon name={getIconName(doc.type)} alt={getTypeLabel(doc.type)} size={28} />
+													<Icon name={getIconName(doc.type)} alt={getTypeLabel(doc.type, t)} size={28} />
 												</div>
 												<div className="document-card-title">
 													<div className="document-card-name">{doc.name}</div>
 													{hasTags && (
 														<div className="document-card-tags">
 															{doc.type && (
-																<span className={`document-type-badge ${getTypeBadgeClass(doc.type)}`}>{getTypeLabel(doc.type)}</span>
+																<span className={`document-type-badge ${getTypeBadgeClass(doc.type)}`}>{getTypeLabel(doc.type, t)}</span>
 															)}
 															{doc.status && (
-																<span className={`status-badge ${getStatusClass(doc.status)}`}>{startCase(doc.status)}</span>
+																<span className={`status-badge ${getStatusClass(doc.status)}`}>{getStatusLabel(doc.status, t)}</span>
 															)}
 														</div>
 													)}
@@ -442,7 +473,7 @@ function DocumentViewer() {
 													onClick={() => handlePreview(doc)}
 													disabled={previewTargetId === doc.id}
 												>
-													Preview
+													{t('documents.preview') || 'Preview'}
 												</button>
 												<button
 													type="button"
@@ -450,7 +481,7 @@ function DocumentViewer() {
 													onClick={() => handleDownload(doc)}
 													disabled={downloadingId === doc.id}
 												>
-													Download
+													{t('documents.download') || 'Download'}
 												</button>
 											</div>
 										</div>
@@ -461,10 +492,10 @@ function DocumentViewer() {
 													<span className="document-card-footnote">{formatFileSize(doc.fileSize)}</span>
 												)}
 												{doc.uploadDate && (
-													<span className="document-card-footnote">Uploaded {formatDate(doc.uploadDate)}</span>
+													<span className="document-card-footnote">{(t('documents.uploadedOn') || 'Uploaded {date}').replace('{date}', formatDate(doc.uploadDate))}</span>
 												)}
 												{doc.uploadedByName && (
-													<span className="document-card-footnote">by {doc.uploadedByName}</span>
+													<span className="document-card-footnote">{(t('documents.uploadedBy') || 'by {name}').replace('{name}', doc.uploadedByName)}</span>
 												)}
 											</div>
 										)}
@@ -500,24 +531,24 @@ function DocumentViewer() {
 					<div className="modal-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
 						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--border-primary)' }}>
 							<div>
-								<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Type</div>
+									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.type') || 'Type'}</div>
 								<span className={`document-type-badge ${getTypeBadgeClass(previewState.detail.type)}`}>
-									{getTypeLabel(previewState.detail.type)}
+										{getTypeLabel(previewState.detail.type, t)}
 								</span>
 							</div>
 							<div>
-								<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Size</div>
+									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.size') || 'Size'}</div>
 								<div style={{ fontSize: '14px', fontWeight: '500' }}>{formatFileSize(previewState.detail.fileSize)}</div>
 							</div>
 							<div>
-								<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Uploaded</div>
+									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.uploaded') || 'Uploaded'}</div>
 								<div style={{ fontSize: '14px', fontWeight: '500' }}>{formatDate(previewState.detail.uploadDate)}</div>
 							</div>
 							{previewState.detail.status && (
 								<div>
-									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Status</div>
+										<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.status') || 'Status'}</div>
 									<span className={`status-badge ${getStatusClass(previewState.detail.status)}`}>
-										{startCase(previewState.detail.status)}
+											{getStatusLabel(previewState.detail.status, t)}
 									</span>
 								</div>
 							)}
@@ -531,18 +562,18 @@ function DocumentViewer() {
 									<iframe src={previewState.url} title={previewState.detail.name} style={{ width: '100%', height: '100%', border: 'none' }} />
 								) : (
 									<div style={{ textAlign: 'center', padding: '40px' }}>
-										<Icon name="docs" alt="Document" size={48} />
-										<div style={{ marginTop: '16px', fontSize: '16px', fontWeight: '600' }}>Document Ready</div>
+										<Icon name="docs" alt={t('documents.genericName') || 'Document'} size={48} />
+											<div style={{ marginTop: '16px', fontSize: '16px', fontWeight: '600' }}>{t('documents.previewReady') || 'Document Ready'}</div>
 										<a href={previewState.url} target="_blank" rel="noreferrer" className="btn btn-link" style={{ marginTop: '12px' }}>
-											Open document in new window
+												{t('documents.openInNewWindow') || 'Open document in new window'}
 										</a>
 									</div>
 								)
 							) : (
 								<div style={{ textAlign: 'center', padding: '40px' }}>
-									<Icon name="docs" alt="Document" size={48} />
-									<div style={{ marginTop: '16px', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Preview unavailable</div>
-									<div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Download the document to view its contents</div>
+									<Icon name="docs" alt={t('documents.genericName') || 'Document'} size={48} />
+										<div style={{ marginTop: '16px', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>{t('documents.previewUnavailable') || 'Preview unavailable'}</div>
+										<div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{t('documents.downloadToView') || 'Download the document to view its contents'}</div>
 								</div>
 							)}
 						</div>
@@ -555,7 +586,7 @@ function DocumentViewer() {
 							onClick={closePreview}
 							style={{ flex: 1 }}
 						>
-							Close
+								{t('common.close') || 'Close'}
 						</button>
 						<button
 							type="button"
@@ -564,7 +595,7 @@ function DocumentViewer() {
 							disabled={downloadingId === previewState.detail.id}
 							style={{ flex: 1 }}
 						>
-							{downloadingId === previewState.detail.id ? 'Downloading...' : 'Download'}
+								{downloadingId === previewState.detail.id ? t('documents.downloading') || 'Downloading...' : t('documents.download') || 'Download'}
 						</button>
 					</div>
 				</div>
