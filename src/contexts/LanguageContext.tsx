@@ -440,6 +440,8 @@ const translations: Translations = {
   'status.signed': { en: 'Signed', zu: 'Kusayinwe' },
   'status.submitted': { en: 'Submitted', zu: 'Kuthunyelwe' },
   'status.processing': { en: 'Processing', zu: 'Kuyacubungulwa' },
+  'status.success': { en: 'Success', zu: 'Impumelelo' },
+  'status.failed': { en: 'Failed', zu: 'Yehlulekile' },
 
   // Property Management
   'property.title': { en: 'Property Management', zu: 'Ukuphatha Izindawo' },
@@ -627,6 +629,51 @@ const translations: Translations = {
   'documents.field.size': { en: 'Size', zu: 'Usayizi' },
   'documents.field.uploaded': { en: 'Uploaded', zu: 'Kulayishwe' },
   'documents.field.status': { en: 'Status', zu: 'Isimo' },
+  // #COMPLETION_DRIVE: Assuming isiZulu activity translations align with tenant portal phrasing and preserve placeholders
+  // #SUGGEST_VERIFY: Ask isiZulu language reviewer to confirm terminology and placeholder positioning
+  'activity.filters.all': { en: 'All', zu: 'Zonke' },
+  'activity.types.login': { en: 'Logins', zu: 'Ukungena' },
+  'activity.types.payment': { en: 'Payments', zu: 'Izinkokhelo' },
+  'activity.types.maintenance': { en: 'Maintenance Requests', zu: 'Izicelo Zokulungisa' },
+  'activity.types.profile': { en: 'Profile Updates', zu: 'Izibuyekezo Zephrofayili' },
+  'activity.types.documents': { en: 'Documents', zu: 'Amadokhumenti' },
+  'activity.types.lease': { en: 'Lease Actions', zu: 'Izenzo Zamaqashi' },
+  'activity.searchPlaceholder': { en: 'Search activities', zu: 'Sesha imisebenzi' },
+  'activity.searchAria': { en: 'Search tenant activity', zu: 'Sesha imisebenzi yomqashi' },
+  'activity.exportPdf': { en: 'Export PDF', zu: 'Thekelisa i-PDF' },
+  'activity.exporting': { en: 'Exporting...', zu: 'Kuthekeliswa...' },
+  'activity.emptyTitle': { en: 'No activities found', zu: 'Ayikho imisebenzi etholakele' },
+  'activity.clearSearch': { en: 'Clear search', zu: 'Sula usesho' },
+  'activity.detailsButton': { en: 'Details', zu: 'Imininingwane' },
+  'activity.modal.heading': { en: 'Activity Details', zu: 'Imininingwane Yemisebenzi' },
+  'activity.modal.typeLabel': { en: 'Type', zu: 'Uhlobo' },
+  'activity.modal.titleLabel': { en: 'Title', zu: 'Isihloko' },
+  'activity.modal.descriptionLabel': { en: 'Description', zu: 'Incazelo' },
+  'activity.modal.timestampLabel': { en: 'Timestamp', zu: 'Isikhathi' },
+  'activity.modal.statusLabel': { en: 'Status', zu: 'Isimo' },
+  'activity.modal.additionalDetailsLabel': { en: 'Additional Details', zu: 'Imininingwane Engeziwe' },
+  'activity.status.unknown': { en: 'Unknown', zu: 'Akwaziwa' },
+  'activity.pdf.title': { en: 'Tenant Activity Log', zu: 'Irekhodi Lemisebenzi Yomqashi' },
+  'activity.pdf.generated': { en: 'Generated: {timestamp}', zu: 'Kukhiqizwe: {timestamp}' },
+  'activity.pdf.total': { en: 'Total Activities: {count}', zu: 'Imisebenzi Iyonke: {count}' },
+  'activity.pdf.none': { en: 'No activity records available.', zu: 'Azikho izinkomba zemisebenzi ezitholakalayo.' },
+  'activity.pdf.entry': { en: '{index}. {timestamp} - {title}', zu: '{index}. {timestamp} - {title}' },
+  'activity.pdf.typeStatus': { en: 'Type: {type} | Status: {status}', zu: 'Uhlobo: {type} | Isimo: {status}' },
+  'activity.pdf.description': { en: 'Description: {description}', zu: 'Incazelo: {description}' },
+  'activity.pdf.detailsHeading': { en: 'Details:', zu: 'Imininingwane:' },
+  'activity.pdf.detailsItem': { en: '  - {key}: {value}', zu: '  - {key}: {value}' },
+  'activity.sample.login.title': { en: 'Successful login', zu: 'Ukungena ngempumelelo' },
+  'activity.sample.login.description': { en: 'You signed in from a mobile device in Johannesburg.', zu: 'Ungene ngemobhayili eGoli.' },
+  'activity.sample.payment.title': { en: 'Rent payment received', zu: 'Inkokhelo yerenti itholiwe' },
+  'activity.sample.payment.description': { en: 'We received your rent payment of R12,500 via bank transfer.', zu: 'Samukela inkokhelo yakho yerenti engu-R12,500 ngokudluliselwa kwebhange.' },
+  'activity.sample.maintenance.title': { en: 'Maintenance request submitted', zu: 'Isicelo sokulungisa sithunyelwe' },
+  'activity.sample.maintenance.description': { en: 'You reported a medium priority plumbing issue in the bathroom.', zu: 'Ubikile inkinga yeplumbing emaphakathi yokubaluleka egumbini lokugezela.' },
+  'activity.sample.profile.title': { en: 'Profile updated', zu: 'Iphrofayili ibuyekeziwe' },
+  'activity.sample.profile.description': { en: 'Emergency contact details were updated.', zu: 'Imininingwane yokuxhumana ephuthumayo ibuyekeziwe.' },
+  'activity.sample.document.title': { en: 'Lease document uploaded', zu: 'Idokhumenti yeqashi ilayishiwe' },
+  'activity.sample.document.description': { en: 'A signed lease agreement was added to your documents.', zu: 'Isivumelwano sokuqasha esisayiniwe sengezwe kumadokhumenti akho.' },
+  'activity.sample.lease.title': { en: 'Lease renewed', zu: 'Iqashi livuselelwe' },
+  'activity.sample.lease.description': { en: 'Your lease was renewed for 12 months at R13,000 per month.', zu: 'Iqashi lakho livuselelwe izinyanga ezingu-12 ngo-R13,000 ngenyanga.' },
   
   'settings.title': { en: 'Settings', zu: 'Izilungiselelo' },
   'settings.profile': { en: 'Profile Settings', zu: 'Izilungiselelo Zephrofayili' },
@@ -1404,8 +1451,8 @@ export const LanguageSwitcher: React.FC = () => {
         onChange={(e) => setLanguage(e.target.value as 'en' | 'zu')}
         className="language-select"
       >
-        <option value="en">{t('settings.english')}</option>
-        <option value="zu">{t('settings.zulu')}</option>
+        <option value="en">English</option>
+        <option value="zu">Zulu</option>
       </select>
     </div>
   );

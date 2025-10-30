@@ -22,7 +22,7 @@ function TenantActivityPage() {
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">{t('profile.activityLog')}</div>
-          <div className="page-subtitle">View your account activity and history</div>
+          <div className="page-subtitle">{t('profile.viewActivity')}</div>
         </div>
         
         <ActivityLog />

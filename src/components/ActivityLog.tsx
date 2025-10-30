@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Icon from './Icon.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+
+type ActivityStatus = 'success' | 'pending' | 'failed';
 
 interface ActivityItem {
   id: string;
@@ -8,22 +11,33 @@ interface ActivityItem {
   description: string;
   timestamp: string;
   details?: Record<string, unknown>;
-  status?: 'success' | 'pending' | 'failed';
+  status?: ActivityStatus;
 }
 
 type ActivityFilterKey = 'all' | ActivityItem['type'];
 
-const activityTypeConfig: Record<ActivityItem['type'], { label: string; icon: string; color: string }> = {
-  login: { label: 'Logins', icon: 'activityLog', color: 'var(--brand-primary)' },
-  payment: { label: 'Payments', icon: 'payment', color: 'var(--brand-secondary)' },
-  maintenance_request: { label: 'Maintenance', icon: 'maintenance', color: 'var(--brand-ai)' },
-  profile_update: { label: 'Profile', icon: 'profile', color: 'var(--info)' },
-  document_upload: { label: 'Documents', icon: 'document', color: 'var(--primary)' },
-  lease_action: { label: 'Lease', icon: 'lease', color: 'var(--success)' }
+interface ActivityTemplate extends Omit<ActivityItem, 'title' | 'description'> {
+  titleKey: string;
+  descriptionKey: string;
+}
+
+const activityTypeConfig: Record<ActivityItem['type'], { labelKey: string; icon: string; color: string }> = {
+  login: { labelKey: 'activity.types.login', icon: 'activityLog', color: 'var(--brand-primary)' },
+  payment: { labelKey: 'activity.types.payment', icon: 'payment', color: 'var(--brand-secondary)' },
+  maintenance_request: { labelKey: 'activity.types.maintenance', icon: 'maintenance', color: 'var(--brand-ai)' },
+  profile_update: { labelKey: 'activity.types.profile', icon: 'profile', color: 'var(--info)' },
+  document_upload: { labelKey: 'activity.types.documents', icon: 'document', color: 'var(--primary)' },
+  lease_action: { labelKey: 'activity.types.lease', icon: 'lease', color: 'var(--success)' }
 };
 
-function formatDateTime(timestamp: string) {
-  return new Date(timestamp).toLocaleString('en-ZA', {
+const statusLabelKeys: Record<ActivityStatus, string> = {
+  success: 'status.success',
+  pending: 'status.pending',
+  failed: 'status.failed'
+};
+
+function formatDateTime(timestamp: string, locale: string) {
+  return new Date(timestamp).toLocaleString(locale || 'en-ZA', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -53,8 +67,16 @@ function getActivityAccentColor(type: ActivityItem['type']) {
   return activityTypeConfig[type].color;
 }
 
-function getActivityTypeName(type: ActivityItem['type']) {
-  return activityTypeConfig[type].label;
+function getActivityTypeName(type: ActivityItem['type'], translate: (key: string) => string) {
+  return translate(activityTypeConfig[type].labelKey);
+}
+
+function getStatusLabel(status: ActivityStatus | undefined, translate: (key: string) => string) {
+  if (!status) {
+    return translate('activity.status.unknown') || 'N/A';
+  }
+  const key = statusLabelKeys[status];
+  return key ? translate(key) : status.toUpperCase();
 }
 
 function escapePdfText(value: string): string {
@@ -93,13 +115,19 @@ function formatDetailValue(value: unknown): string {
   return String(value);
 }
 
-function formatDetailLines(details?: Record<string, unknown>): string[] {
+function formatDetailLines(details: Record<string, unknown> | undefined, translate: (key: string) => string): string[] {
   if (!details || Object.keys(details).length === 0) {
     return [];
   }
-  const lines = ['Details:'];
+  const heading = translate('activity.pdf.detailsHeading') || 'Details:';
+  const itemTemplate = translate('activity.pdf.detailsItem') || '  - {key}: {value}';
+  const lines = [heading];
   for (const [key, value] of Object.entries(details)) {
-    lines.push(`  - ${formatDetailKey(key)}: ${formatDetailValue(value)}`);
+    lines.push(
+      itemTemplate
+        .replace('{key}', formatDetailKey(key))
+        .replace('{value}', formatDetailValue(value))
+    );
   }
   return lines;
 }
@@ -209,28 +237,41 @@ function assemblePdf(contentCommands: string[]): Uint8Array {
   return encoder.encode(pdfString);
 }
 
-function createPdfBlobFromActivities(activities: ActivityItem[]): Blob {
+function createPdfBlobFromActivities(
+  activities: ActivityItem[],
+  translate: (key: string) => string,
+  locale: string
+): Blob {
   const now = new Date();
-  const lines: string[] = [];
-  lines.push('Tenant Activity Log');
-  lines.push(`Generated: ${now.toLocaleString('en-ZA', {
+  const headerTimestamp = now.toLocaleString(locale || 'en-ZA', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
-  })}`);
-  lines.push(`Total Activities: ${activities.length}`);
+  });
+  const lines: string[] = [];
+  lines.push(translate('activity.pdf.title') || 'Tenant Activity Log');
+  lines.push((translate('activity.pdf.generated') || 'Generated: {timestamp}').replace('{timestamp}', headerTimestamp));
+  lines.push((translate('activity.pdf.total') || 'Total Activities: {count}').replace('{count}', activities.length.toString()));
   lines.push('');
 
   if (activities.length === 0) {
-    lines.push('No activity records available.');
+    lines.push(translate('activity.pdf.none') || 'No activity records available.');
   } else {
     activities.forEach((activity, index) => {
-      lines.push(`${index + 1}. ${formatDateTime(activity.timestamp)} — ${activity.title}`);
-      lines.push(`Type: ${getActivityTypeName(activity.type)} | Status: ${activity.status?.toUpperCase() ?? 'N/A'}`);
-      lines.push(`Description: ${activity.description}`);
-      const detailLines = formatDetailLines(activity.details);
+      const entryLine = (translate('activity.pdf.entry') || '{index}. {timestamp} - {title}')
+        .replace('{index}', (index + 1).toString())
+        .replace('{timestamp}', formatDateTime(activity.timestamp, locale))
+        .replace('{title}', activity.title);
+      lines.push(entryLine);
+      const typeStatusLine = (translate('activity.pdf.typeStatus') || 'Type: {type} | Status: {status}')
+        .replace('{type}', translate(activityTypeConfig[activity.type].labelKey))
+        .replace('{status}', getStatusLabel(activity.status, translate));
+      lines.push(typeStatusLine);
+      lines.push((translate('activity.pdf.description') || 'Description: {description}')
+        .replace('{description}', activity.description));
+      const detailLines = formatDetailLines(activity.details, translate);
       detailLines.forEach((detailLine) => lines.push(detailLine));
       lines.push('');
     });
@@ -283,12 +324,12 @@ function createPdfBlobFromActivities(activities: ActivityItem[]): Blob {
   return new Blob([buffer], { type: 'application/pdf' });
 }
 
-const defaultActivities: ActivityItem[] = [
+const defaultActivityTemplates: ActivityTemplate[] = [
   {
     id: '1',
     type: 'login',
-    title: 'Login',
-    description: 'Successfully logged into account',
+    titleKey: 'activity.sample.login.title',
+    descriptionKey: 'activity.sample.login.description',
     timestamp: '2024-09-16T09:15:00Z',
     status: 'success',
     details: { device: 'Mobile App', location: 'Johannesburg' }
@@ -296,8 +337,8 @@ const defaultActivities: ActivityItem[] = [
   {
     id: '2',
     type: 'payment',
-    title: 'Rent Payment',
-    description: 'Monthly rent payment processed',
+    titleKey: 'activity.sample.payment.title',
+    descriptionKey: 'activity.sample.payment.description',
     timestamp: '2024-09-01T08:30:00Z',
     status: 'success',
     details: { amount: 12500, method: 'bank_transfer', reference: 'RENT-SEP-2024' }
@@ -305,8 +346,8 @@ const defaultActivities: ActivityItem[] = [
   {
     id: '3',
     type: 'maintenance_request',
-    title: 'Maintenance Request Submitted',
-    description: 'Plumbing issue reported in bathroom',
+    titleKey: 'activity.sample.maintenance.title',
+    descriptionKey: 'activity.sample.maintenance.description',
     timestamp: '2024-08-28T14:20:00Z',
     status: 'pending',
     details: { category: 'plumbing', priority: 'medium', request_id: 'MAINT-2024-0828' }
@@ -314,8 +355,8 @@ const defaultActivities: ActivityItem[] = [
   {
     id: '4',
     type: 'profile_update',
-    title: 'Profile Updated',
-    description: 'Emergency contact information updated',
+    titleKey: 'activity.sample.profile.title',
+    descriptionKey: 'activity.sample.profile.description',
     timestamp: '2024-08-25T11:45:00Z',
     status: 'success',
     details: { fields_updated: ['emergency_contact'] }
@@ -323,8 +364,8 @@ const defaultActivities: ActivityItem[] = [
   {
     id: '5',
     type: 'document_upload',
-    title: 'Document Uploaded',
-    description: 'Lease agreement uploaded',
+    titleKey: 'activity.sample.document.title',
+    descriptionKey: 'activity.sample.document.description',
     timestamp: '2024-08-20T16:30:00Z',
     status: 'success',
     details: { document_type: 'lease', file_size: '2.4 MB' }
@@ -332,20 +373,57 @@ const defaultActivities: ActivityItem[] = [
   {
     id: '6',
     type: 'lease_action',
-    title: 'Lease Renewal',
-    description: 'Lease renewed for another year',
+    titleKey: 'activity.sample.lease.title',
+    descriptionKey: 'activity.sample.lease.description',
     timestamp: '2024-08-15T10:00:00Z',
     status: 'success',
     details: { renewal_period: '12 months', new_monthly_rent: 13000 }
   }
 ];
 
+function buildDefaultActivities(translate: (key: string) => string): ActivityItem[] {
+  return defaultActivityTemplates.map(({ titleKey, descriptionKey, ...rest }) => ({
+    ...rest,
+    title: translate(titleKey),
+    description: translate(descriptionKey)
+  }));
+}
+
 function ActivityLog() {
-  const activities = defaultActivities;
+  const { t, language } = useLanguage();
+  const locale = language === 'zu' ? 'zu-ZA' : 'en-ZA';
+  const activities = useMemo(() => buildDefaultActivities(t), [t]);
   const [filter, setFilter] = useState<ActivityFilterKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [exporting, setExporting] = useState(false);
+
+  const filterOptions = useMemo(() => {
+    const options: Array<{ key: ActivityFilterKey; label: string }> = [
+      { key: 'all', label: t('activity.filters.all') || 'All' }
+    ];
+    for (const [key, value] of Object.entries(activityTypeConfig)) {
+      const typedKey = key as ActivityItem['type'];
+      options.push({ key: typedKey, label: t(value.labelKey) });
+    }
+    return options;
+  }, [t]);
+
+  const searchPlaceholder = t('activity.searchPlaceholder') || 'Search activities';
+  const searchAriaLabel = t('activity.searchAria') || searchPlaceholder;
+  const exportButtonLabel = t('activity.exportPdf') || 'Export PDF';
+  const exportingLabel = t('activity.exporting') || 'Exporting...';
+  const emptyStateTitle = t('activity.emptyTitle') || 'No activities found';
+  const clearSearchLabel = t('activity.clearSearch') || 'Clear search';
+  const detailsLabel = t('activity.detailsButton') || 'Details';
+  const modalHeading = t('activity.modal.heading') || 'Activity Details';
+  const typeLabel = t('activity.modal.typeLabel') || 'Type';
+  const titleLabel = t('activity.modal.titleLabel') || 'Title';
+  const descriptionLabel = t('activity.modal.descriptionLabel') || 'Description';
+  const timestampLabel = t('activity.modal.timestampLabel') || 'Timestamp';
+  const statusLabel = t('activity.modal.statusLabel') || 'Status';
+  const additionalDetailsLabel = t('activity.modal.additionalDetailsLabel') || 'Additional Details';
+  const closeLabel = t('common.close') || 'Close';
 
   const activityCounts: Record<ActivityFilterKey, number> = {
     all: 0,
@@ -361,14 +439,6 @@ function ActivityLog() {
     activityCounts.all += 1;
     activityCounts[activity.type] += 1;
   }
-
-  const filterOptions: Array<{ key: ActivityFilterKey; label: string }> = [
-    { key: 'all', label: 'All' },
-    ...Object.entries(activityTypeConfig).map(([key, value]) => ({
-      key: key as ActivityItem['type'],
-      label: value.label
-    }))
-  ];
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredActivities = activities.filter((activity) => {
@@ -386,7 +456,7 @@ function ActivityLog() {
     }
     setExporting(true);
     try {
-      const blob = createPdfBlobFromActivities(activities);
+      const blob = createPdfBlobFromActivities(activities, t, locale);
       const url = globalThis.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -409,10 +479,10 @@ function ActivityLog() {
           <input
             type="search"
             className="input activity-search-input"
-            placeholder="Search activities"
+            placeholder={searchPlaceholder}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            aria-label="Search activities"
+            aria-label={searchAriaLabel}
           />
           <button
             type="button"
@@ -420,7 +490,7 @@ function ActivityLog() {
             onClick={handleExport}
             disabled={exporting}
           >
-            {exporting ? 'Exporting…' : 'Export PDF'}
+            {exporting ? exportingLabel : exportButtonLabel}
           </button>
         </div>
         <div className="activity-filter-list">
@@ -449,14 +519,14 @@ function ActivityLog() {
       <div className="activity-list">
         {filteredActivities.length === 0 ? (
           <div className="activity-card activity-empty">
-            <p>No activities found</p>
+            <p>{emptyStateTitle}</p>
             {searchTerm && (
               <button
                 type="button"
                 className="button button-sm button-secondary"
                 onClick={() => setSearchTerm('')}
               >
-                Clear search
+                {clearSearchLabel}
               </button>
             )}
           </div>
@@ -477,15 +547,15 @@ function ActivityLog() {
                     <h4 className="activity-item-title">{activity.title}</h4>
                     {activity.status && (
                       <span className={`status-badge ${getStatusColor(activity.status)}`}>
-                        {activity.status.toUpperCase()}
+                        {getStatusLabel(activity.status, t)}
                       </span>
                     )}
                   </div>
                   <p className="activity-item-description">{activity.description}</p>
                   <div className="activity-item-meta">
-                    <span>{getActivityTypeName(activity.type)}</span>
+                    <span>{getActivityTypeName(activity.type, t)}</span>
                     <span className="activity-item-meta-separator" aria-hidden="true">•</span>
-                    <span>{formatDateTime(activity.timestamp)}</span>
+                    <span>{formatDateTime(activity.timestamp, locale)}</span>
                   </div>
                 </div>
                 <div className="activity-item-actions">
@@ -494,7 +564,7 @@ function ActivityLog() {
                     className="button button-sm button-secondary activity-details-button"
                     onClick={() => setSelectedActivity(activity)}
                   >
-                    Details
+                    {detailsLabel}
                   </button>
                 </div>
               </div>
@@ -507,7 +577,7 @@ function ActivityLog() {
         <div className="modal-overlay">
           <div className="modal-content modal-large">
             <div className="modal-header">
-              <h3>Activity Details</h3>
+              <h3>{modalHeading}</h3>
               <button
                 type="button"
                 className="close-btn"
@@ -519,32 +589,32 @@ function ActivityLog() {
             <div className="modal-body">
               <div className="activity-details">
                 <div className="detail-row">
-                  <label>Type:</label>
-                  <span>{getActivityTypeName(selectedActivity.type)}</span>
+                  <label>{`${typeLabel}:`}</label>
+                  <span>{getActivityTypeName(selectedActivity.type, t)}</span>
                 </div>
                 <div className="detail-row">
-                  <label>Title:</label>
+                  <label>{`${titleLabel}:`}</label>
                   <span>{selectedActivity.title}</span>
                 </div>
                 <div className="detail-row">
-                  <label>Description:</label>
+                  <label>{`${descriptionLabel}:`}</label>
                   <span>{selectedActivity.description}</span>
                 </div>
                 <div className="detail-row">
-                  <label>Timestamp:</label>
-                  <span>{formatDateTime(selectedActivity.timestamp)}</span>
+                  <label>{`${timestampLabel}:`}</label>
+                  <span>{formatDateTime(selectedActivity.timestamp, locale)}</span>
                 </div>
                 {selectedActivity.status && (
                   <div className="detail-row">
-                    <label>Status:</label>
+                    <label>{`${statusLabel}:`}</label>
                     <span className={`status-badge ${getStatusColor(selectedActivity.status)}`}>
-                      {selectedActivity.status.toUpperCase()}
+                      {getStatusLabel(selectedActivity.status, t)}
                     </span>
                   </div>
                 )}
                 {selectedActivity.details && (
                   <div className="detail-row">
-                    <label>Additional Details:</label>
+                    <label>{`${additionalDetailsLabel}:`}</label>
                     <div className="details-json">
                       <pre>{JSON.stringify(selectedActivity.details, null, 2)}</pre>
                     </div>
@@ -557,7 +627,7 @@ function ActivityLog() {
                   className="button button-md button-secondary"
                   onClick={() => setSelectedActivity(null)}
                 >
-                  Close
+                  {closeLabel}
                 </button>
               </div>
             </div>
