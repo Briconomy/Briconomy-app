@@ -15,16 +15,37 @@ const CommunicationPage = () => {
   const [sending, setSending] = useState(false);
 
   const emergencyContacts = [
-    { name: 'Property Manager', phone: '+27 11 234 5678', description: 'Building emergencies & urgent issues' },
-    { name: 'Emergency Maintenance', phone: '+27 11 234 5679', description: 'After-hours maintenance emergencies' },
-    { name: 'Building Security', phone: '+27 11 234 5680', description: 'Security concerns & access issues' },
-    { name: 'Fire & Rescue', phone: '10177', description: 'Fire emergencies & medical assistance' },
-    { name: 'Police (SAPS)', phone: '10111', description: 'Crime, theft, & security emergencies' },
-    { name: 'Ambulance Service', phone: '10177', description: 'Medical emergencies' },
-    { name: 'Poison Information', phone: '0861 555 777', description: 'Poison & toxin emergencies' },
-    { name: 'Electricity (Eskom)', phone: '0860 037 566', description: 'Power outages & electrical faults' },
-    { name: 'Water & Sanitation', phone: '0860 562 874', description: 'Water leaks & sewage issues' }
-  ];
+    { nameKey: 'requests.emergency.contacts.manager.name', descriptionKey: 'requests.emergency.contacts.manager.description', phone: '+27 11 234 5678' },
+    { nameKey: 'requests.emergency.contacts.maintenance.name', descriptionKey: 'requests.emergency.contacts.maintenance.description', phone: '+27 11 234 5679' },
+    { nameKey: 'requests.emergency.contacts.security.name', descriptionKey: 'requests.emergency.contacts.security.description', phone: '+27 11 234 5680' },
+    { nameKey: 'requests.emergency.contacts.fireRescue.name', descriptionKey: 'requests.emergency.contacts.fireRescue.description', phone: '10177' },
+    { nameKey: 'requests.emergency.contacts.police.name', descriptionKey: 'requests.emergency.contacts.police.description', phone: '10111' },
+    { nameKey: 'requests.emergency.contacts.ambulance.name', descriptionKey: 'requests.emergency.contacts.ambulance.description', phone: '10177' },
+    { nameKey: 'requests.emergency.contacts.poison.name', descriptionKey: 'requests.emergency.contacts.poison.description', phone: '0861 555 777' },
+    { nameKey: 'requests.emergency.contacts.electricity.name', descriptionKey: 'requests.emergency.contacts.electricity.description', phone: '0860 037 566' },
+    { nameKey: 'requests.emergency.contacts.water.name', descriptionKey: 'requests.emergency.contacts.water.description', phone: '0860 562 874' }
+  ] as const;
+
+  const statusLabelMap: Record<string, string> = {
+    pending: t('requests.status_pending_badge') || 'PENDING',
+    in_progress: t('requests.status_in_progress_badge') || 'IN PROGRESS',
+    completed: t('requests.status_completed_badge') || 'COMPLETED'
+  };
+
+  const priorityLabelMap: Record<string, string> = {
+    urgent: t('requests.priorityOption.urgent') || 'Urgent',
+    high: t('requests.priorityOption.high') || 'High',
+    medium: t('requests.priorityOption.medium') || 'Medium',
+    low: t('requests.priorityOption.low') || 'Low'
+  };
+
+  const notAvailableLabel = t('common.notAvailable') || 'N/A';
+  // #COMPLETION_DRIVE: Assuming active requests title template keeps {count} placeholder for badge number substitution
+  // #SUGGEST_VERIFY: Change language and verify the maintenance request count renders correctly
+  const activeRequestsTitleTemplate = t('communication.activeRequestsTitle') || 'Active Maintenance Requests ({count})';
+  // #COMPLETION_DRIVE: Assuming request metadata template includes {priority} and {date} placeholders for localized copy
+  // #SUGGEST_VERIFY: Review maintenance request list in each language to ensure labels and timestamps display as expected
+  const requestMetaTemplate = t('communication.requestMeta') || 'Priority: {priority} | {date}';
 
   const navItems = [
     { path: '/tenant', label: t('nav.home'), icon: 'properties' },
@@ -50,12 +71,12 @@ const CommunicationPage = () => {
 
   const handleSendMessage = async () => {
     if (!messageContent.trim() || !messageSubject.trim() || sending) {
-      showToast('Please fill in all fields', 'error');
+      showToast(t('communication.validation.missingFields') || 'Please fill in all fields', 'error');
       return;
     }
 
     if (!user?.id) {
-      showToast('User not authenticated. Please log in again.', 'error');
+      showToast(t('communication.validation.unauthenticated') || 'User not authenticated. Please log in again.', 'error');
       return;
     }
 
@@ -64,7 +85,7 @@ const CommunicationPage = () => {
       const currentLease = leases?.[0];
       
       if (!currentLease || !currentLease.propertyId) {
-        showToast('Unable to find your property manager. Please contact support.', 'error');
+        showToast(t('communication.validation.missingManager') || 'Unable to find your property manager. Please contact support.', 'error');
         setSending(false);
         return;
       }
@@ -76,26 +97,38 @@ const CommunicationPage = () => {
       const property = await propertiesApi.getById(propertyId);
       
       if (!property || !property.managerId) {
-        showToast('Unable to find your property manager. Please contact support.', 'error');
+        showToast(t('communication.validation.missingManager') || 'Unable to find your property manager. Please contact support.', 'error');
         setSending(false);
         return;
       }
 
+      const tenantDisplayName = user.fullName || user.email || t('communication.notificationSenderFallback') || 'Tenant';
+      const unitDisplay = currentLease.unit?.unitNumber || notAvailableLabel;
+      // #COMPLETION_DRIVE: Assuming notification templates retain {subject}, {tenant}, {unit}, and {message} placeholders for runtime substitution
+      // #SUGGEST_VERIFY: Send a message in each supported language and confirm manager notification text renders expected values
+      const notificationTitleTemplate = t('communication.notificationTitle') || 'Message from Tenant: {subject}';
+      const notificationBodyTemplate = t('communication.notificationBody') || 'From: {tenant}\nUnit: {unit}\n\n{message}';
+      const notificationTitle = notificationTitleTemplate.replace('{subject}', messageSubject);
+      const notificationBody = notificationBodyTemplate
+        .replace('{tenant}', tenantDisplayName)
+        .replace('{unit}', unitDisplay)
+        .replace('{message}', messageContent);
+
       await notificationsApi.create({
         userId: property.managerId,
-        title: `Message from Tenant: ${messageSubject}`,
-        message: `From: ${user.fullName || user.email}\nUnit: ${currentLease.unit?.unitNumber || 'N/A'}\n\n${messageContent}`,
+        title: notificationTitle,
+        message: notificationBody,
         type: 'system',
         read: false
       });
 
-      showToast('Message sent successfully to your property manager!', 'success');
+      showToast(t('communication.success') || 'Message sent successfully to your property manager!', 'success');
       setMessageSubject('');
       setMessageContent('');
       await refetchNotifications();
     } catch (error) {
       console.error('Error sending message:', error);
-      showToast('Failed to send message. Please try again.', 'error');
+      showToast(t('communication.error') || 'Failed to send message. Please try again.', 'error');
     } finally {
       setSending(false);
     }
@@ -127,25 +160,25 @@ const CommunicationPage = () => {
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">{t('communication.title')}</div>
-          <div className="page-subtitle">Send messages to your property team</div>
+          <div className="page-subtitle">{t('communication.subtitle')}</div>
         </div>
 
         <div className="card" style={{ padding: '16px', marginBottom: '20px' }}>
           <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>
-            Message Property Manager
+            {t('communication.messageManagerTitle')}
           </h3>
           <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
-            Send a message to your property manager about leases, payments, or general inquiries
+            {t('communication.messageManagerDescription')}
           </p>
 
           <div style={{ marginBottom: '12px' }}>
             <label htmlFor="subject" style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-              Subject
+              {t('communication.subject')}
             </label>
             <input
               type="text"
               id="subject"
-              placeholder="What is this about?"
+              placeholder={t('communication.subjectPlaceholder')}
               value={messageSubject}
               onChange={(e) => setMessageSubject(e.target.value)}
               disabled={sending}
@@ -162,11 +195,11 @@ const CommunicationPage = () => {
 
           <div style={{ marginBottom: '16px' }}>
             <label htmlFor="message" style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-              Message
+              {t('communication.message')}
             </label>
             <textarea
               id="message"
-              placeholder="Type your message here..."
+              placeholder={t('communication.messagePlaceholder')}
               value={messageContent}
               onChange={(e) => setMessageContent(e.target.value)}
               rows={6}
@@ -191,7 +224,7 @@ const CommunicationPage = () => {
             disabled={!messageContent.trim() || !messageSubject.trim() || sending}
             style={{ width: '100%', padding: '12px', fontSize: '14px' }}
           >
-            {sending ? 'Sending...' : 'Send Message'}
+            {sending ? t('communication.sending') : t('communication.sendMessage')}
           </button>
         </div>
 
@@ -199,7 +232,7 @@ const CommunicationPage = () => {
           <div className="data-table" style={{ marginBottom: '20px' }}>
             <div className="table-header">
               <div className="table-title">
-                Active Maintenance Requests ({pendingRequests.length})
+                {activeRequestsTitleTemplate.replace('{count}', pendingRequests.length.toString())}
               </div>
             </div>
             <div className="table-body">
@@ -208,11 +241,13 @@ const CommunicationPage = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                     <strong style={{ fontSize: '14px', color: '#2c3e50' }}>{request.title}</strong>
                     <span className={`status-badge status-${request.status}`}>
-                      {request.status}
+                      {statusLabelMap[request.status] || request.status}
                     </span>
                   </div>
                   <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                    Priority: {request.priority} | {formatDateTime(request.createdAt)}
+                    {requestMetaTemplate
+                      .replace('{priority}', priorityLabelMap[request.priority] || (t('communication.priorityUnknown') || request.priority))
+                      .replace('{date}', formatDateTime(request.createdAt))}
                   </div>
                 </div>
               ))}
@@ -222,7 +257,7 @@ const CommunicationPage = () => {
 
         <div className="data-table" style={{ marginBottom: '20px' }}>
           <div className="table-header">
-            <div className="table-title">Emergency Contacts</div>
+            <div className="table-title">{t('communication.emergencyContactsTitle')}</div>
           </div>
           <div style={{
             background: '#fff3cd',
@@ -233,49 +268,60 @@ const CommunicationPage = () => {
             fontSize: '13px',
             margin: '16px'
           }}>
-            <strong>WARNING - Life-threatening emergencies:</strong><br />
-            Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
+            <strong>{t('communication.emergencyWarningTitle')}</strong><br />
+            {t('communication.emergencyWarningBody')}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
-            {emergencyContacts.map((contact, index) => (
-              <div
-                key={index}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  background: '#f9f9f9'
-                }}
-              >
-                <div style={{ marginBottom: '8px' }}>
-                  <h4 style={{ fontSize: '14px', margin: '0 0 4px 0', fontWeight: '600' }}>
-                    {contact.name}
-                  </h4>
-                  <p style={{ fontSize: '12px', margin: '0', color: '#666' }}>
-                    {contact.description}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() => {
-                    const confirmCall = globalThis.confirm(`Call ${contact.name}?\n\n${contact.phone}`);
-                    if (confirmCall) {
-                      globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
-                    }
-                  }}
+            {emergencyContacts.map((contact, index) => {
+              const contactName = t(contact.nameKey);
+              const contactDescription = t(contact.descriptionKey);
+              // #COMPLETION_DRIVE: Assuming call confirmation template retains {name} and {phone} placeholders for runtime substitution
+              // #SUGGEST_VERIFY: Trigger call flows in each language to ensure confirmation and button labels render properly
+              const confirmMessage = (t('requests.confirmCall') || 'Call {name}?\n\n{phone}')
+                .replace('{name}', contactName)
+                .replace('{phone}', contact.phone);
+              const callLabel = (t('requests.callNumber') || 'Call: {phone}').replace('{phone}', contact.phone);
+
+              return (
+                <div
+                  key={index}
                   style={{
-                    width: '100%',
-                    padding: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600'
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    background: '#f9f9f9'
                   }}
                 >
-                  Call: {contact.phone}
-                </button>
-              </div>
-            ))}
+                  <div style={{ marginBottom: '8px' }}>
+                    <h4 style={{ fontSize: '14px', margin: '0 0 4px 0', fontWeight: '600' }}>
+                      {contactName}
+                    </h4>
+                    <p style={{ fontSize: '12px', margin: '0', color: '#666' }}>
+                      {contactDescription}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      const confirmCall = globalThis.confirm(confirmMessage);
+                      if (confirmCall) {
+                        globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {callLabel}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

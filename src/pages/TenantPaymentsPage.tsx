@@ -123,11 +123,32 @@ function TenantPaymentsPage() {
   const stats = getStats();
   const invoiceList = Array.isArray(invoices) ? (invoices as Invoice[]) : [];
   const paidInvoices = invoiceList.filter(inv => inv.status === 'paid');
-  const overdueLabel = stats.overdue === 1 ? 'invoice' : 'invoices';
+  const invoiceSingular = t('payments.invoiceSingular') || 'invoice';
+  const invoicePlural = t('payments.invoicePlural') || 'invoices';
+  const overdueLabel = stats.overdue === 1 ? invoiceSingular : invoicePlural;
+  // #COMPLETION_DRIVE: Assuming translation templates supply {count} and {label} placeholders for overdue banner text
+  // #SUGGEST_VERIFY: Switch languages and confirm overdue banner renders expected values
+  const overdueBannerTitleTemplate = t('payments.overdueBannerTitle') || 'You have {count} overdue {label}';
+  const overdueBannerText = t('payments.overdueBannerText') || 'Please submit payment to avoid penalties.';
+  const notAvailableLabel = t('common.notAvailable') || 'N/A';
+  const invoicesTabLabel = t('payments.tab.invoices') || 'Invoices';
+  const historyTabLabel = t('payments.tab.history') || t('payments.paymentHistory') || 'Payment History';
+  const emptyInvoicesTitle = t('payments.emptyInvoicesTitle') || 'No invoices';
+  const emptyInvoicesDescription = t('payments.emptyInvoicesDescription') || 'You do not have any outstanding invoices.';
+  const emptyHistoryTitle = t('payments.emptyHistoryTitle') || 'No payment history';
+  const emptyHistoryDescription = t('payments.emptyHistoryDescription') || 'Your payments will appear here once processed.';
+  const backToInvoicesLabel = t('payments.backToInvoices') || 'Back to invoices';
+  const selectedInvoiceTitle = t('payments.selectedInvoice') || 'Selected invoice';
+  // #COMPLETION_DRIVE: Assuming translation template includes {date} placeholder for selected invoice subtitle
+  // #SUGGEST_VERIFY: Switch languages and confirm due date text renders correctly
+  const selectedInvoiceDueTemplate = t('payments.selectedInvoiceDue') || 'Due {date}';
+  const additionalNotesLabel = t('payments.additionalNotes') || 'Additional notes';
+  const notesPlaceholder = t('payments.notesPlaceholder') || 'Add context for this payment';
+  const processingPaymentLabel = t('payments.processingPayment') || 'Processing payment...';
 
   const handlePaymentComplete = async (reference: string) => {
     if (!selectedInvoice || !selectedPaymentMethod) {
-      showToast('Missing payment information', 'error');
+      showToast(t('payments.missingInfo') || 'Missing payment information', 'error');
       return;
     }
 
@@ -158,10 +179,10 @@ function TenantPaymentsPage() {
 
       // #COMPLETION_DRIVE: Send payment confirmation notification to trigger manager update
       // #SUGGEST_VERIFY: Backend creates notification that broadcasts to manager via WebSocket
-  const methodLabel = PAYMENT_METHODS.find(method => method.id === selectedPaymentMethod)?.label ?? 'Unknown';
-  notificationService.sendPaymentConfirmation(selectedInvoice.amount, methodLabel);
+      const methodLabel = PAYMENT_METHODS.find(method => method.id === selectedPaymentMethod)?.label ?? 'Unknown';
+      notificationService.sendPaymentConfirmation(selectedInvoice.amount, methodLabel);
 
-      showToast('Payment submitted successfully!', 'success');
+      showToast(t('payments.submitSuccess') || 'Payment submitted successfully!', 'success');
       setShowCheckout(false);
       setPaymentMode(false);
       setSelectedInvoice(null);
@@ -170,7 +191,11 @@ function TenantPaymentsPage() {
       setGeneratedReference('');
       refetchInvoices();
     } catch (error) {
-      showToast('Failed to submit payment: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
+      const errorMessage = error instanceof Error ? error.message : (t('payments.unknownError') || 'Unknown error');
+      // #COMPLETION_DRIVE: Assuming translation template includes {message} placeholder for submit error toast
+      // #SUGGEST_VERIFY: Force payment failure and verify error message renders in selected language
+      const submitErrorTemplate = t('payments.submitError') || 'Failed to submit payment: {message}';
+      showToast(submitErrorTemplate.replace('{message}', errorMessage), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -178,7 +203,7 @@ function TenantPaymentsPage() {
 
   const handleSubmitPayment = () => {
     if (!selectedInvoice || !selectedPaymentMethod) {
-      showToast('Please select a payment method', 'error');
+      showToast(t('payments.selectMethodError') || 'Please select a payment method', 'error');
       return;
     }
 
@@ -206,24 +231,24 @@ function TenantPaymentsPage() {
 
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Payments</div>
-          <div className="page-subtitle">View invoices and manage payments</div>
+          <div className="page-title">{t('payments.title')}</div>
+          <div className="page-subtitle">{t('payments.subtitle')}</div>
         </div>
 
         <div className="dashboard-grid">
-          <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" />
-          <StatCard value={stats.overdue} label="Overdue Invoices" />
-          <StatCard value={stats.nextDue ? formatDate(stats.nextDue.dueDate) : 'N/A'} label="Next Due Date" />
+          <StatCard value={formatCurrency(stats.totalDue)} label={t('payments.totalDue')} />
+          <StatCard value={stats.overdue} label={t('payments.overdueInvoices') || 'Overdue Invoices'} />
+          <StatCard value={stats.nextDue ? formatDate(stats.nextDue.dueDate) : notAvailableLabel} label={t('payments.nextDueDate') || 'Next Due Date'} />
         </div>
 
         {stats.overdue > 0 && (
           <div className="alert-banner">
             <div className="alert-banner-icon">
-              <Icon name="alert" alt="Overdue invoices" size={40} />
+              <Icon name="alert" alt={t('payments.alertAlt') || 'Overdue invoices'} size={40} />
             </div>
             <div className="alert-banner-content">
-              <div className="alert-title">{`You have ${stats.overdue} overdue ${overdueLabel}`}</div>
-              <div className="alert-text">Please submit payment to avoid penalties.</div>
+              <div className="alert-title">{overdueBannerTitleTemplate.replace('{count}', stats.overdue.toString()).replace('{label}', overdueLabel)}</div>
+              <div className="alert-text">{overdueBannerText}</div>
             </div>
           </div>
         )}
@@ -237,7 +262,7 @@ function TenantPaymentsPage() {
               setPaymentMode(false);
             }}
           >
-            Invoices
+            {invoicesTabLabel}
           </button>
           <button
             type="button"
@@ -248,7 +273,7 @@ function TenantPaymentsPage() {
               setSelectedInvoice(null);
             }}
           >
-            Payment History
+            {historyTabLabel}
           </button>
         </div>
 
@@ -256,9 +281,9 @@ function TenantPaymentsPage() {
           <div>
             {invoiceList.length === 0 ? (
               <div className="section-card empty-state-card">
-                <Icon name="invoice" alt="Invoices" size={48} />
-                <div className="empty-state-title">No invoices</div>
-                <div className="empty-state-text">You do not have any outstanding invoices.</div>
+                <Icon name="invoice" alt={invoicesTabLabel} size={48} />
+                <div className="empty-state-title">{emptyInvoicesTitle}</div>
+                <div className="empty-state-text">{emptyInvoicesDescription}</div>
               </div>
             ) : (
               <div className="support-grid">
@@ -271,7 +296,7 @@ function TenantPaymentsPage() {
                         await invoicesApi.download(id, format);
                       } catch (error) {
                         console.error('Download failed:', error);
-                        showToast('Failed to download invoice', 'error');
+                        showToast(t('payments.downloadError') || 'Failed to download invoice', 'error');
                       }
                     }}
                     onPay={(selectedInv) => {
@@ -299,12 +324,12 @@ function TenantPaymentsPage() {
                     setPaymentNotes('');
                   }}
                 >
-                  Back to invoices
+                  {backToInvoicesLabel}
                 </button>
               </div>
               <div className="card-divider">
-                <div className="section-title">Selected invoice</div>
-                <div className="section-subtitle">Due {formatDate(selectedInvoice.dueDate)}</div>
+                <div className="section-title">{selectedInvoiceTitle}</div>
+                <div className="section-subtitle">{selectedInvoiceDueTemplate.replace('{date}', formatDate(selectedInvoice.dueDate))}</div>
               </div>
               <div className="invoice-summary">
                 <div className="invoice-meta">
@@ -319,13 +344,13 @@ function TenantPaymentsPage() {
               <PaymentMethodSelector selected={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
 
               <div className="card-divider">
-                <label className="form-label" htmlFor="payment-notes">Additional notes</label>
+                <label className="form-label" htmlFor="payment-notes">{additionalNotesLabel}</label>
                 <textarea
                   id="payment-notes"
                   className="form-textarea"
                   value={paymentNotes}
                   onChange={(e) => setPaymentNotes(e.target.value)}
-                  placeholder="Add context for this payment"
+                  placeholder={notesPlaceholder}
                 />
               </div>
 
@@ -336,7 +361,11 @@ function TenantPaymentsPage() {
                   onClick={handleSubmitPayment}
                   disabled={!selectedPaymentMethod || submitting}
                 >
-                  {submitting ? 'Processing payment...' : `Pay ${formatCurrency(selectedInvoice.amount)}`}
+                  {submitting
+                    ? processingPaymentLabel
+                    // #COMPLETION_DRIVE: Assuming translation template includes {amount} placeholder for payment button
+                    // #SUGGEST_VERIFY: Trigger payment modal and confirm amount displays correctly across languages
+                    : (t('payments.payAmount') || `Pay {amount}`).replace('{amount}', formatCurrency(selectedInvoice.amount))}
                 </button>
               </div>
             </div>
@@ -347,9 +376,9 @@ function TenantPaymentsPage() {
           <div>
             {paidInvoices.length === 0 ? (
               <div className="section-card empty-state-card">
-                <Icon name="payment" alt="Payments" size={48} />
-                <div className="empty-state-title">No payment history</div>
-                <div className="empty-state-text">Your payments will appear here once processed.</div>
+                <Icon name="payment" alt={historyTabLabel} size={48} />
+                <div className="empty-state-title">{emptyHistoryTitle}</div>
+                <div className="empty-state-text">{emptyHistoryDescription}</div>
               </div>
             ) : (
               <div className="support-grid">
@@ -362,7 +391,7 @@ function TenantPaymentsPage() {
                         await invoicesApi.download(id, format);
                       } catch (error) {
                         console.error('Download failed:', error);
-                        showToast('Failed to download invoice', 'error');
+                        showToast(t('payments.downloadError') || 'Failed to download invoice', 'error');
                       }
                     }}
                     onPay={() => {}}
