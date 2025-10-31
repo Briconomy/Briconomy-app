@@ -21,6 +21,26 @@ function UserProfilePage() {
   );
 
   const currentLease = Array.isArray(leases) ? leases[0] : null;
+  const tenantContext = user?.tenantContext || null;
+
+  const parseDateValue = (value: unknown): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'string' && value.length > 0) {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+  };
+
+  const contextLease = tenantContext?.lease || null;
+  const leaseStartSource = currentLease?.startDate ?? contextLease?.startDate ?? user?.leaseStart ?? null;
+  const leaseEndSource = currentLease?.endDate ?? contextLease?.endDate ?? user?.leaseEnd ?? null;
+  const leaseStartDate = parseDateValue(leaseStartSource);
+  const leaseEndDate = parseDateValue(leaseEndSource);
+  const leaseStartDisplay = leaseStartDate ? leaseStartDate.toLocaleDateString() : t('profile.notProvided');
+  const leaseEndDisplay = leaseEndDate ? leaseEndDate.toLocaleDateString() : t('profile.notProvided');
+  const leaseDaysRemainingValue = leaseEndDate ? Math.max(Math.ceil((leaseEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 0) : null;
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -130,18 +150,39 @@ function UserProfilePage() {
     return null;
   }
 
-  const leaseEndDate = user.leaseEnd ? new Date(user.leaseEnd) : new Date();
-  const leaseDaysRemaining = Math.ceil((leaseEndDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const unitDisplay = currentLease?.unit?.unitNumber || tenantContext?.unit?.unitNumber || t('profile.notProvided');
+  const rentCandidate = Number(currentLease?.monthlyRent ?? tenantContext?.lease?.monthlyRent ?? user.rent ?? 0);
+  const monthlyRentDisplay = `R${(Number.isFinite(rentCandidate) ? rentCandidate : 0).toLocaleString()}`;
+  const leaseRemainingDisplay = leaseDaysRemainingValue !== null ? `${leaseDaysRemainingValue} ${t('property.days')}` : t('profile.notProvided');
+  const statusSource = typeof currentLease?.status === 'string' && currentLease.status.length > 0
+    ? currentLease.status
+    : typeof contextLease?.status === 'string' && contextLease.status.length > 0
+      ? contextLease.status
+      : 'active';
+  const statusBase = typeof statusSource === 'string' ? statusSource.toLowerCase() : 'active';
+  const statusTranslations: Record<string, string> = {
+    active: t('status.active'),
+    pending: t('requests.status_pending_badge') || 'Pending',
+    approved: t('status.active'),
+    draft: t('requests.status_pending_badge') || 'Pending'
+  };
+  const normalizedStatus = typeof statusSource === 'string' && statusSource.length > 0
+    ? statusSource.charAt(0).toUpperCase() + statusSource.slice(1)
+    : t('status.active');
+  const statusDisplay = statusTranslations[statusBase] || normalizedStatus;
+  const propertyDisplay = currentLease?.property?.name || tenantContext?.property?.name || t('profile.notProvided');
+  const memberSinceDate = parseDateValue(user.joinDate) || new Date();
+  const memberSinceDisplay = memberSinceDate.toLocaleDateString();
 
   const tenantStats = [
-    { value: currentLease?.unit?.unitNumber || 'N/A', label: t('property.unit') },
-    { value: `R${(currentLease?.monthlyRent || 0).toLocaleString()}`, label: t('property.monthlyRent') },
-    { value: `${leaseDaysRemaining} ${t('property.days')}`, label: t('property.leaseRemaining') },
-    { value: t('status.active'), label: t('common.status') },
-    { value: new Date(user.leaseStart || new Date()).toLocaleDateString(), label: t('profile.leaseStart') },
-    { value: new Date(user.leaseEnd || new Date()).toLocaleDateString(), label: t('profile.leaseEnd') },
-    { value: currentLease?.property?.name || 'N/A', label: t('profile.property') },
-    { value: new Date(user.joinDate || new Date()).toLocaleDateString(), label: t('profile.memberSince') }
+    { value: unitDisplay, label: t('property.unit') },
+    { value: monthlyRentDisplay, label: t('property.monthlyRent') },
+    { value: leaseRemainingDisplay, label: t('property.leaseRemaining') },
+    { value: statusDisplay, label: t('common.status') },
+    { value: leaseStartDisplay, label: t('profile.leaseStart') },
+    { value: leaseEndDisplay, label: t('profile.leaseEnd') },
+    { value: propertyDisplay, label: t('profile.property') },
+    { value: memberSinceDisplay, label: t('profile.memberSince') }
   ];
 
   return (

@@ -36,6 +36,7 @@ import {
   getDashboardStats,
   getUsers as _getUsers,
   loginUser,
+  getTenantContext,
   registerUser,
   getSystemStats,
   getUserStats,
@@ -394,6 +395,28 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
+      }
+    }
+
+    if (path[0] === 'api' && path[1] === 'tenants' && path.length >= 4 && path[3] === 'context' && req.method === 'GET') {
+      const tenantId = path[2];
+      if (!tenantId) {
+        return new Response(JSON.stringify({ error: 'Tenant identifier required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      try {
+        const context = await getTenantContext(tenantId);
+        return new Response(JSON.stringify(context), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.error('Error building tenant context:', error);
+        return new Response(JSON.stringify({ error: 'Failed to load tenant context' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
     }
 

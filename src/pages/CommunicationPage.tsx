@@ -10,6 +10,7 @@ const CommunicationPage = () => {
   const { t } = useLanguage();
   const { showToast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const tenantContext = user?.tenantContext || null;
   const [messageSubject, setMessageSubject] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [sending, setSending] = useState(false);
@@ -64,6 +65,32 @@ const CommunicationPage = () => {
     [user?.id]
   );
 
+  const primaryLease = Array.isArray(leases) ? leases[0] : null;
+  const leaseRecord = primaryLease as Record<string, unknown> | null;
+  const leaseProperty = leaseRecord && typeof leaseRecord?.property === 'object' && leaseRecord.property !== null
+    ? leaseRecord.property as Record<string, unknown>
+    : null;
+  const leaseUnit = leaseRecord && typeof leaseRecord?.unit === 'object' && leaseRecord.unit !== null
+    ? leaseRecord.unit as Record<string, unknown>
+    : null;
+  const notProvidedLabel = t('profile.notProvided') || 'Not provided';
+  const leaseUnitNumberRaw = leaseUnit ? (leaseUnit as Record<string, unknown>).unitNumber : null;
+  const rawUnitNumber = tenantContext?.unit?.unitNumber
+    ? String(tenantContext.unit.unitNumber)
+    : typeof leaseUnitNumberRaw === 'string' || typeof leaseUnitNumberRaw === 'number'
+      ? String(leaseUnitNumberRaw)
+      : '';
+  const propertyNameDisplay = tenantContext?.property?.name
+    || (leaseProperty && typeof leaseProperty.name === 'string' ? leaseProperty.name as string : '')
+    || notProvidedLabel;
+  const propertyAddressDisplay = tenantContext?.property?.address
+    || (leaseProperty && typeof leaseProperty.address === 'string' ? leaseProperty.address as string : '')
+    || '';
+  const unitNumberDisplay = rawUnitNumber || notProvidedLabel;
+  const managerNameDisplay = tenantContext?.manager?.fullName || notProvidedLabel;
+  const managerEmailDisplay = tenantContext?.manager?.email || '';
+  const managerPhoneDisplay = tenantContext?.manager?.phone || notAvailableLabel;
+
   const { data: requests, loading: requestsLoading } = useApi(
     () => user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
     [user?.id]
@@ -82,28 +109,58 @@ const CommunicationPage = () => {
 
     setSending(true);
     try {
-      const currentLease = leases?.[0];
-      
-      if (!currentLease || !currentLease.propertyId) {
-        showToast(t('communication.validation.missingManager') || 'Unable to find your property manager. Please contact support.', 'error');
-        setSending(false);
-        return;
+      const pickFirstString = (...values: unknown[]): string | null => {
+        for (const value of values) {
+          if (typeof value === 'string' && value.length > 0) {
+            return value;
+          }
+        }
+        return null;
+      };
+
+      const activeLease = primaryLease as Record<string, unknown> | null;
+      const leaseProperty = activeLease && typeof activeLease.property === 'object' && activeLease.property !== null
+        ? activeLease.property as Record<string, unknown>
+        : null;
+      const rawPropertyId = activeLease ? activeLease.propertyId : null;
+      let leasePropertyId: string | null = null;
+      if (typeof rawPropertyId === 'string') {
+        leasePropertyId = rawPropertyId;
+      } else if (rawPropertyId && typeof rawPropertyId === 'object' && 'id' in rawPropertyId && typeof rawPropertyId.id === 'string') {
+        leasePropertyId = rawPropertyId.id;
+      } else if (leaseProperty && typeof leaseProperty.id === 'string') {
+        leasePropertyId = leaseProperty.id as string;
       }
 
-      const propertyId = typeof currentLease.propertyId === 'object' && 'id' in currentLease.propertyId 
-        ? currentLease.propertyId.id 
-        : currentLease.propertyId;
+      const propertyIdCandidate = pickFirstString(
+        tenantContext?.property?.id,
+        leasePropertyId,
+        user?.assignedPropertyId,
+        user?.propertyId,
+        user?.appliedPropertyId
+      );
 
-      const property = await propertiesApi.getById(propertyId);
-      
-      if (!property || !property.managerId) {
+      let managerIdCandidate = pickFirstString(
+        tenantContext?.manager?.id,
+        tenantContext?.property?.managerId,
+        user?.managerId,
+        leaseProperty && typeof leaseProperty.managerId === 'string' ? leaseProperty.managerId : null
+      );
+
+      if (!managerIdCandidate && propertyIdCandidate) {
+        const property = await propertiesApi.getById(propertyIdCandidate);
+        if (property && typeof property.managerId === 'string') {
+          managerIdCandidate = property.managerId;
+        }
+      }
+
+      if (!managerIdCandidate) {
         showToast(t('communication.validation.missingManager') || 'Unable to find your property manager. Please contact support.', 'error');
-        setSending(false);
         return;
       }
 
       const tenantDisplayName = user.fullName || user.email || t('communication.notificationSenderFallback') || 'Tenant';
-      const unitDisplay = currentLease.unit?.unitNumber || notAvailableLabel;
+      const unitDisplay = rawUnitNumber && rawUnitNumber.length > 0 ? rawUnitNumber : notAvailableLabel;
       // #COMPLETION_DRIVE: Assuming notification templates retain {subject}, {tenant}, {unit}, and {message} placeholders for runtime substitution
       // #SUGGEST_VERIFY: Send a message in each supported language and confirm manager notification text renders expected values
       const notificationTitleTemplate = t('communication.notificationTitle') || 'Message from Tenant: {subject}';
@@ -115,7 +172,7 @@ const CommunicationPage = () => {
         .replace('{message}', messageContent);
 
       await notificationsApi.create({
-        userId: property.managerId,
+        userId: managerIdCandidate,
         title: notificationTitle,
         message: notificationBody,
         type: 'system',
@@ -162,6 +219,26 @@ const CommunicationPage = () => {
           <div className="page-title">{t('communication.title')}</div>
           <div className="page-subtitle">{t('communication.subtitle')}</div>
         </div>
+
+        {(tenantContext?.property || tenantContext?.manager || leaseProperty || rawUnitNumber) && (
+          <div className="card" style={{ padding: '16px', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>
+              {t('communication.managerSummaryTitle') || 'Your Property Manager'}
+            </h3>
+            <div style={{ display: 'grid', gap: '6px', fontSize: '13px', color: '#444' }}>
+              <div><strong>{t('profile.property') || 'Property'}</strong>: {propertyNameDisplay}</div>
+              {propertyAddressDisplay ? (
+                <div><strong>{t('profile.address') || 'Address'}</strong>: {propertyAddressDisplay}</div>
+              ) : null}
+              <div><strong>{t('property.unit') || 'Unit'}</strong>: {unitNumberDisplay}</div>
+              <div><strong>{t('communication.managerLabel') || 'Manager'}</strong>: {managerNameDisplay}</div>
+              {managerEmailDisplay ? (
+                <div><strong>{t('profile.email')}</strong>: <a href={`mailto:${managerEmailDisplay}`}>{managerEmailDisplay}</a></div>
+              ) : null}
+              <div><strong>{t('profile.phone')}</strong>: {managerPhoneDisplay}</div>
+            </div>
+          </div>
+        )}
 
         <div className="card" style={{ padding: '16px', marginBottom: '20px' }}>
           <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>

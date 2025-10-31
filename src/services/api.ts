@@ -395,6 +395,10 @@ export const managerApi = {
   }),
 };
 
+export const tenantsApi = {
+  getContext: (tenantId: string) => apiRequest(`/api/tenants/${tenantId}/context`),
+};
+
 export const authApi = {
   login: (email: string, password: string) => apiRequest('/api/auth/login', {
     method: 'POST',

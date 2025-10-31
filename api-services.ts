@@ -131,6 +131,48 @@ function valueToString(value: unknown): string | null {
   return null;
 }
 
+interface TenantPropertySummary {
+  id: string;
+  name?: string;
+  address?: string;
+  managerId?: string | null;
+  type?: string | null;
+}
+
+interface TenantUnitSummary {
+  id: string;
+  unitNumber?: string;
+  floor?: string | number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  status?: string | null;
+}
+
+interface TenantManagerSummary {
+  id: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface TenantLeaseSummary {
+  id: string;
+  status?: string | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  monthlyRent?: number | null;
+  deposit?: number | null;
+}
+
+interface TenantContextPayload {
+  tenantId: string;
+  property: TenantPropertySummary | null;
+  unit: TenantUnitSummary | null;
+  manager: TenantManagerSummary | null;
+  lease: TenantLeaseSummary | null;
+  fetchedAt: string;
+}
+
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(" ");
   const lines: string[] = [];
@@ -487,11 +529,44 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
       return { success: false, message: "Invalid password" };
     }
     
-    const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
-    const mappedUser = { id: String(rest._id ?? ""), ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id")) };
+    const { password: _pw, ...userWithoutPassword } = user as Record<string, unknown> & { _id?: ObjectId };
+    const mappedUserDoc = mapDoc(userWithoutPassword as { _id?: ObjectId });
+    if (!mappedUserDoc) {
+      throw new Error("Unable to map user document");
+    }
 
-    const userType = (mappedUser as Record<string, unknown>).userType;
-    const managerApprovalStatus = (mappedUser as Record<string, unknown>).managerApprovalStatus;
+    const mappedUser = mappedUserDoc as Record<string, unknown> & {
+      id: string;
+      userType?: string;
+      managerApprovalStatus?: string;
+      tenantContext?: TenantContextPayload | null;
+      propertyId?: unknown;
+      assignedPropertyId?: unknown;
+      appliedPropertyId?: unknown;
+      unitId?: unknown;
+      managerId?: unknown;
+    };
+
+    if (mappedUser.userType === 'tenant') {
+      const tenantContext = await buildTenantContext(mappedUser.id, user as Record<string, unknown>);
+      mappedUser.tenantContext = tenantContext;
+      const resolvedManagerId = tenantContext.manager?.id ?? tenantContext.property?.managerId ?? null;
+      if (resolvedManagerId) {
+        mappedUser.managerId = resolvedManagerId;
+      }
+      if (!mappedUser.propertyId && tenantContext.property?.id) {
+        mappedUser.propertyId = tenantContext.property.id;
+      }
+      if (tenantContext.property?.id) {
+        mappedUser.assignedPropertyId = tenantContext.property.id;
+      }
+      if (tenantContext.unit?.id) {
+        mappedUser.unitId = tenantContext.unit.id;
+      }
+    }
+
+    const userType = mappedUser.userType;
+    const managerApprovalStatus = mappedUser.managerApprovalStatus;
     
     if (userType === 'tenant' && managerApprovalStatus === 'rejected') {
       await createAuditLog({
@@ -537,6 +612,216 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
     };
   } catch (error) {
     console.error("Error logging in user:", error);
+    throw error;
+  }
+}
+
+async function buildTenantContext(tenantId: string, tenantDoc?: Record<string, unknown> | null): Promise<TenantContextPayload> {
+  const usersCollection = getCollection("users");
+  const propertiesCollection = getCollection("properties");
+  const unitsCollection = getCollection("units");
+  const leasesCollection = getCollection("leases");
+
+  let tenantRecord = tenantDoc;
+  if (!tenantRecord) {
+    const lookupId = toObjectId(tenantId);
+    tenantRecord = await usersCollection.findOne(lookupId ? { _id: lookupId } : { _id: tenantId });
+    if (!tenantRecord) {
+      tenantRecord = await usersCollection.findOne({ id: tenantId });
+    }
+  }
+
+  const propertyCandidates = new Set<string>();
+  const unitCandidates = new Set<string>();
+
+  if (tenantRecord) {
+    const data = tenantRecord as Record<string, unknown>;
+    const profileValue = typeof data["profile"] === 'object' && data["profile"] !== null ? data["profile"] as Record<string, unknown> : null;
+    const propertyRefs = [
+      data["assignedPropertyId"],
+      data["propertyId"],
+      data["appliedPropertyId"],
+      profileValue ? profileValue["propertyId"] : null,
+      profileValue ? profileValue["assignedPropertyId"] : null
+    ];
+    for (const ref of propertyRefs) {
+      const str = valueToString(ref ?? undefined);
+      if (str) {
+        propertyCandidates.add(str);
+      }
+    }
+
+    const unitRefs = [
+      data["unitId"],
+      data["appliedUnitId"],
+      profileValue ? profileValue["unitId"] : null
+    ];
+    for (const ref of unitRefs) {
+      const str = valueToString(ref ?? undefined);
+      if (str) {
+        unitCandidates.add(str);
+      }
+    }
+  }
+
+  const leaseStatuses = ['active', 'pending', 'draft'];
+  const leaseQuery: Record<string, unknown> = { status: { $in: leaseStatuses } };
+  const tenantFilters: Record<string, unknown>[] = [];
+  const tenantObjectId = toObjectId(tenantId);
+  if (tenantObjectId) {
+    tenantFilters.push({ tenantId: tenantObjectId });
+  }
+  tenantFilters.push({ tenantId });
+  if (tenantFilters.length > 1) {
+    leaseQuery.$or = tenantFilters;
+  } else if (tenantFilters.length === 1) {
+    Object.assign(leaseQuery, tenantFilters[0]);
+  }
+
+  let primaryLease: Record<string, unknown> | null = null;
+  try {
+    const leaseCursor = leasesCollection.find(leaseQuery).sort({ createdAt: -1 }).limit(1);
+    const leasesFound = await leaseCursor.toArray();
+    primaryLease = leasesFound[0] ?? null;
+  } catch (_error) {
+    primaryLease = null;
+  }
+
+  if (primaryLease) {
+    const leasePropertyId = valueToString((primaryLease as Record<string, unknown>)["propertyId"]);
+    if (leasePropertyId) {
+      propertyCandidates.add(leasePropertyId);
+    }
+    const leaseUnitId = valueToString((primaryLease as Record<string, unknown>)["unitId"]);
+    if (leaseUnitId) {
+      unitCandidates.add(leaseUnitId);
+    }
+  }
+
+  let propertyDoc: Record<string, unknown> | null = null;
+  for (const candidate of propertyCandidates) {
+    const found = await propertiesCollection.findOne({ _id: toId(candidate) });
+    if (found) {
+      propertyDoc = found as Record<string, unknown>;
+      break;
+    }
+  }
+
+  let unitDoc: Record<string, unknown> | null = null;
+  for (const candidate of unitCandidates) {
+    const found = await unitsCollection.findOne({ _id: toId(candidate) });
+    if (found) {
+      unitDoc = found as Record<string, unknown>;
+      break;
+    }
+  }
+
+  if (!propertyDoc && unitDoc) {
+    const unitPropertyId = valueToString(unitDoc["propertyId"]);
+    if (unitPropertyId && !propertyCandidates.has(unitPropertyId)) {
+      const relatedProperty = await propertiesCollection.findOne({ _id: toId(unitPropertyId) });
+      if (relatedProperty) {
+        propertyDoc = relatedProperty as Record<string, unknown>;
+        propertyCandidates.add(unitPropertyId);
+      }
+    }
+  }
+
+  const managerRaw = propertyDoc ? propertyDoc["managerId"] : null;
+  const managerIdStr = valueToString(managerRaw ?? undefined);
+  let managerDoc: Record<string, unknown> | null = null;
+  if (managerIdStr) {
+    const managerLookup = toId(managerIdStr);
+    managerDoc = await usersCollection.findOne(managerLookup ? { _id: managerLookup } : { _id: managerIdStr }) as Record<string, unknown> | null;
+  }
+
+  const propertySummary: TenantPropertySummary | null = propertyDoc
+    ? {
+        id: valueToString((propertyDoc as { _id?: ObjectId })._id) || Array.from(propertyCandidates)[0] || tenantId,
+        name: typeof propertyDoc["name"] === 'string' ? propertyDoc["name"] as string : undefined,
+        address: typeof propertyDoc["address"] === 'string' ? propertyDoc["address"] as string : undefined,
+        managerId: managerIdStr ?? null,
+        type: typeof propertyDoc["type"] === 'string' ? propertyDoc["type"] as string : null
+      }
+    : propertyCandidates.size > 0
+      ? {
+          id: Array.from(propertyCandidates)[0],
+          managerId: managerIdStr ?? null,
+          name: undefined,
+          address: undefined,
+          type: null
+        }
+      : null;
+
+  const unitSummary: TenantUnitSummary | null = unitDoc
+    ? {
+        id: valueToString((unitDoc as { _id?: ObjectId })._id) || (propertySummary ? propertySummary.id : tenantId),
+        unitNumber: typeof unitDoc["unitNumber"] === 'string' ? unitDoc["unitNumber"] as string : undefined,
+        floor: typeof unitDoc["floor"] === 'number' || typeof unitDoc["floor"] === 'string' ? unitDoc["floor"] as string | number : null,
+        bedrooms: typeof unitDoc["bedrooms"] === 'number' ? unitDoc["bedrooms"] as number : null,
+        bathrooms: typeof unitDoc["bathrooms"] === 'number' ? unitDoc["bathrooms"] as number : null,
+        status: typeof unitDoc["status"] === 'string' ? unitDoc["status"] as string : null
+      }
+    : unitCandidates.size > 0
+      ? {
+          id: Array.from(unitCandidates)[0],
+          unitNumber: undefined,
+          floor: null,
+          bedrooms: null,
+          bathrooms: null,
+          status: null
+        }
+      : null;
+
+  const managerSummary: TenantManagerSummary | null = managerDoc
+    ? {
+        id: valueToString((managerDoc as { _id?: ObjectId })._id) || managerIdStr || tenantId,
+        fullName: typeof managerDoc["fullName"] === 'string' ? managerDoc["fullName"] as string : undefined,
+        email: typeof managerDoc["email"] === 'string' ? managerDoc["email"] as string : undefined,
+        phone: typeof managerDoc["phone"] === 'string' ? managerDoc["phone"] as string : undefined
+      }
+    : managerIdStr
+      ? {
+          id: managerIdStr,
+          fullName: undefined,
+          email: undefined,
+          phone: undefined
+        }
+      : null;
+
+  let leaseSummary: TenantLeaseSummary | null = null;
+  if (primaryLease) {
+    const leaseIdValue = valueToString((primaryLease as { _id?: ObjectId })._id) || tenantId;
+    const rentRaw = (primaryLease as Record<string, unknown>)["monthlyRent"];
+    const depositRaw = (primaryLease as Record<string, unknown>)["deposit"];
+    const rentValue = typeof rentRaw === 'number' ? rentRaw : typeof rentRaw === 'string' ? Number(rentRaw) : null;
+    const depositValue = typeof depositRaw === 'number' ? depositRaw : typeof depositRaw === 'string' ? Number(depositRaw) : null;
+    leaseSummary = {
+      id: leaseIdValue,
+      status: typeof primaryLease["status"] === 'string' ? primaryLease["status"] as string : null,
+      startDate: primaryLease["startDate"] instanceof Date || typeof primaryLease["startDate"] === 'string' ? primaryLease["startDate"] as string | Date : null,
+      endDate: primaryLease["endDate"] instanceof Date || typeof primaryLease["endDate"] === 'string' ? primaryLease["endDate"] as string | Date : null,
+      monthlyRent: rentValue,
+      deposit: depositValue
+    };
+  }
+
+  return {
+    tenantId,
+    property: propertySummary,
+    unit: unitSummary,
+    manager: managerSummary,
+    lease: leaseSummary,
+    fetchedAt: new Date().toISOString()
+  };
+}
+
+export async function getTenantContext(tenantId: string) {
+  try {
+    await connectToMongoDB();
+    return await buildTenantContext(tenantId);
+  } catch (error) {
+    console.error("Error fetching tenant context:", error);
     throw error;
   }
 }
@@ -613,6 +898,9 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
+    const profileData = typeof userData.profile === 'object' && userData.profile !== null ? userData.profile as Record<string, unknown> : null;
+    const derivedUnitNumber = profileData && typeof profileData["unitNumber"] === 'string' ? String(profileData["unitNumber"]) : null;
+
     // #COMPLETION_DRIVE: Store the applied unit information in addition to unitId for lease creation context
     // #SUGGEST_VERIFY: Verify that appliedUnitId and appliedUnitNumber match the unit document
     const toInsert = {
@@ -623,7 +911,7 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
       propertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
       appliedPropertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
       appliedUnitId: unitId,
-      appliedUnitNumber: userData.profile?.unitNumber || null,
+      appliedUnitNumber: derivedUnitNumber,
       appliedAt: new Date(),
       createdAt: new Date()
     };
