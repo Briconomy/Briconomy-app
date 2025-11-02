@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { propertiesApi, leasesApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
 function CreateLeasePage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { showToast } = useToast();
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,10 +26,10 @@ function CreateLeasePage() {
   });
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
-    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
-    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: true },
-    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
   // #COMPLETION_DRIVE: Fetch all tenants - these are users who have come from approved applications
@@ -86,7 +90,7 @@ function CreateLeasePage() {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
-            <div className="page-title">Loading...</div>
+            <div className="page-title">{t('createLease.loading')}</div>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -100,7 +104,7 @@ function CreateLeasePage() {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
-            <div className="page-title">Error Loading Data</div>
+            <div className="page-title">{t('createLease.errorLoading')}</div>
             <div className="page-subtitle">{propertiesError || tenantsError}</div>
           </div>
         </div>
@@ -134,11 +138,11 @@ function CreateLeasePage() {
       };
 
       await leasesApi.create(leaseData);
-      alert('Lease created successfully!');
+      showToast(t('createLease.successMessage'), 'success');
       navigate('/manager/leases');
     } catch (error) {
       console.error('Error creating lease:', error);
-      alert('Failed to create lease. Please try again.');
+      showToast(t('createLease.failedMessage'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -160,19 +164,19 @@ function CreateLeasePage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Create New Lease</div>
-          <div className="page-subtitle">Set up a new lease agreement</div>
+          <div className="page-title">{t('createLease.title')}</div>
+          <div className="page-subtitle">{t('createLease.subtitle')}</div>
         </div>
 
         <form onSubmit={handleSubmit} className="lease-form">
           <div className="form-group">
-            <label>Select Tenant *</label>
+            <label>{t('createLease.selectTenant')}</label>
             <select
               value={formData.tenantId}
               onChange={(e) => handleTenantSelection(e.target.value)}
               required
             >
-              <option value="">Choose Tenant</option>
+              <option value="">{t('createLease.chooseTenant')}</option>
               {tenants?.map(tenant => {
                 const tenantId = getEntityId(tenant);
                 if (!tenantId) {
@@ -189,28 +193,28 @@ function CreateLeasePage() {
           </div>
 
           <div className="form-group">
-            <label>Property</label>
+            <label>{t('createLease.property')}</label>
             <input
               type="text"
               value={formData.propertyId ? properties?.find(p => (p._id || p.id) === formData.propertyId)?.name || '' : ''}
               disabled
-              placeholder="Auto-populated from tenant selection"
+              placeholder={t('createLease.autoPopulated')}
             />
           </div>
 
           <div className="form-group">
-            <label>Unit/Apartment</label>
+            <label>{t('createLease.unitApartment')}</label>
             <input
               type="text"
               value={formData.appliedUnitNumber || ''}
               disabled
-              placeholder="Auto-populated from tenant selection"
+              placeholder={t('createLease.autoPopulated')}
             />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>Start Date</label>
+              <label>{t('createLease.startDate')}</label>
               <input
                 type="date"
                 value={formData.startDate}
@@ -219,7 +223,7 @@ function CreateLeasePage() {
               />
             </div>
             <div className="form-group">
-              <label>End Date</label>
+              <label>{t('createLease.endDate')}</label>
               <input
                 type="date"
                 value={formData.endDate}
@@ -231,7 +235,7 @@ function CreateLeasePage() {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Monthly Rent (R)</label>
+              <label>{t('createLease.monthlyRent')}</label>
               <input
                 type="number"
                 value={formData.monthlyRent}
@@ -241,7 +245,7 @@ function CreateLeasePage() {
               />
             </div>
             <div className="form-group">
-              <label>Deposit (R)</label>
+              <label>{t('createLease.deposit')}</label>
               <input
                 type="number"
                 value={formData.deposit}
@@ -253,11 +257,11 @@ function CreateLeasePage() {
           </div>
 
           <div className="form-group">
-            <label>Additional Terms</label>
+            <label>{t('createLease.additionalTerms')}</label>
             <textarea
               value={formData.terms}
               onChange={(e) => handleInputChange('terms', e.target.value)}
-              placeholder="Enter any additional lease terms and conditions..."
+              placeholder={t('createLease.termsPlaceholder')}
               rows={3}
             />
           </div>
@@ -268,14 +272,14 @@ function CreateLeasePage() {
               className="btn btn-secondary createLease-cancel-btn"
               onClick={() => navigate('/manager/leases')}
             >
-              Cancel
+              {t('createLease.cancel')}
             </button>
             <button 
               type="submit"
               className="btn btn-primary createLease-btn"
               disabled={submitting}
             >
-              {submitting ? 'Creating...' : 'Create Lease'}
+              {submitting ? t('createLease.creating') : t('createLease.createLease')}
             </button>
           </div>
         </form>

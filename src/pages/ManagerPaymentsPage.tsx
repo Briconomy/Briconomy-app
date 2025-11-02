@@ -147,14 +147,14 @@ function ManagerPaymentsPage() {
 
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Payments</div>
-          <div className="page-subtitle">Manage tenant payments and invoices</div>
+          <div className="page-title">{t('managerPayments.title')}</div>
+          <div className="page-subtitle">{t('managerPayments.subtitle')}</div>
         </div>
 
         <div className="dashboard-grid">
-          <StatCard value={formatCurrency(stats.totalDue)} label="Total Due" />
-          <StatCard value={stats.overdue} label="Overdue Invoices" />
-          <StatCard value={stats.paid} label="Paid Invoices" />
+          <StatCard value={formatCurrency(stats.totalDue)} label={t('managerPayments.totalDue')} />
+          <StatCard value={stats.overdue} label={t('managerPayments.overdueInvoices')} />
+          <StatCard value={stats.paid} label={t('managerPayments.paidInvoices')} />
         </div>
 
         {stats.overdue > 0 && (
@@ -163,8 +163,12 @@ function ManagerPaymentsPage() {
               <Icon name="alert" alt="Overdue invoices" size={40} />
             </div>
             <div className="alert-banner-content">
-              <div className="alert-title">{`You have ${stats.overdue} overdue ${stats.overdue === 1 ? 'invoice' : 'invoices'}`}</div>
-              <div className="alert-text">Please send reminders to tenants to avoid late payments.</div>
+              <div className="alert-title">
+                {t('managerPayments.overdueAlert')
+                  .replace('{count}', stats.overdue.toString())
+                  .replace('{plural}', stats.overdue === 1 ? t('managerPayments.overdueInvoice') : t('managerPayments.overdueInvoices'))}
+              </div>
+              <div className="alert-text">{t('managerPayments.overdueMessage')}</div>
             </div>
           </div>
         )}
@@ -177,7 +181,7 @@ function ManagerPaymentsPage() {
               className="btn btn-secondary"
               style={{ fontSize: '13px', padding: '8px 12px' }}
             >
-              {showFilters ? '▼ Filters' : '▶ Filters'} {hasActiveFilters && `(${searchTenant || searchProperty || minPrice || maxPrice ? '1' : '0'})`}
+              {showFilters ? '▼ ' : '▶ '}{t('managerPayments.filters')} {hasActiveFilters && `(${searchTenant || searchProperty || minPrice || maxPrice ? '1' : '0'})`}
             </button>
             {hasActiveFilters && (
               <button
@@ -186,7 +190,7 @@ function ManagerPaymentsPage() {
                 className="btn btn-secondary"
                 style={{ fontSize: '12px', padding: '6px 10px', color: 'var(--error-color)' }}
               >
-                Clear filters
+                {t('managerPayments.clearFilters')}
               </button>
             )}
           </div>
@@ -202,13 +206,13 @@ function ManagerPaymentsPage() {
             }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                  Tenant Name
+                  {t('managerPayments.tenantName')}
                 </label>
                 <input
                   type="text"
                   value={searchTenant}
                   onChange={(e) => setSearchTenant(e.target.value)}
-                  placeholder="Search tenant..."
+                  placeholder={t('managerPayments.searchTenant')}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -222,13 +226,13 @@ function ManagerPaymentsPage() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                  Property Name
+                  {t('managerPayments.propertyName')}
                 </label>
                 <input
                   type="text"
                   value={searchProperty}
                   onChange={(e) => setSearchProperty(e.target.value)}
-                  placeholder="Search property..."
+                  placeholder={t('managerPayments.searchProperty')}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -242,13 +246,13 @@ function ManagerPaymentsPage() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                  Min Price
+                  {t('managerPayments.minPrice')}
                 </label>
                 <input
                   type="number"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  placeholder="Min amount..."
+                  placeholder={t('managerPayments.minAmount')}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -262,13 +266,13 @@ function ManagerPaymentsPage() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                  Max Price
+                  {t('managerPayments.maxPrice')}
                 </label>
                 <input
                   type="number"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  placeholder="Max amount..."
+                  placeholder={t('managerPayments.maxAmount')}
                   style={{
                     width: '100%',
                     padding: '10px',
@@ -287,10 +291,10 @@ function ManagerPaymentsPage() {
           <div className="section-card empty-state-card">
             <Icon name="invoice" alt="Invoices" size={48} />
             <div className="empty-state-title">
-              {allInvoices.length === 0 ? 'No invoices' : 'No matching invoices'}
+              {allInvoices.length === 0 ? t('managerPayments.noInvoices') : t('managerPayments.noMatchingInvoices')}
             </div>
             <div className="empty-state-text">
-              {allInvoices.length === 0 ? 'No invoices to display' : 'Try adjusting your filters'}
+              {allInvoices.length === 0 ? t('managerPayments.noInvoicesDisplay') : t('managerPayments.adjustFilters')}
             </div>
           </div>
         ) : (
@@ -303,7 +307,7 @@ function ManagerPaymentsPage() {
                   try {
                     await invoicesApi.download(id, format);
                   } catch (_error) {
-                    showToast('Failed to download invoice', 'error');
+                    showToast(t('managerPayments.downloadFailed'), 'error');
                   }
                 }}
               />

@@ -188,11 +188,11 @@ function ManagerApplicationsPage() {
       
       await managerApi.approveApplication(userId, _user.id);
       
-      setSuccess(`${userName} has been approved and granted property access!`);
+      setSuccess(`${userName} ${t('managerApplications.approveSuccess')}`);
       setApplications(applications.filter(u => u.id !== userId));
       setFilteredApplications(filteredApplications.filter(u => u.id !== userId));
     } catch (err) {
-      setError(`Failed to approve ${userName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(`${t('managerApplications.approveFailed')} ${userName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setProcessing(null);
     }
@@ -218,12 +218,12 @@ function ManagerApplicationsPage() {
       
       await managerApi.rejectApplication(rejectingUserId, _user.id, rejectionReason);
       
-      setSuccess(`${rejectingUserName}'s application has been rejected. If they have an account, they can browse and apply for other properties.`);
+      setSuccess(`${rejectingUserName}${t('managerApplications.rejectSuccess')}`);
       setApplications(applications.filter(u => u.id !== rejectingUserId));
       setFilteredApplications(filteredApplications.filter(u => u.id !== rejectingUserId));
       setShowRejectModal(false);
     } catch (err) {
-      setError(`Failed to reject ${rejectingUserName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(`${t('managerApplications.rejectFailed')} ${rejectingUserName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setProcessing(null);
       setRejectingUserId('');
@@ -268,7 +268,7 @@ function ManagerApplicationsPage() {
     : {};
   const mostPopularProperty = Object.keys(topProperty).length > 0 
     ? Object.keys(topProperty).reduce((a, b) => topProperty[a] > topProperty[b] ? a : b)
-    : 'None';
+    : t('managerApplications.none');
 
   // Handle loading state
   if (loading) {
@@ -278,7 +278,7 @@ function ManagerApplicationsPage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading applications...</p>
+            <p>{t('managerApplications.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -294,8 +294,8 @@ function ManagerApplicationsPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Rental Applications</div>
-          <div className="page-subtitle">Review and approve or reject applications for your properties</div>
+          <div className="page-title">{t('managerApplications.title')}</div>
+          <div className="page-subtitle">{t('managerApplications.subtitle')}</div>
         </div>
 
         {error && (
@@ -311,14 +311,14 @@ function ManagerApplicationsPage() {
         )}
 
         <div className="dashboard-grid">
-          <StatCard value={totalApplications.toString()} label="Total Applications" />
-          <StatCard value={filteredApplications.length.toString()} label="Showing" />
-          <StatCard value={formatCurrency(avgIncome)} label="Avg Income" />
-          <StatCard value={mostPopularProperty} label="Popular Property" />
+          <StatCard value={totalApplications.toString()} label={t('managerApplications.totalApplications')} />
+          <StatCard value={filteredApplications.length.toString()} label={t('managerApplications.showing')} />
+          <StatCard value={formatCurrency(avgIncome)} label={t('managerApplications.avgIncome')} />
+          <StatCard value={mostPopularProperty} label={t('managerApplications.popularProperty')} />
         </div>
 
         <SearchFilter
-          placeholder="Search applications by name, email, property, or occupation..."
+          placeholder={t('managerApplications.searchPlaceholder')}
           onSearch={handleSearch}
           filters={[]}
           onFilterChange={() => {}}
@@ -334,12 +334,12 @@ function ManagerApplicationsPage() {
           }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
             <h3 style={{ marginBottom: '8px', color: '#2c3e50' }}>
-              {searchTerm ? 'No matching applications' : 'No Pending Applications'}
+              {searchTerm ? t('managerApplications.noMatching') : t('managerApplications.noPending')}
             </h3>
             <p style={{ color: '#6c757d' }}>
               {searchTerm 
-                ? `No applications match "${searchTerm}"`
-                : 'All applications for your properties have been processed'
+                ? `${t('managerApplications.noMatchText')} "${searchTerm}"`
+                : t('managerApplications.allProcessed')
               }
             </p>
             {searchTerm && (
@@ -357,14 +357,14 @@ function ManagerApplicationsPage() {
                   fontWeight: '600'
                 }}
               >
-                Clear Search
+                {t('managerApplications.clearSearch')}
               </button>
             )}
           </div>
         ) : (
           <>
             <div className="results-info">
-              <span>{filteredApplications.length} {filteredApplications.length === 1 ? 'application' : 'applications'}</span>
+              <span>{filteredApplications.length} {filteredApplications.length === 1 ? t('managerApplications.application') : t('managerApplications.applications')}</span>
             </div>
 
             <div className="applications-list">
@@ -388,7 +388,7 @@ function ManagerApplicationsPage() {
                           {application.fullName}
                         </h3>
                         <p style={{ margin: '0', fontSize: '14px', color: '#6c757d' }}>
-                          Applied: {formatDate(application.appliedAt)}
+                          {t('managerApplications.applied')}: {formatDate(application.appliedAt)}
                         </p>
                       </div>
                       <span style={{
@@ -399,7 +399,7 @@ function ManagerApplicationsPage() {
                         fontSize: '12px',
                         fontWeight: '600'
                       }}>
-                        PENDING
+                        {t('managerApplications.pending')}
                       </span>
                     </div>
                     
@@ -411,7 +411,7 @@ function ManagerApplicationsPage() {
                         borderRadius: '8px',
                         marginBottom: '12px'
                       }}>
-                        <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>Applied for Property</div>
+                        <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>{t('managerApplications.appliedFor')}</div>
                         <div style={{ fontSize: '16px', fontWeight: '600' }}>{application.property.name}</div>
                         <div style={{ fontSize: '14px', opacity: 0.9 }}>{application.property.address}</div>
                       </div>
@@ -428,40 +428,40 @@ function ManagerApplicationsPage() {
                     borderRadius: '8px'
                   }}>
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Email</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.email')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{application.email}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Phone</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.phone')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{application.phone}</div>
                     </div>
                     {application.profile.unitNumber && (
                       <div>
-                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Preferred Unit</div>
+                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.preferredUnit')}</div>
                         <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{application.profile.unitNumber}</div>
                       </div>
                     )}
                     {application.profile.occupation && (
                       <div>
-                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Occupation</div>
+                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.occupation')}</div>
                         <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{application.profile.occupation}</div>
                       </div>
                     )}
                     {application.profile.monthlyIncome && (
                       <div>
-                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Monthly Income</div>
+                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.monthlyIncome')}</div>
                         <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{formatCurrency(application.profile.monthlyIncome)}</div>
                       </div>
                     )}
                     {application.profile.moveInDate && (
                       <div>
-                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Preferred Move-in Date</div>
+                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.moveInDate')}</div>
                         <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{formatDate(application.profile.moveInDate)}</div>
                       </div>
                     )}
                     {application.profile.emergencyContact && (
                       <div>
-                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Emergency Contact</div>
+                        <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('managerApplications.emergencyContact')}</div>
                         <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>
                           {typeof application.profile.emergencyContact === 'string' 
                             ? application.profile.emergencyContact
@@ -480,7 +480,7 @@ function ManagerApplicationsPage() {
                       className="btn btn-primary"
                       style={{ flex: 1 }}
                     >
-                      {processing === application.id ? 'Processing...' : '✓ Approve'}
+                      {processing === application.id ? t('managerApplications.processing') : t('managerApplications.approve')}
                     </button>
                     <button
                       type="button"
@@ -492,7 +492,7 @@ function ManagerApplicationsPage() {
                         opacity: processing === application.id ? 0.6 : 1
                       }}
                     >
-                      {processing === application.id ? 'Processing...' : '✗ Reject'}
+                      {processing === application.id ? t('managerApplications.processing') : t('managerApplications.reject')}
                     </button>
                   </div>
                 </div>
@@ -507,17 +507,17 @@ function ManagerApplicationsPage() {
       {showRejectModal && (
         <Modal
           isOpen={showRejectModal}
-          title="Reject Application"
+          title={t('managerApplications.rejectTitle')}
           onClose={handleRejectCancel}
         >
           <div style={{ marginBottom: '20px' }}>
             <p style={{ marginBottom: '16px', color: '#6c757d' }}>
-              Please provide a reason for rejecting {rejectingUserName}'s application:
+              {t('managerApplications.rejectReason')} {rejectingUserName}{t('managerApplications.rejectReasonSuffix')}:
             </p>
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Enter rejection reason (optional)..."
+              placeholder={t('managerApplications.rejectPlaceholder')}
               style={{
                 width: '100%',
                 minHeight: '100px',
@@ -536,7 +536,7 @@ function ManagerApplicationsPage() {
               onClick={handleRejectCancel}
               className="btn btn-secondary"
             >
-              Cancel
+              {t('managerApplications.cancel')}
             </button>
             <button
               type="button"
@@ -547,7 +547,7 @@ function ManagerApplicationsPage() {
                 opacity: processing === rejectingUserId ? 0.6 : 1
               }}
             >
-              {processing === rejectingUserId ? 'Processing...' : 'Reject Application'}
+              {processing === rejectingUserId ? t('managerApplications.processing') : t('managerApplications.rejectButton')}
             </button>
           </div>
         </Modal>

@@ -4,6 +4,8 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
 type MaintenanceStatus = 'pending' | 'in_progress' | 'completed';
 type MaintenancePriority = 'high' | 'medium' | 'low';
@@ -27,6 +29,8 @@ type MaintenanceRequest = {
 };
 
 function ManagerMaintenancePage() {
+  const { t } = useLanguage();
+  const { showToast } = useToast();
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -37,10 +41,10 @@ function ManagerMaintenancePage() {
   const [filterAssignment, setFilterAssignment] = useState<'all' | 'assigned' | 'unassigned'>('all');
   
   const navItems = [
-    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
-    { path: '/manager/properties', label: 'Properties', icon: 'properties', active: false },
-    { path: '/manager/leases', label: 'Leases', icon: 'lease', active: false },
-    { path: '/manager/payments', label: 'Payments', icon: 'payment', active: false }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties', active: false },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: false },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment', active: false }
   ];
 
   const { data: maintenance, loading: maintenanceLoading, refetch: refetchMaintenance } = useApi<MaintenanceRequest[]>(
@@ -57,9 +61,9 @@ function ManagerMaintenancePage() {
 
   // Simple caretaker options (1, 2, or 3)
   const caretakers = [
-    { id: '1', name: 'Caretaker 1' },
-    { id: '2', name: 'Caretaker 2' },
-    { id: '3', name: 'Caretaker 3' }
+    { id: '1', name: t('managerMaintenance.caretaker1') },
+    { id: '2', name: t('managerMaintenance.caretaker2') },
+    { id: '3', name: t('managerMaintenance.caretaker3') }
   ];
 
   // Filter maintenance requests
@@ -110,7 +114,7 @@ function ManagerMaintenancePage() {
 
   const handleAssignCaretaker = async (requestId: string) => {
     if (!selectedCaretaker) {
-      alert('Please select a caretaker');
+      showToast(t('managerMaintenance.selectCaretakerError'), 'error');
       return;
     }
 
@@ -123,15 +127,15 @@ function ManagerMaintenancePage() {
       setShowAssignModal(false);
       setSelectedCaretaker('');
       setSelectedRequest(null);
-      alert('Caretaker assigned successfully');
+      showToast(t('managerMaintenance.assignSuccess'), 'success');
     } catch (error) {
       console.error('Error assigning caretaker:', error);
-      alert('Failed to assign caretaker. Please try again.');
+      showToast(t('managerMaintenance.assignFailed'), 'error');
     }
   };
 
   const handleDeleteRequest = async (requestId: string) => {
-    if (!confirm('Are you sure you want to delete this maintenance request? This action cannot be undone.')) {
+    if (!confirm(t('managerMaintenance.deleteConfirm'))) {
       return;
     }
 
@@ -140,10 +144,10 @@ function ManagerMaintenancePage() {
       await refetchMaintenance();
       setShowDetails(false);
       setSelectedRequest(null);
-      alert('Maintenance request deleted successfully');
+      showToast(t('managerMaintenance.deleteSuccess'), 'success');
     } catch (error) {
       console.error('Error deleting maintenance request:', error);
-      alert('Failed to delete maintenance request. Please try again.');
+      showToast(t('managerMaintenance.deleteFailed'), 'error');
     }
   };
 
@@ -215,9 +219,9 @@ function ManagerMaintenancePage() {
 
   const formatStatusText = (status: MaintenanceStatus) => {
     switch (status) {
-      case 'in_progress': return 'In Progress';
-      case 'pending': return 'Pending';
-      case 'completed': return 'Completed';
+      case 'in_progress': return t('managerMaintenance.inProgress');
+      case 'pending': return t('managerMaintenance.pending');
+      case 'completed': return t('managerMaintenance.completed');
       default: return status;
     }
   };
@@ -266,23 +270,23 @@ function ManagerMaintenancePage() {
           )}
           <br />
           <span className="text-xs text-gray-500">
-            Created: {formatDate(request.createdAt)}
+            {t('managerMaintenance.created')} {formatDate(request.createdAt)}
           </span>
           <br />
           {request.assignedTo ? (
             <span className="text-xs text-blue-600">
-              Assigned to: {request.assignedTo}
+              {t('managerMaintenance.assignedTo')} {request.assignedTo}
             </span>
           ) : (
             <span className="text-xs text-orange-600">
-              Unassigned
+              {t('managerMaintenance.unassigned')}
             </span>
           )}
           {request.estimatedCost && (
             <>
               <br />
               <span className="text-xs text-blue-600">
-                Est: {formatCurrency(request.estimatedCost)}
+                {t('managerMaintenance.estimatedCost')} {formatCurrency(request.estimatedCost)}
               </span>
             </>
           )}
@@ -296,7 +300,7 @@ function ManagerMaintenancePage() {
             style={{ fontSize: '13px', padding: '6px 12px' }}
             onClick={() => handleViewDetails(request)}
           >
-            View Details
+            {t('managerMaintenance.viewDetails')}
           </button>
           {request.status !== 'completed' && (
             <button
@@ -305,7 +309,7 @@ function ManagerMaintenancePage() {
               style={{ fontSize: '13px', padding: '6px 12px' }}
               onClick={() => openAssignModal(request)}
             >
-              {request.assignedTo ? 'Reassign' : 'Assign'}
+              {request.assignedTo ? t('managerMaintenance.reassign') : t('managerMaintenance.assign')}
             </button>
           )}
         </div>
@@ -320,7 +324,7 @@ function ManagerMaintenancePage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading maintenance requests...</p>
+            <p>{t('managerMaintenance.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -334,70 +338,70 @@ function ManagerMaintenancePage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Maintenance Requests</div>
+          <div className="page-title">{t('managerMaintenance.title')}</div>
           <div className="page-subtitle">
-            Manage and track maintenance across all properties
+            {t('managerMaintenance.subtitle')}
           </div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={pendingRequests} label="Pending" />
-          <StatCard value={inProgressRequests} label="In Progress" />
-          <StatCard value={completedRequests} label="Completed" />
-          <StatCard value={unassignedRequests} label="Unassigned" />
+          <StatCard value={pendingRequests} label={t('managerMaintenance.pending')} />
+          <StatCard value={inProgressRequests} label={t('managerMaintenance.inProgress')} />
+          <StatCard value={completedRequests} label={t('managerMaintenance.completed')} />
+          <StatCard value={unassignedRequests} label={t('managerMaintenance.unassigned')} />
         </div>
 
         {/* Filters */}
         <div className="filter-section">
           <div className="filter-group">
-            <label className="filter-label">Status:</label>
+            <label className="filter-label">{t('managerMaintenance.filterStatus')}</label>
             <select 
               className="filter-select"
               value={filterStatus}
               onChange={handleStatusFilterChange}
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="all">{t('managerMaintenance.allStatus')}</option>
+              <option value="pending">{t('managerMaintenance.pending')}</option>
+              <option value="in_progress">{t('managerMaintenance.inProgress')}</option>
+              <option value="completed">{t('managerMaintenance.completed')}</option>
             </select>
           </div>
           <div className="filter-group">
-            <label className="filter-label">Priority:</label>
+            <label className="filter-label">{t('managerMaintenance.filterPriority')}</label>
             <select 
               className="filter-select"
               value={filterPriority}
               onChange={handlePriorityFilterChange}
             >
-              <option value="all">All Priorities</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="all">{t('managerMaintenance.allPriorities')}</option>
+              <option value="high">{t('managerMaintenance.high')}</option>
+              <option value="medium">{t('managerMaintenance.medium')}</option>
+              <option value="low">{t('managerMaintenance.low')}</option>
             </select>
           </div>
           <div className="filter-group">
-            <label className="filter-label">Property:</label>
+            <label className="filter-label">{t('managerMaintenance.filterProperty')}</label>
             <select 
               className="filter-select"
               value={filterProperty}
               onChange={handlePropertyFilterChange}
             >
-              <option value="all">All Properties</option>
+              <option value="all">{t('managerMaintenance.allProperties')}</option>
               {properties.map(property => (
                 <option key={property} value={property}>{property}</option>
               ))}
             </select>
           </div>
           <div className="filter-group">
-            <label className="filter-label">Assignment:</label>
+            <label className="filter-label">{t('managerMaintenance.filterAssignment')}</label>
             <select 
               className="filter-select"
               value={filterAssignment}
               onChange={handleAssignmentFilterChange}
             >
-              <option value="all">All Tasks</option>
-              <option value="assigned">Assigned</option>
-              <option value="unassigned">Unassigned</option>
+              <option value="all">{t('managerMaintenance.allTasks')}</option>
+              <option value="assigned">{t('managerMaintenance.assigned')}</option>
+              <option value="unassigned">{t('managerMaintenance.unassigned')}</option>
             </select>
           </div>
         </div>
@@ -405,15 +409,15 @@ function ManagerMaintenancePage() {
         {/* Maintenance Requests List */}
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Maintenance Requests</div>
+            <div className="table-title">{t('managerMaintenance.maintenanceRequests')}</div>
             <div className="text-sm text-gray-500">
-              {filteredRequests.length} requests
+              {t('managerMaintenance.requestsCount').replace('{count}', filteredRequests.length.toString())}
             </div>
           </div>
           
           {filteredRequests.length === 0 ? (
             <div className="no-results">
-              <p>No maintenance requests found</p>
+              <p>{t('managerMaintenance.noRequests')}</p>
             </div>
           ) : (
             filteredRequests
@@ -423,22 +427,22 @@ function ManagerMaintenancePage() {
         </div>
 
         {/* Performance Summary */}
-        <ChartCard title="Maintenance Performance">
+        <ChartCard title={t('managerMaintenance.performanceTitle')}>
           <div className="performance-stats">
             <div className="stat-row">
-              <div className="stat-label">Total Completed:</div>
+              <div className="stat-label">{t('managerMaintenance.totalCompleted')}</div>
               <div className="stat-value">{completedRequests}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Average Resolution Time:</div>
+              <div className="stat-label">{t('managerMaintenance.avgResolution')}</div>
               <div className="stat-value">{formatDuration(avgResolutionTime)}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Total Cost:</div>
+              <div className="stat-label">{t('managerMaintenance.totalCost')}</div>
               <div className="stat-value">{formatCurrency(totalCost)}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">High Priority Issues:</div>
+              <div className="stat-label">{t('managerMaintenance.highPriorityIssues')}</div>
               <div className="stat-value">{highPriorityRequests}</div>
             </div>
           </div>
@@ -452,7 +456,7 @@ function ManagerMaintenancePage() {
         <div className="modal-overlay" onClick={handleCloseDetails}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Maintenance Request Details</h3>
+              <h3>{t('managerMaintenance.detailsTitle')}</h3>
               <button type="button" className="modal-close" onClick={handleCloseDetails}>×</button>
             </div>
             
@@ -463,56 +467,56 @@ function ManagerMaintenancePage() {
                   {formatStatusText(selectedRequest.status)}
                 </span>
                 <span className={`ml-2 text-sm ${getPriorityColor(selectedRequest.priority)}`}>
-                  {selectedRequest.priority.toUpperCase()} Priority
+                  {selectedRequest.priority.toUpperCase()} {t('managerMaintenance.priority')}
                 </span>
               </div>
 
               <div className="detail-section">
-                <label>Description:</label>
+                <label>{t('managerMaintenance.description')}</label>
                 <p>{selectedRequest.description}</p>
               </div>
 
               <div className="detail-section">
-                <label>Property & Unit:</label>
+                <label>{t('managerMaintenance.propertyUnit')}</label>
                 <p>{selectedRequest.property} {selectedRequest.unit && `- Unit ${selectedRequest.unit}`}</p>
               </div>
 
               <div className="detail-section">
-                <label>Assignment:</label>
-                <p>{selectedRequest.assignedTo ? `Assigned to: ${selectedRequest.assignedTo}` : 'Unassigned'}</p>
+                <label>{t('managerMaintenance.assignment')}</label>
+                <p>{selectedRequest.assignedTo ? `${t('managerMaintenance.assignedTo')} ${selectedRequest.assignedTo}` : t('managerMaintenance.unassigned')}</p>
               </div>
 
               <div className="detail-section">
-                <label>Dates:</label>
-                <p>Created: {formatDate(selectedRequest.createdAt)}</p>
-                <p>Last Updated: {formatDate(selectedRequest.updatedAt)}</p>
+                <label>{t('managerMaintenance.dates')}</label>
+                <p>{t('managerMaintenance.created')} {formatDate(selectedRequest.createdAt)}</p>
+                <p>{t('managerMaintenance.lastUpdated')} {formatDate(selectedRequest.updatedAt)}</p>
                 {selectedRequest.completedDate && (
-                  <p>Completed: {formatDate(selectedRequest.completedDate)}</p>
+                  <p>{t('managerMaintenance.completed')}: {formatDate(selectedRequest.completedDate)}</p>
                 )}
               </div>
 
               {(selectedRequest.estimatedCost || selectedRequest.actualCost) && (
                 <div className="detail-section">
-                  <label>Costs:</label>
+                  <label>{t('managerMaintenance.costs')}</label>
                   {selectedRequest.estimatedCost && (
-                    <p>Estimated: {formatCurrency(selectedRequest.estimatedCost)}</p>
+                    <p>{t('managerMaintenance.estimated')} {formatCurrency(selectedRequest.estimatedCost)}</p>
                   )}
                   {selectedRequest.actualCost && (
-                    <p>Actual: {formatCurrency(selectedRequest.actualCost)}</p>
+                    <p>{t('managerMaintenance.actual')} {formatCurrency(selectedRequest.actualCost)}</p>
                   )}
                 </div>
               )}
 
               {selectedRequest.notes && (
                 <div className="detail-section">
-                  <label>Notes:</label>
+                  <label>{t('managerMaintenance.notes')}</label>
                   <p>{selectedRequest.notes}</p>
                 </div>
               )}
 
               {selectedRequest.images && selectedRequest.images.length > 0 && (
                 <div className="detail-section">
-                  <label>Images:</label>
+                  <label>{t('managerMaintenance.images')}</label>
                   <div className="image-list">
                     {selectedRequest.images.map((image, idx) => (
                       <div key={idx} className="image-item">{image}</div>
@@ -536,7 +540,7 @@ function ManagerMaintenancePage() {
                   padding: '8px 12px'
                 }}
               >
-                Delete
+                {t('managerMaintenance.delete')}
               </button>
               <button 
                 type="button" 
@@ -544,7 +548,7 @@ function ManagerMaintenancePage() {
                 onClick={handleCloseDetails}
                 style={{ whiteSpace: 'nowrap' }}
               >
-                Close
+                {t('managerMaintenance.close')}
               </button>
             </div>
           </div>
@@ -555,7 +559,7 @@ function ManagerMaintenancePage() {
         <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
             <div className="modal-header">
-              <h3>{selectedRequest.assignedTo ? 'Reassign' : 'Assign'} Caretaker</h3>
+              <h3>{selectedRequest.assignedTo ? t('managerMaintenance.reassignCaretakerTitle') : t('managerMaintenance.assignCaretakerTitle')}</h3>
               <button type="button" className="modal-close" onClick={() => setShowAssignModal(false)}>&times;</button>
             </div>
             <div className="modal-body">
@@ -563,7 +567,7 @@ function ManagerMaintenancePage() {
                 <h4 style={{ fontSize: '16px', marginBottom: '8px' }}>{selectedRequest.title}</h4>
                 <p className="text-sm text-gray-600">{selectedRequest.property}</p>
                 <span className={`status-badge ${getStatusColor(selectedRequest.status)}`}>
-                  {selectedRequest.status.replace('_', ' ').toUpperCase()}
+                  {formatStatusText(selectedRequest.status)}
                 </span>
               </div>
 
@@ -576,14 +580,14 @@ function ManagerMaintenancePage() {
                   borderLeft: '3px solid #0ea5e9'
                 }}>
                   <p className="text-sm">
-                    <strong>Currently assigned to:</strong> {selectedRequest.assignedTo}
+                    <strong>{t('managerMaintenance.currentlyAssigned')}</strong> {selectedRequest.assignedTo}
                   </p>
                 </div>
               )}
 
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Select Caretaker
+                  {t('managerMaintenance.selectCaretaker')}
                 </label>
                 <select
                   className="filter-select"
@@ -591,7 +595,7 @@ function ManagerMaintenancePage() {
                   onChange={handleCaretakerChange}
                   style={{ width: '100%', padding: '10px', fontSize: '14px' }}
                 >
-                  <option value="">-- Select a caretaker --</option>
+                  <option value="">{t('managerMaintenance.selectCaretakerPlaceholder')}</option>
                   {caretakers.map((c) => (
                     <option key={c.id} value={c.name}>
                       {c.name}
@@ -608,13 +612,13 @@ function ManagerMaintenancePage() {
                 color: '#6b7280'
               }}>
                 <p style={{ marginBottom: '4px' }}>
-                  <strong>Note:</strong> {selectedRequest.assignedTo ? 'Reassigning' : 'Assigning'} will:
+                  <strong>{t('managerMaintenance.assignNote')}</strong> {selectedRequest.assignedTo ? t('managerMaintenance.reassigningWill') : t('managerMaintenance.assigningWill')}
                 </p>
                 <ul style={{ marginLeft: '20px', marginTop: '4px' }}>
-                  <li>Change status to "In Progress"</li>
-                  <li>Notify the selected caretaker</li>
+                  <li>{t('managerMaintenance.changeStatus')}</li>
+                  <li>{t('managerMaintenance.notifyCaretaker')}</li>
                   {selectedRequest.assignedTo && (
-                    <li>Notify the previous caretaker of reassignment</li>
+                    <li>{t('managerMaintenance.notifyPrevious')}</li>
                   )}
                 </ul>
               </div>
@@ -629,7 +633,7 @@ function ManagerMaintenancePage() {
                 }}
                 style={{ whiteSpace: 'nowrap' }}
               >
-                Cancel
+                {t('createLease.cancel')}
               </button>
               <button
                 type="button"
@@ -638,7 +642,7 @@ function ManagerMaintenancePage() {
                 disabled={!selectedCaretaker}
                 style={{ whiteSpace: 'nowrap', fontSize: '14px' }}
               >
-                {selectedRequest.assignedTo ? 'Reassign' : 'Assign'}
+                {selectedRequest.assignedTo ? t('managerMaintenance.reassign') : t('managerMaintenance.assign')}
               </button>
             </div>
           </div>
