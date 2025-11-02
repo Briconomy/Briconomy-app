@@ -366,7 +366,35 @@ serve(async (req) => {
 
     // Users endpoints
     if (path[0] === 'api' && path[1] === 'users') {
-      if (req.method === 'GET') {
+      if (path[2] && req.method === 'GET') {
+        const userId = path[2];
+        try {
+          await connectToMongoDB();
+          const users = getCollection("users");
+          const user = await users.findOne({ _id: new ObjectId(userId) });
+          if (!user) {
+            return new Response(JSON.stringify({ error: 'User not found' }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 404
+            });
+          }
+          const sanitizedUser = {
+            id: user._id?.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            userType: user.userType,
+            phone: user.phone
+          };
+          return new Response(JSON.stringify(sanitizedUser), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (_error) {
+          return new Response(JSON.stringify({ error: 'Invalid user ID' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      } else if (req.method === 'GET') {
         try {
           await connectToMongoDB();
           const users = getCollection("users");
@@ -480,7 +508,32 @@ serve(async (req) => {
     }
 
     if (path[0] === 'api' && path[1] === 'units') {
-      if (req.method === 'GET') {
+      if (path[2] && req.method === 'GET') {
+        const unitId = path[2];
+        const units = getCollection("units");
+        const unit = await units.findOne({ _id: new ObjectId(unitId) });
+        if (!unit) {
+          return new Response(JSON.stringify({ error: 'Unit not found' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404
+          });
+        }
+        const unitResponse = {
+          id: unit._id.toString(),
+          unitNumber: unit.unitNumber,
+          propertyId: unit.propertyId?.toString(),
+          rent: unit.rent,
+          bedrooms: unit.bedrooms,
+          bathrooms: unit.bathrooms,
+          sqft: unit.sqft,
+          status: unit.status,
+          features: unit.features,
+          floor: unit.floor
+        };
+        return new Response(JSON.stringify(unitResponse), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET') {
         const propertyId = url.searchParams.get('propertyId');
         const units = await getUnits(propertyId || undefined);
         return new Response(JSON.stringify(units), {
@@ -506,7 +559,9 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
+        console.log('[POST /api/leases] Creating lease with data:', JSON.stringify(body, null, 2));
         const lease = await createLease(body);
+        console.log('[POST /api/leases] Created lease:', JSON.stringify(lease, null, 2));
 
         try {
           const leaseRecord = lease as Record<string, unknown>;
@@ -523,17 +578,47 @@ serve(async (req) => {
           const month = startDate.toLocaleString('default', { month: 'long' });
           const year = startDate.getFullYear();
 
+          const tenantName = typeof leaseRecord.tenant === 'object' && leaseRecord.tenant !== null 
+            ? (leaseRecord.tenant as Record<string, unknown>).fullName as string | undefined
+            : undefined;
+          
+          const propertyName = typeof leaseRecord.property === 'object' && leaseRecord.property !== null 
+            ? (leaseRecord.property as Record<string, unknown>).name as string | undefined
+            : undefined;
+          
+          const propertyAddress = typeof leaseRecord.property === 'object' && leaseRecord.property !== null 
+            ? (leaseRecord.property as Record<string, unknown>).address as string | undefined
+            : undefined;
+
+          let managerId = undefined;
+          if (leaseRecord.propertyId) {
+            const properties = getCollection("properties");
+            const property = await properties.findOne({ _id: new ObjectId(leaseRecord.propertyId as string) });
+            if (property && property.managerId) {
+              managerId = property.managerId;
+            }
+          }
+
+          const dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + 1);
+          dueDate.setDate(1);
+
           await createInvoice({
             tenantId: leaseRecord.tenantId,
             leaseId: leaseRecord.id,
+            propertyId: leaseRecord.propertyId,
+            managerId: managerId,
             amount: (leaseRecord.monthlyRent as number | undefined) ?? 0,
             issueDate: startDate.toISOString().split('T')[0],
-            dueDate: 'monthly',
+            dueDate: dueDate.toISOString().split('T')[0],
             month: month,
             year: year,
             status: 'active',
             description: `Monthly rent for ${month} ${year}`,
-            source: 'lease'
+            source: 'lease',
+            tenantName: tenantName || 'Tenant',
+            propertyName: propertyName,
+            propertyAddress: propertyAddress
           });
         } catch (invoiceError) {
           console.error('Failed to create automatic invoice for lease:', invoiceError);

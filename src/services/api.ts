@@ -77,10 +77,15 @@ export const unitsApi = {
     const endpoint = propertyId ? `/api/units?propertyId=${propertyId}` : '/api/units';
     return apiRequest(endpoint);
   },
+  getById: (id: string) => apiRequest(`/api/units/${id}`),
   create: (data: Record<string, unknown>) => apiRequest('/api/units', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+};
+
+export const usersApi = {
+  getById: (id: string) => apiRequest(`/api/users/${id}`),
 };
 
 export const leasesApi = {

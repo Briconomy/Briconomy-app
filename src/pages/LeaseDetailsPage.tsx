@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
-import { leasesApi, documentsApi, formatCurrency } from '../services/api.ts';
+import { leasesApi, documentsApi, propertiesApi, unitsApi, usersApi, formatCurrency } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
 
@@ -13,6 +13,9 @@ function LeaseDetailsPage() {
   const { t } = useLanguage();
   const { showToast } = useToast();
   const [lease, setLease] = useState(null);
+  const [property, setProperty] = useState(null);
+  const [unit, setUnit] = useState(null);
+  const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sendingDocument, setSendingDocument] = useState(false);
 
@@ -26,10 +29,10 @@ function LeaseDetailsPage() {
     try {
       const leaseContent = `LEASE AGREEMENT
 
-Tenant: ${lease.tenant?.fullName || 'N/A'}
-Property: ${lease.property?.name || 'N/A'}
-Address: ${lease.property?.address || 'N/A'}
-Unit: ${lease.unit?.unitNumber || 'N/A'}
+Tenant: ${tenant?.fullName || lease.tenant?.fullName || 'N/A'}
+Property: ${property?.name || lease.property?.name || 'N/A'}
+Address: ${property?.address || lease.property?.address || 'N/A'}
+Unit: ${unit?.unitNumber || lease.unit?.unitNumber || 'N/A'}
 
 LEASE TERMS:
 Start Date: ${lease.startDate ? new Date(lease.startDate).toLocaleDateString() : 'N/A'}
@@ -88,6 +91,46 @@ Renewal Option: ${lease.renewalOption ? 'Yes' : 'No'}`;
         const leases = await leasesApi.getAll();
         const foundLease = leases.find(l => l.id === id);
         setLease(foundLease);
+
+        if (foundLease) {
+          console.log('[LeaseDetailsPage] Lease data:', foundLease);
+          console.log('[LeaseDetailsPage] propertyId:', foundLease.propertyId);
+          console.log('[LeaseDetailsPage] unitId:', foundLease.unitId);
+          console.log('[LeaseDetailsPage] tenantId:', foundLease.tenantId);
+
+          if (foundLease.propertyId) {
+            try {
+              console.log('[LeaseDetailsPage] Fetching property:', foundLease.propertyId);
+              const propertyData = await propertiesApi.getById(foundLease.propertyId);
+              console.log('[LeaseDetailsPage] Property data:', propertyData);
+              setProperty(propertyData);
+            } catch (err) {
+              console.error('Error fetching property:', err);
+            }
+          }
+
+          if (foundLease.unitId) {
+            try {
+              console.log('[LeaseDetailsPage] Fetching unit:', foundLease.unitId);
+              const unitData = await unitsApi.getById(foundLease.unitId);
+              console.log('[LeaseDetailsPage] Unit data:', unitData);
+              setUnit(unitData);
+            } catch (err) {
+              console.error('Error fetching unit:', err);
+            }
+          }
+
+          if (foundLease.tenantId) {
+            try {
+              console.log('[LeaseDetailsPage] Fetching tenant:', foundLease.tenantId);
+              const tenantData = await usersApi.getById(foundLease.tenantId);
+              console.log('[LeaseDetailsPage] Tenant data:', tenantData);
+              setTenant(tenantData);
+            } catch (err) {
+              console.error('Error fetching tenant:', err);
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching lease:', error);
       } finally {
@@ -184,15 +227,15 @@ Renewal Option: ${lease.renewalOption ? 'Yes' : 'No'}`;
           </h3>
           <div className="detail-row">
             <span className="detail-label">{t('lease.tenant')}:</span>
-            <span className="detail-value">{lease.tenant?.fullName || 'N/A'}</span>
+            <span className="detail-value">{tenant?.fullName || lease.tenant?.fullName || 'N/A'}</span>
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('lease.email')}:</span>
-            <span className="detail-value">{lease.tenant?.email || 'N/A'}</span>
+            <span className="detail-value">{tenant?.email || lease.tenant?.email || 'N/A'}</span>
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('lease.phone')}:</span>
-            <span className="detail-value">{lease.tenant?.phone || 'N/A'}</span>
+            <span className="detail-value">{tenant?.phone || lease.tenant?.phone || 'N/A'}</span>
           </div>
         </div>
 
@@ -208,15 +251,15 @@ Renewal Option: ${lease.renewalOption ? 'Yes' : 'No'}`;
           </h3>
           <div className="detail-row">
             <span className="detail-label">{t('lease.property')}:</span>
-            <span className="detail-value">{lease.property?.name || 'N/A'}</span>
+            <span className="detail-value">{property?.name || lease.property?.name || 'N/A'}</span>
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('common.address')}:</span>
-            <span className="detail-value">{lease.property?.address || 'N/A'}</span>
+            <span className="detail-value">{property?.address || lease.property?.address || 'N/A'}</span>
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('lease.unit')}:</span>
-            <span className="detail-value">{lease.unit?.unitNumber || 'N/A'}</span>
+            <span className="detail-value">{unit?.unitNumber || lease.unit?.unitNumber || 'N/A'}</span>
           </div>
         </div>
 

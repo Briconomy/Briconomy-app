@@ -1090,17 +1090,10 @@ export async function getPendingUsers() {
     const pendingUsers = getCollection("pending_users");
     const properties = getCollection("properties");
 
-    // #COMPLETION_DRIVE: Fetch both pending and admin_approved applications for admin view
-    // #SUGGEST_VERIFY: Ensure admins see all applications that need attention
     const users = await pendingUsers.find({
-      $or: [
-        { status: 'pending' },
-        { status: 'admin_approved' }
-      ]
+      status: 'pending'
     }).sort({ appliedAt: -1 }).toArray();
 
-    // #COMPLETION_DRIVE: Enrich applications with property details like manager view does
-    // #SUGGEST_VERIFY: Property lookup works for both string and ObjectId appliedPropertyId formats
     const allProperties = await properties.find({}).toArray();
 
     const enriched = users.map(app => {
@@ -1174,13 +1167,12 @@ export async function approvePendingUser(userId: string) {
       );
     }
 
-    // #COMPLETION_DRIVE: Set status to admin_approved so managers can still see and use application data for lease creation
-    // #SUGGEST_VERIFY: Verify manager's getPendingApplicationsForManager filter includes 'admin_approved' status
     await pendingUsers.updateOne(
       { _id: userObjectId },
       { $set: {
-        status: 'admin_approved',
-        approvedAt: new Date()
+        status: 'approved',
+        approvedAt: new Date(),
+        approvedBy: 'admin'
       } }
     );
 
@@ -1252,15 +1244,11 @@ export async function getPendingApplicationsForManager(managerId: string) {
   const propertyIds = managerProperties.map(p => p._id);
 
     if (propertyIds.length === 0) {
-      return []; // Manager has no properties, so no applications
+      return [];
     }
 
-    // Get pending applications for those properties - check both pending and admin_approved
     const applications = await pendingUsers.find({
-      $or: [
-        { status: 'pending' },
-        { status: 'admin_approved' }
-      ],
+      status: 'pending',
       appliedPropertyId: { $in: propertyIds }
     }).sort({ appliedAt: -1 }).toArray();
 
@@ -1719,9 +1707,80 @@ export async function createLease(leaseData: Record<string, unknown>) {
 
     const result = await leases.insertOne(leaseDoc);
 
-    // Fetch the created lease and return it mapped
-    const createdLease = await leases.findOne({ _id: result });
-    return mapDoc(createdLease);
+    const enrichedLease = await leases.aggregate([
+      { $match: { _id: result } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tenantId",
+          foreignField: "_id",
+          as: "tenantData"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "propertyData"
+        }
+      },
+      {
+        $lookup: {
+          from: "units",
+          localField: "unitId",
+          foreignField: "_id",
+          as: "unitData"
+        }
+      },
+      {
+        $addFields: {
+          tenant: {
+            $cond: {
+              if: { $gt: [{ $size: "$tenantData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$tenantData._id", 0] } },
+                fullName: { $arrayElemAt: ["$tenantData.fullName", 0] },
+                email: { $arrayElemAt: ["$tenantData.email", 0] },
+                phone: { $arrayElemAt: ["$tenantData.phone", 0] }
+              },
+              else: null
+            }
+          },
+          property: {
+            $cond: {
+              if: { $gt: [{ $size: "$propertyData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$propertyData._id", 0] } },
+                name: { $arrayElemAt: ["$propertyData.name", 0] },
+                address: { $arrayElemAt: ["$propertyData.address", 0] }
+              },
+              else: null
+            }
+          },
+          unit: {
+            $cond: {
+              if: { $gt: [{ $size: "$unitData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$unitData._id", 0] } },
+                unitNumber: { $arrayElemAt: ["$unitData.unitNumber", 0] }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          tenantData: 0,
+          propertyData: 0,
+          unitData: 0
+        }
+      }
+    ]).toArray();
+
+    const enrichedLeaseDoc = enrichedLease[0] || null;
+    return mapDoc(enrichedLeaseDoc);
   } catch (error) {
     console.error("Error creating lease:", error);
     throw error;
