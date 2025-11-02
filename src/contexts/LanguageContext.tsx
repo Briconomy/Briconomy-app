@@ -449,6 +449,8 @@ const translations: Translations = {
   'common.enter_email': { en: 'Enter your email', zu: 'Faka i-imeyili yakho' },
   'common.enter_password': { en: 'Enter your password', zu: 'Faka iphasiwedi yakho' },
   'common.signing_in': { en: 'Signing In...', zu: 'Kuyangena...' },
+  'common.show_password': { en: 'Show password', zu: 'Bonisa iphasiwedi' },
+  'common.hide_password': { en: 'Hide password', zu: 'Fihla iphasiwedi' },
 
   // Dashboard Text
   'dashboard.admin': { en: 'Admin Dashboard', zu: 'Ideshibodi Lomphathi' },
@@ -1207,6 +1209,8 @@ const translations: Translations = {
   'communication.emergencyContactsTitle': { en: 'Emergency Contacts', zu: 'Oxhumana nabo ezimeni eziphuthumayo' },
   'communication.emergencyWarningTitle': { en: 'WARNING - Life-threatening emergencies:', zu: 'ISIXWAYISO - Izimo eziyingozi empilweni:' },
   'communication.emergencyWarningBody': { en: 'Call 10177 (Fire/Medical) or 10111 (Police) immediately', zu: 'Shayela u-10177 (Umlilo/Okwezokwelapha) noma 10111 (Amaphoyisa) ngokushesha' },
+  'communication.managerSummaryTitle': { en: 'Your Property Manager', zu: 'Umphathi Wendawo Yakho' },
+  'communication.managerLabel': { en: 'Manager', zu: 'Umphathi' },
 
   // Maintenance Requests Page (additional)
   'maintenance.subtitle': { en: 'Track and manage maintenance requests', zu: 'Landelela futhi uphatha izicelo zokulungisa' },

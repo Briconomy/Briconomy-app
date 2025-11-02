@@ -2113,21 +2113,41 @@ export async function getMaintenanceRequests(filters: Record<string, unknown> = 
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
     const properties = getCollection("properties");
+    const units = getCollection("units");
     
-  const queryFilters = normalizeFilters(filters) as Record<string, unknown>;
+    const queryFilters = normalizeFilters(filters) as Record<string, unknown>;
     
-    // If managerId is provided, get properties for that manager and filter by those propertyIds
     if (filters.managerId) {
       const managerProperties = await properties.find({ managerId: toId(filters.managerId) }).toArray();
       const propertyIds = managerProperties.map(p => p._id);
       
-      // Replace managerId filter with propertyId filter
       delete queryFilters.managerId;
       queryFilters.propertyId = { $in: propertyIds };
     }
     
     const rows = await requests.find(queryFilters).toArray();
-    return mapDocs(rows);
+    
+    const enrichedRows = await Promise.all(rows.map(async (row) => {
+      const enriched = { ...row };
+      
+      if (row.propertyId) {
+        const property = await properties.findOne({ _id: toId(row.propertyId) });
+        if (property) {
+          enriched.location = property.name || property.address || enriched.location || 'Unknown';
+        }
+      }
+      
+      if (row.unitId) {
+        const unit = await units.findOne({ _id: toId(row.unitId) });
+        if (unit) {
+          enriched.unitNumber = unit.unitNumber || enriched.unitNumber || 'Unknown';
+        }
+      }
+      
+      return enriched;
+    }));
+    
+    return mapDocs(enrichedRows);
   } catch (error) {
     console.error("Error fetching maintenance requests:", error);
     throw error;

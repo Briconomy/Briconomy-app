@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 db = db.getSiblingDB('briconomy');
 
 db.users.drop();

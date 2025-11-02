@@ -6,7 +6,7 @@ import ChartCard from '../components/ChartCard.tsx';
 import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
 import Icon from '../components/Icon.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
-import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
+import { maintenanceApi, leasesApi, propertiesApi, unitsApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
@@ -210,15 +210,60 @@ function MaintenanceRequestsPage() {
 
     setSubmitting(true);
     try {
+      // Get tenantContext from user (like CommunicationPage does)
+      const tenantContext = user?.tenantContext || null;
       const currentLease = leases?.[0];
+      
+      console.log('[MaintenanceRequest] TenantContext:', tenantContext);
+      console.log('[MaintenanceRequest] Current lease:', currentLease);
 
-      // #COMPLETION_DRIVE: Extract only IDs from lease objects, not full objects
-      // #SUGGEST_VERIFY: Verify lease objects contain _id field for ID extraction
-      const unitId = currentLease?.unitId;
-      const propertyId = currentLease?.propertyId;
-      const propertyName = currentLease?.property?.name;
-      const propertyAddress = currentLease?.property?.address;
-      const unitNumber = currentLease?.unit?.unitNumber;
+      // Prioritize tenantContext (like CommunicationPage), then fall back to lease
+      let unitId = tenantContext?.unit?.id || currentLease?.unitId;
+      let propertyId = tenantContext?.property?.id || currentLease?.propertyId;
+      let propertyName = tenantContext?.property?.name || currentLease?.property?.name;
+      let propertyAddress = tenantContext?.property?.address || currentLease?.property?.address;
+      let unitNumber = tenantContext?.unit?.unitNumber || currentLease?.unit?.unitNumber;
+      
+      console.log('[MaintenanceRequest] Initial data:', { 
+        unitId, 
+        propertyId, 
+        propertyName, 
+        propertyAddress, 
+        unitNumber 
+      });
+
+      // Only fetch if we still don't have the data
+      if (propertyId && !propertyName && !propertyAddress) {
+        try {
+          console.log('[MaintenanceRequest] Fetching property details for:', propertyId);
+          const property = await propertiesApi.getById(propertyId);
+          console.log('[MaintenanceRequest] Property fetched:', property);
+          propertyName = property.name;
+          propertyAddress = property.address;
+        } catch (error) {
+          console.error('[MaintenanceRequest] Failed to fetch property details:', error);
+        }
+      }
+
+      if (unitId && !unitNumber) {
+        try {
+          console.log('[MaintenanceRequest] Fetching unit details for:', unitId);
+          const units = await unitsApi.getAll(propertyId);
+          console.log('[MaintenanceRequest] Units fetched:', units);
+          const unit = units.find((u: { id: string }) => u.id === unitId);
+          console.log('[MaintenanceRequest] Found unit:', unit);
+          if (unit) {
+            unitNumber = unit.unitNumber;
+          }
+        } catch (error) {
+          console.error('[MaintenanceRequest] Failed to fetch unit details:', error);
+        }
+      }
+      
+      console.log('[MaintenanceRequest] Final data:', { 
+        location: propertyName || propertyAddress || 'Unknown',
+        unitNumber: unitNumber || 'Unknown'
+      });
 
       const requestData = {
         title: formData.title,
