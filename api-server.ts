@@ -411,7 +411,12 @@ serve(async (req) => {
             fullName: user.fullName,
             email: user.email,
             userType: user.userType,
-            phone: user.phone
+            phone: user.phone,
+            propertyId: user.propertyId?.toString() || user.assignedPropertyId?.toString(),
+            assignedPropertyId: user.assignedPropertyId?.toString(),
+            unitId: user.unitId?.toString(),
+            appliedUnitId: user.appliedUnitId?.toString(),
+            profile: user.profile
           }));
           
           return new Response(JSON.stringify(sanitizedUsers), {
