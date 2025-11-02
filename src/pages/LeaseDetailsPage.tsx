@@ -27,6 +27,17 @@ function LeaseDetailsPage() {
 
     setSendingDocument(true);
     try {
+      const calculateDuration = () => {
+        if (!lease.startDate || !lease.endDate) return 'N/A';
+        const start = new Date(lease.startDate);
+        const end = new Date(lease.endDate);
+        const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+        return months > 0 ? `${months} months` : 'N/A';
+      };
+
+      const leaseNumber = lease.leaseNumber || `LSE-${lease.id.slice(-8).toUpperCase()}`;
+      const duration = calculateDuration();
+
       const leaseContent = `LEASE AGREEMENT
 
 Tenant: ${tenant?.fullName || lease.tenant?.fullName || 'N/A'}
@@ -37,7 +48,7 @@ Unit: ${unit?.unitNumber || lease.unit?.unitNumber || 'N/A'}
 LEASE TERMS:
 Start Date: ${lease.startDate ? new Date(lease.startDate).toLocaleDateString() : 'N/A'}
 End Date: ${lease.endDate ? new Date(lease.endDate).toLocaleDateString() : 'N/A'}
-Duration: ${lease.leaseLength ? lease.leaseLength + ' months' : 'N/A'}
+Duration: ${duration}
 
 FINANCIAL TERMS:
 Monthly Rent: ${lease.monthlyRent ? `$${lease.monthlyRent.toLocaleString()}` : 'N/A'}
@@ -46,14 +57,14 @@ Security Deposit: ${lease.deposit ? `$${lease.deposit.toLocaleString()}` : 'N/A'
 ADDITIONAL TERMS:
 ${lease.terms || 'No additional terms specified'}
 
-Lease Number: ${lease.leaseNumber || 'N/A'}
+Lease Number: ${leaseNumber}
 Status: ${lease.status?.toUpperCase() || 'N/A'}
 Renewal Option: ${lease.renewalOption ? 'Yes' : 'No'}`;
 
       const base64Content = btoa(unescape(encodeURIComponent(leaseContent)));
 
       const payload = {
-        name: `Lease Agreement - ${lease.leaseNumber || lease.tenant?.fullName || 'Lease'}`,
+        name: `Lease Agreement - ${tenant?.fullName || lease.tenant?.fullName || leaseNumber}`,
         type: 'lease',
         category: 'legal',
         tenantId: lease.tenantId,
