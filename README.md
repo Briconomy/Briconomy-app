@@ -1,5 +1,5 @@
-<div align="center">
-  <img src="src/Icons/BriconomyReadMELogo.svg" alt="Briconomy Logo" width="1000"/>
+<div align="center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+  <img src="src/Icons/BriconomyReadMELogo.svg" alt="Briconomy Logo" width="1000" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));"/>
 </div>
 
 ## Contributors
@@ -57,7 +57,6 @@ Full-stack property management application built with React, Deno, and MongoDB. 
 - [Core Features](#core-features)
 - [Authentication & Authorization](#authentication--authorization)
 - [Data Models](#data-models)
-- [Development](#development)
 - [Deployment](#deployment)
 
 ---
@@ -96,11 +95,11 @@ deno run -A api-server.ts
 
 ## Architecture
 
-**Frontend**: React 18, TypeScript, CSS3
-**State Management**: React Context API (Auth, Language, Toast, ProspectiveTenant)
-**Backend**: Deno, TypeScript
-**Database**: MongoDB
-**Real-time**: WebSocket
+Frontend: React 18, TypeScript, CSS3
+State Management: React Context API (Auth, Language, Toast, ProspectiveTenant)
+Backend: Deno, TypeScript
+Database: MongoDB
+Real-time: WebSocket
 
 ### Project Structure
 
@@ -521,52 +520,6 @@ changes, timestamp
 
 ---
 
-## Development
-
-### Adding a Page
-
-1. Create component in `/src/pages/NewPage.tsx`
-2. Import in `/src/App.tsx`
-3. Add route in App.tsx with appropriate role protection
-4. Add navigation in TopNav/BottomNav if needed
-
-### Adding an API Endpoint
-
-1. Define route in `/api-server.ts`
-2. Create service function in `/api-services.ts`
-3. Add client method in `/src/services/api.ts`
-4. Use in component with loading/error handling
-
-### Component Patterns
-
-- Use TopNav (desktop) and BottomNav (mobile) for navigation
-- Import useAuth from AuthContext for user info
-- Use API services from /services/api.ts
-- Always handle loading and error states
-- Test on mobile and desktop
-
-### API Service Pattern
-
-```typescript
-const [data, setData] = useState(null);
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState(null);
-
-const fetchData = async () => {
-  setLoading(true);
-  try {
-    const result = await api.get('/api/endpoint');
-    setData(result);
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-```
-
----
-
 ## Deployment
 
 ### Environment Variables
@@ -605,11 +558,3 @@ docker run -p 3000:3000 --env-file .env briconomy:latest
 ```
 
 ---
-
-## MongoDB Collections
-
-users, properties, units, leases, renewals, payments, invoices, maintenance, tasks, documents, notifications, announcements, chatMessages, auditLogs, applications, securitySettings, reports
-
----
-
-Last Updated: October 28, 2025
