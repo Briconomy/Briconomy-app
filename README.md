@@ -50,7 +50,6 @@ Full-stack property management application built with React, Deno, and MongoDB. 
 ## Table of Contents
 
 - [Quick Start](#quick-start)
-- [Architecture](#architecture)
 - [User Roles](#user-roles)
 - [Pages & Routes](#pages--routes)
 - [API Endpoints](#api-endpoints)
@@ -89,34 +88,6 @@ deno run -A dev-server.ts
 ```bash
 npm run build
 deno run -A api-server.ts
-```
-
----
-
-## Architecture
-
-Frontend: React 18, TypeScript, CSS3
-State Management: React Context API (Auth, Language, Toast, ProspectiveTenant)
-Backend: Deno, TypeScript
-Database: MongoDB
-Real-time: WebSocket
-
-### Project Structure
-
-```
-src/
-├── pages/          # 50 page components
-├── components/     # 37 reusable UI components
-├── contexts/       # 4 context providers
-├── services/       # API client, notifications, chatbot
-├── utils/          # Utility functions
-├── styles/         # Global CSS
-└── Icons/          # SVG assets
-
-Root:
-├── api-server.ts      # Deno HTTP server
-├── api-services.ts    # MongoDB operations
-└── db.ts              # Database connection
 ```
 
 ---
@@ -558,3 +529,11 @@ docker run -p 3000:3000 --env-file .env briconomy:latest
 ```
 
 ---
+
+## MongoDB Collections
+
+users, properties, units, leases, renewals, payments, invoices, maintenance, tasks, documents, notifications, announcements, chatMessages, auditLogs, applications, securitySettings, reports
+
+---
+
+Last Updated: October 28, 2025
