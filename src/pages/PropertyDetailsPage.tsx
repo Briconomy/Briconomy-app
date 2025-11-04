@@ -108,11 +108,12 @@ const modalStyles = `
     position: absolute;
     top: 10px;
     left: 10px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     color: white;
     padding: 5px 10px;
     border-radius: 15px;
     font-size: 12px;
+    backdrop-filter: blur(4px);
   }
   
   .image-navigation {
@@ -125,10 +126,11 @@ const modalStyles = `
     justify-content: space-between;
     padding: 0 10px;
     pointer-events: none;
+    background: transparent;
   }
   
   .nav-btn {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.3);
     color: white;
     border: none;
     width: 40px;
@@ -140,10 +142,13 @@ const modalStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
   }
   
   .nav-btn:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
   }
   
   .nav-btn:disabled {
