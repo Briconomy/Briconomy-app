@@ -1,19 +1,11 @@
-db = db.getSiblingDB('briconomy');
+import { MongoClient, ObjectId as BsonObjectId } from "npm:mongodb";
 
-db.users.drop();
-db.properties.drop();
-db.units.drop();
-db.leases.drop();
-db.invoices.drop();
-db.payments.drop();
-db.maintenance_requests.drop();
-db.caretaker_tasks.drop();
-db.reports.drop();
-db.notifications.drop();
-db.settings.drop();
-db.audit_logs.drop();
-db.documents.drop();
-db.lease_renewals.drop();
+const MONGO_URI = Deno.env.get("MONGO_URI") ?? "mongodb://127.0.0.1:27017";
+// #COMPLETION_DRIVE: Assuming local MongoDB is accessible when no MONGO_URI is provided
+// #SUGGEST_VERIFY: Set MONGO_URI env var if the database runs on a different host
+const DB_NAME = Deno.env.get("DB_NAME") ?? "briconomy";
+// #COMPLETION_DRIVE: Assuming default database name remains briconomy unless overridden
+// #SUGGEST_VERIFY: Export DB_NAME env var if the project uses another database
 
 // Create users with proper ObjectIds
 const _users = db.users.insertMany([
@@ -217,7 +209,6 @@ const _users = db.users.insertMany([
     createdAt: new Date(),
     updatedAt: new Date()
   }
-]);
 
 // Create properties with proper manager assignments
 db.properties.insertMany([
@@ -266,7 +257,6 @@ db.properties.insertMany([
     createdAt: new Date(),
     updatedAt: new Date()
   }
-]);
 
 // Create units with proper property references
 db.units.insertMany([
@@ -394,7 +384,6 @@ db.units.insertMany([
     createdAt: new Date(),
     updatedAt: new Date()
   }
-]);
 
 // Create leases with proper references
 const leases = db.leases.insertMany([
@@ -473,7 +462,6 @@ const leases = db.leases.insertMany([
     createdAt: new Date(),
     updatedAt: new Date()
   }
-]);
 
 // Create invoices with proper references
 const _invoices = db.invoices.insertMany([
@@ -749,7 +737,6 @@ const _invoices = db.invoices.insertMany([
     createdAt: new Date('2024-08-01'),
     updatedAt: new Date('2024-08-01')
   }
-]);
 
 // Create lease renewals - using the actual lease IDs
 const _leaseRenewals = db.lease_renewals.insertMany([
@@ -838,7 +825,6 @@ const _leaseRenewals = db.lease_renewals.insertMany([
     createdAt: new Date('2024-09-12'),
     updatedAt: new Date('2024-10-05')
   }
-]);
 
 // Create payments with proper references
 const payments = db.payments.insertMany([
@@ -1015,190 +1001,18 @@ const payments = db.payments.insertMany([
     createdAt: new Date(),
     updatedAt: new Date()
   }
-]);
 
-// Maintenance requests are created by users through the app, not seeded
-// db.maintenance_requests collection will be empty on init
-
-// Create caretaker tasks with proper references
-const caretakerTasks = db.caretaker_tasks.insertMany([
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e701"),
-    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-    title: 'Weekly property inspection',
-    description: 'Routine inspection of common areas and exterior, check for maintenance issues',
-    dueDate: new Date(Date.now() + 7*24*60*60*1000),
-    status: 'pending',
-    priority: 'medium',
-    estimatedHours: 4,
-    actualHours: null,
-    completedDate: null,
-    notes: '',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e702"),
-    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
-    title: 'Garden maintenance',
-    description: 'Trim hedges, water plants, and general landscaping of common areas',
-    dueDate: new Date(Date.now() + 3*24*60*60*1000),
-    status: 'in_progress',
-    priority: 'low',
-    estimatedHours: 6,
-    actualHours: 3,
-    completedDate: null,
-    notes: 'Started trimming hedges, weather permitting will complete tomorrow',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e703"),
-    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
-    title: 'Pool cleaning',
-    description: 'Weekly pool maintenance and chemical balancing',
-    dueDate: new Date(Date.now() + 2*24*60*60*1000),
-    status: 'pending',
-    priority: 'medium',
-    estimatedHours: 3,
-    actualHours: null,
-    completedDate: null,
-    notes: '',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e704"),
-    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-    title: 'Security system check',
-    description: 'Monthly security system inspection and testing',
-    dueDate: new Date(Date.now() + 5*24*60*60*1000),
-    status: 'pending',
-    priority: 'high',
-    estimatedHours: 2,
-    actualHours: null,
-    completedDate: null,
-    notes: '',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e705"),
-    caretakerId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
-    title: 'Playground inspection',
-    description: 'Safety inspection of playground equipment',
-    dueDate: new Date(Date.now() + 10*24*60*60*1000),
-    status: 'pending',
-    priority: 'medium',
-    estimatedHours: 2,
-    actualHours: null,
-    completedDate: null,
-    notes: '',
-    createdAt: new Date(),
-    updatedAt: new Date()
+  if (caretakerTasks.length > 0) {
+    await db.collection("caretaker_tasks").insertMany(caretakerTasks);
   }
-]);
 
-// Create reports with proper references
-const reports = db.reports.insertMany([
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e711"),
-    type: 'financial',
-    period: 'monthly',
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-    data: {
-      totalRevenue: 180000,
-      totalExpenses: 45000,
-      occupancyRate: 89,
-      collectionsRate: 95,
-      netIncome: 135000,
-      averageRent: 12500,
-      maintenanceCosts: 15000,
-      utilities: 12000,
-      insurance: 8000,
-      propertyTaxes: 10000
-    },
-    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e712"),
-    type: 'maintenance',
-    period: 'weekly',
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
-    data: {
-      completedTasks: 12,
-      pendingTasks: 5,
-      avgResponseTime: 2.5,
-      urgentRequests: 1,
-      totalCost: 18500,
-      avgResolutionTime: 3.2
-    },
-    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e713"),
-    type: 'occupancy',
-    period: 'monthly',
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
-    data: {
-      totalUnits: 32,
-      occupiedUnits: 28,
-      vacantUnits: 4,
-      occupancyRate: 87.5,
-      turnoverRate: 5.2,
-      avgLeaseDuration: 18.5
-    },
-    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e714"),
-    type: 'performance',
-    period: 'monthly',
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-    data: {
-      tenantSatisfaction: 4.2,
-      maintenanceResponseTime: 2.1,
-      rentCollectionRate: 96,
-      vacancyRate: 12.5,
-      renewalRate: 78
-    },
-    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e715"),
-    type: 'financial',
-    period: 'quarterly',
-    propertyId: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
-    data: {
-      totalRevenue: 540000,
-      totalExpenses: 135000,
-      occupancyRate: 88.9,
-      collectionsRate: 94,
-      netIncome: 405000,
-      averageRent: 10500,
-      maintenanceCosts: 45000,
-      utilities: 36000,
-      insurance: 24000,
-      propertyTaxes: 30000
-    },
-    generatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
-    createdAt: new Date(),
-    updatedAt: new Date()
+  if (reports.length > 0) {
+    await db.collection("reports").insertMany(reports);
   }
-]);
+
+  if (notifications.length > 0) {
+    await db.collection("notifications").insertMany(notifications);
+  }
 
 // Create settings with proper references
 const _settings = db.settings.insertMany([
@@ -1274,158 +1088,100 @@ const _settings = db.settings.insertMany([
     updatedBy: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     updatedAt: new Date()
   }
-]);
 
-// Create audit logs with proper references
-const _auditLogs = db.audit_logs.insertMany([
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e741"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    action: 'user_login',
-    resource: 'authentication',
-    details: {
-      ip: '192.168.1.100',
-      userAgent: 'Mozilla/5.0 (Android 10; Mobile; rv:81.0)',
-      success: true
-    },
-    timestamp: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e742"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
-    action: 'payment_created',
-    resource: 'payments',
-    details: {
-      paymentId: payments.insertedIds["67b2a1e0c9e4b8a3d4f5e6e1"],
-      amount: 12500,
-      method: 'bank_transfer',
-      reference: 'RENT-2024-08-001'
-    },
-    timestamp: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e744"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
-    action: 'task_assigned',
-    resource: 'caretaker_tasks',
-    details: {
-      taskId: caretakerTasks.insertedIds["67b2a1e0c9e4b8a3d4f5e701"],
-      property: 'Blue Hills Apartments',
-      title: 'Weekly property inspection'
-    },
-    timestamp: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e745"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
-    action: 'report_generated',
-    resource: 'reports',
-    details: {
-      reportId: reports.insertedIds["67b2a1e0c9e4b8a3d4f5e711"],
-      type: 'financial',
-      period: 'monthly',
-      property: 'Blue Hills Apartments'
-    },
-    timestamp: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e746"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
-    action: 'profile_updated',
-    resource: 'users',
-    details: {
-      updatedFields: ['phone', 'emergencyContact'],
-      previousPhone: '+27823456790',
-      newPhone: '+27823456791'
-    },
-    timestamp: new Date()
-  },
-  {
-    _id: ObjectId("67b2a1e0c9e4b8a3d4f5e748"),
-    userId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
-    action: 'lease_created',
-    resource: 'leases',
-    details: {
-      leaseId: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"],
-      tenantId: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
-      unitId: ObjectId("67b2a1e0c9e4b8a3d4f5e6c5"),
-      monthlyRent: 9500
-    },
-    timestamp: new Date()
+  if (documents.length > 0) {
+    await db.collection("documents").insertMany(documents);
   }
-]);
 
-// Update user profiles with lease references
-db.users.updateMany(
-  { userType: 'tenant' },
-  [
-    {
-      $set: {
-        'profile.leaseId': {
-          $switch: {
-            branches: [
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a6")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d1"] },
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a7")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d2"] },
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a8")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d3"] },
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a9")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d4"] },
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6aa")] }, then: leases.insertedIds["67b2a1e0c9e4b8a3d4f5e6d5"] }
-            ],
-            default: null
-          }
-        }
-      }
-    }
-  ]
-);
+  await db.collection("users").updateMany(
+    { userType: "tenant" },
+    [
+      {
+        $set: {
+          "profile.leaseId": {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a6")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6d1"),
+                },
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a7")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6d2"),
+                },
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a8")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6d3"),
+                },
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a9")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6d4"),
+                },
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6aa")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6d5"),
+                },
+              ],
+              default: null,
+            },
+          },
+        },
+      },
+    ],
+  );
 
-// Update manager profiles with managed properties
-db.users.updateMany(
-  { userType: 'manager' },
-  [
-    {
-      $set: {
-        'profile.managedProperties': {
-          $switch: {
-            branches: [
-              { 
-                case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a2")] }, 
-                then: [
-                  ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
-                  ObjectId("67b2a1e0c9e4b8a3d4f5e6b3")
-                ] 
-              },
-              { 
-                case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a3")] }, 
-                then: [ObjectId("67b2a1e0c9e4b8a3d4f5e6b2")] 
-              }
-            ],
-            default: []
-          }
-        }
-      }
-    }
-  ]
-);
+  await db.collection("users").updateMany(
+    { userType: "manager" },
+    [
+      {
+        $set: {
+          "profile.managedProperties": {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a2")] },
+                  then: [
+                    ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+                    ObjectId("67b2a1e0c9e4b8a3d4f5e6b3"),
+                  ],
+                },
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a3")] },
+                  then: [ObjectId("67b2a1e0c9e4b8a3d4f5e6b2")],
+                },
+              ],
+              default: [],
+            },
+          },
+        },
+      },
+    ],
+  );
 
-// Update caretaker profiles with assigned properties
-db.users.updateMany(
-  { userType: 'caretaker' },
-  [
-    {
-      $set: {
-        'profile.assignedProperty': {
-          $switch: {
-            branches: [
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a4")] }, then: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1") },
-              { case: { $eq: ['$_id', ObjectId("67b2a1e0c9e4b8a3d4f5e6a5")] }, then: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2") }
-            ],
-            default: null
-          }
-        }
-      }
-    }
-  ]
-);
+  await db.collection("users").updateMany(
+    { userType: "caretaker" },
+    [
+      {
+        $set: {
+          "profile.assignedProperty": {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a4")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+                },
+                {
+                  case: { $eq: ["$_id", ObjectId("67b2a1e0c9e4b8a3d4f5e6a5")] },
+                  then: ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+                },
+              ],
+              default: null,
+            },
+          },
+        },
+      },
+    ],
+  );
 
 db.documents.insertMany([
   {
@@ -1529,64 +1285,93 @@ db.documents.insertMany([
   }
 ]);
 
-db.properties.createIndex({ managerId: 1 });
-db.properties.createIndex({ status: 1 });
-db.properties.createIndex({ type: 1 });
-db.properties.createIndex({ name: "text", address: "text" });
+  await db.collection("payments").createIndex({ tenantId: 1 });
+  await db.collection("payments").createIndex({ leaseId: 1 });
+  await db.collection("payments").createIndex({ status: 1 });
+  await db.collection("payments").createIndex({ dueDate: 1 });
 
-db.units.createIndex({ propertyId: 1 });
-db.units.createIndex({ status: 1 });
+  await db.collection("maintenance_requests").createIndex({ tenantId: 1 });
+  await db.collection("maintenance_requests").createIndex({ propertyId: 1 });
+  await db.collection("maintenance_requests").createIndex({ unitId: 1 });
+  await db.collection("maintenance_requests").createIndex({ status: 1 });
 
-db.leases.createIndex({ tenantId: 1 });
-db.leases.createIndex({ propertyId: 1 });
-db.leases.createIndex({ unitId: 1 });
-db.leases.createIndex({ status: 1 });
+  await db.collection("documents").createIndex({ leaseId: 1 });
+  await db.collection("documents").createIndex({ propertyId: 1 });
+  await db.collection("documents").createIndex({ tenantId: 1 });
 
-db.payments.createIndex({ tenantId: 1 });
-db.payments.createIndex({ leaseId: 1 });
-db.payments.createIndex({ status: 1 });
-db.payments.createIndex({ dueDate: 1 });
+  await db.collection("notifications").createIndex({ userId: 1 });
+  await db.collection("notifications").createIndex({ read: 1 });
 
-db.maintenance_requests.createIndex({ tenantId: 1 });
-db.maintenance_requests.createIndex({ propertyId: 1 });
-db.maintenance_requests.createIndex({ unitId: 1 });
-db.maintenance_requests.createIndex({ status: 1 });
+  await db.collection("audit_logs").createIndex({ userId: 1 });
+  await db.collection("audit_logs").createIndex({ action: 1 });
+  await db.collection("audit_logs").createIndex({ timestamp: -1 });
 
-db.documents.createIndex({ leaseId: 1 });
-db.documents.createIndex({ propertyId: 1 });
-db.documents.createIndex({ tenantId: 1 });
+  const counts = {
+    users: await db.collection("users").countDocuments(),
+    properties: await db.collection("properties").countDocuments(),
+    units: await db.collection("units").countDocuments(),
+    leases: await db.collection("leases").countDocuments(),
+    payments: await db.collection("payments").countDocuments(),
+    maintenanceRequests: await db.collection("maintenance_requests")
+      .countDocuments(),
+    caretakerTasks: await db.collection("caretaker_tasks").countDocuments(),
+    reports: await db.collection("reports").countDocuments(),
+    notifications: await db.collection("notifications").countDocuments(),
+    settings: await db.collection("settings").countDocuments(),
+    auditLogs: await db.collection("audit_logs").countDocuments(),
+    documents: await db.collection("documents").countDocuments(),
+    invoices: await db.collection("invoices").countDocuments(),
+    leaseRenewals: await db.collection("lease_renewals").countDocuments(),
+  };
 
-db.notifications.createIndex({ userId: 1 });
-db.notifications.createIndex({ read: 1 });
+  console.log("Comprehensive database initialization completed successfully!");
+  console.log("Collections created:");
+  console.log(`   - users (${counts.users} documents)`);
+  console.log(`   - properties (${counts.properties} documents)`);
+  console.log(`   - units (${counts.units} documents)`);
+  console.log(`   - leases (${counts.leases} documents)`);
+  console.log(`   - payments (${counts.payments} documents)`);
+  console.log(
+    `   - maintenance_requests (${counts.maintenanceRequests} documents)`,
+  );
+  console.log(`   - caretaker_tasks (${counts.caretakerTasks} documents)`);
+  console.log(`   - reports (${counts.reports} documents)`);
+  console.log(`   - notifications (${counts.notifications} documents)`);
+  console.log(`   - settings (${counts.settings} documents)`);
+  console.log(`   - audit_logs (${counts.auditLogs} documents)`);
+  console.log(`   - documents (${counts.documents} documents)`);
+  console.log(`   - invoices (${counts.invoices} documents)`);
+  console.log(`   - lease_renewals (${counts.leaseRenewals} documents)`);
 
-db.audit_logs.createIndex({ userId: 1 });
-db.audit_logs.createIndex({ action: 1 });
-db.audit_logs.createIndex({ timestamp: -1 });
+  console.log("");
+  console.log("Data relationships established:");
+  console.log("   - Each tenant has a lease and assigned unit");
+  console.log("   - Each property has a manager and multiple units");
+  console.log("   - Each unit belongs to a property and may have a tenant");
+  console.log("   - Payments are linked to tenants and leases");
+  console.log(
+    "   - Maintenance requests are linked to tenants, units, and properties",
+  );
+  console.log("   - Caretaker tasks are assigned to caretakers and properties");
+  console.log("   - Notifications are linked to appropriate users");
+  console.log("   - Audit logs track all user actions");
+  console.log("   - Documents are linked to leases, properties, and tenants");
+  console.log("");
+  console.log("Database is ready for consistent development!");
+}
 
-print('Comprehensive database initialization completed successfully!');
-print('Collections created:');
-print('   - users (' + db.users.countDocuments({}) + ' documents)');
-print('   - properties (' + db.properties.countDocuments({}) + ' documents)');
-print('   - units (' + db.units.countDocuments({}) + ' documents)');
-print('   - leases (' + db.leases.countDocuments({}) + ' documents)');
-print('   - payments (' + db.payments.countDocuments({}) + ' documents)');
-print('   - maintenance_requests (' + db.maintenance_requests.countDocuments({}) + ' documents)');
-print('   - caretaker_tasks (' + db.caretaker_tasks.countDocuments({}) + ' documents)');
-print('   - reports (' + db.reports.countDocuments({}) + ' documents)');
-print('   - notifications (' + db.notifications.countDocuments({}) + ' documents)');
-print('   - settings (' + db.settings.countDocuments({}) + ' documents)');
-print('   - audit_logs (' + db.audit_logs.countDocuments({}) + ' documents)');
-print('   - documents (' + db.documents.countDocuments({}) + ' documents)');
-print('');
-print('Data relationships established:');
-print('   - Each tenant has a lease and assigned unit');
-print('   - Each property has a manager and multiple units');
-print('   - Each unit belongs to a property and may have a tenant');
-print('   - Payments are linked to tenants and leases');
-print('   - Maintenance requests are linked to tenants, units, and properties');
-print('   - Caretaker tasks are assigned to caretakers and properties');
-print('   - All notifications are linked to appropriate users');
-print('   - Audit logs track all user actions');
-print('   - Documents are linked to leases, properties, and tenants');
-print('');
-print('Database is ready for consistent development!');
+async function main() {
+  await client.connect();
+
+  try {
+    const db = client.db(DB_NAME);
+    await dropCollections(db);
+    await seed(db);
+  } finally {
+    await client.close();
+  }
+}
+
+if (import.meta.main) {
+  await main();
+}
