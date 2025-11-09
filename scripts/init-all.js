@@ -13,7 +13,7 @@
 
 import { MongoClient, ObjectId } from "mongodb";
 
-const MONGO_URI = "mongodb://localhost:27017";
+const MONGO_URI = "mongodb://127.0.0.1";
 const DB_NAME = "briconomy";
 
 // Sanitize input to prevent NoSQL injection
