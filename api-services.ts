@@ -2764,13 +2764,47 @@ export async function getDashboardStats(filters: Record<string, unknown> = {}) {
     const leaseFilter = propertyIds.length > 0 ? { propertyId: { $in: propertyIds } } : {};
     const activeLeases = await leases.countDocuments({ ...leaseFilter, status: 'active' });
     
-    const revenueMatch = propertyIds.length > 0 
-      ? { status: 'paid', propertyId: { $in: propertyIds } }
-      : { status: 'paid' };
-    const totalRevenue = await payments.aggregate([
-      { $match: revenueMatch },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]).toArray();
+    // Calculate revenue with proper joins for manager filtering
+    let totalRevenue = 0;
+    if (propertyIds.length > 0) {
+      // For managers, we need to join through leases to properties
+      const revenueResult = await payments.aggregate([
+        {
+          $lookup: {
+            from: "leases",
+            localField: "leaseId",
+            foreignField: "_id",
+            as: "lease"
+          }
+        },
+        {
+          $unwind: {
+            path: "$lease",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            status: 'paid',
+            "lease.propertyId": { $in: propertyIds }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$amount' }
+          }
+        }
+      ]).toArray();
+      totalRevenue = (revenueResult[0] as Record<string, unknown> | undefined)?.total as number || 0;
+    } else {
+      // For admins, simple query
+      const revenueResult = await payments.aggregate([
+        { $match: { status: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]).toArray();
+      totalRevenue = (revenueResult[0] as Record<string, unknown> | undefined)?.total as number || 0;
+    }
     
     const maintenanceMatch = propertyIds.length > 0 
       ? { propertyId: { $in: propertyIds } }
@@ -2791,7 +2825,7 @@ export async function getDashboardStats(filters: Record<string, unknown> = {}) {
       occupiedUnits,
       occupancyRate: totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0,
       activeLeases,
-      totalRevenue: (totalRevenue[0] as Record<string, unknown> | undefined)?.total as number || 0,
+      totalRevenue,
       maintenanceStats
     };
   } catch (error) {
