@@ -38,52 +38,13 @@ echo ========================================
 echo   Initializing Database...
 echo ========================================
 
-set "MONGO_SHELL="
-
-for /f "delims=" %%i in ('where mongosh 2^>nul') do (
-    set "MONGO_SHELL=%%i"
-    goto :run_core_init
-)
-
-for /f "delims=" %%i in ('where mongo 2^>nul') do (
-    set "MONGO_SHELL=%%i"
-    goto :run_core_init
-)
-
-for /d %%d in ("%ProgramFiles%\MongoDB\Server\*") do (
-    if exist "%%d\bin\mongosh.exe" (
-        set "MONGO_SHELL=%%d\bin\mongosh.exe"
-        goto :run_core_init
-    )
-)
-
-if exist "%ProgramFiles(x86)%\MongoDB\Server" (
-    for /d %%d in ("%ProgramFiles(x86)%\MongoDB\Server\*") do (
-        if exist "%%d\bin\mongosh.exe" (
-            set "MONGO_SHELL=%%d\bin\mongosh.exe"
-            goto :run_core_init
-        )
-    )
-)
-
-echo ⚠ Warning: MongoDB shell not found, skipping core database initialization...
-goto :db_init_done
-
-:run_core_init
-echo Using MongoDB shell at "%MONGO_SHELL%"
-"%MONGO_SHELL%" briconomy scripts/comprehensive-data-init.js
+echo Running init-all.js...
+deno run -A scripts\init-all.js
 if %errorlevel% equ 0 (
-    echo ✓ Core database initialized
+    echo ✓ Database initialized successfully
 ) else (
-    echo ⚠ Warning: Core database initialization exited with code %errorlevel%
+    echo ⚠ Warning: Database initialization exited with code %errorlevel%
 )
-
-:db_init_done
-
-echo Running additional setup scripts...
-call deno run -A scripts/init-pending-users.js >nul 2>&1
-call deno run -A scripts/add-sample-applications.js >nul 2>&1
-call deno run -A scripts/setup-manager-properties.ts >nul 2>&1
 
 echo.
 echo Database initialization complete!
