@@ -63,17 +63,26 @@ async function initPendingUsers() {
       email: "string (unique)",
       phone: "string",
       password: "string (hashed with SHA-256)",
+      userType: "string (tenant)",
       profile: {
-        emergencyContact: { name: "string", phone: "string", relationship: "string" },
+        emergencyContact: {
+          name: "string",
+          phone: "string",
+          relationship: "string"
+        },
         occupation: "string",
         monthlyIncome: "number",
-        preferredProperty: "string",
-        preferredUnitNumber: "string",
-        desiredMoveInDate: "string"
+        moveInDate: "string (ISO date)",
+        leaseDuration: "string (months, e.g., '12')",
+        unitNumber: "string (e.g., '2A', '1B')"
       },
-      status: "string (pending|approved|declined)",
-      appliedAt: "Date",
-      appliedPropertyId: "string (optional)"
+      status: "string (pending|admin_approved|approved|declined)",
+      appliedPropertyId: "ObjectId",
+      propertyId: "ObjectId",
+      unitId: "ObjectId",
+      appliedUnitId: "ObjectId",
+      appliedUnitNumber: "string",
+      appliedAt: "Date"
     });
     
   } catch (error) {

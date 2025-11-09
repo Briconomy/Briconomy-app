@@ -7,12 +7,40 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ActionCard from '../components/ActionCard.tsx';
 import Icon from '../components/Icon.tsx';
+import { leasesApi, useApi } from '../services/api.ts';
 
 function UserProfilePage() {
   const navigate = useNavigate();
   const { user, loading, updateUser } = useAuth();
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
+
+  const { data: leases } = useApi(
+    () => leasesApi.getAll({ tenantId: user?.id }),
+    [user?.id]
+  );
+
+  const currentLease = Array.isArray(leases) ? leases[0] : null;
+  const tenantContext = user?.tenantContext || null;
+
+  const parseDateValue = (value: unknown): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'string' && value.length > 0) {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+  };
+
+  const contextLease = tenantContext?.lease || null;
+  const leaseStartSource = currentLease?.startDate ?? contextLease?.startDate ?? user?.leaseStart ?? null;
+  const leaseEndSource = currentLease?.endDate ?? contextLease?.endDate ?? user?.leaseEnd ?? null;
+  const leaseStartDate = parseDateValue(leaseStartSource);
+  const leaseEndDate = parseDateValue(leaseEndSource);
+  const leaseStartDisplay = leaseStartDate ? leaseStartDate.toLocaleDateString() : t('profile.notProvided');
+  const leaseEndDisplay = leaseEndDate ? leaseEndDate.toLocaleDateString() : t('profile.notProvided');
+  const leaseDaysRemainingValue = leaseEndDate ? Math.max(Math.ceil((leaseEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 0) : null;
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -100,7 +128,7 @@ function UserProfilePage() {
 
     updateUser(updatedUser);
     setIsEditing(false);
-    alert('Profile updated successfully!');
+  alert(t('profile.updateSuccess'));
   };
 
   if (loading) {
@@ -122,18 +150,39 @@ function UserProfilePage() {
     return null;
   }
 
-  const leaseEndDate = user.leaseEnd ? new Date(user.leaseEnd) : new Date();
-  const leaseDaysRemaining = Math.ceil((leaseEndDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const unitDisplay = currentLease?.unit?.unitNumber || tenantContext?.unit?.unitNumber || t('profile.notProvided');
+  const rentCandidate = Number(currentLease?.monthlyRent ?? tenantContext?.lease?.monthlyRent ?? user.rent ?? 0);
+  const monthlyRentDisplay = `R${(Number.isFinite(rentCandidate) ? rentCandidate : 0).toLocaleString()}`;
+  const leaseRemainingDisplay = leaseDaysRemainingValue !== null ? `${leaseDaysRemainingValue} ${t('property.days')}` : t('profile.notProvided');
+  const statusSource = typeof currentLease?.status === 'string' && currentLease.status.length > 0
+    ? currentLease.status
+    : typeof contextLease?.status === 'string' && contextLease.status.length > 0
+      ? contextLease.status
+      : 'active';
+  const statusBase = typeof statusSource === 'string' ? statusSource.toLowerCase() : 'active';
+  const statusTranslations: Record<string, string> = {
+    active: t('status.active'),
+    pending: t('requests.status_pending_badge') || 'Pending',
+    approved: t('status.active'),
+    draft: t('requests.status_pending_badge') || 'Pending'
+  };
+  const normalizedStatus = typeof statusSource === 'string' && statusSource.length > 0
+    ? statusSource.charAt(0).toUpperCase() + statusSource.slice(1)
+    : t('status.active');
+  const statusDisplay = statusTranslations[statusBase] || normalizedStatus;
+  const propertyDisplay = currentLease?.property?.name || tenantContext?.property?.name || t('profile.notProvided');
+  const memberSinceDate = parseDateValue(user.joinDate) || new Date();
+  const memberSinceDisplay = memberSinceDate.toLocaleDateString();
 
   const tenantStats = [
-    { value: user.unit || 'N/A', label: t('property.unit') },
-    { value: `R${(user.rent || 0).toLocaleString()}`, label: t('property.monthlyRent') },
-    { value: `${leaseDaysRemaining} ${t('property.days')}`, label: t('property.leaseRemaining') },
-    { value: t('status.active'), label: t('common.status') },
-    { value: new Date(user.leaseStart || new Date()).toLocaleDateString(), label: t('profile.leaseStart') },
-    { value: new Date(user.leaseEnd || new Date()).toLocaleDateString(), label: t('profile.leaseEnd') },
-    { value: user.property || 'N/A', label: t('profile.property') },
-    { value: new Date(user.joinDate || new Date()).toLocaleDateString(), label: t('profile.memberSince') }
+    { value: unitDisplay, label: t('property.unit') },
+    { value: monthlyRentDisplay, label: t('property.monthlyRent') },
+    { value: leaseRemainingDisplay, label: t('property.leaseRemaining') },
+    { value: statusDisplay, label: t('common.status') },
+    { value: leaseStartDisplay, label: t('profile.leaseStart') },
+    { value: leaseEndDisplay, label: t('profile.leaseEnd') },
+    { value: propertyDisplay, label: t('profile.property') },
+    { value: memberSinceDisplay, label: t('profile.memberSince') }
   ];
 
   return (
@@ -167,7 +216,7 @@ function UserProfilePage() {
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.fullName || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.fullName || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -181,7 +230,7 @@ function UserProfilePage() {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.email || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.email || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -195,7 +244,7 @@ function UserProfilePage() {
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.phone || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.phone || t('profile.notProvided')}</div>
               )}
             </div>
           </div>
@@ -216,7 +265,7 @@ function UserProfilePage() {
                   onChange={(e) => handleEmergencyContactChange('name', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.emergencyContact?.name || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.name || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -230,7 +279,7 @@ function UserProfilePage() {
                   onChange={(e) => handleEmergencyContactChange('relationship', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.emergencyContact?.relationship || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.relationship || t('profile.notProvided')}</div>
               )}
             </div>
 
@@ -244,7 +293,7 @@ function UserProfilePage() {
                   onChange={(e) => handleEmergencyContactChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="profile-field-value">{user?.emergencyContact?.phone || 'Not provided'}</div>
+                <div className="profile-field-value">{user?.emergencyContact?.phone || t('profile.notProvided')}</div>
               )}
             </div>
           </div>
@@ -268,8 +317,8 @@ function UserProfilePage() {
           <div className="caretaker-notification-settings">
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Email Notifications</div>
-                <div className="caretaker-setting-desc">Receive updates via email</div>
+                <div className="caretaker-setting-title">{t('profile.emailNotificationsTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.emailNotificationsDescription')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.email ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -281,8 +330,8 @@ function UserProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Push Notifications</div>
-                <div className="caretaker-setting-desc">Receive push notifications</div>
+                <div className="caretaker-setting-title">{t('profile.pushNotificationsTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.pushNotificationsDescription')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.push ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -294,8 +343,8 @@ function UserProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">SMS Notifications</div>
-                <div className="caretaker-setting-desc">Receive text message alerts</div>
+                <div className="caretaker-setting-title">{t('profile.smsNotificationsTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.smsNotificationsDescription')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.sms ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -307,17 +356,17 @@ function UserProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Language Preference</div>
-                <div className="caretaker-setting-desc">Choose your preferred language</div>
+                <div className="caretaker-setting-title">{t('profile.languagePreferenceTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.languagePreferenceDescription')}</div>
               </div>
               <LanguageSwitcher />
             </div>
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Two-Factor Authentication</div>
-                <div className="caretaker-setting-desc">Add an extra layer of security</div>
-                <div className="caretaker-setting-desc" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>Coming Soon</div>
+                <div className="caretaker-setting-title">{t('profile.twoFactorTitle')}</div>
+                <div className="caretaker-setting-desc">{t('profile.twoFactorDescription')}</div>
+                <div className="caretaker-setting-desc" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>{t('profile.comingSoon')}</div>
               </div>
               <div
                 className="caretaker-toggle-switch caretaker-toggle-off"
@@ -331,18 +380,18 @@ function UserProfilePage() {
 
         <div className="section-card profile-actions-section">
           <div className="section-card-header">
-            <div className="section-title">Quick Actions</div>
+            <div className="section-title">{t('profile.quickActions')}</div>
           </div>
           <div className="quick-actions">
             <ActionCard
               to="/tenant/documents"
-              icon={<Icon name="docs" alt="Documents" />}
+              icon={<Icon name="docs" alt={t('profile.documents')} size={48} />}
               title={t('profile.documents')}
               description={t('profile.viewDocuments')}
             />
             <ActionCard
               to="/tenant/activity"
-              icon={<Icon name="activityLog" alt="Activity Log" />}
+              icon={<Icon name="activityLog" alt={t('profile.activityLog')} size={48} />}
               title={t('profile.activityLog')}
               description={t('profile.viewActivity')}
             />

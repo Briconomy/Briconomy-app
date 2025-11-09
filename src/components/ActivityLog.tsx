@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import Icon from './Icon.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+
+type ActivityStatus = 'success' | 'pending' | 'failed';
 
 interface ActivityItem {
   id: string;
@@ -7,382 +11,560 @@ interface ActivityItem {
   description: string;
   timestamp: string;
   details?: Record<string, unknown>;
-  status?: 'success' | 'pending' | 'failed';
+  status?: ActivityStatus;
+}
+
+type ActivityFilterKey = 'all' | ActivityItem['type'];
+
+interface ActivityTemplate extends Omit<ActivityItem, 'title' | 'description'> {
+  titleKey: string;
+  descriptionKey: string;
+}
+
+const activityTypeConfig: Record<ActivityItem['type'], { labelKey: string; icon: string; color: string }> = {
+  login: { labelKey: 'activity.types.login', icon: 'activityLog', color: 'var(--brand-primary)' },
+  payment: { labelKey: 'activity.types.payment', icon: 'payment', color: 'var(--brand-secondary)' },
+  maintenance_request: { labelKey: 'activity.types.maintenance', icon: 'maintenance', color: 'var(--brand-ai)' },
+  profile_update: { labelKey: 'activity.types.profile', icon: 'profile', color: 'var(--info)' },
+  document_upload: { labelKey: 'activity.types.documents', icon: 'document', color: 'var(--primary)' },
+  lease_action: { labelKey: 'activity.types.lease', icon: 'lease', color: 'var(--success)' }
+};
+
+const statusLabelKeys: Record<ActivityStatus, string> = {
+  success: 'status.success',
+  pending: 'status.pending',
+  failed: 'status.failed'
+};
+
+function formatDateTime(timestamp: string, locale: string) {
+  return new Date(timestamp).toLocaleString(locale || 'en-ZA', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function getStatusColor(status?: ActivityItem['status']) {
+  switch (status) {
+    case 'success':
+      return 'status-paid';
+    case 'pending':
+      return 'status-pending';
+    case 'failed':
+      return 'status-overdue';
+    default:
+      return 'status-pending';
+  }
+}
+
+function getActivityIconName(type: ActivityItem['type']) {
+  return activityTypeConfig[type].icon;
+}
+
+function getActivityAccentColor(type: ActivityItem['type']) {
+  return activityTypeConfig[type].color;
+}
+
+function getActivityTypeName(type: ActivityItem['type'], translate: (key: string) => string) {
+  return translate(activityTypeConfig[type].labelKey);
+}
+
+function getStatusLabel(status: ActivityStatus | undefined, translate: (key: string) => string) {
+  if (!status) {
+    return translate('activity.status.unknown') || 'N/A';
+  }
+  const key = statusLabelKeys[status];
+  return key ? translate(key) : status.toUpperCase();
+}
+
+function escapePdfText(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)');
+}
+
+function formatDetailKey(key: string): string {
+  return key
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
+function formatDetailValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => formatDetailValue(item)).join(', ');
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .map(([entryKey, entryValue]) => `${formatDetailKey(entryKey)}: ${formatDetailValue(entryValue)}`);
+    return entries.join('; ');
+  }
+  return String(value);
+}
+
+function formatDetailLines(details: Record<string, unknown> | undefined, translate: (key: string) => string): string[] {
+  if (!details || Object.keys(details).length === 0) {
+    return [];
+  }
+  const heading = translate('activity.pdf.detailsHeading') || 'Details:';
+  const itemTemplate = translate('activity.pdf.detailsItem') || '  - {key}: {value}';
+  const lines = [heading];
+  for (const [key, value] of Object.entries(details)) {
+    lines.push(
+      itemTemplate
+        .replace('{key}', formatDetailKey(key))
+        .replace('{value}', formatDetailValue(value))
+    );
+  }
+  return lines;
+}
+
+function wrapForPdf(text: string, max = 92): string[] {
+  if (!text || text.trim().length === 0) {
+    return [];
+  }
+
+  let firstPrefix = '';
+  let restPrefix = '';
+  let content = text;
+
+  const bulletMatch = text.match(/^(\s*[\u2022\-*]\s+)/);
+  if (bulletMatch) {
+    firstPrefix = bulletMatch[1];
+    restPrefix = ' '.repeat(firstPrefix.length);
+    content = text.slice(firstPrefix.length);
+  } else {
+    const indentMatch = text.match(/^(\s+)/);
+    if (indentMatch) {
+      firstPrefix = indentMatch[1];
+      restPrefix = indentMatch[1];
+      content = text.slice(firstPrefix.length);
+    }
+  }
+
+  const words = content.split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return [text.trim()];
+  }
+
+  const lines: string[] = [];
+  let current = '';
+  let isFirstLine = true;
+
+  for (const word of words) {
+    const available = max - (isFirstLine ? firstPrefix.length : restPrefix.length);
+    const candidate = current.length > 0 ? `${current} ${word}` : word;
+
+    if (available <= 0) {
+      const prefix = isFirstLine ? firstPrefix : restPrefix;
+      lines.push(prefix + candidate);
+      current = '';
+      isFirstLine = false;
+      continue;
+    }
+
+    if (candidate.length <= available) {
+      current = candidate;
+      continue;
+    }
+
+    if (current.length === 0) {
+      const prefix = isFirstLine ? firstPrefix : restPrefix;
+      lines.push(prefix + candidate);
+      current = '';
+      isFirstLine = false;
+      continue;
+    }
+
+    const prefix = isFirstLine ? firstPrefix : restPrefix;
+    lines.push(prefix + current);
+    current = word;
+    isFirstLine = false;
+  }
+
+  if (current.length > 0) {
+    const prefix = lines.length === 0 ? firstPrefix : restPrefix;
+    lines.push(prefix + current);
+  }
+
+  return lines;
+}
+
+function buildPdfObjects(content: string) {
+  const objects: string[] = [];
+  objects.push('');
+  objects.push('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  objects.push('2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n');
+  objects.push('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>\nendobj\n');
+  objects.push(`4 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
+  objects.push('5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n');
+  return objects;
+}
+
+function assemblePdf(contentCommands: string[]): Uint8Array {
+  const header = '%PDF-1.4\n';
+  const contentStream = contentCommands.join('\n');
+  const objects = buildPdfObjects(contentStream);
+  let body = '';
+  const xrefEntries = ['0000000000 65535 f \n'];
+  let offset = header.length;
+
+  for (let index = 1; index < objects.length; index += 1) {
+    const object = objects[index];
+    xrefEntries.push(`${offset.toString().padStart(10, '0')} 00000 n \n`);
+    body += object;
+    offset += object.length;
+  }
+
+  const xrefStart = offset;
+  const xref = `xref\n0 ${objects.length}\n${xrefEntries.join('')}`;
+  const trailer = `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  const pdfString = header + body + xref + trailer;
+  const encoder = new TextEncoder();
+  return encoder.encode(pdfString);
+}
+
+function createPdfBlobFromActivities(
+  activities: ActivityItem[],
+  translate: (key: string) => string,
+  locale: string
+): Blob {
+  const now = new Date();
+  const headerTimestamp = now.toLocaleString(locale || 'en-ZA', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  const lines: string[] = [];
+  lines.push(translate('activity.pdf.title') || 'Tenant Activity Log');
+  lines.push((translate('activity.pdf.generated') || 'Generated: {timestamp}').replace('{timestamp}', headerTimestamp));
+  lines.push((translate('activity.pdf.total') || 'Total Activities: {count}').replace('{count}', activities.length.toString()));
+  lines.push('');
+
+  if (activities.length === 0) {
+    lines.push(translate('activity.pdf.none') || 'No activity records available.');
+  } else {
+    activities.forEach((activity, index) => {
+      const entryLine = (translate('activity.pdf.entry') || '{index}. {timestamp} - {title}')
+        .replace('{index}', (index + 1).toString())
+        .replace('{timestamp}', formatDateTime(activity.timestamp, locale))
+        .replace('{title}', activity.title);
+      lines.push(entryLine);
+      const typeStatusLine = (translate('activity.pdf.typeStatus') || 'Type: {type} | Status: {status}')
+        .replace('{type}', translate(activityTypeConfig[activity.type].labelKey))
+        .replace('{status}', getStatusLabel(activity.status, translate));
+      lines.push(typeStatusLine);
+      lines.push((translate('activity.pdf.description') || 'Description: {description}')
+        .replace('{description}', activity.description));
+      const detailLines = formatDetailLines(activity.details, translate);
+      detailLines.forEach((detailLine) => lines.push(detailLine));
+      lines.push('');
+    });
+  }
+
+  const commands: string[] = [];
+  commands.push('BT');
+  commands.push('/F1 12 Tf');
+  commands.push('18 TL');
+  commands.push('1 0 0 1 60 760 Tm');
+
+  let hasContent = false;
+
+  const appendSegments = (segments: string[]) => {
+    segments.forEach((segment) => {
+      if (!hasContent) {
+        commands.push(`(${escapePdfText(segment)}) Tj`);
+        hasContent = true;
+      } else {
+        commands.push('T*');
+        commands.push(`(${escapePdfText(segment)}) Tj`);
+      }
+    });
+  };
+
+  lines.forEach((line) => {
+    if (line.trim().length === 0) {
+      if (hasContent) {
+        commands.push('T*');
+      }
+      return;
+    }
+
+    const wrapped = wrapForPdf(line);
+    if (wrapped.length === 0) {
+      if (hasContent) {
+        commands.push('T*');
+      }
+      return;
+    }
+
+    appendSegments(wrapped);
+  });
+
+  commands.push('ET');
+
+  const pdfBytes = assemblePdf(commands);
+  const buffer = new ArrayBuffer(pdfBytes.byteLength);
+  new Uint8Array(buffer).set(pdfBytes);
+  return new Blob([buffer], { type: 'application/pdf' });
+}
+
+const defaultActivityTemplates: ActivityTemplate[] = [
+  {
+    id: '1',
+    type: 'login',
+    titleKey: 'activity.sample.login.title',
+    descriptionKey: 'activity.sample.login.description',
+    timestamp: '2024-09-16T09:15:00Z',
+    status: 'success',
+    details: { device: 'Mobile App', location: 'Johannesburg' }
+  },
+  {
+    id: '2',
+    type: 'payment',
+    titleKey: 'activity.sample.payment.title',
+    descriptionKey: 'activity.sample.payment.description',
+    timestamp: '2024-09-01T08:30:00Z',
+    status: 'success',
+    details: { amount: 12500, method: 'bank_transfer', reference: 'RENT-SEP-2024' }
+  },
+  {
+    id: '3',
+    type: 'maintenance_request',
+    titleKey: 'activity.sample.maintenance.title',
+    descriptionKey: 'activity.sample.maintenance.description',
+    timestamp: '2024-08-28T14:20:00Z',
+    status: 'pending',
+    details: { category: 'plumbing', priority: 'medium', request_id: 'MAINT-2024-0828' }
+  },
+  {
+    id: '4',
+    type: 'profile_update',
+    titleKey: 'activity.sample.profile.title',
+    descriptionKey: 'activity.sample.profile.description',
+    timestamp: '2024-08-25T11:45:00Z',
+    status: 'success',
+    details: { fields_updated: ['emergency_contact'] }
+  },
+  {
+    id: '5',
+    type: 'document_upload',
+    titleKey: 'activity.sample.document.title',
+    descriptionKey: 'activity.sample.document.description',
+    timestamp: '2024-08-20T16:30:00Z',
+    status: 'success',
+    details: { document_type: 'lease', file_size: '2.4 MB' }
+  },
+  {
+    id: '6',
+    type: 'lease_action',
+    titleKey: 'activity.sample.lease.title',
+    descriptionKey: 'activity.sample.lease.description',
+    timestamp: '2024-08-15T10:00:00Z',
+    status: 'success',
+    details: { renewal_period: '12 months', new_monthly_rent: 13000 }
+  }
+];
+
+function buildDefaultActivities(translate: (key: string) => string): ActivityItem[] {
+  return defaultActivityTemplates.map(({ titleKey, descriptionKey, ...rest }) => ({
+    ...rest,
+    title: translate(titleKey),
+    description: translate(descriptionKey)
+  }));
 }
 
 function ActivityLog() {
-  const [activities, _setActivities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      type: 'login',
-      title: 'Login',
-      description: 'Successfully logged into account',
-      timestamp: '2024-09-16T09:15:00Z',
-      status: 'success',
-      details: { device: 'Mobile App', location: 'Johannesburg' }
-    },
-    {
-      id: '2',
-      type: 'payment',
-      title: 'Rent Payment',
-      description: 'Monthly rent payment processed',
-      timestamp: '2024-09-01T08:30:00Z',
-      status: 'success',
-      details: { amount: 12500, method: 'bank_transfer', reference: 'RENT-SEP-2024' }
-    },
-    {
-      id: '3',
-      type: 'maintenance_request',
-      title: 'Maintenance Request Submitted',
-      description: 'Plumbing issue reported in bathroom',
-      timestamp: '2024-08-28T14:20:00Z',
-      status: 'pending',
-      details: { category: 'plumbing', priority: 'medium', request_id: 'MAINT-2024-0828' }
-    },
-    {
-      id: '4',
-      type: 'profile_update',
-      title: 'Profile Updated',
-      description: 'Emergency contact information updated',
-      timestamp: '2024-08-25T11:45:00Z',
-      status: 'success',
-      details: { fields_updated: ['emergency_contact'] }
-    },
-    {
-      id: '5',
-      type: 'document_upload',
-      title: 'Document Uploaded',
-      description: 'Lease agreement uploaded',
-      timestamp: '2024-08-20T16:30:00Z',
-      status: 'success',
-      details: { document_type: 'lease', file_size: '2.4 MB' }
-    },
-    {
-      id: '6',
-      type: 'lease_action',
-      title: 'Lease Renewal',
-      description: 'Lease renewed for another year',
-      timestamp: '2024-08-15T10:00:00Z',
-      status: 'success',
-      details: { renewal_period: '12 months', new_monthly_rent: 13000 }
-    }
-  ]);
-
-  const [filter, setFilter] = useState<'all' | 'login' | 'payment' | 'maintenance_request' | 'profile_update' | 'document_upload' | 'lease_action'>('all');
+  const { t, language } = useLanguage();
+  const locale = language === 'zu' ? 'zu-ZA' : 'en-ZA';
+  const activities = useMemo(() => buildDefaultActivities(t), [t]);
+  const [filter, setFilter] = useState<ActivityFilterKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const getActivityIcon = (type: ActivityItem['type']) => {
-    switch (type) {
-      case 'login': return 'Login';
-      case 'payment': return 'Payment';
-      case 'maintenance_request': return 'Maintenance';
-      case 'profile_update': return 'Profile';
-      case 'document_upload': return 'Document';
-      case 'lease_action': return 'Lease';
-      default: return 'Activity';
+  const filterOptions = useMemo(() => {
+    const options: Array<{ key: ActivityFilterKey; label: string }> = [
+      { key: 'all', label: t('activity.filters.all') || 'All' }
+    ];
+    for (const [key, value] of Object.entries(activityTypeConfig)) {
+      const typedKey = key as ActivityItem['type'];
+      options.push({ key: typedKey, label: t(value.labelKey) });
     }
+    return options;
+  }, [t]);
+
+  const searchPlaceholder = t('activity.searchPlaceholder') || 'Search activities';
+  const searchAriaLabel = t('activity.searchAria') || searchPlaceholder;
+  const exportButtonLabel = t('activity.exportPdf') || 'Export PDF';
+  const exportingLabel = t('activity.exporting') || 'Exporting...';
+  const emptyStateTitle = t('activity.emptyTitle') || 'No activities found';
+  const clearSearchLabel = t('activity.clearSearch') || 'Clear search';
+  const detailsLabel = t('activity.detailsButton') || 'Details';
+  const modalHeading = t('activity.modal.heading') || 'Activity Details';
+  const typeLabel = t('activity.modal.typeLabel') || 'Type';
+  const titleLabel = t('activity.modal.titleLabel') || 'Title';
+  const descriptionLabel = t('activity.modal.descriptionLabel') || 'Description';
+  const timestampLabel = t('activity.modal.timestampLabel') || 'Timestamp';
+  const statusLabel = t('activity.modal.statusLabel') || 'Status';
+  const additionalDetailsLabel = t('activity.modal.additionalDetailsLabel') || 'Additional Details';
+  const closeLabel = t('common.close') || 'Close';
+
+  const activityCounts: Record<ActivityFilterKey, number> = {
+    all: 0,
+    login: 0,
+    payment: 0,
+    maintenance_request: 0,
+    profile_update: 0,
+    document_upload: 0,
+    lease_action: 0
   };
 
-  const getActivityColor = (type: ActivityItem['type']) => {
-    switch (type) {
-      case 'login': return 'activity-login';
-      case 'payment': return 'activity-payment';
-      case 'maintenance_request': return 'activity-maintenance';
-      case 'profile_update': return 'activity-profile';
-      case 'document_upload': return 'activity-document';
-      case 'lease_action': return 'activity-lease';
-      default: return 'activity-default';
-    }
-  };
+  for (const activity of activities) {
+    activityCounts.all += 1;
+    activityCounts[activity.type] += 1;
+  }
 
-  const getStatusColor = (status?: ActivityItem['status']) => {
-    switch (status) {
-      case 'success': return 'status-paid';
-      case 'pending': return 'status-pending';
-      case 'failed': return 'status-overdue';
-      default: return 'status-pending';
-    }
-  };
-
-  const filteredActivities = activities.filter(activity => {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredActivities = activities.filter((activity) => {
     const matchesFilter = filter === 'all' || activity.type === filter;
-    const matchesSearch = searchTerm === '' || 
-      activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      activity.title.toLowerCase().includes(normalizedSearch) ||
+      activity.description.toLowerCase().includes(normalizedSearch);
     return matchesFilter && matchesSearch;
   });
 
   const handleExport = () => {
-    setExporting(true);
-    
-    // Simulate export process
-    setTimeout(() => {
-      const exportData = {
-        export_date: new Date().toISOString(),
-        total_activities: activities.length,
-        activities: activities
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `activity-log-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      setExporting(false);
-    }, 1000);
-  };
-
-  const formatDateTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('en-ZA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getActivityTypeName = (type: ActivityItem['type']) => {
-    switch (type) {
-      case 'login': return 'Login';
-      case 'payment': return 'Payment';
-      case 'maintenance_request': return 'Maintenance Request';
-      case 'profile_update': return 'Profile Update';
-      case 'document_upload': return 'Document Upload';
-      case 'lease_action': return 'Lease Action';
-      default: return 'Activity';
+    if (exporting) {
+      return;
     }
-  };
-
-  const activityCounts = {
-    all: activities.length,
-    login: activities.filter(a => a.type === 'login').length,
-    payment: activities.filter(a => a.type === 'payment').length,
-    maintenance_request: activities.filter(a => a.type === 'maintenance_request').length,
-    profile_update: activities.filter(a => a.type === 'profile_update').length,
-    document_upload: activities.filter(a => a.type === 'document_upload').length,
-    lease_action: activities.filter(a => a.type === 'lease_action').length
+    setExporting(true);
+    try {
+      const blob = createPdfBlobFromActivities(activities, t, locale);
+      const url = globalThis.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `activity-log-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      globalThis.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Activity export failed:', error);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
     <div className="activity-log">
-      <div className="activity-header">
-        <h3>Activity Log</h3>
-        <div className="search-box" style={{ marginBottom: '16px' }}>
+      <section className="activity-card activity-log-controls">
+        <div className="activity-search-row">
           <input
-            type="text"
-            placeholder="Search activities..."
+            type="search"
+            className="input activity-search-input"
+            placeholder={searchPlaceholder}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              backgroundColor: '#fff',
-              outline: 'none',
-              transition: 'border-color 0.2s ease',
-              boxSizing: 'border-box'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#162F1B'}
-            onBlur={(e) => e.target.style.borderColor = '#ddd'}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            aria-label={searchAriaLabel}
           />
-        </div>
-        <div className="activity-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-          <button 
+          <button
             type="button"
-            className="btn btn-primary btn-sm"
+            className="button button-md button-primary activity-export-button"
             onClick={handleExport}
             disabled={exporting}
           >
-            {exporting ? 'Exporting...' : 'Export'}
+            {exporting ? exportingLabel : exportButtonLabel}
           </button>
         </div>
-      </div>
+        <div className="activity-filter-list">
+          {filterOptions.map((option) => {
+            const isActive = filter === option.key;
+            const buttonClass = [
+              'activity-filter-button',
+              option.key !== 'all' ? `activity-filter-${option.key}` : '',
+              isActive ? 'active' : ''
+            ].filter(Boolean).join(' ');
 
-      <div className="activity-filters">
-        <div className="filter-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-          <button
-            type="button"
-            className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('all')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            All ({activityCounts.all})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'login' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('login')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Logins ({activityCounts.login})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'payment' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('payment')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Payments ({activityCounts.payment})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'maintenance_request' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('maintenance_request')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Maintenance ({activityCounts.maintenance_request})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'profile_update' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('profile_update')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Profile ({activityCounts.profile_update})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'document_upload' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('document_upload')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Documents ({activityCounts.document_upload})
-          </button>
-          <button
-            type="button"
-            className={`btn ${filter === 'lease_action' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter('lease_action')}
-            style={{ 
-              fontSize: '11px', 
-              padding: '2px 6px', 
-              minHeight: 'auto', 
-              borderRadius: '12px',
-              border: 'none',
-              whiteSpace: 'nowrap',
-              flex: 'none',
-              width: 'auto',
-              minWidth: 'auto'
-            }}
-          >
-            Lease ({activityCounts.lease_action})
-          </button>
+            return (
+              <button
+                key={option.key}
+                type="button"
+                className={buttonClass}
+                onClick={() => setFilter(option.key)}
+              >
+                {`${option.label} (${activityCounts[option.key] ?? 0})`}
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
       <div className="activity-list">
         {filteredActivities.length === 0 ? (
-          <div className="empty-state">
-            <p>No activities found</p>
+          <div className="activity-card activity-empty">
+            <p>{emptyStateTitle}</p>
             {searchTerm && (
-              <button 
+              <button
                 type="button"
-                className="btn btn-secondary"
+                className="button button-sm button-secondary"
                 onClick={() => setSearchTerm('')}
               >
-                Clear Search
+                {clearSearchLabel}
               </button>
             )}
           </div>
         ) : (
           filteredActivities.map((activity) => (
-            <div key={activity.id} className="activity-item">
-              <div className="activity-main">
-                <div className="activity-icon">
-                  <span className={`icon-wrapper ${getActivityColor(activity.type)}`}>
-                    {getActivityIcon(activity.type)}
-                  </span>
+            <div key={activity.id} className="activity-card activity-item">
+              <div className="activity-item-top">
+                <div className="activity-item-icon">
+                  <Icon
+                    name={getActivityIconName(activity.type)}
+                    size={40}
+                    color={getActivityAccentColor(activity.type)}
+                    borderRadius="50%"
+                  />
                 </div>
-                <div className="activity-content">
-                  <div className="activity-header-info">
-                    <h4>{activity.title}</h4>
+                <div className="activity-item-body">
+                  <div className="activity-item-heading">
+                    <h4 className="activity-item-title">{activity.title}</h4>
                     {activity.status && (
                       <span className={`status-badge ${getStatusColor(activity.status)}`}>
-                        {activity.status.toUpperCase()}
+                        {getStatusLabel(activity.status, t)}
                       </span>
                     )}
                   </div>
-                  <p className="activity-description">{activity.description}</p>
-                  <p className="activity-meta">
-                    {getActivityTypeName(activity.type)} • {formatDateTime(activity.timestamp)}
-                  </p>
+                  <p className="activity-item-description">{activity.description}</p>
+                  <div className="activity-item-meta">
+                    <span>{getActivityTypeName(activity.type, t)}</span>
+                    <span className="activity-item-meta-separator" aria-hidden="true">•</span>
+                    <span>{formatDateTime(activity.timestamp, locale)}</span>
+                  </div>
                 </div>
-                <div className="activity-actions">
-                  <button 
+                <div className="activity-item-actions">
+                  <button
                     type="button"
-                    className="btn btn-sm btn-secondary"
+                    className="button button-sm button-secondary activity-details-button"
                     onClick={() => setSelectedActivity(activity)}
                   >
-                    Details
+                    {detailsLabel}
                   </button>
                 </div>
               </div>
@@ -393,10 +575,10 @@ function ActivityLog() {
 
       {selectedActivity && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content modal-large">
             <div className="modal-header">
-              <h3>Activity Details</h3>
-              <button 
+              <h3>{modalHeading}</h3>
+              <button
                 type="button"
                 className="close-btn"
                 onClick={() => setSelectedActivity(null)}
@@ -407,32 +589,32 @@ function ActivityLog() {
             <div className="modal-body">
               <div className="activity-details">
                 <div className="detail-row">
-                  <label>Type:</label>
-                  <span>{getActivityTypeName(selectedActivity.type)}</span>
+                  <label>{`${typeLabel}:`}</label>
+                  <span>{getActivityTypeName(selectedActivity.type, t)}</span>
                 </div>
                 <div className="detail-row">
-                  <label>Title:</label>
+                  <label>{`${titleLabel}:`}</label>
                   <span>{selectedActivity.title}</span>
                 </div>
                 <div className="detail-row">
-                  <label>Description:</label>
+                  <label>{`${descriptionLabel}:`}</label>
                   <span>{selectedActivity.description}</span>
                 </div>
                 <div className="detail-row">
-                  <label>Timestamp:</label>
-                  <span>{formatDateTime(selectedActivity.timestamp)}</span>
+                  <label>{`${timestampLabel}:`}</label>
+                  <span>{formatDateTime(selectedActivity.timestamp, locale)}</span>
                 </div>
                 {selectedActivity.status && (
                   <div className="detail-row">
-                    <label>Status:</label>
+                    <label>{`${statusLabel}:`}</label>
                     <span className={`status-badge ${getStatusColor(selectedActivity.status)}`}>
-                      {selectedActivity.status.toUpperCase()}
+                      {getStatusLabel(selectedActivity.status, t)}
                     </span>
                   </div>
                 )}
                 {selectedActivity.details && (
                   <div className="detail-row">
-                    <label>Additional Details:</label>
+                    <label>{`${additionalDetailsLabel}:`}</label>
                     <div className="details-json">
                       <pre>{JSON.stringify(selectedActivity.details, null, 2)}</pre>
                     </div>
@@ -440,12 +622,12 @@ function ActivityLog() {
                 )}
               </div>
               <div className="form-actions">
-                <button 
+                <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="button button-md button-secondary"
                   onClick={() => setSelectedActivity(null)}
                 >
-                  Close
+                  {closeLabel}
                 </button>
               </div>
             </div>

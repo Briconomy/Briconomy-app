@@ -3,6 +3,8 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 
 type MaintenanceTask = {
@@ -18,14 +20,16 @@ type MaintenanceTask = {
 
 function CaretakerSchedulePage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const { showToast } = useToast();
   const [selectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('day'); // day, week, month
   
   const navItems = [
-    { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
-    { path: '/caretaker/schedule', label: 'Schedule', icon: 'report', active: true },
-    { path: '/caretaker/history', label: 'History', icon: 'activityLog', active: false },
-    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
+    { path: '/caretaker', label: t('nav.tasks'), icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: t('nav.schedule'), icon: 'report', active: true },
+    { path: '/caretaker/history', label: t('nav.history'), icon: 'activityLog', active: false },
+    { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile', active: false }
   ];
 
   const { data: tasks, loading: tasksLoading, error: _tasksError, refetch: refetchTasks } = useApi<MaintenanceTask[]>(
@@ -63,12 +67,12 @@ function CaretakerSchedulePage() {
       console.log(`[CaretakerSchedulePage] Updated request ${requestId} status to ${newStatus}`);
     } catch (error) {
       console.error('[CaretakerSchedulePage] Error updating status:', error);
-      alert('Failed to update status. Please try again.');
+      showToast(t('caretakerSchedule.updateFailed'), 'error');
     }
   };
 
   const handleDeleteRequest = async (requestId: string) => {
-    if (!confirm('Are you sure you want to delete this maintenance request?')) {
+    if (!confirm(t('caretakerSchedule.deleteConfirm'))) {
       return;
     }
     
@@ -78,7 +82,7 @@ function CaretakerSchedulePage() {
       console.log(`[CaretakerSchedulePage] Deleted request ${requestId}`);
     } catch (error) {
       console.error('[CaretakerSchedulePage] Error deleting request:', error);
-      alert('Failed to delete request. Please try again.');
+      showToast(t('caretakerSchedule.deleteFailed'), 'error');
     }
   };
 
@@ -180,11 +184,11 @@ function CaretakerSchedulePage() {
   if (tasksLoading) {
     return (
       <div className="app-container mobile-only">
-<TopNav showLogout showBackButton />
+        <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading your schedule...</p>
+            <p>{t('caretakerSchedule.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -198,39 +202,39 @@ function CaretakerSchedulePage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">My Schedule</div>
-          <div className="page-subtitle">Task calendar and planning</div>
+          <div className="page-title">{t('caretakerSchedule.title')}</div>
+          <div className="page-subtitle">{t('caretakerSchedule.subtitle')}</div>
         </div>
         
         <div className="dashboard-grid">
-          <StatCard value={todayTasks} label="Today" />
-          <StatCard value={thisWeekTasks} label="This Week" />
-          <StatCard value={overdueTasks} label="Overdue" />
-          <StatCard value={`${totalEstimatedHours}h`} label="Hours" />
+          <StatCard value={todayTasks} label={t('caretakerSchedule.today')} />
+          <StatCard value={thisWeekTasks} label={t('caretakerSchedule.thisWeek')} />
+          <StatCard value={overdueTasks} label={t('caretakerSchedule.overdue')} />
+          <StatCard value={`${totalEstimatedHours}h`} label={t('caretakerSchedule.hours')} />
         </div>
 
         {/* View Mode Selector */}
         <div className="view-mode-selector">
           <button 
             type="button"
-            className={`btn btn-sm ${viewMode === 'day' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${viewMode === 'day' ? 'btn-primary date-btn' : 'btn-secondary date2-btn'}`}
             onClick={() => setViewMode('day')}
           >
-            Day
+            {t('caretakerSchedule.day')}
           </button>
           <button 
             type="button"
-            className={`btn btn-sm ${viewMode === 'week' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${viewMode === 'week' ? 'btn-primary date-btn' : 'btn-secondary date2-btn'}`}
             onClick={() => setViewMode('week')}
           >
-            Week
+            {t('caretakerSchedule.week')}
           </button>
           <button 
             type="button"
-            className={`btn btn-sm ${viewMode === 'month' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn btn-sm ${viewMode === 'month' ? 'btn-primary date-btn' : 'btn-secondary date2-btn'}`}
             onClick={() => setViewMode('month')}
           >
-            Month
+            {t('caretakerSchedule.month')}
           </button>
         </div>
 
@@ -238,17 +242,17 @@ function CaretakerSchedulePage() {
         <div className="data-table">
           <div className="table-header">
             <div className="table-title">
-              {viewMode === 'day' ? 'Today\'s Schedule' : 
-               viewMode === 'week' ? 'This Week' : 'This Month'}
+              {viewMode === 'day' ? t('caretakerSchedule.todaysSchedule') : 
+               viewMode === 'week' ? t('caretakerSchedule.thisWeek') : t('caretakerSchedule.month')}
             </div>
             <div className="text-sm text-gray-500">
-              {filteredTasks.length} tasks
+              {filteredTasks.length} {t('caretakerSchedule.tasks')}
             </div>
           </div>
           
           {filteredTasks.length === 0 ? (
             <div className="no-results">
-              <p>No tasks scheduled for this period</p>
+              <p>{t('caretakerSchedule.noTasksScheduled')}</p>
             </div>
           ) : (
             filteredTasks
@@ -261,9 +265,9 @@ function CaretakerSchedulePage() {
                         {task.title}
                       </h4>
                       <span className={`status-badge ${getStatusColor(task.status)}`}>
-                        {task.status === 'in_progress' ? 'In Progress' : 
-                         task.status === 'pending' ? 'Scheduled' :
-                         task.status === 'completed' ? 'Completed' : task.status}
+                        {task.status === 'in_progress' ? t('caretakerSchedule.statusInProgress') : 
+                         task.status === 'pending' ? t('caretakerSchedule.statusScheduled') :
+                         task.status === 'completed' ? t('caretakerSchedule.statusCompleted') : task.status}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{task.description}</p>
@@ -298,7 +302,7 @@ function CaretakerSchedulePage() {
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(task.id, 'in_progress')}
                         >
-                          Start Work
+                          {t('caretakerSchedule.startWork')}
                         </button>
                       )}
                       {task.status === 'in_progress' && (
@@ -308,7 +312,7 @@ function CaretakerSchedulePage() {
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(task.id, 'completed')}
                         >
-                          Complete
+                          {t('caretakerSchedule.complete')}
                         </button>
                       )}
                       {task.status === 'completed' && (
@@ -318,7 +322,7 @@ function CaretakerSchedulePage() {
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(task.id, 'pending')}
                         >
-                          Reopen
+                          {t('caretakerSchedule.reopen')}
                         </button>
                       )}
                       <button
@@ -327,7 +331,7 @@ function CaretakerSchedulePage() {
                         style={{ fontSize: '13px', padding: '6px 12px' }}
                         onClick={() => handleDeleteRequest(task.id)}
                       >
-                        Delete
+                        {t('caretakerSchedule.delete')}
                       </button>
                     </div>
                   </div>
@@ -339,9 +343,9 @@ function CaretakerSchedulePage() {
           {/* Upcoming Deadlines - Inline Style */}
           <div className="data-table" style={{ marginTop: '2rem' }}>
             <div className="table-header">
-              <div className="table-title">Upcoming Deadlines</div>
+              <div className="table-title">{t('caretakerSchedule.upcomingDeadlines')}</div>
               <div className="text-sm text-gray-500">
-                {tasksData.filter(task => task.status !== 'completed').length} tasks
+                {tasksData.filter(task => task.status !== 'completed').length} {t('caretakerSchedule.tasks')}
               </div>
             </div>
             {tasksData

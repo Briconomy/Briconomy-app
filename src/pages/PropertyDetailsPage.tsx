@@ -6,6 +6,22 @@ import { propertiesApi, unitsApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
+
+type PropertyUnit = {
+  id?: string;
+  _id?: string;
+  unitNumber?: string;
+  status?: string;
+  rent?: number;
+  floor?: string | number;
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number | string;
+  features?: string[];
+  maintenanceNotes?: string;
+  propertyId?: string;
+};
 
 // Add styles for the image modal and gallery
 const modalStyles = `
@@ -92,11 +108,12 @@ const modalStyles = `
     position: absolute;
     top: 10px;
     left: 10px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     color: white;
     padding: 5px 10px;
     border-radius: 15px;
     font-size: 12px;
+    backdrop-filter: blur(4px);
   }
   
   .image-navigation {
@@ -109,10 +126,11 @@ const modalStyles = `
     justify-content: space-between;
     padding: 0 10px;
     pointer-events: none;
+    background: transparent;
   }
   
   .nav-btn {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.3);
     color: white;
     border: none;
     width: 40px;
@@ -124,10 +142,13 @@ const modalStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
   }
   
   .nav-btn:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
   }
   
   .nav-btn:disabled {
@@ -135,6 +156,21 @@ const modalStyles = `
     cursor: not-allowed;
   }
   
+.backtoProperties-btn {
+    width: 295px;
+    font-size: 13px;
+    margin-top: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .applyNow-btn {
+    width: 190px;
+    font-size: 15px;
+    margin-top: 10px;
+  }
+
   .thumbnail-grid {
     display: flex;
     gap: 10px;
@@ -328,45 +364,6 @@ const modalStyles = `
     gap: 8px;
   }
 
-  .btn-sm {
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-    transition: all 0.3s ease;
-    flex: 1;
-  }
-
-  .btn-sm:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .btn-secondary.btn-sm {
-    background: #f8f9fa;
-    color: #495057;
-    border: 2px solid #e9ecef;
-  }
-
-  .btn-secondary.btn-sm:hover:not(:disabled) {
-    background: #e9ecef;
-    border-color: #dee2e6;
-  }
-
-  .btn-primary.btn-sm {
-    background: #162F1B;
-    color: white;
-  }
-
-  .btn-primary.btn-sm:hover:not(:disabled) {
-    background: #1a3a20;
-  }
-
   /* Unit cards styling */
   .units-grid {
     display: grid;
@@ -417,9 +414,9 @@ const modalStyles = `
   }
 
   .final-action-section .property-actions {
-    justify-content: center;
-    max-width: 300px;
-    margin: 0 auto;
+    justify-content: flex-start;
+    max-width: none;
+    margin: 0;
   }
   
   .price-subtitle {
@@ -758,7 +755,7 @@ function PropertyDetailsPage() {
   const { id: propertyId } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
-  const [units, setUnits] = useState([]);
+  const [units, setUnits] = useState<PropertyUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -778,23 +775,25 @@ function PropertyDetailsPage() {
   const { optimizeImage } = useImageOptimization();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { addViewedProperty } = useProspectiveTenant();
 
   const isManager = user?.userType === 'manager';
   const isTenant = user?.userType === 'tenant';
+  const isProspectiveTenant = !isManager && !isTenant;
 
   const navItems = isManager ? [
     { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
-    { path: '/properties', label: 'Properties', icon: 'properties', active: true },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties', active: true },
     { path: '/manager/leases', label: 'Leases', icon: 'lease', active: false },
     { path: '/manager/payments', label: 'Payments', icon: 'payment', active: false }
   ] : isTenant ? [
     { path: '/tenant', label: 'Dashboard', icon: 'properties', active: false },
-    { path: '/properties', label: 'My Properties', icon: 'properties', active: true },
     { path: '/tenant/payments', label: 'Payments', icon: 'payment', active: false },
-    { path: '/tenant/maintenance', label: 'Maintenance', icon: 'maintenance', active: false }
+    { path: '/tenant/requests', label: 'Requests', icon: 'maintenance', active: false },
+    { path: '/tenant/profile', label: 'Profile', icon: 'profile', active: false }
   ] : [
     { path: '/', label: 'Home', icon: 'logo', active: false },
-    { path: '/properties', label: 'Properties', icon: 'properties', active: true },
+    { path: '/browse-properties', label: 'Properties', icon: 'properties', active: true },
     { path: '/login', label: 'Login', icon: 'profile', active: false }
   ];
 
@@ -807,6 +806,13 @@ function PropertyDetailsPage() {
       setLoading(false);
     }
   }, [propertyId]);
+
+  // Track viewed property for prospective tenants
+  useEffect(() => {
+    if (propertyId && isProspectiveTenant && property) {
+      addViewedProperty(propertyId);
+    }
+  }, [propertyId, isProspectiveTenant, property]);
 
   const fetchPropertyDetails = async () => {
     try {
@@ -919,24 +925,24 @@ function PropertyDetailsPage() {
     }));
   };
 
-  const getEstimatedRentRange = () => {
+  const getEstimatedRentRange = (currentOccupiedCount?: number) => {
     if (!property) return { min: 0, max: 0 };
-    
-    const baseRent = property.type === 'apartment' ? 8000 : 
+
+    const baseRent = property.type === 'apartment' ? 8000 :
                     property.type === 'complex' ? 10000 : 12000;
-    const occupancyMultiplier = property.occupiedUnits / property.totalUnits;
+    const occupancyMultiplier = (currentOccupiedCount ?? property.occupiedUnits) / property.totalUnits;
     const avgRent = Math.round(baseRent * (1 + occupancyMultiplier * 0.5));
-    
+
     return {
       min: Math.round(avgRent * 0.8),
       max: Math.round(avgRent * 1.2)
     };
   };
 
-  const calculateEstimatedRent = (property: { type: string; occupiedUnits: number; totalUnits: number }) => {
-    const baseRent = property.type === 'apartment' ? 8000 : 
-                    property.type === 'complex' ? 10000 : 12000;
-    const occupancyMultiplier = property.occupiedUnits / property.totalUnits;
+  const calculateEstimatedRent = (propertyObj: { type: string; occupiedUnits?: number; totalUnits: number }, currentOccupiedCount?: number) => {
+    const baseRent = propertyObj.type === 'apartment' ? 8000 :
+                    propertyObj.type === 'complex' ? 10000 : 12000;
+    const occupancyMultiplier = (currentOccupiedCount ?? propertyObj.occupiedUnits ?? 0) / propertyObj.totalUnits;
     return Math.round(baseRent * (1 + occupancyMultiplier * 0.5));
   };
 
@@ -1053,26 +1059,31 @@ function PropertyDetailsPage() {
         <div className="main-content">
           <div className="error-state">
             <p>Property not found</p>
-            <button type="button" onClick={handleBack} className="btn btn-primary">Back to Properties</button>
+            <button type="button" onClick={handleBack} className="btn btn-primary backToProperties-btn">Back to Properties</button>
           </div>
         </div>
       </div>
     );
   }
 
-  const rentRange = getEstimatedRentRange();
   const propertyImages = getPropertyImages();
+
+  const vacantCount = units.filter(unit => unit.status === 'vacant').length;
+  const occupiedCount = units.filter(unit => unit.status === 'occupied').length;
+
+  const rentRange = getEstimatedRentRange(occupiedCount);
+
   const availability = {
-    available: property.totalUnits - property.occupiedUnits,
+    available: vacantCount,
     total: property.totalUnits,
-    percentage: Math.round(((property.totalUnits - property.occupiedUnits) / property.totalUnits) * 100)
+    percentage: Math.round((vacantCount / property.totalUnits) * 100)
   };
 
   // Manager View - Property Management Interface
   if (isManager) {
-    const estimatedMonthlyRevenue = property.occupiedUnits * (property.type === 'apartment' ? 8000 : 
+    const estimatedMonthlyRevenue = occupiedCount * (property.type === 'apartment' ? 8000 :
                                  property.type === 'complex' ? 10000 : 12000);
-    const occupancyRate = Math.round((property.occupiedUnits / property.totalUnits) * 100);
+    const occupancyRate = Math.round((occupiedCount / property.totalUnits) * 100);
 
     return (
       <div className="app-container mobile-only">
@@ -1275,7 +1286,7 @@ function PropertyDetailsPage() {
 
               <div className="property-actions-section">
                 <div className="action-buttons">
-                  <button type="button" onClick={handleBack} className="btn btn-secondary">
+                  <button type="button" onClick={handleBack} className="btn btn-secondary backtoProperties-btn">
                     Back to Properties
                   </button>
                 </div>
@@ -1501,7 +1512,7 @@ function PropertyDetailsPage() {
         <div className="property-pricing-section">
           <div className="pricing-highlight">
             <div className="main-price">
-              <span className="price">{formatCurrency(calculateEstimatedRent(property))}</span>
+              <span className="price">{formatCurrency(calculateEstimatedRent(property, occupiedCount))}</span>
               <span className="period">/month</span>
             </div>
             <div className="price-subtitle">{t('prospect.average_rent')}</div>
@@ -1539,7 +1550,7 @@ function PropertyDetailsPage() {
         {/* Property Overview Card */}
         <div className="property-card">
           <div className="property-info">
-            <div className="property-price">{formatCurrency(calculateEstimatedRent(property))}/month</div>
+            <div className="property-price">{formatCurrency(calculateEstimatedRent(property, occupiedCount))}/month</div>
             <div className="property-title">{property.name}</div>
             <div className="property-location">{property.address}</div>
             
@@ -1590,13 +1601,13 @@ function PropertyDetailsPage() {
             <div className="property-actions">
               <button type="button"
                 onClick={() => globalThis.location.href = '/browse-properties'}
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary backtoProperties-btn"
               >
                 {t('prospect.back_to_properties')}
               </button>
               <button type="button"
                 onClick={handleApplyNow}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary applyNow-btn"
                 disabled={availability.available === 0}
               >
                 {availability.available > 0 ? t('prospect.apply_now') : t('prospect.join_waitlist')}
@@ -1605,12 +1616,12 @@ function PropertyDetailsPage() {
           </div>
         </div>
 
-        {units.length > 0 && (
+  {units.filter(unit => unit.status === 'vacant').length > 0 && (
           <div className="property-card">
             <div className="property-info">
               <h3 className="section-heading" style={{ marginBottom: '16px' }}>{t('prospect.available_units')} ({units.filter(u => u.status === 'vacant').length})</h3>
               <div className="units-grid">
-                {units.map((unit, index) => (
+                {units.filter(unit => unit.status === 'vacant').map((unit, index) => (
                   <div key={unit.id || `unit-${index}`} className="property-card unit-detail-card">
                     <div className="property-info">
                       <div className="unit-header-info">
@@ -1703,7 +1714,7 @@ function PropertyDetailsPage() {
                 textAlign: 'center',
                 border: '2px dashed #dee2e6'
               }}>
-                <div className="map-placeholder-icon">📍</div>
+                <div className="map-placeholder-icon" style={{ marginBottom: '8px', fontSize: '24px', color: '#162F1B', fontWeight: '600' }}>MAP</div>
                 <p style={{ color: '#6c757d', margin: '0 0 4px 0', fontWeight: '500' }}>{t('prospect.interactive_map')}</p>
                 <p className="map-placeholder-text">{t('prospect.maps_coming_soon')}</p>
               </div>
@@ -1724,16 +1735,16 @@ function PropertyDetailsPage() {
                 </div>
               </div>
               <div className="property-actions">
-                <button type="button" 
-                  onClick={handleBack} 
-                  className="btn btn-secondary btn-sm"
+                <button type="button"
+                  onClick={handleBack}
+                  className="btn btn-secondary backtoProperties-btn"
                 >
                   {t('prospect.back_to_properties')}
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={handleApplyNow}
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary applyNow-btn"
                   disabled={availability.available === 0}
                 >
                   {availability.available > 0 ? t('prospect.apply_now') : t('prospect.join_waitlist')}

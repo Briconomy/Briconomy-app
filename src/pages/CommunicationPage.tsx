@@ -1,77 +1,52 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { notificationsApi, leasesApi, maintenanceApi, propertiesApi, formatDateTime, useApi } from '../services/api.ts';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
-import ActionCard from '../components/ActionCard.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
-import Icon from '../components/Icon.tsx';
 import { useToast } from '../contexts/ToastContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
 const CommunicationPage = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const [messageType, setMessageType] = useState<'manager' | null>(null);
+  const tenantContext = user?.tenantContext || null;
   const [messageSubject, setMessageSubject] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [sending, setSending] = useState(false);
-  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [selectedFAQ, setSelectedFAQ] = useState<string | null>(null);
-
-  const faqItems = [
-    {
-      id: '1',
-      question: 'How do I pay my rent?',
-      answer: 'Go to the Payments page and select your preferred payment method. We accept bank transfers, EFT, and credit/debit cards.',
-      icon: 'payment'
-    },
-    {
-      id: '2',
-      question: 'How do I report a maintenance issue?',
-      answer: 'Click "Report Issue" on this page, fill in the details, and submit. Our maintenance team will be notified immediately.',
-      icon: 'issue'
-    },
-    {
-      id: '3',
-      question: 'How do I contact my property manager?',
-      answer: 'Use the Messages page to send a message or call directly using the Emergency Contact button above.',
-      icon: 'contact'
-    },
-    {
-      id: '4',
-      question: 'What if I have an emergency?',
-      answer: 'Click the "Emergency Contact" button to call the property manager immediately, or view all emergency contacts in the Help & Support section.',
-      icon: 'emergency'
-    },
-    {
-      id: '5',
-      question: 'Where can I view my lease?',
-      answer: 'Your lease agreement and all documents are available in the Documents section of your Profile page.',
-      icon: 'profile'
-    },
-    {
-      id: '6',
-      question: 'How do I update my information?',
-      answer: 'Go to your Profile page and click the "Edit" button to update your contact and personal information.',
-      icon: 'profile'
-    }
-  ];
 
   const emergencyContacts = [
-    { name: 'Property Manager', phone: '+27 11 234 5678', description: 'Building emergencies & urgent issues' },
-    { name: 'Emergency Maintenance', phone: '+27 11 234 5679', description: 'After-hours maintenance emergencies' },
-    { name: 'Building Security', phone: '+27 11 234 5680', description: 'Security concerns & access issues' },
-    { name: 'Fire & Rescue', phone: '10177', description: 'Fire emergencies & medical assistance' },
-    { name: 'Police (SAPS)', phone: '10111', description: 'Crime, theft, & security emergencies' },
-    { name: 'Ambulance Service', phone: '10177', description: 'Medical emergencies' },
-    { name: 'Poison Information', phone: '0861 555 777', description: 'Poison & toxin emergencies' },
-    { name: 'Electricity (Eskom)', phone: '0860 037 566', description: 'Power outages & electrical faults' },
-    { name: 'Water & Sanitation', phone: '0860 562 874', description: 'Water leaks & sewage issues' }
-  ];
+    { nameKey: 'requests.emergency.contacts.manager.name', descriptionKey: 'requests.emergency.contacts.manager.description', phone: '+27 11 234 5678' },
+    { nameKey: 'requests.emergency.contacts.maintenance.name', descriptionKey: 'requests.emergency.contacts.maintenance.description', phone: '+27 11 234 5679' },
+    { nameKey: 'requests.emergency.contacts.security.name', descriptionKey: 'requests.emergency.contacts.security.description', phone: '+27 11 234 5680' },
+    { nameKey: 'requests.emergency.contacts.fireRescue.name', descriptionKey: 'requests.emergency.contacts.fireRescue.description', phone: '10177' },
+    { nameKey: 'requests.emergency.contacts.police.name', descriptionKey: 'requests.emergency.contacts.police.description', phone: '10111' },
+    { nameKey: 'requests.emergency.contacts.ambulance.name', descriptionKey: 'requests.emergency.contacts.ambulance.description', phone: '10177' },
+    { nameKey: 'requests.emergency.contacts.poison.name', descriptionKey: 'requests.emergency.contacts.poison.description', phone: '0861 555 777' },
+    { nameKey: 'requests.emergency.contacts.electricity.name', descriptionKey: 'requests.emergency.contacts.electricity.description', phone: '0860 037 566' },
+    { nameKey: 'requests.emergency.contacts.water.name', descriptionKey: 'requests.emergency.contacts.water.description', phone: '0860 562 874' }
+  ] as const;
+
+  const statusLabelMap: Record<string, string> = {
+    pending: t('requests.status_pending_badge') || 'PENDING',
+    in_progress: t('requests.status_in_progress_badge') || 'IN PROGRESS',
+    completed: t('requests.status_completed_badge') || 'COMPLETED'
+  };
+
+  const priorityLabelMap: Record<string, string> = {
+    urgent: t('requests.priorityOption.urgent') || 'Urgent',
+    high: t('requests.priorityOption.high') || 'High',
+    medium: t('requests.priorityOption.medium') || 'Medium',
+    low: t('requests.priorityOption.low') || 'Low'
+  };
+
+  const notAvailableLabel = t('common.notAvailable') || 'N/A';
+  // #COMPLETION_DRIVE: Assuming active requests title template keeps {count} placeholder for badge number substitution
+  // #SUGGEST_VERIFY: Change language and verify the maintenance request count renders correctly
+  const activeRequestsTitleTemplate = t('communication.activeRequestsTitle') || 'Active Maintenance Requests ({count})';
+  // #COMPLETION_DRIVE: Assuming request metadata template includes {priority} and {date} placeholders for localized copy
+  // #SUGGEST_VERIFY: Review maintenance request list in each language to ensure labels and timestamps display as expected
+  const requestMetaTemplate = t('communication.requestMeta') || 'Priority: {priority} | {date}';
 
   const navItems = [
     { path: '/tenant', label: t('nav.home'), icon: 'properties' },
@@ -80,7 +55,7 @@ const CommunicationPage = () => {
     { path: '/tenant/messages', label: t('nav.communication'), icon: 'contact', active: true }
   ];
 
-  const { data: notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(
+  const { data: _notifications, loading: notificationsLoading, refetch: refetchNotifications } = useApi(
     () => user?.id ? notificationsApi.getAll(user.id) : Promise.resolve([]),
     [user?.id]
   );
@@ -90,71 +65,130 @@ const CommunicationPage = () => {
     [user?.id]
   );
 
+  const primaryLease = Array.isArray(leases) ? leases[0] : null;
+  const leaseRecord = primaryLease as Record<string, unknown> | null;
+  const leaseProperty = leaseRecord && typeof leaseRecord?.property === 'object' && leaseRecord.property !== null
+    ? leaseRecord.property as Record<string, unknown>
+    : null;
+  const leaseUnit = leaseRecord && typeof leaseRecord?.unit === 'object' && leaseRecord.unit !== null
+    ? leaseRecord.unit as Record<string, unknown>
+    : null;
+  const notProvidedLabel = t('profile.notProvided') || 'Not provided';
+  const leaseUnitNumberRaw = leaseUnit ? (leaseUnit as Record<string, unknown>).unitNumber : null;
+  const rawUnitNumber = tenantContext?.unit?.unitNumber
+    ? String(tenantContext.unit.unitNumber)
+    : typeof leaseUnitNumberRaw === 'string' || typeof leaseUnitNumberRaw === 'number'
+      ? String(leaseUnitNumberRaw)
+      : '';
+  const propertyNameDisplay = tenantContext?.property?.name
+    || (leaseProperty && typeof leaseProperty.name === 'string' ? leaseProperty.name as string : '')
+    || notProvidedLabel;
+  const propertyAddressDisplay = tenantContext?.property?.address
+    || (leaseProperty && typeof leaseProperty.address === 'string' ? leaseProperty.address as string : '')
+    || '';
+  const unitNumberDisplay = rawUnitNumber || notProvidedLabel;
+  const managerNameDisplay = tenantContext?.manager?.fullName || notProvidedLabel;
+  const managerEmailDisplay = tenantContext?.manager?.email || '';
+  const managerPhoneDisplay = tenantContext?.manager?.phone || notAvailableLabel;
+
   const { data: requests, loading: requestsLoading } = useApi(
     () => user?.id ? maintenanceApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
     [user?.id]
   );
 
   const handleSendMessage = async () => {
-    if (!messageContent.trim() || !messageSubject.trim() || !messageType || sending) {
-      showToast('Please fill in all fields', 'error');
+    if (!messageContent.trim() || !messageSubject.trim() || sending) {
+      showToast(t('communication.validation.missingFields') || 'Please fill in all fields', 'error');
       return;
     }
 
     if (!user?.id) {
-      showToast('User not authenticated. Please log in again.', 'error');
+      showToast(t('communication.validation.unauthenticated') || 'User not authenticated. Please log in again.', 'error');
       return;
     }
 
     setSending(true);
     try {
-      const currentLease = leases?.[0];
-      
-      if (!currentLease || !currentLease.propertyId) {
-        showToast('Unable to find your property manager. Please contact support.', 'error');
-        setSending(false);
+      const pickFirstString = (...values: unknown[]): string | null => {
+        for (const value of values) {
+          if (typeof value === 'string' && value.length > 0) {
+            return value;
+          }
+        }
+        return null;
+      };
+
+      const activeLease = primaryLease as Record<string, unknown> | null;
+      const leaseProperty = activeLease && typeof activeLease.property === 'object' && activeLease.property !== null
+        ? activeLease.property as Record<string, unknown>
+        : null;
+      const rawPropertyId = activeLease ? activeLease.propertyId : null;
+      let leasePropertyId: string | null = null;
+      if (typeof rawPropertyId === 'string') {
+        leasePropertyId = rawPropertyId;
+      } else if (rawPropertyId && typeof rawPropertyId === 'object' && 'id' in rawPropertyId && typeof rawPropertyId.id === 'string') {
+        leasePropertyId = rawPropertyId.id;
+      } else if (leaseProperty && typeof leaseProperty.id === 'string') {
+        leasePropertyId = leaseProperty.id as string;
+      }
+
+      const propertyIdCandidate = pickFirstString(
+        tenantContext?.property?.id,
+        leasePropertyId,
+        user?.assignedPropertyId,
+        user?.propertyId,
+        user?.appliedPropertyId
+      );
+
+      let managerIdCandidate = pickFirstString(
+        tenantContext?.manager?.id,
+        tenantContext?.property?.managerId,
+        user?.managerId,
+        leaseProperty && typeof leaseProperty.managerId === 'string' ? leaseProperty.managerId : null
+      );
+
+      if (!managerIdCandidate && propertyIdCandidate) {
+        const property = await propertiesApi.getById(propertyIdCandidate);
+        if (property && typeof property.managerId === 'string') {
+          managerIdCandidate = property.managerId;
+        }
+      }
+
+      if (!managerIdCandidate) {
+        showToast(t('communication.validation.missingManager') || 'Unable to find your property manager. Please contact support.', 'error');
         return;
       }
 
-      const propertyId = typeof currentLease.propertyId === 'object' && 'id' in currentLease.propertyId 
-        ? currentLease.propertyId.id 
-        : currentLease.propertyId;
-
-      const property = await propertiesApi.getById(propertyId);
-      
-      if (!property || !property.managerId) {
-        showToast('Unable to find your property manager. Please contact support.', 'error');
-        setSending(false);
-        return;
-      }
+      const tenantDisplayName = user.fullName || user.email || t('communication.notificationSenderFallback') || 'Tenant';
+      const unitDisplay = rawUnitNumber && rawUnitNumber.length > 0 ? rawUnitNumber : notAvailableLabel;
+      // #COMPLETION_DRIVE: Assuming notification templates retain {subject}, {tenant}, {unit}, and {message} placeholders for runtime substitution
+      // #SUGGEST_VERIFY: Send a message in each supported language and confirm manager notification text renders expected values
+      const notificationTitleTemplate = t('communication.notificationTitle') || 'Message from Tenant: {subject}';
+      const notificationBodyTemplate = t('communication.notificationBody') || 'From: {tenant}\nUnit: {unit}\n\n{message}';
+      const notificationTitle = notificationTitleTemplate.replace('{subject}', messageSubject);
+      const notificationBody = notificationBodyTemplate
+        .replace('{tenant}', tenantDisplayName)
+        .replace('{unit}', unitDisplay)
+        .replace('{message}', messageContent);
 
       await notificationsApi.create({
-        userId: property.managerId,
-        title: `Message from Tenant: ${messageSubject}`,
-        message: `From: ${user.fullName || user.email}\nUnit: ${currentLease.unitId?.unitNumber || 'N/A'}\n\n${messageContent}`,
+        userId: managerIdCandidate,
+        title: notificationTitle,
+        message: notificationBody,
         type: 'system',
         read: false
       });
 
-      showToast('Message sent successfully to your property manager!', 'success');
-      setMessageType(null);
+      showToast(t('communication.success') || 'Message sent successfully to your property manager!', 'success');
       setMessageSubject('');
       setMessageContent('');
       await refetchNotifications();
     } catch (error) {
       console.error('Error sending message:', error);
-      showToast('Failed to send message. Please try again.', 'error');
+      showToast(t('communication.error') || 'Failed to send message. Please try again.', 'error');
     } finally {
       setSending(false);
     }
-  };
-
-  const handleEmergency = () => {
-    setShowEmergencyModal(true);
-  };
-
-  const toggleFAQ = (id: string) => {
-    setSelectedFAQ(selectedFAQ === id ? null : id);
   };
 
   const isLoading = authLoading || notificationsLoading || leasesLoading || requestsLoading;
@@ -174,8 +208,6 @@ const CommunicationPage = () => {
     );
   }
 
-  const currentLease = leases?.[0];
-  const unreadNotifications = notifications?.filter((n: { read: boolean }) => !n.read) || [];
   const pendingRequests = requests?.filter((r: { status: string }) => r.status === 'pending') || [];
 
   return (
@@ -185,383 +217,192 @@ const CommunicationPage = () => {
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">{t('communication.title')}</div>
-          <div className="page-subtitle">Send messages to your property team</div>
+          <div className="page-subtitle">{t('communication.subtitle')}</div>
         </div>
 
-        {currentLease && (
-          <div className="info-card" style={{ marginBottom: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
-            <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#2c3e50' }}>Your Property</h3>
-            <div style={{ fontSize: '14px', color: '#6c757d' }}>
-              <p style={{ margin: '5px 0' }}>
-                <strong>Property:</strong> {currentLease.propertyId?.name || 'N/A'}
-              </p>
-              <p style={{ margin: '5px 0' }}>
-                <strong>Unit:</strong> {currentLease.unitId?.unitNumber || 'N/A'}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {messageType === null ? (
-          <>
-            <div className="quick-actions">
-              <ActionCard 
-                onClick={() => setMessageType('manager')}
-                icon={<Icon name="manage" alt="Manager" />}
-                title="Message Manager"
-                description="Contact your property manager"
-              />
-              <ActionCard 
-                onClick={() => navigate('/tenant/requests')}
-                icon={<Icon name="maintenance" alt="Maintenance" />}
-                title="Message Maintenance"
-                description="Submit a maintenance request"
-              />
-              <ActionCard 
-                onClick={handleEmergency}
-                icon={<Icon name="emergency" alt="Emergency" />}
-                title="Emergency Contact"
-                description="Call for urgent matters only"
-              />
-              <ActionCard 
-                onClick={() => setShowHelpModal(true)}
-                icon={<Icon name="help" alt="Help & Support" />}
-                title="Help & Support"
-                description="FAQs and contact info"
-              />
-            </div>
-
-            {unreadNotifications.length > 0 && (
-              <div className="data-table" style={{ marginTop: '20px' }}>
-                <div className="table-header">
-                  <div className="table-title">
-                    Unread Notifications ({unreadNotifications.length})
-                  </div>
-                </div>
-                <div className="table-body">
-                  {unreadNotifications.slice(0, 5).map((notification: { id: string; title: string; message: string; createdAt: string }) => (
-                    <div key={notification.id} className="table-row" style={{ padding: '15px', borderBottom: '1px solid #e9ecef' }}>
-                      <div style={{ marginBottom: '5px' }}>
-                        <strong style={{ fontSize: '14px', color: '#2c3e50' }}>{notification.title}</strong>
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#6c757d', marginBottom: '5px' }}>
-                        {notification.message}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#95a5a6' }}>
-                        {formatDateTime(notification.createdAt)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {pendingRequests.length > 0 && (
-              <div className="data-table" style={{ marginTop: '20px' }}>
-                <div className="table-header">
-                  <div className="table-title">
-                    Active Maintenance Requests ({pendingRequests.length})
-                  </div>
-                </div>
-                <div className="table-body">
-                  {pendingRequests.map((request: { id: string; title: string; status: string; priority: string; createdAt: string }) => (
-                    <div key={request.id} className="table-row" style={{ padding: '15px', borderBottom: '1px solid #e9ecef' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                        <strong style={{ fontSize: '14px', color: '#2c3e50' }}>{request.title}</strong>
-                        <span className={`status-badge status-${request.status}`}>
-                          {request.status}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                        Priority: {request.priority} | {formatDateTime(request.createdAt)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {notifications && notifications.length > 0 && (
-              <div className="data-table" style={{ marginTop: '20px' }}>
-                <div className="table-header">
-                  <div className="table-title">All Notifications</div>
-                </div>
-                <div className="table-body">
-                  {notifications.slice(0, 10).map((notification: { id: string; title: string; message: string; createdAt: string; read: boolean }) => (
-                    <div 
-                      key={notification.id} 
-                      className="table-row" 
-                      style={{ 
-                        padding: '15px', 
-                        borderBottom: '1px solid #e9ecef',
-                        opacity: notification.read ? 0.6 : 1
-                      }}
-                    >
-                      <div style={{ marginBottom: '5px' }}>
-                        <strong style={{ fontSize: '14px', color: '#2c3e50' }}>{notification.title}</strong>
-                        {!notification.read && (
-                          <span style={{ 
-                            marginLeft: '10px', 
-                            fontSize: '11px', 
-                            background: '#e74c3c', 
-                            color: 'white', 
-                            padding: '2px 8px', 
-                            borderRadius: '10px' 
-                          }}>
-                            NEW
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#6c757d', marginBottom: '5px' }}>
-                        {notification.message}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#95a5a6' }}>
-                        {formatDateTime(notification.createdAt)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="card" style={{ padding: '16px' }}>
-            <button 
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                setMessageType(null);
-                setMessageSubject('');
-                setMessageContent('');
-              }}
-              style={{ marginBottom: '16px' }}
-            >
-              ← Back
-            </button>
-
+        {(tenantContext?.property || tenantContext?.manager || leaseProperty || rawUnitNumber) && (
+          <div className="card" style={{ padding: '16px', marginBottom: '20px' }}>
             <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>
-              Message Property Manager
+              {t('communication.managerSummaryTitle') || 'Your Property Manager'}
             </h3>
-            <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
-              Send a message to your property manager about leases, payments, or general inquiries
-            </p>
-
-            <div style={{ marginBottom: '12px' }}>
-              <label htmlFor="subject" style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                Subject
-              </label>
-              <input
-                type="text"
-                id="subject"
-                placeholder="What is this about?"
-                value={messageSubject}
-                onChange={(e) => setMessageSubject(e.target.value)}
-                disabled={sending}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '14px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  outline: 'none'
-                }}
-              />
+            <div style={{ display: 'grid', gap: '6px', fontSize: '13px', color: '#444' }}>
+              <div><strong>{t('profile.property') || 'Property'}</strong>: {propertyNameDisplay}</div>
+              {propertyAddressDisplay ? (
+                <div><strong>{t('profile.address') || 'Address'}</strong>: {propertyAddressDisplay}</div>
+              ) : null}
+              <div><strong>{t('property.unit') || 'Unit'}</strong>: {unitNumberDisplay}</div>
+              <div><strong>{t('communication.managerLabel') || 'Manager'}</strong>: {managerNameDisplay}</div>
+              {managerEmailDisplay ? (
+                <div><strong>{t('profile.email')}</strong>: <a href={`mailto:${managerEmailDisplay}`}>{managerEmailDisplay}</a></div>
+              ) : null}
+              <div><strong>{t('profile.phone')}</strong>: {managerPhoneDisplay}</div>
             </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label htmlFor="message" style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                Message
-              </label>
-              <textarea
-                id="message"
-                placeholder="Type your message here..."
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                rows={6}
-                disabled={sending}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  fontSize: '14px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  outline: 'none',
-                  resize: 'vertical',
-                  minHeight: '100px'
-                }}
-              />
-            </div>
-
-            <button 
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSendMessage}
-              disabled={!messageContent.trim() || !messageSubject.trim() || sending}
-              style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-            >
-              {sending ? 'Sending...' : 'Send Message'}
-            </button>
           </div>
         )}
-      </div>
 
-      {showEmergencyModal && (
-        <div className="modal-overlay" onClick={() => setShowEmergencyModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
-            <div className="modal-header">
-              <h3>Emergency Contacts</h3>
-              <button type="button" className="close-btn" onClick={() => setShowEmergencyModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ 
-                background: '#fff3cd', 
-                border: '1px solid #ffc107', 
-                borderRadius: '8px', 
-                padding: '12px', 
-                marginBottom: '16px',
-                fontSize: '13px'
-              }}>
-                <strong>WARNING - Life-threatening emergencies:</strong><br />
-                Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
+        <div className="card" style={{ padding: '16px', marginBottom: '20px' }}>
+          <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>
+            {t('communication.messageManagerTitle')}
+          </h3>
+          <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
+            {t('communication.messageManagerDescription')}
+          </p>
+
+          <div style={{ marginBottom: '12px' }}>
+            <label htmlFor="subject" style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
+              {t('communication.subject')}
+            </label>
+            <input
+              type="text"
+              id="subject"
+              placeholder={t('communication.subjectPlaceholder')}
+              value={messageSubject}
+              onChange={(e) => setMessageSubject(e.target.value)}
+              disabled={sending}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="message" style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
+              {t('communication.message')}
+            </label>
+            <textarea
+              id="message"
+              placeholder={t('communication.messagePlaceholder')}
+              value={messageContent}
+              onChange={(e) => setMessageContent(e.target.value)}
+              rows={6}
+              disabled={sending}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                outline: 'none',
+                resize: 'vertical',
+                minHeight: '100px'
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleSendMessage}
+            disabled={!messageContent.trim() || !messageSubject.trim() || sending}
+            style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+          >
+            {sending ? t('communication.sending') : t('communication.sendMessage')}
+          </button>
+        </div>
+
+        {pendingRequests.length > 0 && (
+          <div className="data-table" style={{ marginBottom: '20px' }}>
+            <div className="table-header">
+              <div className="table-title">
+                {activeRequestsTitleTemplate.replace('{count}', pendingRequests.length.toString())}
               </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {emergencyContacts.map((contact, index) => (
-                  <div 
-                    key={index}
+            </div>
+            <div className="table-body">
+              {pendingRequests.map((request: { id: string; title: string; status: string; priority: string; createdAt: string }) => (
+                <div key={request.id} className="table-row" style={{ padding: '15px', borderBottom: '1px solid #e9ecef' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                    <strong style={{ fontSize: '14px', color: '#2c3e50' }}>{request.title}</strong>
+                    <span className={`status-badge status-${request.status}`}>
+                      {statusLabelMap[request.status] || request.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                    {requestMetaTemplate
+                      .replace('{priority}', priorityLabelMap[request.priority] || (t('communication.priorityUnknown') || request.priority))
+                      .replace('{date}', formatDateTime(request.createdAt))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="data-table" style={{ marginBottom: '20px' }}>
+          <div className="table-header">
+            <div className="table-title">{t('communication.emergencyContactsTitle')}</div>
+          </div>
+          <div style={{
+            background: '#fff3cd',
+            border: '1px solid #ffc107',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            margin: '16px'
+          }}>
+            <strong>{t('communication.emergencyWarningTitle')}</strong><br />
+            {t('communication.emergencyWarningBody')}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+            {emergencyContacts.map((contact, index) => {
+              const contactName = t(contact.nameKey);
+              const contactDescription = t(contact.descriptionKey);
+              // #COMPLETION_DRIVE: Assuming call confirmation template retains {name} and {phone} placeholders for runtime substitution
+              // #SUGGEST_VERIFY: Trigger call flows in each language to ensure confirmation and button labels render properly
+              const confirmMessage = (t('requests.confirmCall') || 'Call {name}?\n\n{phone}')
+                .replace('{name}', contactName)
+                .replace('{phone}', contact.phone);
+              const callLabel = (t('requests.callNumber') || 'Call: {phone}').replace('{phone}', contact.phone);
+
+              return (
+                <div
+                  key={index}
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    background: '#f9f9f9'
+                  }}
+                >
+                  <div style={{ marginBottom: '8px' }}>
+                    <h4 style={{ fontSize: '14px', margin: '0 0 4px 0', fontWeight: '600' }}>
+                      {contactName}
+                    </h4>
+                    <p style={{ fontSize: '12px', margin: '0', color: '#666' }}>
+                      {contactDescription}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      const confirmCall = globalThis.confirm(confirmMessage);
+                      if (confirmCall) {
+                        globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
+                      }
+                    }}
                     style={{
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      background: '#f9f9f9'
+                      width: '100%',
+                      padding: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600'
                     }}
                   >
-                    <div style={{ marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '14px', margin: '0 0 4px 0', fontWeight: '600' }}>
-                        {contact.name}
-                      </h4>
-                      <p style={{ fontSize: '12px', margin: '0', color: '#666' }}>
-                        {contact.description}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        const confirmCall = globalThis.confirm(`Call ${contact.name}?\n\n${contact.phone}`);
-                        if (confirmCall) {
-                          globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
-                          setShowEmergencyModal(false);
-                        }
-                      }}
-                      style={{ 
-                        width: '100%', 
-                        padding: '8px',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}
-                    >
-                      Call: {contact.phone}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowEmergencyModal(false)}
-                style={{ width: '100%', marginTop: '16px' }}
-              >
-                Close
-              </button>
-            </div>
+                    {callLabel}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
-      )}
+      </div>
 
-      {showHelpModal && (
-        <div className="modal-overlay" onClick={() => setShowHelpModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: '80vh', overflowY: 'auto' }}>
-            <div className="modal-header">
-              <h3>Help & Support</h3>
-              <button type="button" className="close-btn" onClick={() => setShowHelpModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <h4 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>FAQs</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                {faqItems.map(item => (
-                  <div key={item.id} style={{ borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => toggleFAQ(item.id)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'none',
-                        border: 'none',
-                        padding: '8px 0',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        textAlign: 'left',
-                        fontWeight: '500'
-                      }}
-                    >
-                      <span>{item.question}</span>
-                      <span style={{ fontSize: '18px', color: '#666' }}>
-                        {selectedFAQ === item.id ? '−' : '+'}
-                      </span>
-                    </button>
-                    {selectedFAQ === item.id && (
-                      <p style={{ 
-                        margin: '8px 0 0 0', 
-                        fontSize: '13px', 
-                        color: '#666',
-                        lineHeight: '1.5'
-                      }}>
-                        {item.answer}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <h4 style={{ fontSize: '16px', marginBottom: '12px', fontWeight: '600' }}>Office Hours</h4>
-              <div style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>Mon - Fri</span>
-                  <strong>8:00 AM - 6:00 PM</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>Saturday</span>
-                  <strong>9:00 AM - 2:00 PM</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span>Sunday</span>
-                  <strong>Closed</strong>
-                </div>
-                <div style={{ borderTop: '1px solid #eee', paddingTop: '12px' }}>
-                  <p style={{ fontSize: '12px', margin: '0 0 4px 0' }}><strong>Office Location</strong></p>
-                  <p style={{ margin: '0', fontSize: '12px' }}>123 Main Street, Blue Hills</p>
-                  <p style={{ margin: '0', fontSize: '12px' }}>Johannesburg, SA 2090</p>
-                </div>
-              </div>
-              
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowHelpModal(false)}
-                style={{ width: '100%' }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <BottomNav items={navItems} responsive={false} />
     </div>
   );

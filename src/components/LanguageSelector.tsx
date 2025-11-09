@@ -26,7 +26,7 @@ function LanguageSelector({ isOpen, onClose }: LanguageSelectorProps) {
             onClick={() => handleLanguageChange('en')}
           >
             <div className="language-option-content">
-              <div className="language-name">{t('settings.english')}</div>
+              <div className="language-name">English</div>
               {language === 'en' && (
                 <div className="language-checkmark">✓</div>
               )}
@@ -39,7 +39,7 @@ function LanguageSelector({ isOpen, onClose }: LanguageSelectorProps) {
             onClick={() => handleLanguageChange('zu')}
           >
             <div className="language-option-content">
-              <div className="language-name">{t('settings.zulu')}</div>
+              <div className="language-name">Zulu</div>
               {language === 'zu' && (
                 <div className="language-checkmark">✓</div>
               )}

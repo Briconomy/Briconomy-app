@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
@@ -6,14 +6,50 @@ import ChartCard from '../components/ChartCard.tsx';
 import OfflineMaintenanceForm from '../components/OfflineMaintenanceForm.tsx';
 import Icon from '../components/Icon.tsx';
 import { useOffline } from '../hooks/useOffline.ts';
-import { maintenanceApi, leasesApi, formatDate, useApi } from '../services/api.ts';
+import { maintenanceApi, leasesApi, propertiesApi, unitsApi, formatDate, useApi } from '../services/api.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
+
+interface FaqTemplate {
+  id: string;
+  questionKey: string;
+  answerKey: string;
+  icon: string;
+}
+
+const faqTemplates: FaqTemplate[] = [
+  { id: '1', questionKey: 'requests.faq.payRent.question', answerKey: 'requests.faq.payRent.answer', icon: 'payment' },
+  { id: '2', questionKey: 'requests.faq.reportIssue.question', answerKey: 'requests.faq.reportIssue.answer', icon: 'issue' },
+  { id: '3', questionKey: 'requests.faq.contactManager.question', answerKey: 'requests.faq.contactManager.answer', icon: 'contact' },
+  { id: '4', questionKey: 'requests.faq.emergency.question', answerKey: 'requests.faq.emergency.answer', icon: 'emergency' },
+  { id: '5', questionKey: 'requests.faq.viewLease.question', answerKey: 'requests.faq.viewLease.answer', icon: 'profile' },
+  { id: '6', questionKey: 'requests.faq.updateInfo.question', answerKey: 'requests.faq.updateInfo.answer', icon: 'profile' }
+];
+
+interface EmergencyContactTemplate {
+  nameKey: string;
+  descriptionKey: string;
+  phone: string;
+}
+
+const emergencyContactTemplates: EmergencyContactTemplate[] = [
+  { nameKey: 'requests.emergency.contacts.manager.name', descriptionKey: 'requests.emergency.contacts.manager.description', phone: '+27 11 234 5678' },
+  { nameKey: 'requests.emergency.contacts.maintenance.name', descriptionKey: 'requests.emergency.contacts.maintenance.description', phone: '+27 11 234 5679' },
+  { nameKey: 'requests.emergency.contacts.security.name', descriptionKey: 'requests.emergency.contacts.security.description', phone: '+27 11 234 5680' },
+  { nameKey: 'requests.emergency.contacts.fireRescue.name', descriptionKey: 'requests.emergency.contacts.fireRescue.description', phone: '10177' },
+  { nameKey: 'requests.emergency.contacts.police.name', descriptionKey: 'requests.emergency.contacts.police.description', phone: '10111' },
+  { nameKey: 'requests.emergency.contacts.ambulance.name', descriptionKey: 'requests.emergency.contacts.ambulance.description', phone: '10177' },
+  { nameKey: 'requests.emergency.contacts.poison.name', descriptionKey: 'requests.emergency.contacts.poison.description', phone: '0861 555 777' },
+  { nameKey: 'requests.emergency.contacts.electricity.name', descriptionKey: 'requests.emergency.contacts.electricity.description', phone: '0860 037 566' },
+  { nameKey: 'requests.emergency.contacts.water.name', descriptionKey: 'requests.emergency.contacts.water.description', phone: '0860 562 874' }
+];
 
 function MaintenanceRequestsPage() {
   const { t } = useLanguage();
   const { isOnline, storeOfflineData, syncNow } = useOffline();
   const { user } = useAuth();
+  const { showToast } = useToast();
   
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -29,56 +65,78 @@ function MaintenanceRequestsPage() {
   const [selectedFAQ, setSelectedFAQ] = useState<string | null>(null);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
-  const faqItems = [
-    {
-      id: '1',
-      question: 'How do I pay my rent?',
-      answer: 'Go to the Payments page and select your preferred payment method. We accept bank transfers, EFT, and credit/debit cards.',
-      icon: 'payment'
-    },
-    {
-      id: '2',
-      question: 'How do I report a maintenance issue?',
-      answer: 'Click "Report Issue" on this page, fill in the details, and submit. Our maintenance team will be notified immediately.',
-      icon: 'issue'
-    },
-    {
-      id: '3',
-      question: 'How do I contact my property manager?',
-      answer: 'Use the Messages page to send a message or call directly using the Emergency Contact button above.',
-      icon: 'contact'
-    },
-    {
-      id: '4',
-      question: 'What if I have an emergency?',
-      answer: 'Click the "Emergency Contact" button to call the property manager immediately, or view all emergency contacts in the Help & Support section.',
-      icon: 'emergency'
-    },
-    {
-      id: '5',
-      question: 'Where can I view my lease?',
-      answer: 'Your lease agreement and all documents are available in the Documents section of your Profile page.',
-      icon: 'profile'
-    },
-    {
-      id: '6',
-      question: 'How do I update my information?',
-      answer: 'Go to your Profile page and click the "Edit" button to update your contact and personal information.',
-      icon: 'profile'
-    }
-  ];
+  const priorityBadgeLabels = useMemo(
+    () => ({
+      urgent: t('requests.priority_urgent') || 'URGENT',
+      high: t('requests.priority_high') || 'HIGH',
+      medium: t('requests.priority_medium') || 'MEDIUM',
+      low: t('requests.priority_low') || 'LOW'
+    }),
+    [t]
+  );
 
-  const emergencyContacts = [
-    { name: 'Property Manager', phone: '+27 11 234 5678', description: 'Building emergencies & urgent issues' },
-    { name: 'Emergency Maintenance', phone: '+27 11 234 5679', description: 'After-hours maintenance emergencies' },
-    { name: 'Building Security', phone: '+27 11 234 5680', description: 'Security concerns & access issues' },
-    { name: 'Fire & Rescue', phone: '10177', description: 'Fire emergencies & medical assistance' },
-    { name: 'Police (SAPS)', phone: '10111', description: 'Crime, theft, & security emergencies' },
-    { name: 'Ambulance Service', phone: '10177', description: 'Medical emergencies' },
-    { name: 'Poison Information', phone: '0861 555 777', description: 'Poison & toxin emergencies' },
-    { name: 'Electricity (Eskom)', phone: '0860 037 566', description: 'Power outages & electrical faults' },
-    { name: 'Water & Sanitation', phone: '0860 562 874', description: 'Water leaks & sewage issues' }
-  ];
+  const priorityOptionLabels = useMemo(
+    () => ({
+      urgent: t('requests.priorityOption.urgent') || 'Urgent',
+      high: t('requests.priorityOption.high') || 'High',
+      medium: t('requests.priorityOption.medium') || 'Medium',
+      low: t('requests.priorityOption.low') || 'Low'
+    }),
+    [t]
+  );
+
+  const statusBadgeLabels = useMemo(
+    () => ({
+      pending: t('requests.status_pending_badge') || 'PENDING',
+      in_progress: t('requests.status_in_progress_badge') || 'IN PROGRESS',
+      completed: t('requests.status_completed_badge') || 'COMPLETED'
+    }),
+    [t]
+  );
+
+  const categoryLabels = useMemo(
+    () => ({
+      plumbing: t('requests.category.plumbing') || 'Plumbing',
+      electrical: t('requests.category.electrical') || 'Electrical',
+      hvac: t('requests.category.hvac') || 'HVAC',
+      appliances: t('requests.category.appliances') || 'Appliances',
+      general: t('requests.category.general') || 'General',
+      pest: t('requests.category.pest') || 'Pest Control',
+      security: t('requests.category.security') || 'Security',
+      other: t('requests.category.other') || 'Other'
+    }),
+    [t]
+  );
+
+  const faqItems = useMemo(
+    () => faqTemplates.map((item) => ({
+      ...item,
+      question: t(item.questionKey),
+      answer: t(item.answerKey)
+    })),
+    [t]
+  );
+
+  const emergencyContacts = useMemo(
+    () => emergencyContactTemplates.map((contact) => ({
+      ...contact,
+      name: t(contact.nameKey),
+      description: t(contact.descriptionKey)
+    })),
+    [t]
+  );
+
+  const formatCallPrompt = (name: string, phone: string) =>
+    (t('requests.confirmCall') || 'Call {name}?\n\n{phone}')
+      .replace('{name}', name)
+      .replace('{phone}', phone);
+
+  const formatCallLabel = (phone: string) =>
+    (t('requests.callNumber') || 'Call: {phone}').replace('{phone}', phone);
+
+  const formatDeleteMessage = (title: string) =>
+    (t('requests.confirmDelete') || 'Are you sure you want to delete the request "{title}"?')
+      .replace('{title}', title);
 
   const toggleFAQ = (id: string) => {
     setSelectedFAQ(selectedFAQ === id ? null : id);
@@ -97,17 +155,17 @@ function MaintenanceRequestsPage() {
   );
 
   const handleDeleteRequest = async (requestId: string, requestTitle: string) => {
-    if (!confirm(`Are you sure you want to delete the request "${requestTitle}"?`)) {
+    if (!confirm(formatDeleteMessage(requestTitle))) {
       return;
     }
 
     try {
       await maintenanceApi.delete(requestId);
       await refetchRequests();
-      alert('Request deleted successfully');
+      showToast(t('requests.deleteSuccess') || 'Request deleted successfully', 'success');
     } catch (error) {
       console.error('[MaintenanceRequestsPage] Error deleting request:', error);
-      alert('Failed to delete request. Please try again.');
+      showToast(t('requests.deleteError') || 'Failed to delete request. Please try again.', 'error');
     }
   };
 
@@ -152,10 +210,61 @@ function MaintenanceRequestsPage() {
 
     setSubmitting(true);
     try {
+      // Get tenantContext from user (like CommunicationPage does)
+      const tenantContext = user?.tenantContext || null;
       const currentLease = leases?.[0];
+      
+      console.log('[MaintenanceRequest] TenantContext:', tenantContext);
+      console.log('[MaintenanceRequest] Current lease:', currentLease);
 
-      // #COMPLETION_DRIVE: Extract only IDs from lease objects, not full objects
-      // #SUGGEST_VERIFY: Verify lease objects contain _id field for ID extraction
+      // Prioritize tenantContext (like CommunicationPage), then fall back to lease
+      let unitId = tenantContext?.unit?.id || currentLease?.unitId;
+      let propertyId = tenantContext?.property?.id || currentLease?.propertyId;
+      let propertyName = tenantContext?.property?.name || currentLease?.property?.name;
+      let propertyAddress = tenantContext?.property?.address || currentLease?.property?.address;
+      let unitNumber = tenantContext?.unit?.unitNumber || currentLease?.unit?.unitNumber;
+      
+      console.log('[MaintenanceRequest] Initial data:', { 
+        unitId, 
+        propertyId, 
+        propertyName, 
+        propertyAddress, 
+        unitNumber 
+      });
+
+      // Only fetch if we still don't have the data
+      if (propertyId && !propertyName && !propertyAddress) {
+        try {
+          console.log('[MaintenanceRequest] Fetching property details for:', propertyId);
+          const property = await propertiesApi.getById(propertyId);
+          console.log('[MaintenanceRequest] Property fetched:', property);
+          propertyName = property.name;
+          propertyAddress = property.address;
+        } catch (error) {
+          console.error('[MaintenanceRequest] Failed to fetch property details:', error);
+        }
+      }
+
+      if (unitId && !unitNumber) {
+        try {
+          console.log('[MaintenanceRequest] Fetching unit details for:', unitId);
+          const units = await unitsApi.getAll(propertyId);
+          console.log('[MaintenanceRequest] Units fetched:', units);
+          const unit = units.find((u: { id: string }) => u.id === unitId);
+          console.log('[MaintenanceRequest] Found unit:', unit);
+          if (unit) {
+            unitNumber = unit.unitNumber;
+          }
+        } catch (error) {
+          console.error('[MaintenanceRequest] Failed to fetch unit details:', error);
+        }
+      }
+      
+      console.log('[MaintenanceRequest] Final data:', { 
+        location: propertyName || propertyAddress || 'Unknown',
+        unitNumber: unitNumber || 'Unknown'
+      });
+
       const requestData = {
         title: formData.title,
         description: formData.description,
@@ -163,11 +272,11 @@ function MaintenanceRequestsPage() {
         category: formData.category,
         status: 'pending',
         tenantId: user?.id || '507f1f77bcf86cd799439012',
-        unitId: currentLease?.unitId?._id || currentLease?.unitId || null,
-        propertyId: currentLease?.propertyId?._id || currentLease?.propertyId || null,
+        unitId: unitId || null,
+        propertyId: propertyId || null,
         photos: formData.photos,
-        location: currentLease?.propertyId?.address || 'Unknown',
-        unitNumber: currentLease?.unitId?.unitNumber || 'Unknown',
+        location: propertyName || propertyAddress || 'Unknown',
+        unitNumber: unitNumber || 'Unknown',
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -179,10 +288,10 @@ function MaintenanceRequestsPage() {
         // #COMPLETION_DRIVE: Wait for refetch to render before closing form
         // #SUGGEST_VERIFY: 500ms delay ensures data appears in list immediately
         await new Promise(resolve => setTimeout(resolve, 500));
-        alert('Maintenance request submitted successfully!');
+        showToast(t('requests.submitSuccess') || 'Maintenance request submitted successfully!', 'success');
       } else {
         await storeOfflineData('maintenance_request', requestData);
-        alert('Request saved offline. It will be submitted when you\'re back online.');
+        showToast(t('requests.submitOffline') || 'Request saved offline. It will be submitted when you\'re back online.', 'info');
       }
       setShowRequestForm(false);
       setFormData({
@@ -195,7 +304,7 @@ function MaintenanceRequestsPage() {
       setUploadedPhotos([]);
     } catch (error) {
       console.error('Error submitting request:', error);
-      alert('Failed to submit request. Please try again.');
+  showToast(t('requests.submitError') || 'Failed to submit request. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -244,9 +353,7 @@ function MaintenanceRequestsPage() {
     );
   }
 
-  const currentLease = leases?.[0];
-
-    return (
+  return (
       <div className="app-container mobile-only page-wrapper">
         <TopNav showLogout showBackButton />
 
@@ -262,14 +369,14 @@ function MaintenanceRequestsPage() {
               className={`tab-button ${activeTab === 'requests' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('requests')}
             >
-              Requests
+              {t('requests.tab.requests') || 'Requests'}
             </button>
             <button
               type="button"
               className={`tab-button ${activeTab === 'help' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('help')}
             >
-              Help & Support
+              {t('requests.tab.help') || 'Help & Support'}
             </button>
           </div>
 
@@ -282,58 +389,40 @@ function MaintenanceRequestsPage() {
                 <StatCard value={requestsData.length} label={t('requests.total')} />
               </div>
 
-              {currentLease && (
-                <div className="section-card">
-                  <div className="section-title">{t('requests.yourUnit')}</div>
-                  <div className="detail-grid">
-                    <div className="detail-block">
-                      <div className="detail-label">{t('payments.unit')}</div>
-                      <div className="detail-value">{currentLease.unitId?.unitNumber || 'N/A'}</div>
-                    </div>
-                    <div className="detail-block">
-                      <div className="detail-label">{t('payments.property')}</div>
-                      <div className="detail-value">{currentLease.propertyId?.name || 'N/A'}</div>
-                    </div>
-                    <div className="detail-block">
-                      <div className="detail-label">{t('requests.address')}</div>
-                      <div className="detail-value">{currentLease.propertyId?.address || 'N/A'}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="section-card">
-                <div className="section-card-header">
-                  <div className="section-header-content">
-                    <div className="section-title-row">
-                      <div className="section-title">{t('requests.yourRequests')}</div>
-                      <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
-                        {isOnline ? 'Online' : 'Offline'}
-                      </span>
+                {requestsData.length > 0 && (
+                  <div className="section-card-header">
+                    <div className="section-header-content">
+                      <div className="section-title-row">
+                        <div className="section-title">{t('requests.yourRequests')}</div>
+                        <span className={`status-pill ${isOnline ? 'success' : 'warning'}`}>
+                          {isOnline ? (t('requests.statusOnline') || 'Online') : (t('requests.statusOffline') || 'Offline')}
+                        </span>
+                      </div>
+                      <div className="section-subtitle">{t('requests.subtitle')}</div>
                     </div>
-                    <div className="section-subtitle">{t('requests.subtitle')}</div>
-                  </div>
-                  <div className="action-stack">
-                    {!isOnline && (
-                      <button type="button" className="btn btn-secondary btn-xs" onClick={() => syncNow()}>
-                        Sync
+                    <div className="action-stack">
+                      {!isOnline && (
+                        <button type="button" className="btn btn-secondary btn-xs" onClick={() => syncNow()}>
+                          {t('requests.syncNow') || 'Sync'}
+                        </button>
+                      )}
+                      <button type="button" className="btn btn-primary btn-sm2" onClick={() => setShowRequestForm(true)}>
+                        {t('requests.newRequest')}
                       </button>
-                    )}
-                    <button type="button" className="btn btn-primary btn-sm2" onClick={() => setShowRequestForm(true)}>
-                      {t('requests.newRequest')}
-                    </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {requestsData.length === 0 ? (
-                  <div className="empty-state-card">
-                    <Icon name="maintenance" alt="Maintenance" size={40} />
-                    <div className="empty-state-title">{t('requests.noRequestsFound')}</div>
-                    <div className="empty-state-text">Log a request to notify your maintenance team.</div>
-                    <div className="card-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary full-width-button"
+              {requestsData.length === 0 ? (
+                <div className="empty-state-card">
+                  <Icon name="maintenance" alt={t('requests.title')} size={48} />
+                  <div className="empty-state-title">{t('requests.noRequestsFound')}</div>
+                  <div className="empty-state-text">{t('requests.emptyDescription') || 'Log a request to notify your maintenance team.'}</div>
+                  <div className="card-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary full-width-button"
                         onClick={() => setShowRequestForm(true)}
                       >
                         {t('requests.newRequest')}
@@ -342,63 +431,71 @@ function MaintenanceRequestsPage() {
                   </div>
                 ) : (
                   <div className="request-list">
-                    {requestsData.map((request) => (
-                      <div key={request.id} className="request-card">
-                        <div className="request-card-header">
-                          <div>
-                            <div className="record-title">{request.title}</div>
-                            <div className="request-description">{request.description}</div>
+                    {requestsData.map((request) => {
+                      const priorityLabel = priorityBadgeLabels[request.priority as keyof typeof priorityBadgeLabels] || request.priority.replace('_', ' ').toUpperCase();
+                      const statusLabel = statusBadgeLabels[request.status as keyof typeof statusBadgeLabels] || request.status.replace('_', ' ').toUpperCase();
+                      const categoryLabel = request.category ? (categoryLabels[request.category as keyof typeof categoryLabels] || request.category) : '';
+                      const createdLabel = (t('requests.createdAt') || 'Created {date}').replace('{date}', formatDate(request.createdAt));
+                      const completedLabel = request.status === 'completed' && request.completedAt
+                        ? (t('requests.completedAt') || 'Completed {date}').replace('{date}', formatDate(request.completedAt))
+                        : null;
+                      const assignedLabel = request.assignedTo
+                        ? (t('requests.assignedTo') || 'Assigned to {name}').replace('{name}', request.assignedTo)
+                        : null;
+                      const locationLabel = request.location
+                        ? request.unitNumber
+                          ? `${request.location} • ${(t('requests.unitLabel') || 'Unit')} ${request.unitNumber}`
+                          : request.location
+                        : null;
+                      const categoryLine = request.category
+                        ? (t('requests.categoryLabel') || 'Category: {category}').replace('{category}', categoryLabel)
+                        : null;
+                      const attachmentsLine = request.photos && request.photos.length > 0
+                        ? `${request.photos.length} ${request.photos.length === 1 ? (t('requests.attachmentSingular') || 'attachment') : (t('requests.attachmentPlural') || 'attachments')}`
+                        : null;
+                      const commentsLine = request.comments && request.comments.length > 0
+                        ? `${request.comments.length} ${request.comments.length === 1 ? (t('requests.commentSingular') || 'comment') : (t('requests.commentPlural') || 'comments')}`
+                        : null;
+
+                      return (
+                        <div key={request.id} className="request-card">
+                          <div className="request-card-header">
+                            <div>
+                              <div className="record-title">{request.title}</div>
+                              <div className="request-description">{request.description}</div>
+                            </div>
+                            <span className={getPriorityBadgeClass(request.priority)}>
+                              {priorityLabel}
+                            </span>
                           </div>
-                          <span className={getPriorityBadgeClass(request.priority)}>
-                            {request.priority.replace('_', ' ').toUpperCase()}
-                          </span>
-                        </div>
 
-                        <div className="request-meta">
-                          <span>Created {formatDate(request.createdAt)}</span>
-                          {request.location && (
-                            <span>
-                              {request.location}
-                              {request.unitNumber ? ` • Unit ${request.unitNumber}` : ''}
-                            </span>
-                          )}
-                          {request.assignedTo && (
-                            <span>Assigned to {request.assignedTo}</span>
-                          )}
-                          {request.category && (
-                            <span>Category: {request.category}</span>
-                          )}
-                          {request.photos && request.photos.length > 0 && (
-                            <span>
-                              {request.photos.length} attachment{request.photos.length > 1 ? 's' : ''}
-                            </span>
-                          )}
-                          {request.comments && request.comments.length > 0 && (
-                            <span>
-                              {request.comments.length} comment{request.comments.length > 1 ? 's' : ''}
-                            </span>
-                          )}
-                          {request.status === 'completed' && request.completedAt && (
-                            <span>Completed {formatDate(request.completedAt)}</span>
-                          )}
-                        </div>
+                          <div className="request-meta">
+                            <span>{createdLabel}</span>
+                            {locationLabel && <span>{locationLabel}</span>}
+                            {assignedLabel && <span>{assignedLabel}</span>}
+                            {categoryLine && <span>{categoryLine}</span>}
+                            {attachmentsLine && <span>{attachmentsLine}</span>}
+                            {commentsLine && <span>{commentsLine}</span>}
+                            {completedLabel && <span>{completedLabel}</span>}
+                          </div>
 
-                        <div className="request-footer">
-                          <span className={`status-badge ${getStatusColor(request.status)}`}>
-                            {request.status.replace('_', ' ').toUpperCase()}
-                          </span>
-                          {request.status === 'pending' && !request.assignedTo && (
-                            <button
-                              type="button"
-                              className="btn btn-danger btn-xs"
-                              onClick={() => handleDeleteRequest(request.id, request.title)}
-                            >
-                              Delete
-                            </button>
-                          )}
+                          <div className="request-footer">
+                            <span className={`status-badge ${getStatusColor(request.status)}`}>
+                              {statusLabel}
+                            </span>
+                            {request.status === 'pending' && !request.assignedTo && (
+                              <button
+                                type="button"
+                                className="btn btn-danger btn-xs"
+                                onClick={() => handleDeleteRequest(request.id, request.title)}
+                              >
+                                {t('common.delete') || 'Delete'}
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -407,15 +504,15 @@ function MaintenanceRequestsPage() {
                 <div className="request-stats">
                   <div className="stat-item">
                     <div className="stat-value">{stats.pendingCount}</div>
-                    <div className="stat-label">Pending</div>
+                    <div className="stat-label">{t('requests.pending')}</div>
                   </div>
                   <div className="stat-item">
                     <div className="stat-value">{stats.inProgressCount}</div>
-                    <div className="stat-label">In Progress</div>
+                    <div className="stat-label">{t('requests.inProgress')}</div>
                   </div>
                   <div className="stat-item">
                     <div className="stat-value">{stats.completedCount}</div>
-                    <div className="stat-label">Completed</div>
+                    <div className="stat-label">{t('requests.completed')}</div>
                   </div>
                 </div>
               </ChartCard>
@@ -427,11 +524,11 @@ function MaintenanceRequestsPage() {
               <div className="section-card">
                 <div className="action-stack">
                   <button type="button" className="btn btn-secondary btn-xs" onClick={() => setActiveTab('requests')}>
-                    Back to requests
+                    {t('requests.backToRequests') || 'Back to requests'}
                   </button>
                 </div>
                 <div className="card-divider">
-                  <div className="section-title">FAQs</div>
+                  <div className="section-title">{t('requests.faqTitle') || 'FAQs'}</div>
                 </div>
                 <div className="record-list">
                   {faqItems.map(item => (
@@ -454,7 +551,7 @@ function MaintenanceRequestsPage() {
 
               <div className="section-card">
                 <div className="section-card-header">
-                  <div className="section-title">Emergency & Contact</div>
+                  <div className="section-title">{t('requests.emergencySectionTitle') || 'Emergency & Contact'}</div>
                 </div>
                 <div className="support-grid">
                   <button
@@ -462,19 +559,21 @@ function MaintenanceRequestsPage() {
                     className="btn btn-primary full-width-button"
                     onClick={() => setShowEmergencyModal(true)}
                   >
-                    Emergency contacts
+                    {t('requests.emergencyContacts') || 'Emergency contacts'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-secondary full-width-button"
                     onClick={() => {
-                      const confirmCall = globalThis.confirm('Call property manager?\n\n+27 11 234 5678');
+                      const confirmCall = globalThis.confirm(
+                        formatCallPrompt(t('requests.emergency.contacts.manager.name'), '+27 11 234 5678')
+                      );
                       if (confirmCall) {
                         globalThis.location.href = 'tel:+27112345678';
                       }
                     }}
                   >
-                    Call property manager
+                    {t('requests.call_manager') || 'Call property manager'}
                   </button>
                   <button
                     type="button"
@@ -483,30 +582,30 @@ function MaintenanceRequestsPage() {
                       globalThis.location.href = '/tenant/messages';
                     }}
                   >
-                    Send message
+                    {t('requests.sendMessage') || 'Send message'}
                   </button>
                 </div>
               </div>
 
               <div className="section-card">
-                <div className="section-title">Office hours</div>
+                <div className="section-title">{t('requests.officeHoursTitle') || 'Office hours'}</div>
                 <div className="record-list">
                   <div className="record-item">
-                    <div className="record-title">Mon - Fri</div>
+                    <div className="record-title">{t('requests.officeHours.weekday') || 'Mon - Fri'}</div>
                     <div className="record-meta">8:00 AM - 6:00 PM</div>
                   </div>
                   <div className="record-item">
-                    <div className="record-title">Saturday</div>
+                    <div className="record-title">{t('requests.officeHours.saturday') || 'Saturday'}</div>
                     <div className="record-meta">9:00 AM - 2:00 PM</div>
                   </div>
                   <div className="record-item">
-                    <div className="record-title">Sunday</div>
-                    <div className="record-meta">Closed</div>
+                    <div className="record-title">{t('requests.officeHours.sunday') || 'Sunday'}</div>
+                    <div className="record-meta">{t('requests.officeHours.closed') || 'Closed'}</div>
                   </div>
                   <div className="card-divider">
-                    <div className="section-subtitle">Office location</div>
-                    <div className="support-text">123 Main Street, Blue Hills</div>
-                    <div className="support-text">Johannesburg, SA 2090</div>
+                    <div className="section-subtitle">{t('requests.officeLocationTitle') || 'Office location'}</div>
+                    <div className="support-text">{t('requests.officeLocationLine1') || '123 Main Street, Blue Hills'}</div>
+                    <div className="support-text">{t('requests.officeLocationLine2') || 'Johannesburg, SA 2090'}</div>
                   </div>
                 </div>
               </div>
@@ -520,7 +619,7 @@ function MaintenanceRequestsPage() {
           propertyId={leases?.[0]?.propertyId || '507f1f77bcf86cd799439013'}
           onSuccess={(_data) => {
             setShowRequestForm(false);
-            alert('Request saved offline. It will be submitted when you\'re back online.');
+            showToast(t('requests.submitOffline') || 'Request saved offline. It will be submitted when you\'re back online.', 'info');
           }}
         />
       )}
@@ -529,7 +628,7 @@ function MaintenanceRequestsPage() {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>New Maintenance Request</h3>
+              <h3>{t('requests.modal.newTitle') || 'New Maintenance Request'}</h3>
               <button
                 type="button"
                 className="close-btn"
@@ -539,69 +638,64 @@ function MaintenanceRequestsPage() {
                 ×
               </button>
             </div>
-            {submitting && (
-              <div className="modal-progress-banner">
-                Submitting your request...
-              </div>
-            )}
             <div className="modal-body">
               <form onSubmit={handleSubmitRequest}>
                 <div className="form-group">
-                  <label>Title *</label>
+                  <label>{t('requests.form.title') || 'Title *'}</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     required
-                    placeholder="Brief description of the issue"
+                    placeholder={t('requests.form.titlePlaceholder') || 'Brief description of the issue'}
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label>Description *</label>
+                  <label>{t('requests.form.description') || 'Description *'}</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     required
                     rows={4}
-                    placeholder="Detailed description of the issue..."
+                    placeholder={t('requests.form.descriptionPlaceholder') || 'Detailed description of the issue...'}
                   />
                 </div>
                 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Priority</label>
+                    <label>{t('requests.form.priority') || 'Priority'}</label>
                     <select
                       value={formData.priority}
                       onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
+                      <option value="low">{priorityOptionLabels.low}</option>
+                      <option value="medium">{priorityOptionLabels.medium}</option>
+                      <option value="high">{priorityOptionLabels.high}</option>
+                      <option value="urgent">{priorityOptionLabels.urgent}</option>
                     </select>
                   </div>
                   
                   <div className="form-group">
-                    <label>Category</label>
+                    <label>{t('requests.form.category') || 'Category'}</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                     >
-                      <option value="plumbing">Plumbing</option>
-                      <option value="electrical">Electrical</option>
-                      <option value="hvac">HVAC</option>
-                      <option value="appliances">Appliances</option>
-                      <option value="general">General</option>
-                      <option value="pest">Pest Control</option>
-                      <option value="security">Security</option>
-                      <option value="other">Other</option>
+                      <option value="plumbing">{categoryLabels.plumbing}</option>
+                      <option value="electrical">{categoryLabels.electrical}</option>
+                      <option value="hvac">{categoryLabels.hvac}</option>
+                      <option value="appliances">{categoryLabels.appliances}</option>
+                      <option value="general">{categoryLabels.general}</option>
+                      <option value="pest">{categoryLabels.pest}</option>
+                      <option value="security">{categoryLabels.security}</option>
+                      <option value="other">{categoryLabels.other}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Photos (Optional - Max 5)</label>
+                  <label>{t('requests.form.photos') || 'Photos (Optional - Max 5)'}</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -610,7 +704,7 @@ function MaintenanceRequestsPage() {
                     disabled={uploadedPhotos.length >= 5}
                     className="upload-input-control"
                   />
-                  <p className="form-hint">Upload photos to help us understand the issue better</p>
+                  <p className="form-hint">{t('requests.form.photosHint') || 'Upload photos to help us understand the issue better'}</p>
                   {uploadedPhotos.length > 0 && (
                     <div className="upload-preview-list">
                       {uploadedPhotos.map((file, index) => (
@@ -632,18 +726,18 @@ function MaintenanceRequestsPage() {
                 <div className="form-actions">
                   <button 
                     type="button"
-                    className="btn btn-secondary"
+                    className="btn btn-secondary newRequest-btn"
                     onClick={() => setShowRequestForm(false)}
                     disabled={submitting}
                   >
-                    Cancel
+                    {t('common.cancel') || 'Cancel'}
                   </button>
                   <button 
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary newRequest2-btn"
                     disabled={submitting || !formData.title.trim() || !formData.description.trim()}
                   >
-                    {submitting ? 'Submitting...' : 'Submit'}
+                    {submitting ? (t('common.submitting') || 'Submitting...') : (t('common.submit') || 'Submit')}
                   </button>
                 </div>
               </form>
@@ -656,13 +750,13 @@ function MaintenanceRequestsPage() {
         <div className="modal-overlay" onClick={() => setShowEmergencyModal(false)}>
           <div className="modal-content modal-scroll" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Emergency Contacts</h3>
+              <h3>{t('requests.emergencyModalTitle') || 'Emergency Contacts'}</h3>
               <button type="button" className="close-btn" onClick={() => setShowEmergencyModal(false)}>×</button>
             </div>
             <div className="modal-body">
               <div className="modal-warning">
-                <strong>WARNING - Life-threatening emergencies:</strong><br />
-                Call <strong>10177</strong> (Fire/Medical) or <strong>10111</strong> (Police) immediately
+                <strong>{t('requests.emergencyWarning') || 'WARNING - Life-threatening emergencies:'}</strong><br />
+                {t('requests.emergencyWarningCall') || 'Call 10177 (Fire/Medical) or 10111 (Police) immediately'}
               </div>
               <div className="contact-grid">
                 {emergencyContacts.map((contact, index) => (
@@ -675,14 +769,14 @@ function MaintenanceRequestsPage() {
                       type="button"
                       className="btn btn-primary btn-sm full-width-button"
                       onClick={() => {
-                        const confirmCall = globalThis.confirm(`Call ${contact.name}?\n\n${contact.phone}`);
+                        const confirmCall = globalThis.confirm(formatCallPrompt(contact.name, contact.phone));
                         if (confirmCall) {
                           globalThis.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
                           setShowEmergencyModal(false);
                         }
                       }}
                     >
-                      Call: {contact.phone}
+                      {formatCallLabel(contact.phone)}
                     </button>
                   </div>
                 ))}
@@ -692,7 +786,7 @@ function MaintenanceRequestsPage() {
                 className="btn btn-secondary full-width-button modal-close-action"
                 onClick={() => setShowEmergencyModal(false)}
               >
-                Close
+                {t('common.close') || 'Close'}
               </button>
             </div>
           </div>

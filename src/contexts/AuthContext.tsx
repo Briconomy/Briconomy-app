@@ -1,7 +1,136 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { authApi } from '../services/api.ts';
+import { authApi, tenantsApi } from '../services/api.ts';
 import { googleLogout } from '@react-oauth/google';
 
+interface TenantPropertyInfo {
+  id: string;
+  name?: string;
+  address?: string;
+  managerId?: string | null;
+  type?: string | null;
+}
+
+interface TenantUnitInfo {
+  id: string;
+  unitNumber?: string;
+  floor?: string | number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  status?: string | null;
+}
+
+interface TenantManagerInfo {
+  id: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface TenantLeaseInfo {
+  id: string;
+  status?: string | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  monthlyRent?: number | null;
+  deposit?: number | null;
+}
+
+interface TenantContextData {
+  tenantId?: string;
+  property: TenantPropertyInfo | null;
+  unit: TenantUnitInfo | null;
+  manager: TenantManagerInfo | null;
+  lease: TenantLeaseInfo | null;
+  fetchedAt?: string;
+}
+
+const toStringOrNull = (value: unknown): string | null => (typeof value === 'string' && value.length > 0 ? value : null);
+
+function enrichTenantUser(baseUser: User): User {
+  if (baseUser.userType !== 'tenant') {
+    return baseUser;
+  }
+
+  const contextData = baseUser.tenantContext ?? null;
+  const fallbackDate = new Date().toISOString().split('T')[0];
+  const futureDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const unitNumber = contextData?.unit?.unitNumber || baseUser.unit || 'N/A';
+  const propertyName = contextData?.property?.name || baseUser.property || 'N/A';
+
+  let rentValue = 0;
+  const contextRent = contextData?.lease?.monthlyRent;
+  if (typeof contextRent === 'number' && Number.isFinite(contextRent)) {
+    rentValue = contextRent;
+  } else if (typeof contextRent === 'string') {
+    const parsed = Number(contextRent);
+    if (!Number.isNaN(parsed)) {
+      rentValue = parsed;
+    }
+  }
+  if (rentValue === 0) {
+    if (typeof baseUser.rent === 'number' && Number.isFinite(baseUser.rent)) {
+      rentValue = baseUser.rent;
+    } else {
+      const rawRent = (baseUser as unknown as Record<string, unknown>).rent;
+      if (typeof rawRent === 'string') {
+        const parsed = Number(rawRent);
+        if (!Number.isNaN(parsed)) {
+          rentValue = parsed;
+        }
+      }
+    }
+  }
+
+  const startSource = contextData?.lease?.startDate ?? baseUser.leaseStart ?? fallbackDate;
+  const endSource = contextData?.lease?.endDate ?? baseUser.leaseEnd ?? futureDate;
+  const leaseStartValue = typeof startSource === 'string'
+    ? startSource
+    : startSource instanceof Date
+      ? startSource.toISOString()
+      : fallbackDate;
+  const leaseEndValue = typeof endSource === 'string'
+    ? endSource
+    : endSource instanceof Date
+      ? endSource.toISOString()
+      : futureDate;
+
+  const propertyFromContext = contextData?.property?.id || null;
+  const assignedPropertyCandidate = toStringOrNull(baseUser.assignedPropertyId) || propertyFromContext || toStringOrNull(baseUser.propertyId) || toStringOrNull(baseUser.appliedPropertyId) || null;
+  const propertyIdCandidate = toStringOrNull(baseUser.propertyId) || propertyFromContext || assignedPropertyCandidate || null;
+  const unitIdCandidate = toStringOrNull(baseUser.unitId) || contextData?.unit?.id || null;
+  const managerIdCandidate = toStringOrNull(baseUser.managerId) || contextData?.manager?.id || contextData?.property?.managerId || null;
+  const appliedPropertyCandidate = toStringOrNull(baseUser.appliedPropertyId) || null;
+
+  const normalizedContext = contextData
+    ? {
+        ...contextData,
+        tenantId: contextData.tenantId || baseUser.id
+      }
+    : null;
+
+  return {
+    ...baseUser,
+    avatar: baseUser.avatar || baseUser.fullName?.substring(0, 2).toUpperCase() || 'T',
+    joinDate: baseUser.joinDate || fallbackDate,
+    lastLogin: baseUser.lastLogin || new Date().toISOString(),
+    unit: unitNumber,
+    property: propertyName,
+    rent: rentValue,
+    leaseStart: leaseStartValue,
+    leaseEnd: leaseEndValue,
+    assignedPropertyId: assignedPropertyCandidate,
+    propertyId: propertyIdCandidate,
+    appliedPropertyId: appliedPropertyCandidate,
+    unitId: unitIdCandidate,
+    managerId: managerIdCandidate,
+    tenantContext: normalizedContext,
+    emergencyContact: baseUser.emergencyContact || {
+      name: '',
+      relationship: '',
+      phone: ''
+    }
+  };
+}
 interface User {
   id: string;
   fullName: string;
@@ -18,6 +147,12 @@ interface User {
   rent?: number;
   leaseStart?: string;
   leaseEnd?: string;
+  assignedPropertyId?: string | null;
+  propertyId?: string | null;
+  appliedPropertyId?: string | null;
+  unitId?: string | null;
+  managerId?: string | null;
+  tenantContext?: TenantContextData | null;
   emergencyContact?: {
     name: string;
     relationship: string;
@@ -72,22 +207,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.log('[AuthContext] Restoring user session:', parsedUser.fullName, parsedUser.userType);
 
             if (parsedUser.userType === 'tenant') {
-              const enhancedUser = {
-                ...parsedUser,
-                avatar: parsedUser.avatar || parsedUser.fullName?.substring(0, 2).toUpperCase() || 'T',
-                joinDate: parsedUser.joinDate || new Date().toISOString().split('T')[0],
-                lastLogin: parsedUser.lastLogin || new Date().toISOString(),
-                unit: parsedUser.unit || 'N/A',
-                property: parsedUser.property || 'N/A',
-                rent: parsedUser.rent || 0,
-                leaseStart: parsedUser.leaseStart || new Date().toISOString().split('T')[0],
-                leaseEnd: parsedUser.leaseEnd || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                emergencyContact: parsedUser.emergencyContact || {
-                  name: '',
-                  relationship: '',
-                  phone: ''
-                }
-              };
+              const enhancedUser = enrichTenantUser(parsedUser as User);
               setUser(enhancedUser);
               
               // Update in whichever storage is being used
@@ -97,7 +217,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 sessionStorage.setItem('briconomy_user', JSON.stringify(enhancedUser));
               }
             } else {
-              setUser(parsedUser);
+              setUser(parsedUser as User);
             }
           } catch (error) {
             console.error('[AuthContext] Error parsing saved user:', error);
@@ -131,7 +251,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const raw = result.user as Record<string, unknown>;
         const id = String((raw as { _id?: unknown; id?: unknown }).id ?? (raw as { _id?: unknown })._id ?? '');
         const { _id: _ignored, ...rest } = raw as Record<string, unknown> & { _id?: unknown };
-        const userWithId = { id, ...(rest as Record<string, unknown>) } as unknown as User;
+  const baseUser = { id, ...(rest as Record<string, unknown>) } as unknown as User;
+  const userWithId = enrichTenantUser(baseUser);
 
         setUser(userWithId);
         
@@ -180,7 +301,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const updateUser = (userData: Partial<User>) => {
     if (user) {
-      const updatedUser = { ...user, ...userData };
+      const updatedUser = enrichTenantUser({ ...user, ...userData } as User);
       setUser(updatedUser);
       
       // Update in whichever storage is being used
@@ -233,6 +354,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return Promise.resolve({ success: false, message: 'Google login failed. Please try again.' });
     }
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncTenantContext = async () => {
+      if (!user || user.userType !== 'tenant') {
+        return;
+      }
+      const hasProperty = Boolean(user.tenantContext?.property?.id || user.assignedPropertyId || user.propertyId);
+      const hasManager = Boolean(user.tenantContext?.manager?.id || user.managerId || user.tenantContext?.property?.managerId);
+      const hasUnit = Boolean(user.tenantContext?.unit?.id || user.unitId);
+      if (hasProperty && hasManager && hasUnit) {
+        return;
+      }
+      try {
+        const context = await tenantsApi.getContext(user.id) as TenantContextData;
+        if (cancelled || !context) {
+          return;
+        }
+        setUser(prev => {
+          if (!prev) {
+            return prev;
+          }
+          const merged = enrichTenantUser({ ...prev, tenantContext: context });
+          if (localStorage.getItem('briconomy_user')) {
+            localStorage.setItem('briconomy_user', JSON.stringify(merged));
+          } else if (sessionStorage.getItem('briconomy_user')) {
+            sessionStorage.setItem('briconomy_user', JSON.stringify(merged));
+          }
+          return merged;
+        });
+      } catch (error) {
+        console.error('[AuthContext] Tenant context sync error:', error);
+      }
+    };
+
+    syncTenantContext();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.userType, user?.tenantContext?.property?.id, user?.tenantContext?.manager?.id, user?.tenantContext?.unit?.id, user?.assignedPropertyId, user?.managerId, user?.unitId]);
 
   const value = {
     user,

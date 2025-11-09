@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 interface ProspectiveTenantSession {
   searchPreferences: {
@@ -85,15 +85,15 @@ export function ProspectiveTenantProvider({ children }: ProspectiveTenantProvide
     }));
   };
 
-  const addViewedProperty = (propertyId: string) => {
+  const addViewedProperty = useCallback((propertyId: string) => {
     setSession(prev => ({
       ...prev,
-      viewedProperties: prev.viewedProperties.includes(propertyId) 
-        ? prev.viewedProperties 
+      viewedProperties: prev.viewedProperties.includes(propertyId)
+        ? prev.viewedProperties
         : [...prev.viewedProperties, propertyId],
       lastActivity: new Date()
     }));
-  };
+  }, []);
 
   const clearSession = () => {
     setSession({

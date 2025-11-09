@@ -1,409 +1,609 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Icon from './Icon.tsx';
+import { documentsApi } from '../services/api.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
-interface Document {
-  id: string;
-  name: string;
-  type: 'lease' | 'payment_receipt' | 'maintenance_report' | 'other';
-  uploadDate: string;
-  fileSize: string;
-  url?: string;
+const typeLabelKeys: Record<string, string> = {
+	lease: 'documents.type.lease',
+	payment_receipt: 'documents.type.paymentReceipt',
+	maintenance_report: 'documents.type.maintenanceReport',
+	inspection: 'documents.type.inspection',
+	insurance: 'documents.type.insurance',
+	payment_proof: 'documents.type.paymentProof',
+	contract: 'documents.type.contract',
+	id: 'documents.type.identification',
+	other: 'documents.type.other'
+};
+
+const iconMap: Record<string, string> = {
+	lease: 'docs',
+	payment_receipt: 'payment',
+	maintenance_report: 'maintenance',
+	inspection: 'maintenance',
+	insurance: 'report',
+	payment_proof: 'payment',
+	contract: 'docLease',
+	id: 'profile',
+	other: 'docs'
+};
+
+const typeBadgeClassMap: Record<string, string> = {
+	lease: 'type-lease',
+	payment_receipt: 'type-payment',
+	maintenance_report: 'type-maintenance',
+	inspection: 'type-maintenance',
+	insurance: 'type-lease',
+	payment_proof: 'type-payment',
+	contract: 'type-lease',
+	id: 'type-other',
+	other: 'type-other'
+};
+
+const statusClassMap: Record<string, string> = {
+	active: 'status-paid',
+	signed: 'status-paid',
+	approved: 'status-paid',
+	pending: 'status-pending',
+	processing: 'status-pending',
+	submitted: 'status-pending',
+	rejected: 'status-overdue',
+	expired: 'status-overdue'
+};
+
+
+interface DocumentListItem {
+	id: string;
+	name: string;
+	description?: string;
+	type?: string;
+	category?: string;
+	fileName?: string;
+	fileSize?: number;
+	mimeType?: string;
+	uploadDate?: string;
+	createdAt?: string;
+	status?: string;
+	uploadedByName?: string;
 }
 
+interface DocumentDetail extends DocumentListItem {
+	content?: string;
+}
+
+
+const startCase = (value: string) =>
+	value
+		.replace(/[_-]+/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatFileSize = (size?: number) => {
+	if (!size || Number.isNaN(size)) {
+		return '—';
+	}
+	if (size < 1024) {
+		return `${size} B`;
+	}
+	if (size < 1024 * 1024) {
+		return `${(size / 1024).toFixed(1)} KB`;
+	}
+	if (size < 1024 * 1024 * 1024) {
+		return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+	}
+	return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
+
+const formatDate = (value?: string) => {
+	if (!value) {
+		return '—';
+	}
+	const parsed = new Date(value);
+	if (Number.isNaN(parsed.getTime())) {
+		return value;
+	}
+	return parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const estimateSizeFromBase64 = (encoded?: string) => {
+	if (!encoded) {
+		return undefined;
+	}
+	const sanitized = encoded.includes(',') ? encoded.split(',').pop() ?? '' : encoded;
+	const length = sanitized.length;
+	if (length === 0) {
+		return undefined;
+	}
+	const padding = sanitized.endsWith('==') ? 2 : sanitized.endsWith('=') ? 1 : 0;
+	return Math.floor((length * 3) / 4) - padding;
+};
+
+const statusLabelKeys: Record<string, string> = {
+	active: 'status.active',
+	signed: 'status.signed',
+	approved: 'status.approved',
+	pending: 'status.pending',
+	processing: 'status.processing',
+	submitted: 'status.submitted',
+	rejected: 'status.rejected',
+	expired: 'status.expired'
+};
+
+const getTypeLabel = (type: string | undefined, translate: (key: string) => string) => {
+	if (!type) {
+		return translate('documents.type.general');
+	}
+	const key = typeLabelKeys[type];
+	return key ? translate(key) : startCase(type);
+};
+
+const getStatusLabel = (status: string | undefined, translate: (key: string) => string) => {
+	if (!status) {
+		return translate('status.pending');
+	}
+	const key = statusLabelKeys[status];
+	return key ? translate(key) : startCase(status);
+};
+
+const getIconName = (type?: string) => {
+	if (!type) {
+		return iconMap.other;
+	}
+	return iconMap[type] ?? iconMap.other;
+};
+
+const getTypeBadgeClass = (type?: string) => {
+	if (!type) {
+		return 'type-other';
+	}
+	return typeBadgeClassMap[type] ?? 'type-other';
+};
+
+const getStatusClass = (status?: string) => {
+	if (!status) {
+		return 'status-pending';
+	}
+	return statusClassMap[status] ?? 'status-pending';
+};
+
+// #COMPLETION_DRIVE: Assuming legacy document viewer styles remain available in the global stylesheet
+// #SUGGEST_VERIFY: Validate the tenant documents page visually after reload on multiple breakpoints
+
 function DocumentViewer() {
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: '1',
-      name: 'Lease Agreement - 2024',
-      type: 'lease',
-      uploadDate: '2024-01-01',
-      fileSize: '2.4 MB',
-      url: '#'
-    },
-    {
-      id: '2',
-      name: 'Payment Receipt - January 2024',
-      type: 'payment_receipt',
-      uploadDate: '2024-01-15',
-      fileSize: '156 KB',
-      url: '#'
-    },
-    {
-      id: '3',
-      name: 'Maintenance Report - Dec 2023',
-      type: 'maintenance_report',
-      uploadDate: '2023-12-20',
-      fileSize: '342 KB',
-      url: '#'
-    }
-  ]);
+	const { user } = useAuth();
+	const { t } = useLanguage();
+	const { showToast } = useToast();
+	const [documents, setDocuments] = useState<DocumentListItem[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [previewState, setPreviewState] = useState<{ detail: DocumentDetail; url: string | null } | null>(null);
+	const [previewTargetId, setPreviewTargetId] = useState<string | null>(null);
+	const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const [showUploadForm, setShowUploadForm] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [filterType, setFilterType] = useState<'all' | Document['type']>('all');
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'other' as Document['type'],
-    file: null as File | null
-  });
+	const sortByDate = useCallback((items: DocumentListItem[]) => {
+		return items
+			.slice()
+			.sort((a, b) => {
+				const aDate = new Date(a.uploadDate ?? a.createdAt ?? 0).getTime();
+				const bDate = new Date(b.uploadDate ?? b.createdAt ?? 0).getTime();
+				return bDate - aDate;
+			});
+	}, []);
 
-  const handleUpload = () => {
-    setFormData({
-      name: '',
-      type: 'other',
-      file: null
-    });
-    setShowUploadForm(true);
-  };
+	const coerceDocument = useCallback((input: Record<string, unknown>): DocumentListItem => {
+		const idValue = input['id'];
+		const fallbackId = input['_id'];
+		let resolvedId = typeof idValue === 'string' && idValue ? idValue : '';
+		if (!resolvedId) {
+			if (typeof fallbackId === 'string' && fallbackId) {
+				resolvedId = fallbackId;
+			} else if (fallbackId && typeof (fallbackId as { toString?: () => string }).toString === 'function') {
+				resolvedId = (fallbackId as { toString: () => string }).toString();
+			}
+		}
 
-  const handleViewDocument = (doc: Document) => {
-    setSelectedDocument(doc);
-  };
+		const nameValue = input['name'];
+		const fileNameValue = input['fileName'];
+		const descriptionValue = input['description'];
+		const typeValue = input['type'];
+		const categoryValue = input['category'];
+		const sizeValue = input['fileSize'];
+		const mimeValue = input['mimeType'];
+		const uploadDateValue = input['uploadDate'];
+		const createdAtValue = input['createdAt'];
+		const statusValue = input['status'];
+		const uploadedByNameValue = input['uploadedByName'];
 
-  const handleDeleteDocument = (id: string, docName: string) => {
-    if (confirm(`Are you sure you want to delete "${docName}"?`)) {
-      setDocuments(prev => prev.filter(doc => doc.id !== id));
-    }
-  };
+		let sizeNumber: number | undefined;
+		if (typeof sizeValue === 'number' && Number.isFinite(sizeValue)) {
+			sizeNumber = sizeValue;
+		} else if (typeof sizeValue === 'string') {
+			const parsed = Number(sizeValue);
+			if (!Number.isNaN(parsed)) {
+				sizeNumber = parsed;
+			}
+		}
 
-  const handleSubmitUpload = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!formData.file || !formData.name) return;
+		const uploadDate =
+			typeof uploadDateValue === 'string'
+				? uploadDateValue
+				: typeof createdAtValue === 'string'
+					? createdAtValue
+					: undefined;
 
-    setUploading(true);
-    setTimeout(() => {
-      const newDocument: Document = {
-        id: Date.now().toString(),
-        name: formData.name,
-        type: formData.type,
-        uploadDate: new Date().toISOString().split('T')[0],
-        fileSize: `${(formData.file.size / 1024).toFixed(1)} KB`,
-        url: '#'
-      };
+		const name =
+			typeof nameValue === 'string' && nameValue
+				? nameValue
+				: typeof fileNameValue === 'string' && fileNameValue
+					? fileNameValue
+					: 'Document';
 
-      setDocuments(prev => [...prev, newDocument]);
-      setShowUploadForm(false);
-      setUploading(false);
-      setFormData({
-        name: '',
-        type: 'other',
-        file: null
-      });
-    }, 1500);
-  };
+		const fallbackGeneratedId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-  const getDocumentIcon = (type: Document['type']) => {
-    switch (type) {
-      case 'lease': return 'docs';
-      case 'payment_receipt': return 'payment';
-      case 'maintenance_report': return 'maintenance';
-      case 'other': return 'docs';
-      default: return 'docs';
-    }
-  };
+		return {
+			id: resolvedId || fallbackGeneratedId,
+			name,
+			description: typeof descriptionValue === 'string' ? descriptionValue : undefined,
+			type: typeof typeValue === 'string' ? typeValue : undefined,
+			category: typeof categoryValue === 'string' ? categoryValue : undefined,
+			fileName: typeof fileNameValue === 'string' ? fileNameValue : undefined,
+			fileSize: sizeNumber,
+			mimeType: typeof mimeValue === 'string' ? mimeValue : undefined,
+			uploadDate,
+			createdAt: typeof createdAtValue === 'string' ? createdAtValue : undefined,
+			status: typeof statusValue === 'string' ? statusValue : undefined,
+			uploadedByName: typeof uploadedByNameValue === 'string' ? uploadedByNameValue : undefined
+		};
+	}, []);
 
-  const getDocumentTypeName = (type: Document['type']) => {
-    switch (type) {
-      case 'lease': return 'Lease Agreement';
-      case 'payment_receipt': return 'Payment Receipt';
-      case 'maintenance_report': return 'Maintenance Report';
-      case 'other': return 'Other Document';
-      default: return 'Document';
-    }
-  };
+	const coerceDetail = useCallback((input: Record<string, unknown>): DocumentDetail => {
+		const base = coerceDocument(input);
+		const contentValue = input['content'];
+		const detail: DocumentDetail = {
+			...base,
+			content: typeof contentValue === 'string' ? contentValue : undefined
+		};
+		if (!detail.fileSize && detail.content) {
+			detail.fileSize = estimateSizeFromBase64(detail.content);
+		}
+		return detail;
+	}, [coerceDocument]);
 
-  const getDocumentTypeColor = (type: Document['type']) => {
-    switch (type) {
-      case 'lease': return 'type-lease';
-      case 'payment_receipt': return 'type-payment';
-      case 'maintenance_report': return 'type-maintenance';
-      case 'other': return 'type-other';
-      default: return 'type-other';
-    }
-  };
+	const fetchDocuments = useCallback(async () => {
+		if (!user?.id) {
+			setDocuments([]);
+			setLoading(false);
+			return;
+		}
+		setLoading(true);
+		setError(null);
+		try {
+			const response = await documentsApi.getAll({ tenantId: user.id });
+			const list = Array.isArray(response) ? (response as Array<Record<string, unknown>>) : [];
+			const normalized = sortByDate(list.map((item) => coerceDocument(item)));
+			setDocuments(normalized);
+		} catch (err) {
+			const fetchErrorMessage = t('documents.error.fetch') || 'Unable to fetch documents';
+			console.error('[DocumentViewer] Fetch error:', err);
+			setError(fetchErrorMessage);
+			setDocuments([]);
+		} finally {
+			setLoading(false);
+		}
+	}, [coerceDocument, sortByDate, t, user?.id]);
 
-  const filteredDocuments = filterType === 'all' 
-    ? documents 
-    : documents.filter(doc => doc.type === filterType);
+	useEffect(() => {
+		fetchDocuments();
+	}, [fetchDocuments]);
 
-  return (
-    <div className="document-viewer">
-      <div className="section-card">
-        <div className="section-card-header">
-          <div>
-            <div className="section-title">My Documents</div>
-            <div className="section-subtitle">{filteredDocuments.length} document{filteredDocuments.length !== 1 ? 's' : ''}</div>
-          </div>
-          <button 
-            type="button"
-            className="btn btn-primary btn-sm"
-            onClick={handleUpload}
-          >
-            Upload Document
-          </button>
-        </div>
+	useEffect(() => {
+		return () => {
+			if (previewState?.url) {
+				URL.revokeObjectURL(previewState.url);
+			}
+		};
+	}, [previewState]);
 
-        <div className="document-filters">
-          <button 
-            type="button"
-            className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterType('all')}
-          >
-            All
-          </button>
-          <button 
-            type="button"
-            className={`filter-btn ${filterType === 'lease' ? 'active' : ''}`}
-            onClick={() => setFilterType('lease')}
-          >
-            Leases
-          </button>
-          <button 
-            type="button"
-            className={`filter-btn ${filterType === 'payment_receipt' ? 'active' : ''}`}
-            onClick={() => setFilterType('payment_receipt')}
-          >
-            Receipts
-          </button>
-          <button 
-            type="button"
-            className={`filter-btn ${filterType === 'maintenance_report' ? 'active' : ''}`}
-            onClick={() => setFilterType('maintenance_report')}
-          >
-            Reports
-          </button>
-          <button 
-            type="button"
-            className={`filter-btn ${filterType === 'other' ? 'active' : ''}`}
-            onClick={() => setFilterType('other')}
-          >
-            Other
-          </button>
-        </div>
+	const buildBlob = (base64: string, mimeType?: string) => {
+		const sanitized = base64.includes(',') ? base64.split(',').pop() ?? '' : base64;
+		const binary = atob(sanitized);
+		const length = binary.length;
+		const bytes = new Uint8Array(length);
+		for (let index = 0; index < length; index += 1) {
+			bytes[index] = binary.charCodeAt(index);
+		}
+		return new Blob([bytes], { type: mimeType || 'application/octet-stream' });
+	};
 
-        {filteredDocuments.length === 0 ? (
-          <div className="empty-state-card">
-            <Icon name="docs" alt="Documents" size={48} />
-            <div className="empty-state-title">No documents found</div>
-            <div className="empty-state-text">
-              {filterType === 'all' 
-                ? 'Upload your first document to get started' 
-                : `No ${getDocumentTypeName(filterType).toLowerCase()}s found`}
-            </div>
-            {filterType === 'all' && (
-              <button 
-                type="button"
-                className="btn btn-primary"
-                onClick={handleUpload}
-              >
-                Upload Document
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="documents-list">
-            {filteredDocuments.map((doc) => (
-              <div key={doc.id} className="document-item">
-                <div className="document-icon-wrapper">
-                  <Icon name={getDocumentIcon(doc.type)} alt={doc.type} size={32} />
-                </div>
-                <div className="document-info">
-                  <div className="document-name">{doc.name}</div>
-                  <div className="document-meta">
-                    <span className={`document-type-badge ${getDocumentTypeColor(doc.type)}`}>
-                      {getDocumentTypeName(doc.type)}
-                    </span>
-                    <span className="document-size">{doc.fileSize}</span>
-                    <span className="document-date">{new Date(doc.uploadDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <div className="document-actions">
-                  <button 
-                    type="button"
-                    className="btn-icon"
-                    onClick={() => handleViewDocument(doc)}
-                    title="View"
-                  >
-                    <Icon name="properties" alt="View" size={20} />
-                  </button>
-                  <button 
-                    type="button"
-                    className="btn-icon"
-                    onClick={() => doc.url && globalThis.open(doc.url, '_blank')}
-                    title="Download"
-                  >
-                    <Icon name="docs" alt="Download" size={20} />
-                  </button>
-                  <button 
-                    type="button"
-                    className="btn-icon btn-icon-danger"
-                    onClick={() => handleDeleteDocument(doc.id, doc.name)}
-                    title="Delete"
-                  >
-                    <Icon name="maintenance" alt="Delete" size={20} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+	const handlePreview = async (doc: DocumentListItem) => {
+		if (!doc.id) {
+			return;
+		}
+		setPreviewTargetId(doc.id);
+		setError(null);
+		try {
+			const response = await documentsApi.getById(doc.id);
+			console.log('[DocumentViewer] Preview response:', response);
+			const detail = coerceDetail(response as Record<string, unknown>);
+			console.log('[DocumentViewer] Coerced detail:', { ...detail, content: detail.content ? '(base64 content present)' : '(no content)' });
+			let objectUrl: string | null = null;
+			if (detail.content) {
+				objectUrl = URL.createObjectURL(buildBlob(detail.content, detail.mimeType));
+			} else {
+				const previewMessage = t('documents.error.previewContent') || 'Preview content not available. The document may not have been uploaded correctly.';
+				showToast(previewMessage, 'info');
+				console.log('[DocumentViewer] No content in detail:', detail);
+			}
+			if (previewState?.url) {
+				URL.revokeObjectURL(previewState.url);
+			}
+			setPreviewState({ detail, url: objectUrl });
+		} catch (err) {
+			const openErrorMessage = t('documents.error.open') || 'Unable to open document';
+			setError(openErrorMessage);
+			showToast(openErrorMessage, 'error');
+			console.error('[DocumentViewer] Preview error:', err);
+		} finally {
+			setPreviewTargetId(null);
+		}
+	};
 
-      {showUploadForm && (
-        <div className="modal-overlay" onClick={() => !uploading && setShowUploadForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="section-title">Upload Document</div>
-              <button 
-                type="button"
-                className="close-btn"
-                onClick={() => setShowUploadForm(false)}
-                disabled={uploading}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <form onSubmit={handleSubmitUpload} className="upload-form">
-                <div className="form-group">
-                  <label className="form-label">Document Name</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter document name"
-                    required
-                  />
-                </div>
+	const handleDownload = async (doc: DocumentListItem | DocumentDetail) => {
+		if (!doc.id) {
+			return;
+		}
+		setDownloadingId(doc.id);
+		setError(null);
+		try {
+			let detail: DocumentDetail | null = null;
+			if ('content' in doc && doc.content) {
+				detail = doc as DocumentDetail;
+				console.log('[DocumentViewer] Download using existing detail with content');
+			} else {
+				console.log('[DocumentViewer] Download fetching document from API');
+				const response = await documentsApi.getById(doc.id);
+				console.log('[DocumentViewer] Download API response:', response);
+				detail = coerceDetail(response as Record<string, unknown>);
+			}
+			if (!detail || !detail.content) {
+				console.error('[DocumentViewer] Download failed - no content:', { detail: detail ? { ...detail, content: detail.content ? '(present)' : '(missing)' } : 'null' });
+				throw new Error(t('documents.error.contentMissing') || 'Document content not available');
+			}
+			const resolvedDetail = detail as DocumentDetail;
+			const blob = buildBlob(resolvedDetail.content, resolvedDetail.mimeType);
+			if (!blob) {
+				throw new Error(t('documents.error.processFailed') || 'Failed to process document');
+			}
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = resolvedDetail.fileName || resolvedDetail.name || 'document';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			const successMessage = (t('documents.downloadSuccess') || '{name} downloaded successfully').replace('{name}', resolvedDetail.name || t('documents.genericName') || 'Document');
+			showToast(successMessage, 'success');
+		} catch (err) {
+			const errorMessage = t('documents.error.download') || 'Unable to download document';
+			setError(errorMessage);
+			showToast(errorMessage, 'error');
+			console.error('[DocumentViewer] Download error:', err);
+		} finally {
+			setDownloadingId(null);
+		}
+	};
 
-                <div className="form-group">
-                  <label className="form-label">Document Type</label>
-                  <select
-                    className="form-select"
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      type: e.target.value as Document['type']
-                    }))}
-                  >
-                    <option value="lease">Lease Agreement</option>
-                    <option value="payment_receipt">Payment Receipt</option>
-                    <option value="maintenance_report">Maintenance Report</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
+	const closePreview = () => {
+		if (previewState?.url) {
+			URL.revokeObjectURL(previewState.url);
+		}
+		setPreviewState(null);
+	};
 
-                <div className="form-group">
-                  <label className="form-label">Select File</label>
-                  <div className="file-input-wrapper">
-                    <input
-                      type="file"
-                      id="file-upload"
-                      className="file-input"
-                      onChange={(e) => setFormData(prev => ({ 
-                        ...prev, 
-                        file: e.target.files?.[0] || null 
-                      }))}
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      required
-                    />
-                    <label htmlFor="file-upload" className="file-input-label">
-                      {formData.file ? formData.file.name : 'Choose a file'}
-                    </label>
-                  </div>
-                  {formData.file && (
-                    <div className="file-info">
-                      {(formData.file.size / 1024).toFixed(1)} KB
-                    </div>
-                  )}
-                </div>
+	const documentsTitle = t('documents.title') || 'Documents';
+	const emptyStateText = t('documents.emptyDescription') || 'No documents received yet';
+	const totalCount = documents.length;
+	const totalLabel = totalCount === 0
+		? t('documents.noneReceived')
+		: (totalCount === 1
+			? (t('documents.singleStored') || '{count} document stored').replace('{count}', totalCount.toString())
+			: (t('documents.multiStored') || '{count} documents stored').replace('{count}', totalCount.toString()));
+	const showingLabel = totalCount === 0
+		? t('documents.noneYet')
+		: (t('documents.showingCount') || 'Showing {count} {label}')
+			.replace('{count}', totalCount.toString())
+			.replace('{label}', totalCount === 1 ? t('documents.singleLabel') || 'document' : t('documents.pluralLabel') || 'documents');
 
-                <div className="form-actions">
-                  <button 
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowUploadForm(false)}
-                    disabled={uploading}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={!formData.file || !formData.name || uploading}
-                  >
-                    {uploading ? 'Uploading...' : 'Upload'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+	return (
+		<div className="document-viewer">
+			<div className="section-card">
+				<div className="section-card-header">
+					<div>
+						<div className="section-title">{documentsTitle}</div>
+						<div className="section-subtitle">{totalLabel}</div>
+					</div>
+				</div>
+				<div className="section-card-body document-content">
+					{error && <div className="alert alert-error">{error}</div>}
+					<div className="document-toolbar">
+						<div className="document-toolbar-summary">{showingLabel}</div>
+					</div>
 
-      {selectedDocument && (
-        <div className="modal-overlay" onClick={() => setSelectedDocument(null)}>
-          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="section-title">{selectedDocument.name}</div>
-              <button 
-                type="button"
-                className="close-btn"
-                onClick={() => setSelectedDocument(null)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="document-preview">
-                <div className="document-details-card">
-                  <div className="detail-row">
-                    <span className="detail-label">Type</span>
-                    <span className={`document-type-badge ${getDocumentTypeColor(selectedDocument.type)}`}>
-                      {getDocumentTypeName(selectedDocument.type)}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Size</span>
-                    <span className="detail-value">{selectedDocument.fileSize}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Uploaded</span>
-                    <span className="detail-value">{new Date(selectedDocument.uploadDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <div className="document-preview-area">
-                  <Icon name="docs" alt="Document" size={64} />
-                  <div className="preview-text">Document Preview</div>
-                  <div className="preview-subtext">
-                    Preview functionality will be implemented with a document viewer
-                  </div>
-                </div>
-              </div>
-              <div className="form-actions">
-                <button 
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setSelectedDocument(null)}
-                >
-                  Close
-                </button>
-                <button 
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => selectedDocument.url && globalThis.open(selectedDocument.url, '_blank')}
-                >
-                  Download
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+					{loading ? (
+						<div className="loading-state">{t('documents.loading') || 'Loading documents...'}</div>
+					) : documents.length === 0 ? (
+						<div className="empty-state-card">
+							<Icon name="docs" alt={documentsTitle} size={48} />
+							<div className="empty-state-title">{t('documents.emptyTitle') || 'No documents found'}</div>
+							<div className="empty-state-text">{emptyStateText}</div>
+						</div>
+					) : (
+						<div className="documents-list">
+							{documents.map((doc) => {
+								const hasTags = Boolean(doc.type) || Boolean(doc.status);
+								const hasFooter = doc.fileSize !== undefined || Boolean(doc.uploadDate) || Boolean(doc.uploadedByName);
+								return (
+									<div key={doc.id} className="document-card">
+										<div className="document-card-header">
+											<div className="document-card-leading">
+												<div className="document-card-icon">
+													<Icon name={getIconName(doc.type)} alt={getTypeLabel(doc.type, t)} size={28} />
+												</div>
+												<div className="document-card-title">
+													<div className="document-card-name">{doc.name}</div>
+													{hasTags && (
+														<div className="document-card-tags">
+															{doc.type && (
+																<span className={`document-type-badge ${getTypeBadgeClass(doc.type)}`}>{getTypeLabel(doc.type, t)}</span>
+															)}
+															{doc.status && (
+																<span className={`status-badge ${getStatusClass(doc.status)}`}>{getStatusLabel(doc.status, t)}</span>
+															)}
+														</div>
+													)}
+												</div>
+											</div>
+											<div className="document-card-actions">
+												<button
+													type="button"
+													className="btn btn-secondary btn-xs"
+													onClick={() => handlePreview(doc)}
+													disabled={previewTargetId === doc.id}
+												>
+													{t('documents.preview') || 'Preview'}
+												</button>
+												<button
+													type="button"
+													className="btn btn-secondary btn-xs"
+													onClick={() => handleDownload(doc)}
+													disabled={downloadingId === doc.id}
+												>
+													{t('documents.download') || 'Download'}
+												</button>
+											</div>
+										</div>
+										{doc.description && <p className="document-card-description">{doc.description}</p>}
+										{hasFooter && (
+											<div className="document-card-footer">
+												{doc.fileSize !== undefined && (
+													<span className="document-card-footnote">{formatFileSize(doc.fileSize)}</span>
+												)}
+												{doc.uploadDate && (
+													<span className="document-card-footnote">{(t('documents.uploadedOn') || 'Uploaded {date}').replace('{date}', formatDate(doc.uploadDate))}</span>
+												)}
+												{doc.uploadedByName && (
+													<span className="document-card-footnote">{(t('documents.uploadedBy') || 'by {name}').replace('{name}', doc.uploadedByName)}</span>
+												)}
+											</div>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+
+		{previewState && (
+			<div className="modal-overlay" onClick={closePreview}>
+				<div
+					className="modal-content"
+					onClick={(event) => event.stopPropagation()}
+					style={{
+						maxWidth: '90vw',
+						maxHeight: '90vh',
+						height: '85vh',
+						display: 'flex',
+						flexDirection: 'column',
+						padding: 0
+					}}
+				>
+					<div className="modal-header" style={{ borderBottom: '1px solid var(--border-primary)', padding: '20px' }}>
+						<div className="section-title" style={{ margin: 0 }}>{previewState.detail.name}</div>
+						<button type="button" className="close-btn" onClick={closePreview} style={{ marginTop: 0 }}>
+							×
+						</button>
+					</div>
+
+					<div className="modal-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
+						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--border-primary)' }}>
+							<div>
+									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.type') || 'Type'}</div>
+								<span className={`document-type-badge ${getTypeBadgeClass(previewState.detail.type)}`}>
+										{getTypeLabel(previewState.detail.type, t)}
+								</span>
+							</div>
+							<div>
+									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.size') || 'Size'}</div>
+								<div style={{ fontSize: '14px', fontWeight: '500' }}>{formatFileSize(previewState.detail.fileSize)}</div>
+							</div>
+							<div>
+									<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.uploaded') || 'Uploaded'}</div>
+								<div style={{ fontSize: '14px', fontWeight: '500' }}>{formatDate(previewState.detail.uploadDate)}</div>
+							</div>
+							{previewState.detail.status && (
+								<div>
+										<div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{t('documents.field.status') || 'Status'}</div>
+									<span className={`status-badge ${getStatusClass(previewState.detail.status)}`}>
+											{getStatusLabel(previewState.detail.status, t)}
+									</span>
+								</div>
+							)}
+						</div>
+
+						<div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', backgroundColor: 'var(--background)', overflow: 'auto', minHeight: 0 }}>
+							{previewState.url ? (
+								previewState.detail.mimeType?.startsWith('image/') ? (
+									<img src={previewState.url} alt={previewState.detail.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+								) : previewState.detail.mimeType === 'application/pdf' ? (
+									<iframe src={previewState.url} title={previewState.detail.name} style={{ width: '100%', height: '100%', border: 'none' }} />
+								) : (
+									<div style={{ textAlign: 'center', padding: '40px' }}>
+										<Icon name="docs" alt={t('documents.genericName') || 'Document'} size={48} />
+											<div style={{ marginTop: '16px', fontSize: '16px', fontWeight: '600' }}>{t('documents.previewReady') || 'Document Ready'}</div>
+										<a href={previewState.url} target="_blank" rel="noreferrer" className="btn btn-link" style={{ marginTop: '12px' }}>
+												{t('documents.openInNewWindow') || 'Open document in new window'}
+										</a>
+									</div>
+								)
+							) : (
+								<div style={{ textAlign: 'center', padding: '40px' }}>
+									<Icon name="docs" alt={t('documents.genericName') || 'Document'} size={48} />
+										<div style={{ marginTop: '16px', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>{t('documents.previewUnavailable') || 'Preview unavailable'}</div>
+										<div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{t('documents.downloadToView') || 'Download the document to view its contents'}</div>
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="form-actions" style={{ borderTop: '1px solid var(--border-primary)', padding: '16px 20px', gap: '12px', display: 'flex' }}>
+						<button
+							type="button"
+							className="btn btn-secondary"
+							onClick={closePreview}
+							style={{ flex: 1 }}
+						>
+								{t('common.close') || 'Close'}
+						</button>
+						<button
+							type="button"
+							className="btn btn-primary"
+							onClick={() => handleDownload(previewState.detail)}
+							disabled={downloadingId === previewState.detail.id}
+							style={{ flex: 1 }}
+						>
+								{downloadingId === previewState.detail.id ? t('documents.downloading') || 'Downloading...' : t('documents.download') || 'Download'}
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
+
+		</div>
+	);
 }
 
 export default DocumentViewer;

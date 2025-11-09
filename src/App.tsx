@@ -34,7 +34,6 @@ import ManagerMaintenancePage from './pages/ManagerMaintenancePage.tsx';
 import ManagerApplicationsPage from './pages/ManagerApplicationsPage.tsx';
 import CommunicationPage from './pages/CommunicationPage.tsx';
 import CreateLeasePage from './pages/CreateLeasePage.tsx';
-import DocumentManagementPage from './pages/DocumentManagementPage.tsx';
 import ReportingDashboardPage from './pages/ReportingDashboardPage.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
 import TenantProfileEditPage from './pages/TenantProfileEditPage.tsx';
@@ -110,7 +109,6 @@ function App() {
               <Route path="/caretaker/maintenance" element={<CaretakerRoute><CaretakerMaintenancePage /></CaretakerRoute>} />
               <Route path="/caretaker/reports" element={<CaretakerRoute><CaretakerReportsPage /></CaretakerRoute>} />
               <Route path="/tenant/messages" element={<TenantRoute><CommunicationPage /></TenantRoute>} />
-              <Route path="/manager/documents" element={<ManagerRoute><DocumentManagementPage /></ManagerRoute>} />
               <Route path="/manager/reports" element={<ManagerRoute><ReportingDashboardPage /></ManagerRoute>} />
               <Route path="/manager/access-logs" element={<ManagerRoute><AccessLogsPage /></ManagerRoute>} />
               <Route path="/tenant/profile" element={<TenantRoute><UserProfilePage /></TenantRoute>} />

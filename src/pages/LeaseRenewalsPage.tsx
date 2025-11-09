@@ -95,7 +95,7 @@ function LeaseRenewalsPage() {
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
-    { path: '/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
     { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
     { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
@@ -174,7 +174,7 @@ function LeaseRenewalsPage() {
         <div className="action-buttons">
           {!row.renewalOfferSent && (
             <button type="button"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary sendRenewal-offer-btn"
               onClick={() => handleSendRenewalOffer(row.id)}
             >
               {t('renewals.send_offer')}

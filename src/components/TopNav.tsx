@@ -35,7 +35,7 @@ function TopNav({ showBackButton = false, backLink: _backLink = '/', showLogout 
         )}
         <div className="logo">
           <div className="logo-icon">
-            <Icon name="logo" alt="Briconomy" />
+            <Icon name="logo" alt="Briconomy" noBackground />
           </div>
           <span>Briconomy</span>
         </div>

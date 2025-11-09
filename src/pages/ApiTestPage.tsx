@@ -24,10 +24,10 @@ function ApiTestPage() {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
   const navItems = [
-    { path: '/admin', label: 'Dashboard', active: false },
-    { path: '/admin/api-test', label: 'API Test', active: true },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/security', label: 'Security' }
+    { path: '/admin', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/admin/users', label: 'Users', icon: 'users' },
+    { path: '/admin/security', label: 'Security', icon: 'security' },
+    { path: '/admin/reports', label: 'Reports', icon: 'report' }
   ];
 
   const tests = [

@@ -14,9 +14,10 @@ interface PendingUser {
     property?: string;
     unitNumber?: string;
     occupation?: string;
-    monthlyIncome?: string;
-    emergencyContact?: string;
+    monthlyIncome?: string | number;
+    emergencyContact?: string | { name?: string; phone?: string; relationship?: string };
     moveInDate?: string;
+    leaseDuration?: string;
   };
   appliedAt?: string;
   status: string;
@@ -56,7 +57,7 @@ function AdminPendingUsersPage() {
   };
 
   const handleApprove = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to approve ${userName}'s application?`)) {
+    if (!confirm(t('admin.confirm_approve').replace('{name}', userName))) {
       return;
     }
 
@@ -64,20 +65,20 @@ function AdminPendingUsersPage() {
       setProcessing(userId);
       setError('');
       setSuccess('');
-      
+
       await adminApi.approvePendingUser(userId);
-      
-      setSuccess(`${userName} has been approved and account created!`);
+
+      setSuccess(t('admin.approved_success').replace('{name}', userName));
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
     } catch (err) {
-      setError(`Failed to approve ${userName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(`${t('admin.failed_approve').replace('{name}', userName)}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setProcessing(null);
     }
   };
 
   const handleDecline = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to decline ${userName}'s application?`)) {
+    if (!confirm(t('admin.confirm_decline').replace('{name}', userName))) {
       return;
     }
 
@@ -85,13 +86,13 @@ function AdminPendingUsersPage() {
       setProcessing(userId);
       setError('');
       setSuccess('');
-      
+
       await adminApi.declinePendingUser(userId);
-      
-      setSuccess(`${userName}'s application has been declined.`);
+
+      setSuccess(t('admin.declined_success').replace('{name}', userName));
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
     } catch (err) {
-      setError(`Failed to decline ${userName}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(`${t('admin.failed_decline').replace('{name}', userName)}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setProcessing(null);
     }
@@ -100,11 +101,22 @@ function AdminPendingUsersPage() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
+  };
+
+  const formatEmergencyContact = (contact?: string | { name?: string; phone?: string; relationship?: string }) => {
+    if (!contact) return 'N/A';
+    if (typeof contact === 'string') {
+      return contact;
+    }
+    if (contact.name && contact.phone && contact.relationship) {
+      return `${contact.name} (${contact.phone}) - ${contact.relationship}`;
+    }
+    return JSON.stringify(contact);
   };
 
   return (
@@ -113,8 +125,8 @@ function AdminPendingUsersPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Pending User Applications</div>
-          <div className="page-subtitle">Review and approve or decline prospective tenant applications</div>
+          <div className="page-title">{t('admin.pending_user_applications')}</div>
+          <div className="page-subtitle">{t('admin.pending_applications_desc')}</div>
         </div>
 
         {error && (
@@ -132,7 +144,7 @@ function AdminPendingUsersPage() {
         {loading ? (
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading pending applications...</p>
+            <p>{t('admin.loading_pending_applications')}</p>
           </div>
         ) : pendingUsers.length === 0 ? (
           <div style={{
@@ -143,9 +155,9 @@ function AdminPendingUsersPage() {
             margin: '20px 0'
           }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
-            <h3 style={{ marginBottom: '8px', color: '#2c3e50' }}>No Pending Applications</h3>
-            <p style={{ color: '#6c757d' }}>All applications have been processed</p>
-            <button 
+            <h3 style={{ marginBottom: '8px', color: '#2c3e50' }}>{t('admin.no_pending_applications')}</h3>
+            <p style={{ color: '#6c757d' }}>{t('admin.all_applications_processed')}</p>
+            <button
               type="button"
               onClick={() => navigate('/admin/users')}
               style={{
@@ -159,13 +171,13 @@ function AdminPendingUsersPage() {
                 fontWeight: '600'
               }}
             >
-              Back to Users
+              {t('admin.back_to_users')}
             </button>
           </div>
         ) : (
           <>
             <div style={{ marginBottom: '20px', color: '#6c757d', fontSize: '14px' }}>
-              {pendingUsers.length} pending {pendingUsers.length === 1 ? 'application' : 'applications'}
+              {pendingUsers.length} {t('admin.pending_count')} {pendingUsers.length === 1 ? t('admin.application_singular') : t('admin.applications_plural')}
             </div>
 
             {pendingUsers.map((user) => (
@@ -187,7 +199,7 @@ function AdminPendingUsersPage() {
                         {user.fullName}
                       </h3>
                       <p style={{ margin: '0', fontSize: '14px', color: '#6c757d' }}>
-                        Applied: {formatDate(user.appliedAt)}
+                        {t('admin.applied')}: {formatDate(user.appliedAt)}
                       </p>
                     </div>
                     <span style={{
@@ -198,7 +210,7 @@ function AdminPendingUsersPage() {
                       fontSize: '12px',
                       fontWeight: '600'
                     }}>
-                      PENDING
+                      {t('admin.pending_status')}
                     </span>
                   </div>
                 </div>
@@ -213,47 +225,47 @@ function AdminPendingUsersPage() {
                   borderRadius: '8px'
                 }}>
                   <div>
-                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Email</div>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.email_address')}</div>
                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{user.email}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Phone</div>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.phone_number')}</div>
                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{user.phone}</div>
                   </div>
                   {user.profile.property && (
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Preferred Property</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.preferred_property')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#162F1B' }}>{user.profile.property}</div>
                     </div>
                   )}
                   {user.profile.unitNumber && (
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Preferred Unit</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.preferred_unit')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{user.profile.unitNumber}</div>
                     </div>
                   )}
                   {user.profile.occupation && (
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Occupation</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.occupation')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{user.profile.occupation}</div>
                     </div>
                   )}
                   {user.profile.monthlyIncome && (
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Monthly Income</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.monthly_income')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>R {parseInt(user.profile.monthlyIncome).toLocaleString()}</div>
                     </div>
                   )}
                   {user.profile.moveInDate && (
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Preferred Move-in Date</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.preferred_move_in_date')}</div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{formatDate(user.profile.moveInDate)}</div>
                     </div>
                   )}
                   {user.profile.emergencyContact && (
                     <div>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Emergency Contact</div>
-                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{user.profile.emergencyContact}</div>
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.emergency_contact')}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>{formatEmergencyContact(user.profile.emergencyContact)}</div>
                     </div>
                   )}
                 </div>
@@ -274,7 +286,7 @@ function AdminPendingUsersPage() {
                       transition: 'all 0.3s ease'
                     }}
                   >
-                    {processing === user.id ? 'Processing...' : '✓ Approve'}
+                    {processing === user.id ? t('admin.processing') : t('admin.approve')}
                   </button>
                   <button
                     type="button"
@@ -291,7 +303,7 @@ function AdminPendingUsersPage() {
                       transition: 'all 0.3s ease'
                     }}
                   >
-                    {processing === user.id ? 'Processing...' : '✗ Decline'}
+                    {processing === user.id ? t('admin.processing') : t('admin.decline')}
                   </button>
                 </div>
               </div>

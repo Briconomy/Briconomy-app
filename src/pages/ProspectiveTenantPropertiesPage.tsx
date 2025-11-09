@@ -1,7 +1,7 @@
 import { useState, useEffect, SyntheticEvent } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
-import { propertiesApi, formatCurrency } from '../services/api.ts';
+import { propertiesApi, unitsApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -28,6 +28,11 @@ type PriceRange = {
   max: string;
 };
 
+type PropertyUnit = {
+  status?: string;
+  [key: string]: unknown;
+};
+
 function ProspectiveTenantPropertiesPage() {
   const [properties, setProperties] = useState<ProspectiveProperty[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +50,7 @@ function ProspectiveTenantPropertiesPage() {
   const { user } = useAuth();
 
   const navItems = [
-    { path: '/', label: t('nav.home'), icon: 'logo', active: false },
+    { path: '/', label: t('nav.home'), icon: 'properties', active: false },
     { path: '/browse-properties', label: t('nav.properties'), icon: 'properties', active: true },
     { path: '/login', label: t('auth.login'), icon: 'profile', active: false }
   ];
@@ -79,7 +84,7 @@ function ProspectiveTenantPropertiesPage() {
         return;
       }
 
-      const normalized: ProspectiveProperty[] = data.map((item) => {
+      const normalized: ProspectiveProperty[] = await Promise.all(data.map(async (item) => {
         if (!item || typeof item !== 'object') {
           return {
             id: crypto.randomUUID(),
@@ -102,27 +107,40 @@ function ProspectiveTenantPropertiesPage() {
           ? record.amenities.filter((value): value is string => typeof value === 'string')
           : [];
 
+        let occupiedUnits = 0;
+        try {
+          const units = await unitsApi.getAll(id);
+          if (Array.isArray(units)) {
+            const processedUnits = units.filter((unit): unit is PropertyUnit => typeof unit === 'object' && unit !== null);
+            occupiedUnits = processedUnits.filter(unit => unit.status === 'occupied').length;
+          } else {
+            occupiedUnits = 0;
+          }
+        } catch {
+          occupiedUnits = typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0;
+        }
+
         return {
           id,
           name: typeof record.name === 'string' ? record.name : 'Property',
           address: typeof record.address === 'string' ? record.address : '',
           type: typeof record.type === 'string' ? record.type : 'apartment',
           totalUnits: typeof record.totalUnits === 'number' ? record.totalUnits : 0,
-          occupiedUnits: typeof record.occupiedUnits === 'number' ? record.occupiedUnits : 0,
+          occupiedUnits: occupiedUnits,
           rent: typeof record.rent === 'number' ? record.rent : undefined,
           description: typeof record.description === 'string' ? record.description : undefined,
           yearBuilt: typeof record.yearBuilt === 'number' || typeof record.yearBuilt === 'string' ? record.yearBuilt : undefined,
           lastRenovation: typeof record.lastRenovation === 'number' || typeof record.lastRenovation === 'string' ? record.lastRenovation : undefined,
           amenities,
         } satisfies ProspectiveProperty;
-      });
+      }));
 
       setProperties(normalized);
       setFilteredProperties(normalized);
     } catch (err) {
       console.error('Error fetching properties:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch properties';
-      
+
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
         setError('Unable to connect to the server. Please check your internet connection.');
       } else if (errorMessage.includes('404')) {
@@ -132,7 +150,7 @@ function ProspectiveTenantPropertiesPage() {
       } else {
         setError(`Error loading properties: ${errorMessage}`);
       }
-      
+
       setProperties([]);
       setFilteredProperties([]);
     } finally {

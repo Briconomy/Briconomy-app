@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
 import Icon from '../components/Icon.tsx';
 
 function LandingPage() {
   const { isAuthenticated, user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
@@ -40,58 +42,55 @@ function LandingPage() {
         </div>
 
         <h1 className="landing-title">
-          Briconomy
+          {t('landing.title')}
         </h1>
 
         <p className="landing-subtitle">
-          Professional Property Management System
+          {t('landing.subtitle')}
         </p>
 
         <div className="landing-sections">
           <div className="landing-card">
-            <h3 className="landing-card-title">Features</h3>
+            <h3 className="landing-card-title">{t('landing.features')}</h3>
             <ul className="landing-features-list">
-              <li>Real-time Analytics</li>
-              <li>Property Management</li>
-              <li>Payment Tracking</li>
-              <li>Maintenance Tasks</li>
-              <li>Mobile Optimized</li>
+              <li>{t('landing.feature_analytics')}</li>
+              <li>{t('landing.feature_properties')}</li>
+              <li>{t('landing.feature_payments')}</li>
+              <li>{t('landing.feature_maintenance')}</li>
+              <li>{t('landing.feature_mobile')}</li>
             </ul>
           </div>
 
           <a href="/login" className="btn btn-primary landing-btn">
-            Sign In
+            {t('landing.sign_in')}
           </a>
         </div>
 
         <div className="landing-card">
           <h3 className="landing-card-title">
-            For Prospective Tenants
+            {t('landing.tenant_section')}
           </h3>
           <p className="landing-card-text">
-            Browse available properties, view detailed information, and apply
-            for your next home - all without creating an account until you're
-            ready to apply!
+            {t('landing.tenant_description')}
           </p>
           <p className="landing-card-note">
-            No Login Required
+            {t('landing.no_login_required')}
           </p>
 
           <a href="/browse-properties" className="btn btn-secondary landing-browse-btn">
-            Browse Properties
+            {t('landing.browse_properties')}
           </a>
         </div>
 
-        <div className="landing-card" style={{ marginTop: '32px', borderTop: '2px solid #3498db', paddingTop: '24px' }}>
-          <h3 className="landing-card-title" style={{ color: '#3498db' }}>
-            Want to Join Briconomy?
+        <div className="landing-card" style={{ marginTop: '32px', borderTop: '2px solid #FF894D', paddingTop: '24px' }}>
+          <h3 className="landing-card-title" style={{ color: '#FF894D' }}>
+            {t('landing.join_section')}
           </h3>
           <p className="landing-card-text">
-            Are you a property owner or manager looking to streamline your property management? 
-            Become a manager on Briconomy and take advantage of our powerful property management platform.
+            {t('landing.join_description')}
           </p>
           <p className="landing-card-text" style={{ marginTop: '12px', fontSize: '16px', fontWeight: '500' }}>
-            Contact us at: <a href="mailto:info@briconomy.com" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '600' }}>info@briconomy.com</a>
+            {t('landing.contact_text')} <a href="mailto:info@briconomy.com" style={{ color: '#FF894D', textDecoration: 'none', fontWeight: '600' }}>{t('landing.contact_email')}</a>
           </p>
         </div>
       </div>

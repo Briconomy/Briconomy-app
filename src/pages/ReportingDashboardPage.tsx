@@ -80,10 +80,10 @@ function ReportingDashboardPage() {
   const [selectedReportType, setSelectedReportType] = useState('');
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/properties', label: 'Properties' },
-    { path: '/manager/reports', label: 'Reports', active: true },
-    { path: '/manager/analytics', label: 'Analytics' }
+    { path: '/manager', label: 'Dashboard', icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: 'Properties', icon: 'properties' },
+    { path: '/manager/leases', label: 'Leases', icon: 'lease' },
+    { path: '/manager/payments', label: 'Payments', icon: 'payment' }
   ];
 
   const totalRevenue = reports

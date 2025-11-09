@@ -13,10 +13,10 @@ function CaretakerMaintenancePage() {
   const [filterPriority, setFilterPriority] = useState('all');
   
   const navItems = [
-    { path: '/caretaker', label: 'Dashboard', active: false },
-    { path: '/caretaker/tasks', label: 'Tasks', active: false },
-    { path: '/caretaker/maintenance', label: 'Maintenance', active: true },
-    { path: '/caretaker/reports', label: 'Reports', active: false }
+    { path: '/caretaker', label: 'Dashboard', icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: 'Schedule', icon: 'activityLog', active: false },
+    { path: '/caretaker/history', label: 'History', icon: 'report', active: false },
+    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
   const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(

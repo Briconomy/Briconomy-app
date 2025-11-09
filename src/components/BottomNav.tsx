@@ -28,7 +28,7 @@ function BottomNav({ items, responsive = false }: BottomNavProps) {
           >
             <div className="nav-icon">
               {item.icon ? (
-                <Icon name={item.icon} alt={item.label} size={24} />
+                <Icon name={item.icon} alt={item.label} size={24} noBackground />
               ) : null}
             </div>
             <div className="nav-label">{item.label}</div>

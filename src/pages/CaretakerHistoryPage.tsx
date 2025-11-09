@@ -4,18 +4,22 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 import { maintenanceApi, useApi } from '../services/api.ts';
 
 function CaretakerHistoryPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const { showToast } = useToast();
   const [filterPeriod, setFilterPeriod] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
   const navItems = [
-    { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
-    { path: '/caretaker/schedule', label: 'Schedule', icon: 'report', active: false },
-    { path: '/caretaker/history', label: 'History', icon: 'activityLog', active: true },
-    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
+    { path: '/caretaker', label: t('nav.tasks'), icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: t('nav.schedule'), icon: 'report', active: false },
+    { path: '/caretaker/history', label: t('nav.history'), icon: 'activityLog', active: true },
+    { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile', active: false }
   ];
 
   const { data: maintenance, loading: maintenanceLoading, error: maintenanceError, refetch: refetchMaintenance } = useApi(
@@ -51,12 +55,12 @@ function CaretakerHistoryPage() {
       console.log(`[CaretakerHistoryPage] Updated request ${requestId} status to ${newStatus}`);
     } catch (error) {
       console.error('[CaretakerHistoryPage] Error updating status:', error);
-      alert('Failed to update status. Please try again.');
+      showToast(t('caretakerHistory.updateFailed'), 'error');
     }
   };
 
   const handleDeleteRequest = async (requestId: string) => {
-    if (!confirm('Are you sure you want to delete this maintenance request?')) {
+    if (!confirm(t('caretakerHistory.deleteConfirm'))) {
       return;
     }
     
@@ -66,7 +70,7 @@ function CaretakerHistoryPage() {
       console.log(`[CaretakerHistoryPage] Deleted request ${requestId}`);
     } catch (error) {
       console.error('[CaretakerHistoryPage] Error deleting request:', error);
-      alert('Failed to delete request. Please try again.');
+      showToast(t('caretakerHistory.deleteFailed'), 'error');
     }
   };
 
@@ -160,7 +164,7 @@ function CaretakerHistoryPage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading your history...</p>
+            <p>{t('caretakerHistory.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -174,49 +178,49 @@ function CaretakerHistoryPage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Work History</div>
-          <div className="page-subtitle">Completed tasks and maintenance records</div>
+          <div className="page-title">{t('caretakerHistory.title')}</div>
+          <div className="page-subtitle">{t('caretakerHistory.subtitle')}</div>
         </div>
         
         {hasMaintenanceError && (
           <div className="alert alert-error">
-            <p>We could not refresh maintenance data. Showing the latest cached records.</p>
+            <p>{t('caretakerHistory.errorMessage')}</p>
           </div>
         )}
 
         <div className="dashboard-grid">
-          <StatCard value={totalCompleted} label="Completed" />
-          <StatCard value={relevantMaintenance.length} label="Total" />
-          <StatCard value={relevantMaintenance.filter(r => r.status === 'pending').length} label="Pending" />
-          <StatCard value={relevantMaintenance.filter(r => r.status === 'in_progress').length} label="In Progress" />
+          <StatCard value={totalCompleted} label={t('caretakerHistory.completed')} />
+          <StatCard value={relevantMaintenance.length} label={t('caretakerHistory.total')} />
+          <StatCard value={relevantMaintenance.filter(r => r.status === 'pending').length} label={t('caretakerHistory.pending')} />
+          <StatCard value={relevantMaintenance.filter(r => r.status === 'in_progress').length} label={t('caretakerHistory.inProgress')} />
         </div>
 
         {/* Filters */}
         <div className="filter-section">
           <div className="filter-group">
-            <label className="filter-label">Period:</label>
+            <label className="filter-label">{t('caretakerHistory.period')}:</label>
             <select 
               className="filter-select"
               value={filterPeriod}
               onChange={(e) => setFilterPeriod(e.target.value)}
             >
-              <option value="all">All Time</option>
-              <option value="week">Last Week</option>
-              <option value="month">Last Month</option>
-              <option value="year">Last Year</option>
+              <option value="all">{t('caretakerHistory.allTime')}</option>
+              <option value="week">{t('caretakerHistory.lastWeek')}</option>
+              <option value="month">{t('caretakerHistory.lastMonth')}</option>
+              <option value="year">{t('caretakerHistory.lastYear')}</option>
             </select>
           </div>
           <div className="filter-group">
-            <label className="filter-label">Status:</label>
+            <label className="filter-label">{t('caretakerHistory.status')}:</label>
             <select 
               className="filter-select"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
-              <option value="all">All</option>
-              <option value="completed">Completed</option>
-              <option value="in_progress">In Progress</option>
-              <option value="pending">Pending</option>
+              <option value="all">{t('caretakerHistory.all')}</option>
+              <option value="completed">{t('caretakerHistory.completedFilter')}</option>
+              <option value="in_progress">{t('caretakerHistory.inProgressFilter')}</option>
+              <option value="pending">{t('caretakerHistory.pendingFilter')}</option>
             </select>
           </div>
         </div>
@@ -224,15 +228,15 @@ function CaretakerHistoryPage() {
         {/* All Maintenance Requests */}
         <div className="data-table">
           <div className="table-header">
-            <div className="table-title">Maintenance Requests</div>
+            <div className="table-title">{t('caretakerHistory.maintenanceRequests')}</div>
             <div className="text-sm text-gray-500">
-              {filteredData.length} requests
+              {filteredData.length} {t('caretakerHistory.requests')}
             </div>
           </div>
           
           {filteredData.length === 0 ? (
             <div className="no-results">
-              <p>No maintenance records found</p>
+              <p>{t('caretakerHistory.noRecords')}</p>
             </div>
           ) : (
             filteredData
@@ -259,8 +263,8 @@ function CaretakerHistoryPage() {
                     <div className="flex justify-between items-start">
                       <h4>{request.title}</h4>
                       <span className={`status-badge ${getStatusColor(request.status)}`}>
-                        {request.status === 'completed' ? 'Completed' : 
-                         request.status === 'in_progress' ? 'In Progress' : 'Pending'}
+                        {request.status === 'completed' ? t('caretakerHistory.completedStatus') : 
+                         request.status === 'in_progress' ? t('caretakerHistory.inProgressStatus') : t('caretakerHistory.pendingStatus')}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{request.description}</p>
@@ -273,8 +277,8 @@ function CaretakerHistoryPage() {
                       </span>
                       <span className="text-xs text-gray-500">
                         {request.completedDate ? 
-                          `Completed: ${formatDate(request.completedDate)}` : 
-                          `Created: ${formatDate(request.createdAt)}`}
+                          `${t('caretakerHistory.completedOn')}: ${formatDate(request.completedDate)}` : 
+                          `${t('caretakerHistory.createdOn')}: ${formatDate(request.createdAt)}`}
                       </span>
                       {request.actualCost && (
                         <span className="text-xs text-green-600 font-semibold">
@@ -284,13 +288,13 @@ function CaretakerHistoryPage() {
                     </div>
                     {request.notes && (
                       <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                        <strong>Notes:</strong> {request.notes}
+                        <strong>{t('caretakerHistory.notes')}:</strong> {request.notes}
                       </div>
                     )}
                     {request.images && request.images.length > 0 && (
                       <div className="mt-2">
                         <span className="text-xs text-blue-600">
-                          {request.images.length} image(s) attached
+                          {request.images.length} {t('caretakerHistory.imagesAttached')}
                         </span>
                       </div>
                     )}
@@ -300,7 +304,8 @@ function CaretakerHistoryPage() {
                       marginTop: '12px', 
                       display: 'grid', 
                       gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
-                      gap: '8px' 
+                      gap: '8px',
+                      marginBottom: '-10px' 
                     }}>
                       {request.status === 'pending' && (
                         <button
@@ -309,7 +314,7 @@ function CaretakerHistoryPage() {
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(request.id, 'in_progress')}
                         >
-                          Start Work
+                          {t('caretakerHistory.startWork')}
                         </button>
                       )}
                       {request.status === 'in_progress' && (
@@ -319,26 +324,26 @@ function CaretakerHistoryPage() {
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(request.id, 'completed')}
                         >
-                          Complete
+                          {t('caretakerHistory.complete')}
                         </button>
                       )}
                       {request.status === 'completed' && (
                         <button
                           type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-secondary reopen-btn"
                           style={{ fontSize: '13px', padding: '6px 12px' }}
                           onClick={() => handleStatusChange(request.id, 'pending')}
                         >
-                          Re-open
+                          {t('caretakerHistory.reopen')}
                         </button>
                       )}
                       <button
                         type="button"
-                        className="btn btn-danger"
+                        className="btn btn-danger delete-btn"
                         style={{ fontSize: '13px', padding: '6px 12px' }}
                         onClick={() => handleDeleteRequest(request.id)}
                       >
-                        Delete
+                        {t('caretakerHistory.delete')}
                       </button>
                     </div>
                   </div>
@@ -348,26 +353,26 @@ function CaretakerHistoryPage() {
         </div>
 
         {/* Performance Summary */}
-        <ChartCard title="Summary">
+        <ChartCard title={t('caretakerHistory.summary')}>
           <div className="performance-stats">
             <div className="stat-row">
-              <div className="stat-label">Total Requests:</div>
+              <div className="stat-label">{t('caretakerHistory.totalRequests')}:</div>
               <div className="stat-value">{relevantMaintenance.length}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Completed:</div>
+              <div className="stat-label">{t('caretakerHistory.completedCount')}:</div>
               <div className="stat-value">{completedMaintenance}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">In Progress:</div>
+              <div className="stat-label">{t('caretakerHistory.inProgressCount')}:</div>
               <div className="stat-value">{relevantMaintenance.filter(r => r.status === 'in_progress').length}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Pending:</div>
+              <div className="stat-label">{t('caretakerHistory.pendingCount')}:</div>
               <div className="stat-value">{relevantMaintenance.filter(r => r.status === 'pending').length}</div>
             </div>
             <div className="stat-row">
-              <div className="stat-label">Completion Rate:</div>
+              <div className="stat-label">{t('caretakerHistory.completionRate')}:</div>
               <div className="stat-value">
                 {relevantMaintenance.length > 0 ? Math.round((completedMaintenance / relevantMaintenance.length) * 100) : 0}%
               </div>

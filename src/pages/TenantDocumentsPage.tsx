@@ -12,7 +12,7 @@ function TenantDocumentsPage() {
     { path: '/tenant', label: t('nav.home'), icon: 'properties', active: false },
     { path: '/tenant/payments', label: t('nav.payments'), icon: 'payment' },
     { path: '/tenant/requests', label: t('nav.requests'), icon: 'maintenance' },
-    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile' }
+    { path: '/tenant/profile', label: t('nav.profile'), icon: 'profile', active: true }
   ];
 
   return (
@@ -22,10 +22,12 @@ function TenantDocumentsPage() {
       <div className="main-content">
         <div className="page-header">
           <div className="page-title">{t('profile.documents')}</div>
-          <div className="page-subtitle">View and manage your documents</div>
+          <div className="page-subtitle">{t('profile.viewDocuments') || 'View and manage your documents'}</div>
         </div>
-        
-        <DocumentViewer />
+
+        <div className="page-section">
+          <DocumentViewer />
+        </div>
       </div>
       
       <BottomNav items={navItems} responsive={false} />

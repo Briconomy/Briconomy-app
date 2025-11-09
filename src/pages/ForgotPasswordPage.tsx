@@ -16,13 +16,13 @@ function ForgotPasswordPage() {
     setSubmitting(true);
 
     if (!email) {
-      setError('Please enter your email address');
+      setError(t('forgotpassword.email_required'));
       setSubmitting(false);
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address');
+      setError(t('forgotpassword.email_invalid'));
       setSubmitting(false);
       return;
     }
@@ -42,10 +42,10 @@ function ForgotPasswordPage() {
         console.log('Password reset requested for:', email);
         setSuccess(true);
       } else {
-        setError(data.message || 'Failed to send reset link. Please try again.');
+        setError(data.message || t('forgotpassword.send_failed'));
       }
     } catch (_err) {
-      setError('Failed to send reset link. Please try again.');
+      setError(t('forgotpassword.send_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +146,7 @@ function ForgotPasswordPage() {
               marginBottom: '24px',
               lineHeight: '1.5'
             }}>
-              Enter your email address and we'll send you a link to reset your password.
+              {t('forgotpassword.instructions')}
             </p>
 
             {error && (
@@ -177,12 +177,12 @@ function ForgotPasswordPage() {
                 >
                   {t('common.email_address') || 'Email Address'}
                 </label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder={t('forgotpassword.email_placeholder')}
                   style={{
                     width: '100%',
                     padding: '12px 14px',
@@ -197,7 +197,7 @@ function ForgotPasswordPage() {
                 />
               </div>
 
-              <button 
+              <button
                 type="submit"
                 disabled={submitting}
                 className="btn btn-primary"
@@ -212,7 +212,7 @@ function ForgotPasswordPage() {
                   transition: 'all 0.3s ease'
                 }}
               >
-                {submitting ? 'Sending...' : 'Send Reset Link'}
+                {submitting ? t('forgotpassword.sending') : t('forgotpassword.send_link')}
               </button>
 
               <div style={{
@@ -228,7 +228,7 @@ function ForgotPasswordPage() {
                     fontWeight: '500'
                   }}
                 >
-                  ← Back to Login
+                  {t('forgotpassword.back_to_login')}
                 </a>
               </div>
             </form>
@@ -255,12 +255,12 @@ function ForgotPasswordPage() {
               ✓
             </div>
             
-            <h2 style={{ 
-              marginBottom: '12px', 
-              color: '#2c3e50', 
-              fontSize: '20px' 
+            <h2 style={{
+              marginBottom: '12px',
+              color: '#2c3e50',
+              fontSize: '20px'
             }}>
-              Check Your Email
+              {t('forgotpassword.check_email')}
             </h2>
             
             <p style={{
@@ -269,8 +269,7 @@ function ForgotPasswordPage() {
               marginBottom: '24px',
               lineHeight: '1.5'
             }}>
-              We've sent a password reset link to <strong>{email}</strong>. 
-              Please check your inbox and follow the instructions.
+              {t('forgotpassword.email_sent').replace('[email]', email)}
             </p>
 
             <p style={{
@@ -278,27 +277,11 @@ function ForgotPasswordPage() {
               fontSize: '13px',
               marginBottom: '24px'
             }}>
-              Didn't receive the email? Check your spam folder or{' '}
-              <button
-                type="button"
-                onClick={() => setSuccess(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#162F1B',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: '13px',
-                  fontWeight: '500'
-                }}
-              >
-                try again
-              </button>
+              {t('forgotpassword.no_email')}
             </p>
 
             <button
-              type="button" 
+              type="button"
               onClick={() => navigate('/login')}
               className="btn btn-primary"
               style={{
@@ -309,7 +292,7 @@ function ForgotPasswordPage() {
                 fontWeight: '600'
               }}
             >
-              Return to Login
+              {t('forgotpassword.return_login')}
             </button>
           </div>
         )}

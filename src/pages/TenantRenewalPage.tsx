@@ -22,10 +22,10 @@ function TenantRenewalPage() {
   );
 
   const navItems = [
-    { path: '/tenant', label: 'Home' },
-    { path: '/tenant/payments', label: 'Payments' },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/profile', label: 'Profile', active: true }
+    { path: '/tenant', label: 'Home', icon: 'properties' },
+    { path: '/tenant/payments', label: 'Payments', icon: 'payment' },
+    { path: '/tenant/requests', label: 'Requests', icon: 'maintenance' },
+    { path: '/tenant/profile', label: 'Profile', icon: 'profile', active: true }
   ];
 
   const handleAcceptClick = (renewal: Record<string, unknown>) => {

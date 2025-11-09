@@ -69,7 +69,17 @@ function normalizeFilters(filters: Record<string, unknown> = {}) {
 function mapDoc<T extends { _id?: ObjectId }>(doc: T | null): (Omit<T, "_id"> & { id: string }) | null {
   if (!doc) return null;
   const { _id, ...rest } = doc as T & { _id?: ObjectId };
-  return { id: String(_id ?? ""), ...(rest as Omit<T, "_id">) };
+
+  const serialized = Object.entries(rest).reduce<Record<string, unknown>>((acc, [key, value]) => {
+    if (value instanceof ObjectId) {
+      acc[key] = value.toString();
+    } else {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+
+  return { id: String(_id ?? ""), ...(serialized as Omit<T, "_id">) };
 }
 
 function mapDocs<T extends { _id?: ObjectId }>(docs: T[]): Array<Omit<T, "_id"> & { id: string }> {
@@ -119,6 +129,48 @@ function valueToString(value: unknown): string | null {
     return value;
   }
   return null;
+}
+
+interface TenantPropertySummary {
+  id: string;
+  name?: string;
+  address?: string;
+  managerId?: string | null;
+  type?: string | null;
+}
+
+interface TenantUnitSummary {
+  id: string;
+  unitNumber?: string;
+  floor?: string | number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  status?: string | null;
+}
+
+interface TenantManagerSummary {
+  id: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface TenantLeaseSummary {
+  id: string;
+  status?: string | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  monthlyRent?: number | null;
+  deposit?: number | null;
+}
+
+interface TenantContextPayload {
+  tenantId: string;
+  property: TenantPropertySummary | null;
+  unit: TenantUnitSummary | null;
+  manager: TenantManagerSummary | null;
+  lease: TenantLeaseSummary | null;
+  fetchedAt: string;
 }
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
@@ -378,6 +430,34 @@ function serializeInvoice(doc: RawInvoiceDoc | null) {
   return result;
 }
 
+async function enrichInvoiceWithRelations(invoice: Record<string, unknown>) {
+  try {
+    const users = getCollection("users");
+    const properties = getCollection("properties");
+
+    if (invoice.tenantId) {
+      const tenant = await users.findOne({ _id: toId(invoice.tenantId) });
+      if (tenant) {
+        invoice.tenant = { fullName: (tenant as Record<string, unknown>).fullName || "" };
+      }
+    }
+
+    if (invoice.propertyId) {
+      const property = await properties.findOne({ _id: toId(invoice.propertyId) });
+      if (property) {
+        invoice.property = {
+          name: (property as Record<string, unknown>).name || "",
+          address: (property as Record<string, unknown>).address || ""
+        };
+      }
+    }
+  } catch (_error) {
+    // Silently fail enrichment, return invoice as-is
+  }
+
+  return invoice;
+}
+
 function toInsertedIdString(result: unknown): string {
   const inserted = (result as { insertedId?: ObjectId }).insertedId ?? result;
   return inserted instanceof ObjectId ? inserted.toString() : String(inserted);
@@ -449,11 +529,44 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
       return { success: false, message: "Invalid password" };
     }
     
-    const { password: _pw, ...rest } = user as Record<string, unknown> & { _id?: ObjectId };
-    const mappedUser = { id: String(rest._id ?? ""), ...Object.fromEntries(Object.entries(rest).filter(([k]) => k !== "_id")) };
+    const { password: _pw, ...userWithoutPassword } = user as Record<string, unknown> & { _id?: ObjectId };
+    const mappedUserDoc = mapDoc(userWithoutPassword as { _id?: ObjectId });
+    if (!mappedUserDoc) {
+      throw new Error("Unable to map user document");
+    }
 
-    const userType = (mappedUser as Record<string, unknown>).userType;
-    const managerApprovalStatus = (mappedUser as Record<string, unknown>).managerApprovalStatus;
+    const mappedUser = mappedUserDoc as Record<string, unknown> & {
+      id: string;
+      userType?: string;
+      managerApprovalStatus?: string;
+      tenantContext?: TenantContextPayload | null;
+      propertyId?: unknown;
+      assignedPropertyId?: unknown;
+      appliedPropertyId?: unknown;
+      unitId?: unknown;
+      managerId?: unknown;
+    };
+
+    if (mappedUser.userType === 'tenant') {
+      const tenantContext = await buildTenantContext(mappedUser.id, user as Record<string, unknown>);
+      mappedUser.tenantContext = tenantContext;
+      const resolvedManagerId = tenantContext.manager?.id ?? tenantContext.property?.managerId ?? null;
+      if (resolvedManagerId) {
+        mappedUser.managerId = resolvedManagerId;
+      }
+      if (!mappedUser.propertyId && tenantContext.property?.id) {
+        mappedUser.propertyId = tenantContext.property.id;
+      }
+      if (tenantContext.property?.id) {
+        mappedUser.assignedPropertyId = tenantContext.property.id;
+      }
+      if (tenantContext.unit?.id) {
+        mappedUser.unitId = tenantContext.unit.id;
+      }
+    }
+
+    const userType = mappedUser.userType;
+    const managerApprovalStatus = mappedUser.managerApprovalStatus;
     
     if (userType === 'tenant' && managerApprovalStatus === 'rejected') {
       await createAuditLog({
@@ -503,6 +616,216 @@ export async function loginUser(email: string, password: string, clientInfo?: Re
   }
 }
 
+async function buildTenantContext(tenantId: string, tenantDoc?: Record<string, unknown> | null): Promise<TenantContextPayload> {
+  const usersCollection = getCollection("users");
+  const propertiesCollection = getCollection("properties");
+  const unitsCollection = getCollection("units");
+  const leasesCollection = getCollection("leases");
+
+  let tenantRecord = tenantDoc;
+  if (!tenantRecord) {
+    const lookupId = toObjectId(tenantId);
+    tenantRecord = await usersCollection.findOne(lookupId ? { _id: lookupId } : { _id: tenantId });
+    if (!tenantRecord) {
+      tenantRecord = await usersCollection.findOne({ id: tenantId });
+    }
+  }
+
+  const propertyCandidates = new Set<string>();
+  const unitCandidates = new Set<string>();
+
+  if (tenantRecord) {
+    const data = tenantRecord as Record<string, unknown>;
+    const profileValue = typeof data["profile"] === 'object' && data["profile"] !== null ? data["profile"] as Record<string, unknown> : null;
+    const propertyRefs = [
+      data["assignedPropertyId"],
+      data["propertyId"],
+      data["appliedPropertyId"],
+      profileValue ? profileValue["propertyId"] : null,
+      profileValue ? profileValue["assignedPropertyId"] : null
+    ];
+    for (const ref of propertyRefs) {
+      const str = valueToString(ref ?? undefined);
+      if (str) {
+        propertyCandidates.add(str);
+      }
+    }
+
+    const unitRefs = [
+      data["unitId"],
+      data["appliedUnitId"],
+      profileValue ? profileValue["unitId"] : null
+    ];
+    for (const ref of unitRefs) {
+      const str = valueToString(ref ?? undefined);
+      if (str) {
+        unitCandidates.add(str);
+      }
+    }
+  }
+
+  const leaseStatuses = ['active', 'pending', 'draft'];
+  const leaseQuery: Record<string, unknown> = { status: { $in: leaseStatuses } };
+  const tenantFilters: Record<string, unknown>[] = [];
+  const tenantObjectId = toObjectId(tenantId);
+  if (tenantObjectId) {
+    tenantFilters.push({ tenantId: tenantObjectId });
+  }
+  tenantFilters.push({ tenantId });
+  if (tenantFilters.length > 1) {
+    leaseQuery.$or = tenantFilters;
+  } else if (tenantFilters.length === 1) {
+    Object.assign(leaseQuery, tenantFilters[0]);
+  }
+
+  let primaryLease: Record<string, unknown> | null = null;
+  try {
+    const leaseCursor = leasesCollection.find(leaseQuery).sort({ createdAt: -1 }).limit(1);
+    const leasesFound = await leaseCursor.toArray();
+    primaryLease = leasesFound[0] ?? null;
+  } catch (_error) {
+    primaryLease = null;
+  }
+
+  if (primaryLease) {
+    const leasePropertyId = valueToString((primaryLease as Record<string, unknown>)["propertyId"]);
+    if (leasePropertyId) {
+      propertyCandidates.add(leasePropertyId);
+    }
+    const leaseUnitId = valueToString((primaryLease as Record<string, unknown>)["unitId"]);
+    if (leaseUnitId) {
+      unitCandidates.add(leaseUnitId);
+    }
+  }
+
+  let propertyDoc: Record<string, unknown> | null = null;
+  for (const candidate of propertyCandidates) {
+    const found = await propertiesCollection.findOne({ _id: toId(candidate) });
+    if (found) {
+      propertyDoc = found as Record<string, unknown>;
+      break;
+    }
+  }
+
+  let unitDoc: Record<string, unknown> | null = null;
+  for (const candidate of unitCandidates) {
+    const found = await unitsCollection.findOne({ _id: toId(candidate) });
+    if (found) {
+      unitDoc = found as Record<string, unknown>;
+      break;
+    }
+  }
+
+  if (!propertyDoc && unitDoc) {
+    const unitPropertyId = valueToString(unitDoc["propertyId"]);
+    if (unitPropertyId && !propertyCandidates.has(unitPropertyId)) {
+      const relatedProperty = await propertiesCollection.findOne({ _id: toId(unitPropertyId) });
+      if (relatedProperty) {
+        propertyDoc = relatedProperty as Record<string, unknown>;
+        propertyCandidates.add(unitPropertyId);
+      }
+    }
+  }
+
+  const managerRaw = propertyDoc ? propertyDoc["managerId"] : null;
+  const managerIdStr = valueToString(managerRaw ?? undefined);
+  let managerDoc: Record<string, unknown> | null = null;
+  if (managerIdStr) {
+    const managerLookup = toId(managerIdStr);
+    managerDoc = await usersCollection.findOne(managerLookup ? { _id: managerLookup } : { _id: managerIdStr }) as Record<string, unknown> | null;
+  }
+
+  const propertySummary: TenantPropertySummary | null = propertyDoc
+    ? {
+        id: valueToString((propertyDoc as { _id?: ObjectId })._id) || Array.from(propertyCandidates)[0] || tenantId,
+        name: typeof propertyDoc["name"] === 'string' ? propertyDoc["name"] as string : undefined,
+        address: typeof propertyDoc["address"] === 'string' ? propertyDoc["address"] as string : undefined,
+        managerId: managerIdStr ?? null,
+        type: typeof propertyDoc["type"] === 'string' ? propertyDoc["type"] as string : null
+      }
+    : propertyCandidates.size > 0
+      ? {
+          id: Array.from(propertyCandidates)[0],
+          managerId: managerIdStr ?? null,
+          name: undefined,
+          address: undefined,
+          type: null
+        }
+      : null;
+
+  const unitSummary: TenantUnitSummary | null = unitDoc
+    ? {
+        id: valueToString((unitDoc as { _id?: ObjectId })._id) || (propertySummary ? propertySummary.id : tenantId),
+        unitNumber: typeof unitDoc["unitNumber"] === 'string' ? unitDoc["unitNumber"] as string : undefined,
+        floor: typeof unitDoc["floor"] === 'number' || typeof unitDoc["floor"] === 'string' ? unitDoc["floor"] as string | number : null,
+        bedrooms: typeof unitDoc["bedrooms"] === 'number' ? unitDoc["bedrooms"] as number : null,
+        bathrooms: typeof unitDoc["bathrooms"] === 'number' ? unitDoc["bathrooms"] as number : null,
+        status: typeof unitDoc["status"] === 'string' ? unitDoc["status"] as string : null
+      }
+    : unitCandidates.size > 0
+      ? {
+          id: Array.from(unitCandidates)[0],
+          unitNumber: undefined,
+          floor: null,
+          bedrooms: null,
+          bathrooms: null,
+          status: null
+        }
+      : null;
+
+  const managerSummary: TenantManagerSummary | null = managerDoc
+    ? {
+        id: valueToString((managerDoc as { _id?: ObjectId })._id) || managerIdStr || tenantId,
+        fullName: typeof managerDoc["fullName"] === 'string' ? managerDoc["fullName"] as string : undefined,
+        email: typeof managerDoc["email"] === 'string' ? managerDoc["email"] as string : undefined,
+        phone: typeof managerDoc["phone"] === 'string' ? managerDoc["phone"] as string : undefined
+      }
+    : managerIdStr
+      ? {
+          id: managerIdStr,
+          fullName: undefined,
+          email: undefined,
+          phone: undefined
+        }
+      : null;
+
+  let leaseSummary: TenantLeaseSummary | null = null;
+  if (primaryLease) {
+    const leaseIdValue = valueToString((primaryLease as { _id?: ObjectId })._id) || tenantId;
+    const rentRaw = (primaryLease as Record<string, unknown>)["monthlyRent"];
+    const depositRaw = (primaryLease as Record<string, unknown>)["deposit"];
+    const rentValue = typeof rentRaw === 'number' ? rentRaw : typeof rentRaw === 'string' ? Number(rentRaw) : null;
+    const depositValue = typeof depositRaw === 'number' ? depositRaw : typeof depositRaw === 'string' ? Number(depositRaw) : null;
+    leaseSummary = {
+      id: leaseIdValue,
+      status: typeof primaryLease["status"] === 'string' ? primaryLease["status"] as string : null,
+      startDate: primaryLease["startDate"] instanceof Date || typeof primaryLease["startDate"] === 'string' ? primaryLease["startDate"] as string | Date : null,
+      endDate: primaryLease["endDate"] instanceof Date || typeof primaryLease["endDate"] === 'string' ? primaryLease["endDate"] as string | Date : null,
+      monthlyRent: rentValue,
+      deposit: depositValue
+    };
+  }
+
+  return {
+    tenantId,
+    property: propertySummary,
+    unit: unitSummary,
+    manager: managerSummary,
+    lease: leaseSummary,
+    fetchedAt: new Date().toISOString()
+  };
+}
+
+export async function getTenantContext(tenantId: string) {
+  try {
+    await connectToMongoDB();
+    return await buildTenantContext(tenantId);
+  } catch (error) {
+    console.error("Error fetching tenant context:", error);
+    throw error;
+  }
+}
+
 export async function registerUser(userData: Record<string, unknown>) {
   try {
     await connectToMongoDB();
@@ -544,40 +867,70 @@ export async function registerPendingTenant(userData: Record<string, unknown>) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
-    
+    const units = getCollection("units");
+
     const existingUser = await users.findOne({ email: userData.email });
     if (existingUser) {
       console.log('[registerPendingTenant] User already exists');
       return { success: false, message: "User with this email already exists" };
     }
-    
+
     const existingPending = await pendingUsers.findOne({ email: userData.email });
     if (existingPending) {
       console.log('[registerPendingTenant] Application already pending');
       return { success: false, message: "Application with this email already pending" };
     }
-    
+
+    const unitId = toObjectId(userData.unitId as string);
+    if (unitId) {
+      const unit = await units.findOne({ _id: unitId });
+      if (!unit) {
+        return { success: false, message: "Selected unit not found" };
+      }
+      if (unit.status !== 'vacant') {
+        return { success: false, message: "Selected unit is no longer available" };
+      }
+    }
+
     const password = String(userData.password ?? "");
     const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
     const hashedPasswordHex = Array.from(new Uint8Array(hashedPassword))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
+
+    const profileData = typeof userData.profile === 'object' && userData.profile !== null ? userData.profile as Record<string, unknown> : null;
+    const derivedUnitNumber = profileData && typeof profileData["unitNumber"] === 'string' ? String(profileData["unitNumber"]) : null;
+
+    // #COMPLETION_DRIVE: Store the applied unit information in addition to unitId for lease creation context
+    // #SUGGEST_VERIFY: Verify that appliedUnitId and appliedUnitNumber match the unit document
     const toInsert = {
       ...userData,
       password: hashedPasswordHex,
       status: 'pending',
+      unitId: unitId,
+      propertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
+      appliedPropertyId: userData.propertyId ? toObjectId(userData.propertyId as string) : null,
+      appliedUnitId: unitId,
+      appliedUnitNumber: derivedUnitNumber,
       appliedAt: new Date(),
       createdAt: new Date()
     };
-    
+
+    console.log('[registerPendingTenant] Marking unit as pending...');
+    if (unitId) {
+      await units.updateOne(
+        { _id: unitId },
+        { $set: { status: 'pending' } }
+      );
+    }
+
     console.log('[registerPendingTenant] Inserting into DB...');
     await pendingUsers.insertOne(toInsert);
     console.log('[registerPendingTenant] Success');
-    
+
     return {
       success: true,
-      message: "Application submitted successfully. Awaiting admin approval."
+      message: "Application submitted successfully. Awaiting approval."
     };
   } catch (error) {
     console.error("[registerPendingTenant] Error:", error);
@@ -735,9 +1088,25 @@ export async function getPendingUsers() {
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
-    const users = await pendingUsers.find({ status: 'pending' }).sort({ appliedAt: -1 }).toArray();
-    const mapped = mapDocs(users);
-    return mapped;
+    const properties = getCollection("properties");
+
+    const users = await pendingUsers.find({
+      status: 'pending'
+    }).sort({ appliedAt: -1 }).toArray();
+
+    const allProperties = await properties.find({}).toArray();
+
+    const enriched = users.map(app => {
+      const property = allProperties.find(p =>
+        p._id.toString() === (typeof app.appliedPropertyId === 'string' ? app.appliedPropertyId : app.appliedPropertyId?.toString())
+      );
+      return {
+        ...mapDoc(app),
+        property: property ? { id: property._id.toString(), name: property.name, address: property.address } : null
+      };
+    });
+
+    return enriched;
   } catch (error) {
     console.error("Error fetching pending users:", error);
     throw error;
@@ -749,19 +1118,31 @@ export async function approvePendingUser(userId: string) {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid pending user identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Pending user not found");
     }
-    
-  const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
-    
+
+    const pendingUserRecord = pendingUser as Record<string, unknown>;
+    const {
+      _id,
+      appliedAt: _appliedAt,
+      appliedPropertyId,
+      status: _status,
+      unitId,
+      propertyId, appliedUnitId, appliedUnitNumber,
+      ...userDataToInsert
+    } = pendingUserRecord;
+
+    // #COMPLETION_DRIVE: Preserve application data (applied unit info) in user record for lease creation reference
+    // #SUGGEST_VERIFY: Ensure appliedUnitNumber is available from pending_users document
     const newUser = {
       ...userDataToInsert,
       userType: 'tenant',
@@ -769,24 +1150,35 @@ export async function approvePendingUser(userId: string) {
       adminApproved: true,
       managerApprovalStatus: 'pending',
       appliedPropertyId: appliedPropertyId,
+      unitId: unitId,
+      propertyId: propertyId,
+      appliedUnitId: appliedUnitId || unitId,
+      appliedUnitNumber: appliedUnitNumber,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
-    await users.insertOne(newUser);
-    
+
+    const insertedUserId = await users.insertOne(newUser);
+
+    if (unitId) {
+      await units.updateOne(
+        { _id: unitId },
+        { $set: { status: 'occupied', tenantId: insertedUserId } }
+      );
+    }
+
     await pendingUsers.updateOne(
       { _id: userObjectId },
-      { $set: { 
-        status: 'admin_approved', 
-        adminApprovedAt: new Date(),
-        managerApprovalStatus: 'pending'
+      { $set: {
+        status: 'approved',
+        approvedAt: new Date(),
+        approvedBy: 'admin'
       } }
     );
-    
+
     return {
       success: true,
-      message: "User approved by admin. Account created. Awaiting manager approval for property access.",
+      message: "User approved. Account created and unit assigned.",
       user: mapDoc(await users.findOne({ email: pendingUser.email }))
     };
   } catch (error) {
@@ -799,20 +1191,33 @@ export async function declinePendingUser(userId: string) {
   try {
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
+    const units = getCollection("units");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid pending user identifier");
     }
-    
+
+    const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
+    if (!pendingUser) {
+      throw new Error("Pending user not found");
+    }
+
+    if (pendingUser.unitId) {
+      await units.updateOne(
+        { _id: pendingUser.unitId },
+        { $set: { status: 'vacant' }, $unset: { tenantId: 1 } }
+      );
+    }
+
     const result = await pendingUsers.updateOne(
       { _id: userObjectId },
       { $set: { status: 'declined', declinedAt: new Date() } }
     );
-    
+
     if (result.modifiedCount === 0) {
       throw new Error("Pending user not found or already processed");
     }
-    
+
     return {
       success: true,
       message: "User application declined"
@@ -833,25 +1238,23 @@ export async function getPendingApplicationsForManager(managerId: string) {
     
     // First, get all properties managed by this manager
     const managerProperties = await properties.find({ managerId: managerMatch }).toArray();
-    
-    const propertyIds = managerProperties.map(p => p._id.toString());
-    
+
+    // #COMPLETION_DRIVE: Keep propertyIds as ObjectIds for MongoDB query matching
+    // #SUGGEST_VERIFY: Ensure appliedPropertyId in pending_users is stored as ObjectId
+  const propertyIds = managerProperties.map(p => p._id);
+
     if (propertyIds.length === 0) {
-      return []; // Manager has no properties, so no applications
+      return [];
     }
-    
-    // Get pending applications for those properties - check both pending and admin_approved
-    const applications = await pendingUsers.find({ 
-      $or: [
-        { status: 'pending' },
-        { status: 'admin_approved' }
-      ],
+
+    const applications = await pendingUsers.find({
+      status: 'pending',
       appliedPropertyId: { $in: propertyIds }
     }).sort({ appliedAt: -1 }).toArray();
-    
+
     // Enrich applications with property details
     const enrichedApplications = applications.map(app => {
-      const property = managerProperties.find(p => p._id.toString() === app.appliedPropertyId);
+      const property = managerProperties.find(p => p._id.toString() === (typeof app.appliedPropertyId === 'string' ? app.appliedPropertyId : app.appliedPropertyId?.toString()));
       return {
         ...mapDoc(app),
         property: property ? { id: property._id.toString(), name: property.name, address: property.address } : null
@@ -870,65 +1273,86 @@ export async function approveApplicationByManager(userId: string, managerId: str
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const properties = getCollection("properties");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid application identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Application not found");
     }
-    
+
     const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
     const managerObjectId = toObjectId(managerId);
     if (!appliedPropertyObjectId || !managerObjectId) {
       throw new Error("Invalid property reference for pending application");
     }
 
-    const property = await properties.findOne({ 
+    const property = await properties.findOne({
       _id: appliedPropertyObjectId,
       managerId: { $in: [managerObjectId, managerId] }
     });
-    
+
     if (!property) {
       throw new Error("Unauthorized: You can only approve applications for your properties");
     }
-    
+
     const existingUser = await users.findOne({ email: pendingUser.email });
-    
+
     if (existingUser) {
       await users.updateOne(
         { _id: existingUser._id },
-        { $set: { 
+        { $set: {
           managerApprovalStatus: 'approved',
           managerApprovedBy: managerId,
           managerApprovedAt: new Date(),
           assignedPropertyId: pendingUser.appliedPropertyId,
+          propertyId: pendingUser.appliedPropertyId,
+          unitId: pendingUser.unitId,
           isActive: true,
           updatedAt: new Date()
         } }
       );
-      
+
+      if (pendingUser.unitId) {
+        await units.updateOne(
+          { _id: pendingUser.unitId },
+          { $set: { status: 'occupied', tenantId: existingUser._id } }
+        );
+      }
+
       await pendingUsers.updateOne(
         { _id: userObjectId },
-        { $set: { 
-          status: 'fully_approved',
-          managerApprovedAt: new Date(),
-          managerApprovedBy: managerId
+        { $set: {
+          status: 'approved',
+          approvedAt: new Date(),
+          approvedBy: managerId
         } }
       );
-      
+
       return {
         success: true,
-        message: "Application approved. Tenant now has full access to the property.",
+        message: "Application approved. Tenant account activated.",
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     } else {
-      const { _id, appliedAt: _appliedAt, appliedPropertyId, status: _status, ...userDataToInsert } = pendingUser;
-      
+      const pendingUserRecord = pendingUser as Record<string, unknown>;
+      const {
+        _id,
+        appliedAt: _appliedAt,
+        appliedPropertyId,
+        status: _status,
+        unitId,
+        propertyId, appliedUnitId, appliedUnitNumber,
+        ...userDataToInsert
+      } = pendingUserRecord;
+
+      // #COMPLETION_DRIVE: Preserve application data (applied unit info) in user record for lease creation reference
+      // #SUGGEST_VERIFY: Ensure appliedUnitNumber exists in profile or as separate field
       const newUser = {
         ...userDataToInsert,
         userType: 'tenant',
@@ -938,24 +1362,35 @@ export async function approveApplicationByManager(userId: string, managerId: str
         managerApprovedBy: managerId,
         managerApprovedAt: new Date(),
         assignedPropertyId: appliedPropertyId,
+        unitId: unitId,
+        propertyId: propertyId,
+        appliedUnitId: appliedUnitId || unitId,
+        appliedUnitNumber: appliedUnitNumber,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
-      await users.insertOne(newUser);
-      
+
+      const insertedId = await users.insertOne(newUser);
+
+      if (unitId) {
+        await units.updateOne(
+          { _id: unitId },
+          { $set: { status: 'occupied', tenantId: insertedId } }
+        );
+      }
+
       await pendingUsers.updateOne(
         { _id: userObjectId },
-        { $set: { 
-          status: 'approved', 
+        { $set: {
+          status: 'approved',
           approvedAt: new Date(),
           approvedBy: managerId
         } }
       );
-      
+
       return {
         success: true,
-        message: "Application approved successfully. Account created with full property access.",
+        message: "Application approved. Account created and tenant activated.",
         user: mapDoc(await users.findOne({ email: pendingUser.email }))
       };
     }
@@ -970,39 +1405,40 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
     await connectToMongoDB();
     const pendingUsers = getCollection("pending_users");
     const users = getCollection("users");
+    const units = getCollection("units");
     const properties = getCollection("properties");
     const userObjectId = toObjectId(userId);
     if (!userObjectId) {
       throw new Error("Invalid application identifier");
     }
-    
+
     const pendingUser = await pendingUsers.findOne({ _id: userObjectId });
-    
+
     if (!pendingUser) {
       throw new Error("Application not found");
     }
-    
+
     const appliedPropertyObjectId = toObjectId(pendingUser.appliedPropertyId);
     const managerObjectId = toObjectId(managerId);
     if (!appliedPropertyObjectId || !managerObjectId) {
       throw new Error("Invalid property reference for pending application");
     }
 
-    const property = await properties.findOne({ 
+    const property = await properties.findOne({
       _id: appliedPropertyObjectId,
       managerId: { $in: [managerObjectId, managerId] }
     });
-    
+
     if (!property) {
       throw new Error("Unauthorized: You can only reject applications for your properties");
     }
-    
+
     const existingUser = await users.findOne({ email: pendingUser.email });
-    
+
     if (existingUser) {
       await users.updateOne(
         { _id: existingUser._id },
-        { $set: { 
+        { $set: {
           managerApprovalStatus: 'rejected',
           managerRejectedBy: managerId,
           managerRejectedAt: new Date(),
@@ -1012,21 +1448,28 @@ export async function rejectApplicationByManager(userId: string, managerId: stri
         } }
       );
     }
-    
+
+    if (pendingUser.unitId) {
+      await units.updateOne(
+        { _id: pendingUser.unitId },
+        { $set: { status: 'vacant' }, $unset: { tenantId: 1 } }
+      );
+    }
+
     const result = await pendingUsers.updateOne(
       { _id: userObjectId },
-      { $set: { 
-        status: 'manager_rejected', 
+      { $set: {
+        status: 'manager_rejected',
         managerRejectedAt: new Date(),
         managerRejectedBy: managerId,
         managerRejectionReason: reason || 'No reason provided'
       } }
     );
-    
+
     if (result.modifiedCount === 0) {
       throw new Error("Application not found or already processed");
     }
-    
+
     return {
       success: true,
       message: "Application rejected successfully"
@@ -1119,6 +1562,22 @@ export async function getUnits(propertyId?: string) {
   return mapDocs(rows);
   } catch (error) {
     console.error("Error fetching units:", error);
+    throw error;
+  }
+}
+
+export async function getAvailableUnits(propertyId: string) {
+  try {
+    await connectToMongoDB();
+    const units = getCollection("units");
+    const filter = {
+      propertyId: toId(propertyId),
+      status: 'vacant'
+    };
+    const rows = await units.find(filter).toArray();
+    return mapDocs(rows);
+  } catch (error) {
+    console.error("Error fetching available units:", error);
     throw error;
   }
 }
@@ -1229,23 +1688,99 @@ export async function createLease(leaseData: Record<string, unknown>) {
     await connectToMongoDB();
     const leases = getCollection("leases");
 
-    const leaseDoc = { ...leaseData, createdAt: new Date() };
+    const leaseDoc: Record<string, unknown> = { ...(leaseData as Record<string, unknown>), createdAt: new Date() };
 
-    if (leaseDoc.tenantId && typeof leaseDoc.tenantId === 'string') {
-      leaseDoc.tenantId = toId(leaseDoc.tenantId);
+    const leaseTenantId = leaseDoc["tenantId"];
+    if (typeof leaseTenantId === 'string') {
+      leaseDoc["tenantId"] = toId(leaseTenantId);
     }
-    if (leaseDoc.propertyId && typeof leaseDoc.propertyId === 'string') {
-      leaseDoc.propertyId = toId(leaseDoc.propertyId);
+
+    const leasePropertyId = leaseDoc["propertyId"];
+    if (typeof leasePropertyId === 'string') {
+      leaseDoc["propertyId"] = toId(leasePropertyId);
     }
-    if (leaseDoc.unitId && typeof leaseDoc.unitId === 'string') {
-      leaseDoc.unitId = toId(leaseDoc.unitId);
+
+    const leaseUnitId = leaseDoc["unitId"];
+    if (typeof leaseUnitId === 'string') {
+      leaseDoc["unitId"] = toId(leaseUnitId);
     }
 
     const result = await leases.insertOne(leaseDoc);
 
-    // Fetch the created lease and return it mapped
-    const createdLease = await leases.findOne({ _id: result });
-    return mapDoc(createdLease);
+    const enrichedLease = await leases.aggregate([
+      { $match: { _id: result } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "tenantId",
+          foreignField: "_id",
+          as: "tenantData"
+        }
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "propertyData"
+        }
+      },
+      {
+        $lookup: {
+          from: "units",
+          localField: "unitId",
+          foreignField: "_id",
+          as: "unitData"
+        }
+      },
+      {
+        $addFields: {
+          tenant: {
+            $cond: {
+              if: { $gt: [{ $size: "$tenantData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$tenantData._id", 0] } },
+                fullName: { $arrayElemAt: ["$tenantData.fullName", 0] },
+                email: { $arrayElemAt: ["$tenantData.email", 0] },
+                phone: { $arrayElemAt: ["$tenantData.phone", 0] }
+              },
+              else: null
+            }
+          },
+          property: {
+            $cond: {
+              if: { $gt: [{ $size: "$propertyData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$propertyData._id", 0] } },
+                name: { $arrayElemAt: ["$propertyData.name", 0] },
+                address: { $arrayElemAt: ["$propertyData.address", 0] }
+              },
+              else: null
+            }
+          },
+          unit: {
+            $cond: {
+              if: { $gt: [{ $size: "$unitData" }, 0] },
+              then: {
+                id: { $toString: { $arrayElemAt: ["$unitData._id", 0] } },
+                unitNumber: { $arrayElemAt: ["$unitData.unitNumber", 0] }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          tenantData: 0,
+          propertyData: 0,
+          unitData: 0
+        }
+      }
+    ]).toArray();
+
+    const enrichedLeaseDoc = enrichedLease[0] || null;
+    return mapDoc(enrichedLeaseDoc);
   } catch (error) {
     console.error("Error creating lease:", error);
     throw error;
@@ -1393,7 +1928,7 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
     const { managerId, ...otherFilters } = filters;
     
     if (managerId) {
-      const pipeline = [
+      const pipeline: Record<string, unknown>[] = [
         {
           $lookup: {
             from: "leases",
@@ -1446,6 +1981,8 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
             _id: 1,
             tenantId: 1,
             leaseId: 1,
+            invoiceId: 1,
+            invoiceNumber: 1,
             amount: 1,
             paymentDate: 1,
             dueDate: 1,
@@ -1466,23 +2003,64 @@ export async function getPayments(filters: Record<string, unknown> = {}) {
       
       if (Object.keys(otherFilters).length > 0) {
         pipeline.unshift({
-          $match: normalizeFilters(otherFilters) as Record<string, unknown>
+          $match: normalizeFilters(otherFilters)
         });
       }
       
-      const rows = await payments.aggregate(pipeline).toArray();
+      const rows = await payments.aggregate(pipeline).toArray() as Array<Record<string, unknown>>;
       return rows.map(row => {
-        const { _id, tenant, property, ...rest } = row;
+        const typedRow = row as Record<string, unknown> & {
+          _id: ObjectId;
+          tenant?: unknown;
+          property?: unknown;
+        };
+
+        const { _id, tenant, property, ...rest } = typedRow;
+
+        const tenantDetails = typeof tenant === 'object' && tenant !== null
+          ? tenant as { fullName?: string }
+          : undefined;
+
+        const propertyDetails = typeof property === 'object' && property !== null
+          ? property as { name?: string; _id?: unknown }
+          : undefined;
+
         return {
           id: String(_id),
           ...rest,
-          tenant: tenant ? { fullName: tenant.fullName } : undefined,
-          property: property ? { name: property.name, id: String(property._id) } : undefined
+          tenant: tenantDetails && typeof tenantDetails.fullName === 'string'
+            ? { fullName: tenantDetails.fullName }
+            : undefined,
+          property: propertyDetails && typeof propertyDetails.name === 'string'
+            ? {
+                name: propertyDetails.name,
+                id: propertyDetails._id !== undefined ? String(propertyDetails._id) : undefined
+              }
+            : undefined
         };
       });
     } else {
-      const rows = await payments.find(normalizeFilters(otherFilters) as Record<string, unknown>).toArray();
-      return mapDocs(rows);
+      const pipeline: Record<string, unknown>[] = [];
+
+      if (Object.keys(otherFilters).length > 0) {
+        pipeline.push({
+          $match: normalizeFilters(otherFilters)
+        });
+      }
+
+      const rows = await payments.aggregate(pipeline).toArray() as Array<Record<string, unknown>>;
+      return rows.map(row => {
+        const typedRow = row as Record<string, unknown> & {
+          _id: ObjectId;
+        };
+
+        const { _id, ...rest } = typedRow;
+
+        return {
+          id: String(_id),
+          ...rest
+        };
+      });
     }
   } catch (error) {
     console.error("Error fetching payments:", error);
@@ -1594,21 +2172,41 @@ export async function getMaintenanceRequests(filters: Record<string, unknown> = 
     await connectToMongoDB();
     const requests = getCollection("maintenance_requests");
     const properties = getCollection("properties");
+    const units = getCollection("units");
     
-  const queryFilters = normalizeFilters(filters) as Record<string, unknown>;
+    const queryFilters = normalizeFilters(filters) as Record<string, unknown>;
     
-    // If managerId is provided, get properties for that manager and filter by those propertyIds
     if (filters.managerId) {
       const managerProperties = await properties.find({ managerId: toId(filters.managerId) }).toArray();
       const propertyIds = managerProperties.map(p => p._id);
       
-      // Replace managerId filter with propertyId filter
       delete queryFilters.managerId;
       queryFilters.propertyId = { $in: propertyIds };
     }
     
     const rows = await requests.find(queryFilters).toArray();
-    return mapDocs(rows);
+    
+    const enrichedRows = await Promise.all(rows.map(async (row) => {
+      const enriched = { ...row };
+      
+      if (row.propertyId) {
+        const property = await properties.findOne({ _id: toId(row.propertyId) });
+        if (property) {
+          enriched.location = property.name || property.address || enriched.location || 'Unknown';
+        }
+      }
+      
+      if (row.unitId) {
+        const unit = await units.findOne({ _id: toId(row.unitId) });
+        if (unit) {
+          enriched.unitNumber = unit.unitNumber || enriched.unitNumber || 'Unknown';
+        }
+      }
+      
+      return enriched;
+    }));
+    
+    return mapDocs(enrichedRows);
   } catch (error) {
     console.error("Error fetching maintenance requests:", error);
     throw error;
@@ -2664,7 +3262,8 @@ export async function getInvoices(filters: Record<string, unknown> = {}) {
       const refreshed = await invoices.findOne({ _id: (entry as RawInvoiceDoc)._id });
       const mapped = serializeInvoice(refreshed as RawInvoiceDoc);
       if (mapped) {
-        serialized.push(mapped);
+        const enriched = await enrichInvoiceWithRelations(mapped);
+        serialized.push(enriched);
       }
     }
     return serialized;
@@ -2684,7 +3283,11 @@ export async function getInvoiceById(id: string) {
     }
     await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
     const refreshed = await invoices.findOne({ _id: (invoice as RawInvoiceDoc)._id });
-    return serializeInvoice(refreshed as RawInvoiceDoc);
+    const serialized = serializeInvoice(refreshed as RawInvoiceDoc);
+    if (serialized) {
+      return await enrichInvoiceWithRelations(serialized);
+    }
+    return serialized;
   } catch (error) {
     console.error("Error fetching invoice:", error);
     throw error;
@@ -2917,6 +3520,7 @@ export async function getInvoicePdf(id: string) {
     if (!invoice) {
       throw new Error("Invoice not found");
     }
+    
     const artifacts = await ensureInvoiceArtifacts(invoice as RawInvoiceDoc);
     const filenameBase = typeof (invoice as Record<string, unknown>).invoiceNumber === "string" && (invoice as Record<string, unknown>).invoiceNumber ? (invoice as Record<string, unknown>).invoiceNumber as string : id;
     const bytes = await Deno.readFile(artifacts.pdfPath);
@@ -3165,18 +3769,53 @@ export async function deleteAnnouncementByContent(announcementData: {
   }
 }
 
-export async function updateSecuritySetting(settingName: string, value: string) {
+const readOnlySecuritySettings = new Set([
+  "audit logging",
+  "encryption standard"
+]);
+
+export async function updateSecuritySetting(settingId: string | undefined, settingName: string, value: string) {
   try {
     await connectToMongoDB();
     const settings = getCollection("security_settings");
-    
-    const result = await settings.updateOne(
-      { setting: settingName },
-      { $set: { value, updatedAt: new Date() } },
-      { upsert: true }
-    );
-    
-    return { success: true, setting: settingName, value, modified: result.modifiedCount };
+    const now = new Date();
+    const normalizedName = typeof settingName === "string" ? settingName.trim() : String(settingName);
+    const normalizedValue = typeof value === "string" ? value.trim() : String(value);
+    const slug = normalizedName.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    const objectId = settingId ? toObjectId(settingId) : undefined;
+    const filter: Record<string, unknown> = objectId ? { _id: objectId } : { setting: normalizedName };
+    const existing = await settings.findOne(filter);
+    const existingConfigurable = (existing as { configurable?: unknown } | null)?.configurable;
+    const configurable = typeof existingConfigurable === "boolean"
+      ? existingConfigurable
+      : !readOnlySecuritySettings.has(normalizedName.toLowerCase());
+    const existingKey = (existing as { key?: string } | null)?.key;
+    const updatePayload = {
+      $set: {
+        setting: normalizedName,
+        value: normalizedValue,
+        configurable,
+        updatedAt: now,
+        key: existingKey ?? slug
+      },
+      $setOnInsert: {
+        createdAt: now
+      }
+    };
+    const result = await settings.updateOne(filter, updatePayload, { upsert: true });
+    const lookupFilter = objectId ? { _id: objectId } : { setting: normalizedName };
+    const updatedDoc = await settings.findOne(lookupFilter);
+    const formatted = updatedDoc ? mapDoc(updatedDoc) : null;
+    const modifiedCount = typeof (result as { modifiedCount?: number }).modifiedCount === "number"
+      ? (result as { modifiedCount?: number }).modifiedCount
+      : 0;
+    const upserted = (result as { upsertedId?: ObjectId }).upsertedId;
+    return {
+      success: true,
+      modified: modifiedCount,
+      upsertedId: upserted instanceof ObjectId ? upserted.toString() : null,
+      setting: formatted
+    };
   } catch (error) {
     console.error("Error updating security setting:", error);
     throw error;
@@ -3402,9 +4041,11 @@ export async function getDocuments(filters: Record<string, unknown> = {}) {
   try {
     await connectToMongoDB();
     const documents = getCollection("documents");
-    
+
+    const matchFilters = normalizeFilters(filters);
+
     const pipeline = [
-      { $match: normalizeFilters(filters) },
+      { $match: matchFilters },
       {
         $lookup: {
           from: "leases",
@@ -3440,7 +4081,14 @@ export async function getDocuments(filters: Record<string, unknown> = {}) {
         $project: {
           lease: 0,
           property: 0,
-          unit: 0
+          unit: 0,
+          content: 0
+        }
+      },
+      {
+        $sort: {
+          uploadDate: -1,
+          createdAt: -1
         }
       }
     ];
@@ -3458,33 +4106,84 @@ export async function createDocument(documentData: Record<string, unknown>) {
     await connectToMongoDB();
     const documents = getCollection("documents");
 
+    console.log('[createDocument] Incoming data:', {
+      name: documentData.name,
+      hasContent: !!documentData.content,
+      contentLength: typeof documentData.content === 'string' ? documentData.content.length : 0,
+      contentPreview: typeof documentData.content === 'string' ? documentData.content.substring(0, 50) : 'N/A'
+    });
+
+    const now = new Date();
+
     const docToInsert: Record<string, unknown> = {
       ...documentData,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
       status: documentData.status || 'active'
     };
 
-    if (docToInsert.leaseId && typeof docToInsert.leaseId === 'string') {
-      docToInsert.leaseId = toId(docToInsert.leaseId);
+    if (!docToInsert.uploadDate) {
+      docToInsert.uploadDate = now;
+    } else if (typeof docToInsert.uploadDate === 'string') {
+      docToInsert.uploadDate = new Date(docToInsert.uploadDate);
     }
-    if (docToInsert.propertyId && typeof docToInsert.propertyId === 'string') {
-      docToInsert.propertyId = toId(docToInsert.propertyId);
+
+    const idFields: Array<keyof Record<string, unknown>> = [
+      'leaseId',
+      'propertyId',
+      'unitId',
+      'tenantId',
+      'uploadedBy',
+      'userId',
+      'paymentId',
+      'invoiceId'
+    ];
+
+    for (const field of idFields) {
+      if (docToInsert[field] && typeof docToInsert[field] === 'string') {
+        docToInsert[field] = toId(docToInsert[field]);
+      }
     }
-    if (docToInsert.unitId && typeof docToInsert.unitId === 'string') {
-      docToInsert.unitId = toId(docToInsert.unitId);
+
+    if (!docToInsert.tenantId && docToInsert.userId instanceof ObjectId) {
+      docToInsert.tenantId = docToInsert.userId;
     }
-    if (docToInsert.tenantId && typeof docToInsert.tenantId === 'string') {
-      docToInsert.tenantId = toId(docToInsert.tenantId);
+
+    if (typeof docToInsert.fileSize === 'string') {
+      const parsedSize = Number(docToInsert.fileSize);
+      docToInsert.fileSize = Number.isNaN(parsedSize) ? undefined : parsedSize;
     }
-    if (docToInsert.uploadedBy && typeof docToInsert.uploadedBy === 'string') {
-      docToInsert.uploadedBy = toId(docToInsert.uploadedBy);
+
+    const metadata = (documentData as { metadata?: Record<string, unknown> }).metadata || {};
+
+    if (!docToInsert.fileName && typeof metadata.fileName === 'string') {
+      docToInsert.fileName = metadata.fileName;
+    }
+    if (!docToInsert.mimeType && typeof metadata.mimeType === 'string') {
+      docToInsert.mimeType = metadata.mimeType;
+    }
+    if (!docToInsert.fileSize && typeof metadata.fileSize === 'number') {
+      docToInsert.fileSize = metadata.fileSize;
+    }
+
+    if (typeof docToInsert.content === 'string' && !docToInsert.fileSize) {
+      const sanitized = docToInsert.content.replace(/[^A-Za-z0-9+/=]/g, '');
+      const estimated = Math.floor((sanitized.length * 3) / 4);
+      docToInsert.fileSize = estimated;
+    }
+
+    if (!docToInsert.uploadedByName && typeof documentData.uploadedByName === 'string') {
+      docToInsert.uploadedByName = documentData.uploadedByName;
     }
 
     const result = await documents.insertOne(docToInsert);
 
-    // Fetch the created document and return it mapped
     const createdDocument = await documents.findOne({ _id: result });
-    return mapDoc(createdDocument);
+    const mapped = mapDoc(createdDocument);
+    if (mapped && Object.prototype.hasOwnProperty.call(mapped, 'content')) {
+      delete (mapped as Record<string, unknown>).content;
+    }
+    return mapped;
   } catch (error) {
     console.error("Error creating document:", error);
     throw error;
@@ -3511,11 +4210,22 @@ export async function getDocumentById(documentId: string) {
   try {
     await connectToMongoDB();
     const documents = getCollection("documents");
-    
+
     const doc = await documents.findOne({
       _id: toId(documentId)
     });
-    
+
+    if (doc) {
+      console.log('[getDocumentById] Document found:', {
+        _id: (doc as Record<string, unknown>)._id,
+        name: (doc as Record<string, unknown>).name,
+        hasContent: !!(doc as Record<string, unknown>).content,
+        contentLength: typeof (doc as Record<string, unknown>).content === 'string' ? ((doc as Record<string, unknown>).content as string).length : 0
+      });
+    } else {
+      console.log('[getDocumentById] Document not found:', documentId);
+    }
+
     return doc ? mapDoc(doc) : null;
   } catch (error) {
     console.error("Error fetching document:", error);

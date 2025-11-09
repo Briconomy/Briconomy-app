@@ -232,7 +232,7 @@ function FakeCheckout({ amount, invoiceNumber, tenantName, onComplete, onCancel,
           </div>
 
           {/* Expiry & CVV */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
                 EXP. MONTH
@@ -253,6 +253,28 @@ function FakeCheckout({ amount, invoiceNumber, tenantName, onComplete, onCancel,
                   textAlign: 'center'
                 }}
                 maxLength={2}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
+                EXP. YEAR
+              </label>
+              <input
+                type="text"
+                name="expiryYear"
+                value={formData.expiryYear}
+                onChange={handleInputChange}
+                placeholder="YYYY"
+                disabled={processing}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  textAlign: 'center'
+                }}
+                maxLength={4}
               />
             </div>
             <div>
@@ -306,7 +328,7 @@ function FakeCheckout({ amount, invoiceNumber, tenantName, onComplete, onCancel,
             fontSize: '12px',
             marginBottom: '16px'
           }}>
-            💡 <strong>Demo Mode:</strong> This is a fake checkout. No real payment is processed. Use card 4111 1111 1111 1111.
+            <strong>Demo Mode:</strong> This is a fake checkout. No real payment is processed. Use card 4111 1111 1111 1111.
           </div>
 
           {/* Buttons */}

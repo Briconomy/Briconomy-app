@@ -55,10 +55,10 @@ function CaretakerReportsPage() {
   };
 
   const navItems = [
-    { path: '/caretaker', label: 'Dashboard', active: false },
-    { path: '/caretaker/tasks', label: 'Tasks', active: false },
-    { path: '/caretaker/maintenance', label: 'Maintenance', active: false },
-    { path: '/caretaker/reports', label: 'Reports', active: true }
+    { path: '/caretaker', label: 'Dashboard', icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: 'Schedule', icon: 'activityLog', active: false },
+    { path: '/caretaker/history', label: 'History', icon: 'report', active: false },
+    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: false }
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi<CaretakerTask[]>(

@@ -64,13 +64,13 @@ function AdminUsersPage() {
         </div>
 
         <div className="data-table">
-          <div className="table-header">
+          <div className="table-header" style={{ flexDirection: 'column', gap: '16px', alignItems: 'flex-start' }}>
             <div className="table-title">{t('admin.user_list')}</div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+              <button
                 type="button"
                 onClick={() => navigate('/admin/pending-users')}
-                className="btn btn-secondary"
+                className="btn btn-secondary user-pending-btn"
                 style={{
                   background: '#f39c12',
                   color: 'white',
@@ -79,20 +79,20 @@ function AdminUsersPage() {
                   border: 'none',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: '12px'
+                  fontSize: '15px'
                 }}
               >
-                Pending ({stats.pendingUsers})
+                {t('admin.pending')} ({stats.pendingUsers})
               </button>
-              <a href="/admin/add-user" className="btn btn-primary">
+              <a href="/admin/add-user" className="btn btn-primary adduser-btn">
                 {t('common.add_user')}
                 <span style={{
-                  padding: '10px 16px',
+                  padding: '10px 1px',
                   borderRadius: '6px',
                   border: 'none',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: '6px'
+                  fontSize: '6px',
                 }}>
                 </span>
               </a>
@@ -124,64 +124,64 @@ function AdminUsersPage() {
           </div>
         </div>
 
-        <ChartCard title="Recent Activity - User Logins">
+        <ChartCard title={t('admin.user_logins')}>
           <div style={{ padding: '20px' }}>
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#2c3e50' }}>
-                Login Activity (Last 7 Days)
+                {t('admin.login_activity_last_7_days')}
               </h3>
-              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '180px', gap: '4px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '220px', gap: '4px', padding: '10px', background: '#f8f9fa', borderRadius: '8px', overflow: 'hidden' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '90px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Mon</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.mon')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>24</div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '124px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Tue</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.tue')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>31</div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '112px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Wed</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.wed')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>28</div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '140px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px', boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Thu</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.thu')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>38</div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '150px', background: 'linear-gradient(180deg, #5dade2 0%, #3498db 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px', boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Fri</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.fri')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>42</div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '70px', background: 'linear-gradient(180deg, #bdc3c7 0%, #95a5a6 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Sat</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.sat')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>18</div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
                   <div style={{ width: '80%', height: '56px', background: 'linear-gradient(180deg, #bdc3c7 0%, #95a5a6 100%)', borderRadius: '4px 4px 0 0', marginBottom: '8px' }}></div>
-                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500' }}>Sun</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{t('time.sun')}</div>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#2c3e50' }}>14</div>
                 </div>
               </div>
             </div>
             <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Total Logins</div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.total_logins')}</div>
                 <div style={{ fontSize: '20px', fontWeight: '700', color: '#3498db' }}>195</div>
-                <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 12% vs last week</div>
+                <div style={{ fontSize: '11px', color: '#27ae60' }}>{t('admin.percentage_vs_last_week')}</div>
               </div>
               <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Peak Day</div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>{t('admin.peak_day')}</div>
                 <div style={{ fontSize: '20px', fontWeight: '700', color: '#f39c12' }}>Friday</div>
-                <div style={{ fontSize: '11px', color: '#6c757d' }}>42 logins</div>
+                <div style={{ fontSize: '11px', color: '#6c757d' }}>42 {t('admin.logins')}</div>
               </div>
             </div>
             <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e9ecef' }}>
-              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px' }}>Recent User Activity</div>
+              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px' }}>{t('admin.recent_user_activity')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ padding: '10px', background: '#fff', border: '1px solid #e9ecef', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>

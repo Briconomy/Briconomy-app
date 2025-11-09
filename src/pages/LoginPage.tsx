@@ -53,7 +53,7 @@ function LoginPage() {
     setSubmitting(true);
     
     if (!formData.email || !formData.password) {
-      setAuthError('Please fill in both email and password');
+      setAuthError(t('auth.validation_both_required'));
       setSubmitting(false);
       return;
     }
@@ -69,12 +69,12 @@ function LoginPage() {
         }
 
         const userName = result.user?.fullName || 'User';
-        
+
         if (result.restricted && result.redirectTo) {
-          showToast(`${userName}, your property application was not approved. You can browse and apply for other properties.`, 'info', 5000);
+          showToast(t('auth.app_not_approved').replace('{name}', userName), 'info', 5000);
           navigate(result.redirectTo);
         } else {
-          showToast(`Welcome back, ${userName}`, 'success', 3000);
+          showToast(`${t('auth.welcome_back')}, ${userName}`, 'success', 3000);
           const dashboards = {
             admin: '/admin',
             manager: '/manager',
@@ -87,7 +87,7 @@ function LoginPage() {
         setAuthError(result.message);
       }
   } catch (_error) {
-      setAuthError('Login failed. Please try again.');
+      setAuthError(t('auth.login_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -115,107 +115,90 @@ function LoginPage() {
       position: 'relative',
       boxShadow: '0 0 20px rgba(0,0,0,0.1)'
     }}>
+      {/* Header */}
       <div style={{
         background: '#ffffff',
         borderBottom: '1px solid #e9ecef',
         padding: '12px 16px',
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        gap: '12px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         height: '60px'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <a 
-            href="/" 
-            style={{
-              background: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              color: '#495057',
-              width: '32px',
-              height: '32px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              textDecoration: 'none'
-            }}
-          >
-            ←
-          </a>
-          <div style={{
+        <a
+          href="/"
+          style={{
+            background: '#f8f9fa',
+            border: '1px solid #e9ecef',
+            color: '#495057',
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            justifyContent: 'center',
             fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#2c3e50'
-          }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              background: 'transparent',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '16px'
-            }}>
-              <Icon name="logo" alt="Briconomy" size={28} />
-            </div>
-            <span>Briconomy</span>
-          </div>
-        </div>
+            textDecoration: 'none',
+            flexShrink: 0
+          }}
+        >
+          ←
+        </a>
+        <Icon name="logo" alt="Briconomy" size={32} />
+        <span style={{
+          fontSize: '20px',
+          fontWeight: '600',
+          color: '#2c3e50'
+        }}>
+          Briconomy
+        </span>
       </div>
-      
-      <div style={{ padding: '20px 16px' }}>
+
+      {/* Content */}
+      <div style={{ padding: '24px 16px' }}>
         <div style={{
           background: '#ffffff',
-          borderRadius: '16px',
-          padding: '24px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          borderRadius: '12px',
+          padding: '32px 24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid #e9ecef'
         }}>
-          <h2 style={{ 
-            textAlign: 'center', 
-            marginBottom: '24px', 
-            color: '#2c3e50', 
-            fontSize: '20px' 
+          <h2 style={{
+            textAlign: 'center',
+            marginBottom: '32px',
+            marginTop: '0',
+            color: '#2c3e50',
+            fontSize: '24px',
+            fontWeight: '600'
           }}>
             {t('auth.sign_in')}
           </h2>
-          
+
           {authError && (
-            <div className="error-message">
+            <div className="error-message" style={{ marginBottom: '16px' }}>
               {authError}
             </div>
           )}
-          
-          <div className="form-group">
-            <label htmlFor="email">
-              {t('common.email_address')}
-            </label>
-            <input 
-              type="email" 
-              id="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder={t('common.enter_email')}
-            />
-          </div>
-          
+
           <form onSubmit={(e) => {
             e.preventDefault();
             handleLogin();
           }}>
+            <div className="form-group">
+              <label htmlFor="email">
+                {t('common.email_address')}
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder={t('common.enter_email')}
+              />
+            </div>
             <div className="form-group">
               <label htmlFor="password">
                 {t('auth.password')}
@@ -247,7 +230,7 @@ function LoginPage() {
                     color: '#6c757d',
                     fontSize: '18px'
                   }}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t('common.hide_password') : t('common.show_password')}
                 >
                   {showPassword ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -286,8 +269,8 @@ function LoginPage() {
               {submitting ? t('common.signing_in') : t('auth.sign_in')}
             </button>
           </form>
-          
-          <div style={{ marginBottom: '10px' }}>
+
+          <div style={{ marginTop: '16px' }}>
             <GoogleLogin
               onSuccess={async (credentialResponse) => {
                 setGoogleSubmitting(true);
@@ -324,27 +307,29 @@ function LoginPage() {
               shape="rectangular"
               width="100%"
             />
+            {googleSubmitting && (
+              <div style={{
+                textAlign: 'center',
+                marginTop: '10px',
+                color: '#4285f4',
+                fontSize: '14px'
+              }}>
+                {t('auth.google_signing_in')}
+              </div>
+            )}
           </div>
-          {googleSubmitting && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '10px',
-              color: '#4285f4',
-              fontSize: '14px'
-            }}>
-              Signing in with Google...
-            </div>
-          )}
-          
-          <button 
-            type="button" 
+
+          <button
+            type="button"
             className="btn btn-secondary btn-block2"
+            style={{ marginTop: '12px' }}
           >
-            Biometric Login
+            {t('auth.biometric_login')}
           </button>
         </div>
       </div>
     </div>
+    
   );
 }
 

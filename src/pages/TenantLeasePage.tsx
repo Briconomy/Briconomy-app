@@ -18,10 +18,10 @@ function TenantLeasePage() {
   );
 
   const navItems = [
-    { path: '/tenant', label: 'Home', active: true },
-    { path: '/tenant/payments', label: 'Payments' },
-    { path: '/tenant/requests', label: 'Requests' },
-    { path: '/tenant/profile', label: 'Profile' }
+    { path: '/tenant', label: 'Home', icon: 'properties', active: true },
+    { path: '/tenant/payments', label: 'Payments', icon: 'payment' },
+    { path: '/tenant/requests', label: 'Requests', icon: 'maintenance' },
+    { path: '/tenant/profile', label: 'Profile', icon: 'profile' }
   ];
 
   const handleDownloadLease = async () => {

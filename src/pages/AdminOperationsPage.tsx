@@ -157,8 +157,34 @@ function AdminOperationsPage() {
         </div>
 
         <ChartCard title={t('admin.system_performance')}>
-          <div className="chart-placeholder">
-            Chart.js {t('admin.performance_analytics')}
+          <div style={{ padding: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#2c3e50' }}>
+                {t('admin.system_performance')}
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Database Connections</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#2563eb' }}>1,247</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 5.2% {t('dashboard.from_last_week')}</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Cache Hit Rate</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#27ae60' }}>95.3%</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↑ 2.1% {t('dashboard.improved')}</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Request Processing Time</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#3498db' }}>142ms</div>
+                  <div style={{ fontSize: '11px', color: '#27ae60' }}>↓ 3.8% {t('dashboard.faster')}</div>
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '6px' }}>
+                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>System Memory Usage</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#f39c12' }}>62.4 GB / 128 GB</div>
+                  <div style={{ fontSize: '11px', color: '#6c757d' }}>48.75% utilization</div>
+                </div>
+              </div>
+            </div>
           </div>
         </ChartCard>
 

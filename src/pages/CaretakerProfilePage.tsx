@@ -4,9 +4,12 @@ import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ChartCard from '../components/ChartCard.tsx';
 import { tasksApi, maintenanceApi, useApi } from '../services/api.ts';
-import { LanguageSwitcher } from '../contexts/LanguageContext.tsx';
+import { LanguageSwitcher, useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
 function CaretakerProfilePage() {
+  const { t } = useLanguage();
+  const { showToast } = useToast();
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,10 +29,10 @@ function CaretakerProfilePage() {
   });
 
   const navItems = [
-    { path: '/caretaker', label: 'Tasks', icon: 'issue', active: false },
-    { path: '/caretaker/schedule', label: 'Schedule', icon: 'report', active: false },
-    { path: '/caretaker/history', label: 'History', icon: 'activityLog', active: false },
-    { path: '/caretaker/profile', label: 'Profile', icon: 'profile', active: true }
+    { path: '/caretaker', label: t('nav.tasks'), icon: 'issue', active: false },
+    { path: '/caretaker/schedule', label: t('nav.schedule'), icon: 'report', active: false },
+    { path: '/caretaker/history', label: t('nav.history'), icon: 'activityLog', active: false },
+    { path: '/caretaker/profile', label: t('nav.profile'), icon: 'profile', active: true }
   ];
 
   const { data: tasks, loading: tasksLoading, error: tasksError } = useApi(
@@ -169,14 +172,14 @@ function CaretakerProfilePage() {
   const efficiency = Math.round((1 / Math.max(avgTaskCompletion, 1)) * 100);
 
   const caretakerStats = [
-    { value: totalTasks, label: 'Tasks Total' },
-    { value: completedTasks, label: 'Tasks Done' },
-    { value: pendingTasks, label: 'Tasks Pending' },
-    { value: inProgressTasks, label: 'In Progress' },
-    { value: `${efficiency}%`, label: 'Efficiency' },
-    { value: completedMaintenance, label: 'Maintenance Closed' },
-    { value: formatCurrency(totalMaintenanceCost), label: 'Cost Saved' },
-    { value: user?.profile?.assignedProperty ? 'Yes' : 'No', label: 'Assigned Property' }
+    { value: totalTasks, label: t('caretakerProfile.tasksTotal') },
+    { value: completedTasks, label: t('caretakerProfile.tasksDone') },
+    { value: pendingTasks, label: t('caretakerProfile.tasksPending') },
+    { value: inProgressTasks, label: t('caretakerProfile.inProgress') },
+    { value: `${efficiency}%`, label: t('caretakerProfile.efficiency') },
+    { value: completedMaintenance, label: t('caretakerProfile.maintenanceClosed') },
+    { value: formatCurrency(totalMaintenanceCost), label: t('caretakerProfile.costSaved') },
+    { value: user?.profile?.assignedProperty ? t('caretakerProfile.yes') : t('caretakerProfile.no'), label: t('caretakerProfile.assignedPropertyLabel') }
   ];
 
   const handleInputChange = (field, value) => {
@@ -224,7 +227,7 @@ function CaretakerProfilePage() {
     }
 
     setIsEditing(false);
-    alert('Profile updated successfully!');
+    showToast(t('caretakerProfile.profileUpdated'), 'success');
   };
 
   const handleNotificationChange = (setting) => {
@@ -265,7 +268,7 @@ function CaretakerProfilePage() {
         <div className="main-content">
           <div className="loading-state">
             <div className="loading-spinner"></div>
-            <p>Loading your profile...</p>
+            <p>{t('caretakerProfile.loading')}</p>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -279,21 +282,21 @@ function CaretakerProfilePage() {
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">My Profile</div>
-          <div className="page-subtitle">Personal information and settings</div>
+          <div className="page-title">{t('caretakerProfile.title')}</div>
+          <div className="page-subtitle">{t('caretakerProfile.subtitle')}</div>
           <button type="button"
             className={`btn ${isEditing ? 'btn-secondary' : 'btn-primary'} btn-sm caretaker-edit-btn`}
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           >
-            {isEditing ? 'Save Changes' : 'Edit Profile'}
+            {isEditing ? t('caretakerProfile.saveChanges') : t('caretakerProfile.editProfile')}
           </button>
         </div>
 
         {/* Profile Information */}
-        <ChartCard title="Personal Information">
+        <ChartCard title={t('caretakerProfile.personalInformation')}>
           <div className="caretaker-profile-info">
             <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">Full Name</label>
+              <label className="caretaker-field-label">{t('caretakerProfile.fullName')}</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -302,12 +305,12 @@ function CaretakerProfilePage() {
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.fullName || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.fullName || t('caretakerProfile.notProvided')}</div>
               )}
             </div>
 
             <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">Email</label>
+              <label className="caretaker-field-label">{t('caretakerProfile.email')}</label>
               {isEditing ? (
                 <input
                   type="email"
@@ -316,12 +319,12 @@ function CaretakerProfilePage() {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.email || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.email || t('caretakerProfile.notProvided')}</div>
               )}
             </div>
 
             <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">Phone</label>
+              <label className="caretaker-field-label">{t('caretakerProfile.phone')}</label>
               {isEditing ? (
                 <input
                   type="tel"
@@ -330,12 +333,12 @@ function CaretakerProfilePage() {
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.phone || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.phone || t('caretakerProfile.notProvided')}</div>
               )}
             </div>
 
             <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">Department</label>
+              <label className="caretaker-field-label">{t('caretakerProfile.department')}</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -344,12 +347,12 @@ function CaretakerProfilePage() {
                   onChange={(e) => handleInputChange('department', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.profile?.department || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.profile?.department || t('caretakerProfile.notProvided')}</div>
               )}
             </div>
 
             <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">Employee ID</label>
+              <label className="caretaker-field-label">{t('caretakerProfile.employeeId')}</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -358,12 +361,12 @@ function CaretakerProfilePage() {
                   onChange={(e) => handleInputChange('employeeId', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.profile?.employeeId || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.profile?.employeeId || t('caretakerProfile.notProvided')}</div>
               )}
             </div>
 
             <div className="caretaker-profile-field">
-              <label className="caretaker-field-label">Emergency Contact</label>
+              <label className="caretaker-field-label">{t('caretakerProfile.emergencyContact')}</label>
               {isEditing ? (
                 <input
                   type="tel"
@@ -372,14 +375,14 @@ function CaretakerProfilePage() {
                   onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
                 />
               ) : (
-                <div className="caretaker-field-value">{user?.profile?.emergencyContact || 'Not provided'}</div>
+                <div className="caretaker-field-value">{user?.profile?.emergencyContact || t('caretakerProfile.notProvided')}</div>
               )}
             </div>
           </div>
         </ChartCard>
 
         {/* Skills Section */}
-        <ChartCard title="Skills & Expertise">
+        <ChartCard title={t('caretakerProfile.skillsExpertise')}>
           <div className="caretaker-skills-section">
             <div className="caretaker-skills-grid">
               {availableSkills.map((skill) => (
@@ -393,7 +396,7 @@ function CaretakerProfilePage() {
               ))}
             </div>
             {!isEditing && formData.skills?.length === 0 && (
-              <p className="text-sm text-gray-500 mt-2">No skills specified</p>
+              <p className="text-sm text-gray-500 mt-2">{t('caretakerProfile.noSkills')}</p>
             )}
           </div>
         </ChartCard>
@@ -406,12 +409,12 @@ function CaretakerProfilePage() {
         </div>
 
         {/* Notification Settings */}
-        <ChartCard title="Notification Settings">
+        <ChartCard title={t('caretakerProfile.notificationSettings')}>
           <div className="caretaker-notification-settings">
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Email Notifications</div>
-                <div className="caretaker-setting-desc">Receive updates via email</div>
+                <div className="caretaker-setting-title">{t('caretakerProfile.emailNotifications')}</div>
+                <div className="caretaker-setting-desc">{t('caretakerProfile.receiveEmail')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.email ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -423,8 +426,8 @@ function CaretakerProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Push Notifications</div>
-                <div className="caretaker-setting-desc">Receive push notifications</div>
+                <div className="caretaker-setting-title">{t('caretakerProfile.pushNotifications')}</div>
+                <div className="caretaker-setting-desc">{t('caretakerProfile.receivePush')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.push ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -436,8 +439,8 @@ function CaretakerProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Task Reminders</div>
-                <div className="caretaker-setting-desc">Get reminded about upcoming tasks</div>
+                <div className="caretaker-setting-title">{t('caretakerProfile.taskReminders')}</div>
+                <div className="caretaker-setting-desc">{t('caretakerProfile.remindTasks')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.taskReminders ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -449,8 +452,8 @@ function CaretakerProfilePage() {
 
             <div className="caretaker-setting-item">
               <div className="caretaker-setting-info">
-                <div className="caretaker-setting-title">Maintenance Updates</div>
-                <div className="caretaker-setting-desc">Updates on maintenance requests</div>
+                <div className="caretaker-setting-title">{t('caretakerProfile.maintenanceUpdates')}</div>
+                <div className="caretaker-setting-desc">{t('caretakerProfile.updatesMaintenance')}</div>
               </div>
               <div
                 className={`caretaker-toggle-switch ${notificationSettings.maintenanceUpdates ? 'caretaker-toggle-on' : 'caretaker-toggle-off'}`}
@@ -464,59 +467,59 @@ function CaretakerProfilePage() {
 
         {/* Assigned Property */}
         {user?.profile?.assignedProperty && (
-          <ChartCard title="Assigned Property">
+          <ChartCard title={t('caretakerProfile.assignedProperty')}>
             <div className="caretaker-property-info">
-              <div className="caretaker-property-name">{user.profile.assignedProperty.name || 'Unknown Property'}</div>
-              <div className="caretaker-property-address">{user.profile.assignedProperty.address || 'Address not available'}</div>
+              <div className="caretaker-property-name">{user.profile.assignedProperty.name || t('caretakerProfile.unknownProperty')}</div>
+              <div className="caretaker-property-address">{user.profile.assignedProperty.address || t('caretakerProfile.addressNotAvailable')}</div>
               <div className="caretaker-property-details">
-                <span className="caretaker-property-type">{user.profile.assignedProperty.type || 'Property'}</span>
-                <span className="caretaker-property-units">{user.profile.assignedProperty.totalUnits || 0} units</span>
+                <span className="caretaker-property-type">{user.profile.assignedProperty.type || t('caretakerProfile.property')}</span>
+                <span className="caretaker-property-units">{user.profile.assignedProperty.totalUnits || 0} {t('caretakerProfile.units')}</span>
               </div>
             </div>
           </ChartCard>
         )}
 
         {/* Recent Activity */}
-        <ChartCard title="Recent Activity">
+        <ChartCard title={t('caretakerProfile.recentActivity')}>
           <div className="caretaker-activity-list">
             {tasksData
               .filter(task => task.status === 'completed')
               .slice(0, 3)
               .map((task) => (
                 <div key={task.id} className="caretaker-activity-item">
-                  <div className="caretaker-activity-icon">Done</div>
+                  <div className="caretaker-activity-icon">{t('caretakerProfile.done')}</div>
                   <div className="caretaker-activity-content">
-                    <div className="caretaker-activity-title">Completed: {task.title}</div>
+                    <div className="caretaker-activity-title">{t('caretakerProfile.completedLabel')}: {task.title}</div>
                     <div className="caretaker-activity-time">
-                      {task.completedDate ? formatDate(task.completedDate) : 'Recently'}
+                      {task.completedDate ? formatDate(task.completedDate) : t('caretakerProfile.recently')}
                     </div>
                   </div>
                 </div>
               ))}
             {tasksData.filter(task => task.status === 'completed').length === 0 && (
               <div className="caretaker-no-activity">
-                <p>No recent activity</p>
+                <p>{t('caretakerProfile.noRecentActivity')}</p>
               </div>
             )}
           </div>
         </ChartCard>
 
         {/* Account Settings */}
-        <ChartCard title="Account Settings">
+        <ChartCard title={t('caretakerProfile.accountSettings')}>
           <div className="caretaker-settings-container">
             <div className="caretaker-setting-row">
               <div className="caretaker-setting-label">
-                <div className="caretaker-setting-name">Language Preference</div>
-                <div className="caretaker-setting-description">Choose your preferred language</div>
+                <div className="caretaker-setting-name">{t('caretakerProfile.languagePreference')}</div>
+                <div className="caretaker-setting-description">{t('caretakerProfile.chooseLanguage')}</div>
               </div>
               <LanguageSwitcher />
             </div>
 
             <div className="caretaker-setting-row">
               <div className="caretaker-setting-label">
-                <div className="caretaker-setting-name">Two-Factor Authentication</div>
-                <div className="caretaker-setting-description">Add an extra layer of security</div>
-                <div className="caretaker-setting-description" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>Coming Soon</div>
+                <div className="caretaker-setting-name">{t('caretakerProfile.twoFactorAuth')}</div>
+                <div className="caretaker-setting-description">{t('caretakerProfile.extraSecurity')}</div>
+                <div className="caretaker-setting-description" style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>{t('caretakerProfile.comingSoon')}</div>
               </div>
               <div
                 className="caretaker-toggle-switch caretaker-toggle-off"

@@ -19,6 +19,7 @@ function TenantDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [_error, _setError] = useState<Error | null>(null);
   const [notifications, setNotifications] = useState<{ id: string; read: boolean }[]>([]);
+  const tenantContext = user?.tenantContext || null;
   
   const navItems = [
     { path: '/tenant', label: t('nav.home'), icon: 'properties', active: true },
@@ -28,12 +29,12 @@ function TenantDashboard() {
   ];
 
   // Only make API calls after user is loaded
-  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: _refetchPayments } = useApi(
+  const { data: payments, loading: paymentsLoading, error: paymentsError, refetch: refetchPayments } = useApi(
     () => user?.id ? paymentsApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
     [user?.id]
   );
 
-  const { data: lease, loading: leaseLoading, error: leaseError } = useApi(
+  const { data: lease, loading: leaseLoading, error: leaseError, refetch: refetchLease } = useApi(
     () => user?.id ? leasesApi.getAll({ tenantId: user.id }) : Promise.resolve([]),
     [user?.id]
   );
@@ -53,6 +54,11 @@ function TenantDashboard() {
       loadNotifications();
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    refetchPayments();
+    refetchLease();
+  }, []);
 
   const loadNotifications = async () => {
     try {
@@ -98,6 +104,53 @@ function TenantDashboard() {
   // Calculate real dashboard metrics
   const upcomingPayment = getUpcomingPayment();
   const currentLease = leaseData?.[0] || null;
+  const notProvidedLabel = t('profile.notProvided') || 'Not provided';
+  const parseDateValue = (value: unknown): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'string' && value.length > 0) {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+  };
+  const unitDisplay = currentLease?.unit?.unitNumber || tenantContext?.unit?.unitNumber || notProvidedLabel;
+  const propertyDisplay = currentLease?.property?.name || tenantContext?.property?.name || notProvidedLabel;
+  const leaseSummary = currentLease
+    ? {
+        monthlyRent: currentLease?.monthlyRent,
+        deposit: currentLease?.deposit,
+        startDate: currentLease?.startDate,
+        endDate: currentLease?.endDate,
+        status: currentLease?.status
+      }
+    : tenantContext?.lease
+      ? {
+          monthlyRent: tenantContext.lease?.monthlyRent,
+          deposit: tenantContext.lease?.deposit,
+          startDate: tenantContext.lease?.startDate,
+          endDate: tenantContext.lease?.endDate,
+          status: tenantContext.lease?.status
+        }
+      : null;
+  const leaseStartDate = leaseSummary?.startDate ? parseDateValue(leaseSummary.startDate) : null;
+  const leaseEndDate = leaseSummary?.endDate ? parseDateValue(leaseSummary.endDate) : null;
+  const leaseStatusBase = typeof leaseSummary?.status === 'string' ? leaseSummary.status.toLowerCase() : 'active';
+  const statusTranslations: Record<string, string> = {
+    active: t('status.active'),
+    pending: t('requests.status_pending_badge') || 'Pending',
+    approved: t('status.active'),
+    draft: t('requests.status_pending_badge') || 'Pending'
+  };
+  const statusDisplay = statusTranslations[leaseStatusBase] || (typeof leaseSummary?.status === 'string' ? leaseSummary.status : t('status.active'));
+  const leasePeriodDisplay = leaseSummary
+    ? `${leaseStartDate ? formatDate(leaseStartDate.toISOString()) : t('profile.notProvided')} - ${leaseEndDate ? formatDate(leaseEndDate.toISOString()) : t('profile.notProvided')}`
+    : t('profile.notProvided');
+  const monthlyRentValue = Number(leaseSummary?.monthlyRent ?? 0);
+  const depositValue = Number(leaseSummary?.deposit ?? 0);
+  const normalizedMonthlyRent = Number.isFinite(monthlyRentValue) ? monthlyRentValue : 0;
+  const normalizedDeposit = Number.isFinite(depositValue) ? depositValue : 0;
+  const statusClass = leaseStatusBase === 'active' ? 'success' : 'warning';
   const pendingRequests = requestsData?.filter((r: { status: string }) => r.status === 'pending') || [];
   const unreadNotifications = notificationsData.filter((n: { read: boolean }) => !n.read).length;
 
@@ -127,7 +180,7 @@ return (
             
           </div>
           <div className="page-subtitle">
-            {currentLease?.unitId?.unitNumber || t('tenant.unit')} - {currentLease?.propertyId?.name || t('tenant.property')}
+            {unitDisplay} - {propertyDisplay}
           </div>
           {hasError && (
             <div className="offline-indicator">
@@ -155,7 +208,7 @@ return (
           />
         </div>
 
-        {currentLease && (
+        {leaseSummary && (
           <div className="section-card lease-info-section">
             <div className="section-card-header">
               <div className="section-title">{t('tenant.lease_information')}</div>
@@ -163,22 +216,20 @@ return (
             <div className="lease-details-grid">
               <div className="lease-detail-item">
                 <div className="lease-detail-label">{t('tenant.monthly_rent')}</div>
-                <div className="lease-detail-value">{formatCurrency(currentLease?.monthlyRent || 0)}</div>
+                <div className="lease-detail-value">{formatCurrency(normalizedMonthlyRent)}</div>
               </div>
               <div className="lease-detail-item">
                 <div className="lease-detail-label">{t('tenant.security_deposit')}</div>
-                <div className="lease-detail-value">{formatCurrency(currentLease?.deposit || 0)}</div>
+                <div className="lease-detail-value">{formatCurrency(normalizedDeposit)}</div>
               </div>
               <div className="lease-detail-item lease-detail-full">
                 <div className="lease-detail-label">{t('tenant.lease_period')}</div>
-                <div className="lease-detail-value">
-                  {formatDate(currentLease?.startDate || '')} - {formatDate(currentLease?.endDate || '')}
-                </div>
+                <div className="lease-detail-value">{leasePeriodDisplay}</div>
               </div>
               <div className="lease-detail-item">
                 <div className="lease-detail-label">{t('common.status')}</div>
-                <span className={`status-pill ${currentLease?.status === 'active' ? 'success' : 'warning'}`}>
-                  {(currentLease?.status || 'unknown').charAt(0).toUpperCase() + (currentLease?.status || 'unknown').slice(1)}
+                <span className={`status-pill ${statusClass}`}>
+                  {statusDisplay}
                 </span>
               </div>
             </div>
@@ -188,39 +239,39 @@ return (
         <div className="quick-actions quick-actions-spaced">
           <ActionCard
             onClick={() => navigate('/tenant/payments')}
-            icon={<Icon name="payment" alt="Pay Rent" />}
+            icon={<Icon name="payment" alt="Pay Rent" size={48} />}
             title={t('dashboard.pay_rent')}
             description={t('dashboard.make_payment')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/requests')}
-            icon={<Icon name="maintenance" alt="Maintenance" />}
+            icon={<Icon name="maintenance" alt="Maintenance" size={48} />}
             title={t('dashboard.maintenance')}
             description={t('dashboard.report_issue')}
           />
           <ActionCard
             onClick={() => navigate('/tenant/messages')}
-            icon={<Icon name="contact" alt="Contact" />}
+            icon={<Icon name="contact" alt="Contact" size={48} />}
             title="Contact Information"
             description="Emergency contacts & general help"
           />
           <ActionCard
             onClick={() => navigate('/tenant/profile')}
-            icon={<Icon name="profile" alt="Profile" />}
+            icon={<Icon name="profile" alt="Profile" size={48} />}
             title={t('common.profile')}
             description={t('dashboard.update_info')}
           />
         </div>
         <div className="ai-button-container">
-        <AIButton 
-              userId={user?.id || 'fallback-user'} 
+        <AIButton
+              userId={user?.id || 'fallback-user'}
               language={localStorage.getItem('language') as 'en' | 'zu' || 'en'}
             />
         </div>
-        
+
         <NotificationWidget />
       </div>
-      
+
       <BottomNav items={navItems} responsive={false} />
       
       {/* Onboarding Tutorial */}

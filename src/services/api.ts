@@ -77,10 +77,15 @@ export const unitsApi = {
     const endpoint = propertyId ? `/api/units?propertyId=${propertyId}` : '/api/units';
     return apiRequest(endpoint);
   },
+  getById: (id: string) => apiRequest(`/api/units/${id}`),
   create: (data: Record<string, unknown>) => apiRequest('/api/units', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+};
+
+export const usersApi = {
+  getById: (id: string) => apiRequest(`/api/users/${id}`),
 };
 
 export const leasesApi = {
@@ -89,10 +94,30 @@ export const leasesApi = {
     const endpoint = params ? `/api/leases?${params}` : '/api/leases';
     return apiRequest(endpoint);
   },
+  getMyLease: (tenantId: string) => apiRequest(`/api/leases?tenantId=${tenantId}`).then((leases: unknown) => {
+    const leaseArray = Array.isArray(leases) ? leases : [];
+    const activeLease = leaseArray.find((l: Record<string, unknown>) => l.status === 'active');
+    return activeLease || null;
+  }),
   create: (data: Record<string, unknown>) => apiRequest('/api/leases', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+  downloadDocument: async (leaseId: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/leases/${leaseId}/document`);
+    if (!response.ok) {
+      throw new Error(`Failed to download lease document: ${response.status}`);
+    }
+    const blob = await response.blob();
+  const url = globalThis.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lease-${leaseId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    globalThis.URL.revokeObjectURL(url);
+  },
 };
 
 export const renewalsApi = {
@@ -176,9 +201,33 @@ export const invoicesApi = {
   delete: (id: string) => apiRequest(`/api/invoices/${id}`, {
     method: 'DELETE',
   }),
-  download: (id: string, format: 'pdf' | 'markdown') => apiRequest(`/api/invoices/${id}/${format}`, {
-    method: 'GET',
-  }),
+  download: async (id: string, format: 'pdf' | 'markdown') => {
+    const url = `${API_BASE_URL}/api/invoices/${id}/${format}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download invoice: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="?([^"]+)"?/);
+      const filename = filenameMatch ? filenameMatch[1] : `invoice-${id}.${format === 'pdf' ? 'pdf' : 'md'}`;
+
+      const downloadUrl = globalThis.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      globalThis.URL.revokeObjectURL(downloadUrl);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Invoice download failed:', error);
+      throw error;
+    }
+  },
   generateMonthly: () => apiRequest('/api/invoices/generate-monthly', {
     method: 'POST',
   }),
@@ -289,9 +338,9 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
-  updateSecuritySetting: (settingName: string, value: string) => apiRequest('/admin/security-settings', {
+  updateSecuritySetting: (id: string | null, settingName: string, value: string) => apiRequest('/admin/security-settings', {
     method: 'PUT',
-    body: JSON.stringify({ setting: settingName, value }),
+    body: JSON.stringify({ id, setting: settingName, value }),
   }),
   updateAuthMethod: (method: string, enabled: boolean) => apiRequest('/admin/auth-methods', {
     method: 'PUT',
@@ -349,6 +398,10 @@ export const managerApi = {
     headers: { 'x-manager-id': managerId },
     body: JSON.stringify({ reason }),
   }),
+};
+
+export const tenantsApi = {
+  getContext: (tenantId: string) => apiRequest(`/api/tenants/${tenantId}/context`),
 };
 
 export const authApi = {

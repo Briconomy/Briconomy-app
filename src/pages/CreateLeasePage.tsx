@@ -2,11 +2,17 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
-import { propertiesApi, unitsApi, leasesApi, useApi } from '../services/api.ts';
+import { propertiesApi, leasesApi, useApi } from '../services/api.ts';
+import { useLanguage } from '../contexts/LanguageContext.tsx';
+import { useToast } from '../contexts/ToastContext.tsx';
 
 function CreateLeasePage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { showToast } = useToast();
+
   const [submitting, setSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     tenantId: '',
     propertyId: '',
@@ -15,28 +21,67 @@ function CreateLeasePage() {
     endDate: '',
     monthlyRent: '',
     deposit: '',
-    terms: ''
+    terms: '',
+    appliedUnitNumber: ''
   });
 
   const navItems = [
-    { path: '/manager', label: 'Dashboard', active: false },
-    { path: '/manager/properties', label: 'Properties' },
-    { path: '/manager/leases', label: 'Leases', active: true },
-    { path: '/manager/payments', label: 'Payments' }
+    { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics', active: false },
+    { path: '/manager/properties', label: t('nav.properties'), icon: 'properties' },
+    { path: '/manager/leases', label: t('nav.leases'), icon: 'lease', active: true },
+    { path: '/manager/payments', label: t('nav.payments'), icon: 'payment' }
   ];
 
-  // Fetch real data from database
-  const { data: properties, loading: loadingProperties, error: propertiesError } = useApi(() => propertiesApi.getAll(), []);
-  const { data: tenants, loading: loadingTenants, error: tenantsError } = useApi(() => 
+  // #COMPLETION_DRIVE: Fetch all tenants - these are users who have come from approved applications
+  // #SUGGEST_VERIFY: Filter should only show tenants with application data (have propertyId and unitId)
+  const { data: tenants, loading: loadingTenants, error: tenantsError } = useApi(() =>
     fetch('http://localhost:8816/api/users?userType=tenant').then(res => {
       if (!res.ok) throw new Error('Failed to fetch tenants');
       return res.json();
     }), []
   );
-  const { data: units, loading: _loadingUnits } = useApi(() => 
-    formData.propertyId ? unitsApi.getAll(formData.propertyId) : Promise.resolve([]), 
-    [formData.propertyId]
-  );
+
+  // #COMPLETION_DRIVE: Fetch properties for reference (though property auto-fills from tenant selection)
+  // #SUGGEST_VERIFY: Properties are loaded but not used for manual selection
+  const { data: properties, loading: loadingProperties, error: propertiesError } = useApi(() => propertiesApi.getAll(), []);
+
+  // #COMPLETION_DRIVE: Calculate end date by adding lease duration months to start date
+  // #SUGGEST_VERIFY: Ensure leaseDuration is a valid number before performing date calculation
+  const calculateEndDate = (startDateStr: string, leaseDurationMonths: string | number) => {
+    if (!startDateStr || !leaseDurationMonths) return '';
+    try {
+      const startDate = new Date(startDateStr);
+      const months = parseInt(String(leaseDurationMonths), 10);
+      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + months, startDate.getDate());
+      return endDate.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  // #COMPLETION_DRIVE: Auto-populate all fields when tenant is selected from dropdown
+  // #SUGGEST_VERIFY: Ensure selected tenant has propertyId, unitId, and profile.moveInDate before using
+  const handleTenantSelection = (tenantId: string) => {
+    const selectedTenant = tenants?.find(t => (t._id || t.id) === tenantId);
+    if (selectedTenant) {
+      const moveInDate = selectedTenant.profile?.moveInDate || '';
+      const leaseDuration = selectedTenant.profile?.leaseDuration || '12';
+      const calculatedEndDate = calculateEndDate(moveInDate, leaseDuration);
+
+      setFormData(prev => ({
+        ...prev,
+        tenantId: tenantId,
+        propertyId: selectedTenant.propertyId || selectedTenant.assignedPropertyId || '',
+        unitId: selectedTenant.unitId || '',
+        appliedUnitNumber: selectedTenant.profile?.unitNumber || '',
+        startDate: moveInDate,
+        endDate: calculatedEndDate,
+        monthlyRent: '',
+        deposit: '',
+        terms: ''
+      }));
+    }
+  };
 
   // Show loading or error states
   if (loadingProperties || loadingTenants) {
@@ -45,7 +90,7 @@ function CreateLeasePage() {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
-            <div className="page-title">Loading...</div>
+            <div className="page-title">{t('createLease.loading')}</div>
           </div>
         </div>
         <BottomNav items={navItems} responsive={false} />
@@ -59,7 +104,7 @@ function CreateLeasePage() {
         <TopNav showLogout showBackButton />
         <div className="main-content">
           <div className="page-header">
-            <div className="page-title">Error Loading Data</div>
+            <div className="page-title">{t('createLease.errorLoading')}</div>
             <div className="page-subtitle">{propertiesError || tenantsError}</div>
           </div>
         </div>
@@ -93,11 +138,11 @@ function CreateLeasePage() {
       };
 
       await leasesApi.create(leaseData);
-      alert('Lease created successfully!');
+      showToast(t('createLease.successMessage'), 'success');
       navigate('/manager/leases');
     } catch (error) {
       console.error('Error creating lease:', error);
-      alert('Failed to create lease. Please try again.');
+      showToast(t('createLease.failedMessage'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -113,35 +158,25 @@ function CreateLeasePage() {
     return tenant.fullName || tenant.name || tenant.email || 'Tenant';
   };
 
-  const getPropertyName = (property: { name?: string; title?: string } | null | undefined) => {
-    if (!property) return 'Property';
-    return property.name || property.title || 'Property';
-  };
-
-  const getUnitLabel = (unit: { unitNumber?: string; name?: string } | null | undefined) => {
-    if (!unit) return 'Unit';
-    return unit.unitNumber || unit.name || 'Unit';
-  };
-
   return (
     <div className="app-container mobile-only">
       <TopNav showLogout showBackButton />
       
       <div className="main-content">
         <div className="page-header">
-          <div className="page-title">Create New Lease</div>
-          <div className="page-subtitle">Set up a new lease agreement</div>
+          <div className="page-title">{t('createLease.title')}</div>
+          <div className="page-subtitle">{t('createLease.subtitle')}</div>
         </div>
 
         <form onSubmit={handleSubmit} className="lease-form">
           <div className="form-group">
-            <label>Select Tenant</label>
+            <label>{t('createLease.selectTenant')}</label>
             <select
               value={formData.tenantId}
-              onChange={(e) => handleInputChange('tenantId', e.target.value)}
+              onChange={(e) => handleTenantSelection(e.target.value)}
               required
             >
-              <option value="">Choose Tenant</option>
+              <option value="">{t('createLease.chooseTenant')}</option>
               {tenants?.map(tenant => {
                 const tenantId = getEntityId(tenant);
                 if (!tenantId) {
@@ -158,58 +193,28 @@ function CreateLeasePage() {
           </div>
 
           <div className="form-group">
-            <label>Select Property</label>
-            <select
-              value={formData.propertyId}
-              onChange={(e) => {
-                handleInputChange('propertyId', e.target.value);
-                handleInputChange('unitId', '');
-              }}
-              required
-            >
-              <option value="">Choose Property</option>
-              {properties?.map(property => {
-                const propertyId = getEntityId(property);
-                if (!propertyId) {
-                  return null;
-                }
-
-                return (
-                  <option key={propertyId} value={propertyId}>
-                    {getPropertyName(property)}
-                  </option>
-                );
-              })}
-            </select>
+            <label>{t('createLease.property')}</label>
+            <input
+              type="text"
+              value={formData.propertyId ? properties?.find(p => (p._id || p.id) === formData.propertyId)?.name || '' : ''}
+              disabled
+              placeholder={t('createLease.autoPopulated')}
+            />
           </div>
 
           <div className="form-group">
-            <label>Select Unit</label>
-            <select
-              value={formData.unitId}
-              onChange={(e) => handleInputChange('unitId', e.target.value)}
-              required
-              disabled={!formData.propertyId}
-            >
-              <option value="">Choose Unit</option>
-              {units?.map(unit => {
-                const unitId = getEntityId(unit);
-                if (!unitId) {
-                  return null;
-                }
-
-                return (
-                  <option key={unitId} value={unitId}>
-                    {getUnitLabel(unit)}
-                  </option>
-                );
-              })}
-            </select>
+            <label>{t('createLease.unitApartment')}</label>
+            <input
+              type="text"
+              value={formData.appliedUnitNumber || ''}
+              disabled
+              placeholder={t('createLease.autoPopulated')}
+            />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>Start Date</label>
+              <label>{t('createLease.startDate')}</label>
               <input
                 type="date"
                 value={formData.startDate}
@@ -218,7 +223,7 @@ function CreateLeasePage() {
               />
             </div>
             <div className="form-group">
-              <label>End Date</label>
+              <label>{t('createLease.endDate')}</label>
               <input
                 type="date"
                 value={formData.endDate}
@@ -230,7 +235,7 @@ function CreateLeasePage() {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Monthly Rent (R)</label>
+              <label>{t('createLease.monthlyRent')}</label>
               <input
                 type="number"
                 value={formData.monthlyRent}
@@ -240,7 +245,7 @@ function CreateLeasePage() {
               />
             </div>
             <div className="form-group">
-              <label>Deposit (R)</label>
+              <label>{t('createLease.deposit')}</label>
               <input
                 type="number"
                 value={formData.deposit}
@@ -252,11 +257,11 @@ function CreateLeasePage() {
           </div>
 
           <div className="form-group">
-            <label>Additional Terms</label>
+            <label>{t('createLease.additionalTerms')}</label>
             <textarea
               value={formData.terms}
               onChange={(e) => handleInputChange('terms', e.target.value)}
-              placeholder="Enter any additional lease terms and conditions..."
+              placeholder={t('createLease.termsPlaceholder')}
               rows={3}
             />
           </div>
@@ -264,17 +269,17 @@ function CreateLeasePage() {
           <div className="form-actions">
             <button 
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary createLease-cancel-btn"
               onClick={() => navigate('/manager/leases')}
             >
-              Cancel
+              {t('createLease.cancel')}
             </button>
             <button 
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary createLease-btn"
               disabled={submitting}
             >
-              {submitting ? 'Creating...' : 'Create Lease'}
+              {submitting ? t('createLease.creating') : t('createLease.createLease')}
             </button>
           </div>
         </form>

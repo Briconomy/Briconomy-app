@@ -1,4 +1,5 @@
 import { serve } from "@std/http/server";
+import { ObjectId } from "mongo";
 import { connectToMongoDB, getCollection } from "./db.ts";
 import { bricllmHandler } from "./bricllm-handler.ts";
 import {
@@ -7,6 +8,7 @@ import {
   createProperty,
   updateProperty,
   getUnits,
+  getAvailableUnits,
   createUnit,
   getLeases,
   createLease,
@@ -34,6 +36,7 @@ import {
   getDashboardStats,
   getUsers as _getUsers,
   loginUser,
+  getTenantContext,
   registerUser,
   getSystemStats,
   getUserStats,
@@ -95,7 +98,7 @@ import {
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control, pragma, expires, x-manager-id',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
 };
 
 interface WebSocketConnection {
@@ -363,7 +366,35 @@ serve(async (req) => {
 
     // Users endpoints
     if (path[0] === 'api' && path[1] === 'users') {
-      if (req.method === 'GET') {
+      if (path[2] && req.method === 'GET') {
+        const userId = path[2];
+        try {
+          await connectToMongoDB();
+          const users = getCollection("users");
+          const user = await users.findOne({ _id: new ObjectId(userId) });
+          if (!user) {
+            return new Response(JSON.stringify({ error: 'User not found' }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 404
+            });
+          }
+          const sanitizedUser = {
+            id: user._id?.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            userType: user.userType,
+            phone: user.phone
+          };
+          return new Response(JSON.stringify(sanitizedUser), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (_error) {
+          return new Response(JSON.stringify({ error: 'Invalid user ID' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      } else if (req.method === 'GET') {
         try {
           await connectToMongoDB();
           const users = getCollection("users");
@@ -380,7 +411,12 @@ serve(async (req) => {
             fullName: user.fullName,
             email: user.email,
             userType: user.userType,
-            phone: user.phone
+            phone: user.phone,
+            propertyId: user.propertyId?.toString() || user.assignedPropertyId?.toString(),
+            assignedPropertyId: user.assignedPropertyId?.toString(),
+            unitId: user.unitId?.toString(),
+            appliedUnitId: user.appliedUnitId?.toString(),
+            profile: user.profile
           }));
           
           return new Response(JSON.stringify(sanitizedUsers), {
@@ -392,6 +428,28 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
+      }
+    }
+
+    if (path[0] === 'api' && path[1] === 'tenants' && path.length >= 4 && path[3] === 'context' && req.method === 'GET') {
+      const tenantId = path[2];
+      if (!tenantId) {
+        return new Response(JSON.stringify({ error: 'Tenant identifier required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      try {
+        const context = await getTenantContext(tenantId);
+        return new Response(JSON.stringify(context), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.error('Error building tenant context:', error);
+        return new Response(JSON.stringify({ error: 'Failed to load tenant context' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
     }
 
@@ -444,8 +502,43 @@ serve(async (req) => {
     }
 
     // Units endpoints
-    if (path[0] === 'api' && path[1] === 'units') {
+    if (path[0] === 'api' && path[1] === 'units' && path[2] === 'available' && path[3]) {
       if (req.method === 'GET') {
+        const propertyId = path[3];
+        const units = await getAvailableUnits(propertyId);
+        return new Response(JSON.stringify(units), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    if (path[0] === 'api' && path[1] === 'units') {
+      if (path[2] && req.method === 'GET') {
+        const unitId = path[2];
+        const units = getCollection("units");
+        const unit = await units.findOne({ _id: new ObjectId(unitId) });
+        if (!unit) {
+          return new Response(JSON.stringify({ error: 'Unit not found' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404
+          });
+        }
+        const unitResponse = {
+          id: unit._id.toString(),
+          unitNumber: unit.unitNumber,
+          propertyId: unit.propertyId?.toString(),
+          rent: unit.rent,
+          bedrooms: unit.bedrooms,
+          bathrooms: unit.bathrooms,
+          sqft: unit.sqft,
+          status: unit.status,
+          features: unit.features,
+          floor: unit.floor
+        };
+        return new Response(JSON.stringify(unitResponse), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else if (req.method === 'GET') {
         const propertyId = url.searchParams.get('propertyId');
         const units = await getUnits(propertyId || undefined);
         return new Response(JSON.stringify(units), {
@@ -471,7 +564,71 @@ serve(async (req) => {
         });
       } else if (req.method === 'POST') {
         const body = await req.json();
+        console.log('[POST /api/leases] Creating lease with data:', JSON.stringify(body, null, 2));
         const lease = await createLease(body);
+        console.log('[POST /api/leases] Created lease:', JSON.stringify(lease, null, 2));
+
+        try {
+          const leaseRecord = lease as Record<string, unknown>;
+          const rawStartDate = leaseRecord.startDate;
+          let startDateInput: string | number | Date = new Date();
+
+          if (rawStartDate instanceof Date) {
+            startDateInput = rawStartDate;
+          } else if (typeof rawStartDate === 'string' || typeof rawStartDate === 'number') {
+            startDateInput = rawStartDate;
+          }
+
+          const startDate = new Date(startDateInput);
+          const month = startDate.toLocaleString('default', { month: 'long' });
+          const year = startDate.getFullYear();
+
+          const tenantName = typeof leaseRecord.tenant === 'object' && leaseRecord.tenant !== null 
+            ? (leaseRecord.tenant as Record<string, unknown>).fullName as string | undefined
+            : undefined;
+          
+          const propertyName = typeof leaseRecord.property === 'object' && leaseRecord.property !== null 
+            ? (leaseRecord.property as Record<string, unknown>).name as string | undefined
+            : undefined;
+          
+          const propertyAddress = typeof leaseRecord.property === 'object' && leaseRecord.property !== null 
+            ? (leaseRecord.property as Record<string, unknown>).address as string | undefined
+            : undefined;
+
+          let managerId = undefined;
+          if (leaseRecord.propertyId) {
+            const properties = getCollection("properties");
+            const property = await properties.findOne({ _id: new ObjectId(leaseRecord.propertyId as string) });
+            if (property && property.managerId) {
+              managerId = property.managerId;
+            }
+          }
+
+          const dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + 1);
+          dueDate.setDate(1);
+
+          await createInvoice({
+            tenantId: leaseRecord.tenantId,
+            leaseId: leaseRecord.id,
+            propertyId: leaseRecord.propertyId,
+            managerId: managerId,
+            amount: (leaseRecord.monthlyRent as number | undefined) ?? 0,
+            issueDate: startDate.toISOString().split('T')[0],
+            dueDate: dueDate.toISOString().split('T')[0],
+            month: month,
+            year: year,
+            status: 'active',
+            description: `Monthly rent for ${month} ${year}`,
+            source: 'lease',
+            tenantName: tenantName || 'Tenant',
+            propertyName: propertyName,
+            propertyAddress: propertyAddress
+          });
+        } catch (invoiceError) {
+          console.error('Failed to create automatic invoice for lease:', invoiceError);
+        }
+
         return new Response(JSON.stringify(lease), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
@@ -536,6 +693,60 @@ serve(async (req) => {
       } else if (req.method === 'POST') {
         const body = await req.json();
         const payment = await createPayment(body);
+
+        // #COMPLETION_DRIVE: Broadcast to all managers of the property, not just primary manager
+        // #SUGGEST_VERIFY: Test with multiple managers to ensure all receive real-time updates
+        if (body.propertyId) {
+          try {
+            await connectToMongoDB();
+            const properties = getCollection("properties");
+            const property = await properties.findOne({ _id: new ObjectId(body.propertyId) }) as Record<string, unknown> | null;
+
+            const managerIds: string[] = [];
+
+            if (property) {
+              if (property.managerId) {
+                managerIds.push(String(property.managerId));
+              }
+              if (Array.isArray(property.managers)) {
+                managerIds.push(...(property.managers as unknown[]).map(m => String(m)));
+              }
+            }
+
+            if (body.managerId && !managerIds.includes(String(body.managerId))) {
+              managerIds.push(String(body.managerId));
+            }
+
+            const uniqueManagerIds = [...new Set(managerIds)];
+
+            for (const managerId of uniqueManagerIds) {
+              const paymentNotification = {
+                userId: managerId,
+                type: 'payment_received',
+                title: 'Payment Received',
+                message: `Payment of R${body.amount} has been received`,
+                read: false
+              };
+              await createNotification(paymentNotification, { broadcastToUsers });
+            }
+
+            // #COMPLETION_DRIVE: Also notify tenant so their payment history updates in real-time
+            // #SUGGEST_VERIFY: Tenant receives WebSocket notification after payment submission
+            if (body.tenantId) {
+              const tenantNotification = {
+                userId: body.tenantId,
+                type: 'payment_submitted',
+                title: 'Payment Submitted',
+                message: `Your payment of R${body.amount} has been submitted`,
+                read: false
+              };
+              await createNotification(tenantNotification, { broadcastToUsers });
+            }
+          } catch (error) {
+            console.error("Error broadcasting payment notification to managers:", error);
+          }
+        }
+
         return new Response(JSON.stringify(payment), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 201
@@ -552,6 +763,12 @@ serve(async (req) => {
     // Invoices endpoints
     if (path[0] === 'api' && path[1] === 'invoices') {
       if (req.method === 'GET' && path[2] && path[3] === 'pdf') {
+         if (!/^[0-9a-fA-F]{24}$/.test(path[2])) {
+        return new Response(JSON.stringify({ error: 'Invalid invoice ID' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
         const pdf = await getInvoicePdf(path[2]);
         return new Response(pdf.bytes, {
           headers: {
@@ -950,7 +1167,13 @@ serve(async (req) => {
       if (path[1] === 'security-settings' && req.method === 'GET') {
         const settings = await getSecuritySettings();
         return new Response(JSON.stringify(settings), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0'
+          }
         });
       }
       
@@ -1027,9 +1250,15 @@ serve(async (req) => {
       // Update security setting
       if (path[1] === 'security-settings' && req.method === 'PUT') {
         const body = await req.json();
-        const result = await updateSecuritySetting(body.setting, body.value);
+        const result = await updateSecuritySetting(body.id, body.setting, body.value);
         return new Response(JSON.stringify(result), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0'
+          }
         });
       }
       
@@ -1253,16 +1482,23 @@ serve(async (req) => {
     if (path[0] === 'api' && path[1] === 'documents') {
       if (req.method === 'GET' && !path[2]) {
         const filters: Record<string, unknown> = {};
-        
-        const typeParam = url.searchParams.get('type');
-        if (typeParam) filters.type = typeParam;
-        
-        const propertyIdParam = url.searchParams.get('propertyId');
-        if (propertyIdParam) filters.propertyId = propertyIdParam;
-        
-        const leaseIdParam = url.searchParams.get('leaseId');
-        if (leaseIdParam) filters.leaseId = leaseIdParam;
-        
+        const filterKeys: Array<[string, string]> = [
+          ['type', 'type'],
+          ['propertyId', 'propertyId'],
+          ['leaseId', 'leaseId'],
+          ['tenantId', 'tenantId'],
+          ['uploadedBy', 'uploadedBy'],
+          ['status', 'status'],
+          ['category', 'category']
+        ];
+
+        for (const [queryKey, filterKey] of filterKeys) {
+          const value = url.searchParams.get(queryKey);
+          if (value) {
+            filters[filterKey] = value;
+          }
+        }
+
         const documents = await getDocuments(filters);
         return new Response(JSON.stringify(documents), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -1271,10 +1507,10 @@ serve(async (req) => {
 
       if (req.method === 'POST' && !path[2]) {
         const body = await req.json();
-        const result = await createDocument(body);
-        const insertedId = (result as { insertedId?: unknown }).insertedId;
-        return new Response(JSON.stringify(insertedId?.toString()), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        const document = await createDocument(body);
+        return new Response(JSON.stringify(document), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201
         });
       }
 

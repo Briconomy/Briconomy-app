@@ -15,9 +15,13 @@ type SecurityStat = {
 };
 
 type SecuritySetting = {
+  id?: string;
   setting: string;
   value: string;
   configurable: boolean;
+  key?: string;
+  updatedAt?: string;
+  createdAt?: string;
 };
 
 type SecurityConfig = {
@@ -61,13 +65,35 @@ function AdminSecurityPage() {
   ];
 
   const getFallbackSecuritySettings = (): SecuritySetting[] => [
-    { setting: 'Session Timeout', value: '30 minutes', configurable: true },
-    { setting: 'Password Expiry', value: '90 days', configurable: true },
-    { setting: 'Max Login Attempts', value: '5 attempts', configurable: true },
-    { setting: 'IP Whitelist', value: 'Disabled', configurable: true },
-    { setting: 'Audit Logging', value: 'Enabled', configurable: false },
-    { setting: 'Encryption Standard', value: 'AES-256', configurable: false }
+    { id: 'fallback-session-timeout', setting: 'Session Timeout', value: '30 minutes', configurable: true },
+    { id: 'fallback-password-expiry', setting: 'Password Expiry', value: '90 days', configurable: true },
+    { id: 'fallback-max-login-attempts', setting: 'Max Login Attempts', value: '5 attempts', configurable: true },
+    { id: 'fallback-ip-whitelist', setting: 'IP Whitelist', value: 'Disabled', configurable: true },
+    { id: 'fallback-audit-logging', setting: 'Audit Logging', value: 'Enabled', configurable: false },
+    { id: 'fallback-encryption-standard', setting: 'Encryption Standard', value: 'AES-256', configurable: false }
   ];
+
+  const normalizeSettingName = (name: string) => name.trim().toLowerCase();
+  const securitySettingOrder = [
+    'session timeout',
+    'password expiry',
+    'max login attempts',
+    'ip whitelist',
+    'audit logging',
+    'encryption standard'
+  ];
+
+  const getSettingOrderIndex = (name: string) => {
+    const index = securitySettingOrder.indexOf(normalizeSettingName(name));
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+
+  const formatUpdatedAt = (timestamp?: string) => {
+    if (!timestamp) return '';
+    const parsed = new Date(timestamp);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toLocaleString();
+  };
 
   const getSecurityStatsData = () => {
     if (statsLoading || !securityStats) {
@@ -188,8 +214,8 @@ function AdminSecurityPage() {
       } else if (selectedSetting.setting.toLowerCase().includes('attempts')) {
         formattedValue = `${settingValue} attempts`;
       }
-
-      await adminApi.updateSecuritySetting(selectedSetting.setting, formattedValue);
+      const targetId = selectedSetting.id && selectedSetting.id.length === 24 ? selectedSetting.id : null;
+      await adminApi.updateSecuritySetting(targetId, selectedSetting.setting, formattedValue);
       
       await refetchSettings();
       
@@ -246,7 +272,20 @@ function AdminSecurityPage() {
 
   const stats = getSecurityStatsData();
   const alertsToRender: SecurityAlert[] = securityAlerts?.length ? securityAlerts : getFallbackSecurityAlerts();
-  const settingsToRender: SecuritySetting[] = securitySettings?.length ? securitySettings : getFallbackSecuritySettings();
+  const liveSettings = (securitySettings ?? []).map((setting) => ({
+    ...setting,
+    configurable: setting.configurable !== false
+  }));
+  const sortedLiveSettings = [...liveSettings].sort((a, b) => {
+    const aIndex = getSettingOrderIndex(a.setting);
+    const bIndex = getSettingOrderIndex(b.setting);
+    if (aIndex !== bIndex) {
+      return aIndex - bIndex;
+    }
+    return a.setting.localeCompare(b.setting);
+  });
+  const hasLiveData = sortedLiveSettings.length > 0;
+  const settingsToRender: SecuritySetting[] = hasLiveData ? sortedLiveSettings : getFallbackSecuritySettings();
 
   return (
     <div className="app-container mobile-only">
@@ -376,7 +415,9 @@ function AdminSecurityPage() {
                     cursor: 'pointer',
                     boxShadow: '0 3px 10px rgba(108, 117, 125, 0.3)',
                     transition: 'all 0.3s ease',
-                    minWidth: '80px'
+                    minWidth: '80px',
+                    marginTop: '5px',
+                    marginBottom: '-15px'
                   }}
                   onClick={() => handleClearAlert(alert.id)}
                 >
@@ -395,7 +436,7 @@ function AdminSecurityPage() {
           <div className="table-header">
             <div className="table-title">
               {t('security.settings')} 
-              {securitySettings && securitySettings.length > 0 ? 
+              {hasLiveData ? 
                 <span style={{ color: 'green', fontSize: '12px', marginLeft: '8px' }}>(Live Data)</span> : 
                 <span style={{ color: 'orange', fontSize: '12px', marginLeft: '8px' }}>(Fallback Data)</span>
               }
@@ -408,13 +449,20 @@ function AdminSecurityPage() {
               </div>
             </div>
           ) : (
-            settingsToRender.map((setting, index) => (
-              <div key={`setting-${setting.setting}-${index}`} className="list-item">
-                <div className="item-info">
-                  <h4>{setting.setting} {!setting.configurable && <span style={{ color: '#999', fontSize: '12px' }}>(Read-only)</span>}</h4>
-                  <p>{setting.value}</p>
-                </div>
-                {setting.configurable ? (
+            settingsToRender.map((setting, index) => {
+              const updatedLabel = formatUpdatedAt(setting.updatedAt);
+              const isConfigurable = setting.configurable !== false;
+              const itemKey = setting.id ? `setting-${setting.id}` : `setting-${setting.setting}-${index}`;
+              return (
+                <div key={itemKey} className="list-item">
+                  <div className="item-info">
+                    <h4>{setting.setting} {!isConfigurable && <span style={{ color: '#999', fontSize: '12px' }}>(Read-only)</span>}</h4>
+                    <p>{setting.value}</p>
+                    {updatedLabel && (
+                      <p style={{ fontSize: '12px', color: '#666' }}>Last updated {updatedLabel}</p>
+                    )}
+                  </div>
+                  {isConfigurable ? (
                   <button 
                     type="button" 
                     style={{
@@ -430,22 +478,23 @@ function AdminSecurityPage() {
                       transition: 'all 0.3s ease',
                       minWidth: '100px'
                     }}
-                    onClick={() => handleConfigureSetting(setting)}
-                  >
-                    {t('security.configure')}
-                  </button>
-                ) : (
-                  <span style={{ 
-                    color: '#999', 
-                    fontSize: '12px', 
-                    fontStyle: 'italic',
-                    padding: '10px 20px'
-                  }}>
-                    System Managed
-                  </span>
-                )}
-              </div>
-            ))
+                      onClick={() => handleConfigureSetting(setting)}
+                    >
+                      {t('security.configure')}
+                    </button>
+                  ) : (
+                    <span style={{ 
+                      color: '#999', 
+                      fontSize: '12px', 
+                      fontStyle: 'italic',
+                      padding: '10px 20px'
+                    }}>
+                      System Managed
+                    </span>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>

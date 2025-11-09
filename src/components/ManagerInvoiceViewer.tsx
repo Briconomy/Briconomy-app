@@ -12,15 +12,14 @@ interface Invoice {
   property?: { name: string; address: string };
 }
 
-interface InvoiceViewerProps {
+interface ManagerInvoiceViewerProps {
   invoice: Invoice;
   onDownload?: (id: string, format: 'pdf' | 'markdown') => void;
-  onPay?: (invoice: Invoice) => void;
   isLoading?: boolean;
 }
 
-function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerProps) {
-  const [expandedDetails, setExpandedDetails] = useState(false);
+function ManagerInvoiceViewer({ invoice, onDownload, isLoading }: ManagerInvoiceViewerProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -47,6 +46,15 @@ function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerP
     return new Date(dateString).toLocaleDateString('en-ZA');
   };
 
+  const handleDownload = async (format: 'pdf' | 'markdown') => {
+    setIsDownloading(true);
+    try {
+      await onDownload?.(invoice.id, format);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="invoice-card" style={{
       background: 'var(--surface)',
@@ -56,7 +64,7 @@ function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerP
       boxShadow: 'var(--shadow-sm)',
       border: '1px solid var(--border-primary)'
     }}>
-      {/* Header */}
+      {/* Header: Invoice Number and Status */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -88,11 +96,10 @@ function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerP
         </div>
       </div>
 
-      {/* Key Dates */}
+      {/* Dates */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '12px',
+        display: 'flex',
+        gap: '16px',
         marginBottom: '16px',
         padding: '12px',
         background: 'var(--background)',
@@ -100,7 +107,7 @@ function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerP
       }}>
         <div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-            ISSUE DATE
+            ISSUED
           </div>
           <div style={{ fontSize: '14px', fontWeight: '500' }}>
             {formatDate(invoice.issueDate)}
@@ -108,7 +115,7 @@ function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerP
         </div>
         <div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-            DUE DATE
+            DUE
           </div>
           <div style={{ fontSize: '14px', fontWeight: '500' }}>
             {formatDate(invoice.dueDate)}
@@ -116,108 +123,86 @@ function InvoiceViewer({ invoice, onDownload, onPay, isLoading }: InvoiceViewerP
         </div>
       </div>
 
-      {/* Details Toggle */}
-      <div
-        onClick={() => setExpandedDetails(!expandedDetails)}
-        style={{
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '12px 0',
-          color: 'var(--primary)',
-          fontSize: '14px',
-          fontWeight: '500'
-        }}
-      >
-        <span>{expandedDetails ? '▼' : '▶'}</span>
-        Details
-      </div>
+      {/* Divider */}
+      <div style={{
+        height: '1px',
+        background: 'var(--border-primary)',
+        margin: '16px 0'
+      }}></div>
 
-      {/* Expanded Details */}
-      {expandedDetails && (
-        <div style={{
-          padding: '12px 0',
-          borderTop: '1px solid var(--border-primary)',
-          marginTop: '12px'
-        }}>
-          {invoice.property && (
-            <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                PROPERTY
-              </div>
-              <div style={{ fontSize: '14px' }}>
-                {invoice.property.name}
-              </div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                {invoice.property.address}
-              </div>
-            </div>
-          )}
-          {invoice.tenant && (
-            <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                TENANT
-              </div>
-              <div style={{ fontSize: '14px' }}>
-                {invoice.tenant.fullName}
-              </div>
-            </div>
-          )}
-          {invoice.description && (
-            <div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                DESCRIPTION
-              </div>
-              <div style={{ fontSize: '14px' }}>
-                {invoice.description}
-              </div>
-            </div>
-          )}
+      {/* Tenant Info */}
+      {invoice.tenant && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+            TENANT
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: '500' }}>
+            {invoice.tenant.fullName}
+          </div>
         </div>
       )}
+
+      {/* Property Info */}
+      {invoice.property && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+            PROPERTY
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: '500' }}>
+            {invoice.property.name}
+          </div>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            {invoice.property.address}
+          </div>
+        </div>
+      )}
+
+      {/* Description */}
+      {invoice.description && (
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+            DESCRIPTION
+          </div>
+          <div style={{ fontSize: '14px' }}>
+            {invoice.description}
+          </div>
+        </div>
+      )}
+
+      {/* Divider */}
+      <div style={{
+        height: '1px',
+        background: 'var(--border-primary)',
+        margin: '16px 0'
+      }}></div>
 
       {/* Actions */}
       <div style={{
         display: 'flex',
         gap: '8px',
-        marginTop: '16px',
-        paddingTop: '16px',
-        borderTop: '1px solid var(--border-primary)',
         flexWrap: 'wrap'
       }}>
-        {invoice.status !== 'paid' && onPay && (
-          <button
-            type="button"
-            onClick={() => onPay(invoice)}
-            disabled={isLoading}
-            className="btn btn-primary"
-            style={{ flex: 1, minWidth: '100px', fontSize: '13px' }}
-          >
-            {isLoading ? '...' : 'Pay'}
-          </button>
-        )}
         <button
           type="button"
-          onClick={() => onDownload?.(invoice.id, 'pdf')}
-          disabled={isLoading}
+          onClick={() => handleDownload('pdf')}
+          disabled={isLoading || isDownloading}
           className="btn btn-secondary"
           style={{ flex: 1, minWidth: '80px', fontSize: '13px' }}
         >
-          {isLoading ? '...' : 'PDF'}
+          {isDownloading ? '...' : 'PDF'}
         </button>
         <button
           type="button"
-          onClick={() => onDownload?.(invoice.id, 'markdown')}
-          disabled={isLoading}
+          onClick={() => handleDownload('markdown')}
+          disabled={isLoading || isDownloading}
           className="btn btn-secondary"
-          style={{ flex: 1, minWidth: '80px', fontSize: '13px' }}
+          style={{ flex: 1, minWidth: '100px', fontSize: '13px' }}
         >
-          {isLoading ? '...' : 'Details'}
+          {isDownloading ? '...' : 'Details'}
         </button>
       </div>
     </div>
   );
 }
 
-export default InvoiceViewer;
+export default ManagerInvoiceViewer;
