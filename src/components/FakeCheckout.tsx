@@ -11,11 +11,11 @@ interface FakeCheckoutProps {
 
 function FakeCheckout({ amount, invoiceNumber, tenantName, onComplete, onCancel, isLoading }: FakeCheckoutProps) {
   const [formData, setFormData] = useState({
-    cardNumber: '',
-    expiryMonth: '',
-    expiryYear: '',
-    cvv: '',
-    cardholderName: '',
+    cardNumber: '4111 1111 1111 1111',
+    expiryMonth: '12',
+    expiryYear: (new Date().getFullYear() + 5).toString(),
+    cvv: '123',
+    cardholderName: tenantName,
   });
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
