@@ -169,46 +169,53 @@ function ProspectiveTenantPropertiesPage() {
   }, [properties, searchTerm, selectedType, priceRange]);
 
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setUserLocationStatus('unsupported');
-      return;
+    // Set default location to Varsity College Sandton
+    // Coordinates: 28.0525° E, -26.1076° S (Sandton, Johannesburg)
+    const varsityCollegeSandton: PropertyLocation = {
+      id: 'varsity-college-sandton',
+      name: 'Varsity College Sandton',
+      address: 'Cnr Grayston Drive & Rivonia Road, Sandton, Johannesburg',
+      coordinates: [28.0525, -26.1076]
+    };
+
+    setUserLocation(varsityCollegeSandton);
+    setUserLocationStatus('ready');
+
+    // Also try to get actual user location in the background
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      let watchId: number | null = null;
+
+      const handleSuccess = (position: GeolocationPosition) => {
+        const { latitude, longitude } = position.coords;
+        const parsedLat = Number(latitude);
+        const parsedLng = Number(longitude);
+        if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
+          setUserLocation({
+            id: 'current-user-location',
+            name: 'Your Current Location',
+            coordinates: [parsedLng, parsedLat]
+          });
+          setUserLocationStatus('ready');
+        }
+      };
+
+      const handleError = (_errorEvent: GeolocationPositionError) => {
+        // Keep Varsity College Sandton as fallback location
+        // Don't change status since we already have a valid location
+      };
+
+      watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 20000
+      });
+
+      return () => {
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+      };
     }
-
-    let watchId: number | null = null;
-
-    const handleSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      const parsedLat = Number(latitude);
-      const parsedLng = Number(longitude);
-      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
-        setUserLocation({
-          id: 'current-user-location',
-          name: 'Current Location',
-          coordinates: [parsedLng, parsedLat]
-        });
-        setUserLocationStatus('ready');
-      }
-    };
-
-    const handleError = (errorEvent: GeolocationPositionError) => {
-      if (errorEvent.code === errorEvent.PERMISSION_DENIED) {
-        setUserLocationStatus('denied');
-      } else {
-        setUserLocationStatus('error');
-      }
-    };
-
-    watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
-      enableHighAccuracy: true,
-      maximumAge: 30000,
-      timeout: 20000
-    });
-
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
   }, []);
 
   // Update search preferences in session when they change
@@ -493,7 +500,7 @@ function ProspectiveTenantPropertiesPage() {
         </div>
 
         <div className="section-card" style={{ marginBottom: '24px', padding: '16px' }}>
-          <div className="section-title" style={{ marginBottom: '12px' }}>Your Current Location</div>
+          <div className="section-title" style={{ marginBottom: '12px' }}>Current Location - Varsity College Sandton</div>
           {userLocationStatus === 'ready' && userLocation ? (
             <PropertyMap locations={[userLocation]} />
           ) : (
