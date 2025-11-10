@@ -2126,7 +2126,7 @@ async function initializeDatabase() {
     console.log(`  Audit Logs: ${await db.collection("audit_logs").countDocuments({})} (6 logs)`);
     
     console.log("\nTest Credentials:");
-    console.log("  Admin:       admin@briconomy.co.za / password");
+    console.log("  Admin:       admin@briconomy.co.za / admin123");
     console.log("  Manager 1:   manager1@briconomy.co.za / manager123");
     console.log("  Manager 2:   manager2@briconomy.co.za / manager123");
     console.log("  Caretaker 1: caretaker1@briconomy.co.za / caretaker123");

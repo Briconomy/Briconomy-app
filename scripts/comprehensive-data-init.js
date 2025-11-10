@@ -12,7 +12,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a1"),
     fullName: 'Sarah Johnson',
-    email: 'admin@briconomy.com',
+    email: 'admin@briconomy.co.za',
     phone: '+27821234567',
     userType: 'admin',
     password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
@@ -24,7 +24,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
     fullName: 'Michael Chen',
-    email: 'manager1@briconomy.com',
+    email: 'manager1@briconomy.co.za',
     phone: '+27823456789',
     userType: 'manager',
     password: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5',
@@ -36,7 +36,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
     fullName: 'Patricia Williams',
-    email: 'manager2@briconomy.com',
+    email: 'manager2@briconomy.co.za',
     phone: '+27825678901',
     userType: 'manager',
     password: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5',
@@ -48,7 +48,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
     fullName: 'David Mokoena',
-    email: 'caretaker1@briconomy.com',
+    email: 'caretaker1@briconomy.co.za',
     phone: '+27827890123',
     userType: 'caretaker',
     password: '4cddfbc939614427ff8b719e4f7699528e2481c37d734086b6b7786c5d9ed1aa',
@@ -60,7 +60,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a5"),
     fullName: 'Thabo Ndlovu',
-    email: 'caretaker2@briconomy.com',
+    email: 'caretaker2@briconomy.co.za',
     phone: '+27829012345',
     userType: 'caretaker',
     password: '4cddfbc939614427ff8b719e4f7699528e2481c37d734086b6b7786c5d9ed1aa',
@@ -72,7 +72,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
     fullName: 'Emma Thompson',
-    email: 'tenant1@briconomy.com',
+    email: 'tenant1@briconomy.co.za',
     phone: '+27821234568',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
@@ -100,7 +100,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
     fullName: 'James Smith',
-    email: 'tenant2@briconomy.com',
+    email: 'tenant2@briconomy.co.za',
     phone: '+27823456790',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
@@ -128,7 +128,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a8"),
     fullName: 'Lisa Anderson',
-    email: 'tenant3@briconomy.com',
+    email: 'tenant3@briconomy.co.za',
     phone: '+27825678902',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
@@ -156,7 +156,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
     fullName: 'Robert Brown',
-    email: 'tenant4@briconomy.com',
+    email: 'tenant4@briconomy.co.za',
     phone: '+27827890124',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
@@ -184,7 +184,7 @@ const _users = db.users.insertMany([
   {
     _id: ObjectId("67b2a1e0c9e4b8a3d4f5e6aa"),
     fullName: 'Maria Garcia',
-    email: 'tenant5@briconomy.com',
+    email: 'tenant5@briconomy.co.za',
     phone: '+27829012346',
     userType: 'tenant',
     password: 'b4f08230cddd4c1bc52a876e12db534f8b40eedb08ba78a5501d1cdf8eb8cb33',
