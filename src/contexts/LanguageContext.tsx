@@ -1063,6 +1063,11 @@ const translations: Translations = {
   'caretakerHistory.created': { en: 'Created:', zu: 'Kudalwe:' },
   'caretakerHistory.notes': { en: 'Notes:', zu: 'Amanothi:' },
   'caretakerHistory.imagesAttached': { en: 'image(s) attached', zu: 'izithombe ezihlanganisiwe' },
+  // #COMPLETION_DRIVE: Assuming "status" phrasing aligns between English and isiZulu caretaker history context
+  // #SUGGEST_VERIFY: Ask isiZulu reviewer to confirm status terminology for caretaker history flows
+  'caretakerHistory.completedStatus': { en: 'Completed', zu: 'Kuphethelwe' },
+  'caretakerHistory.inProgressStatus': { en: 'In Progress', zu: 'Kuyaqhubeka' },
+  'caretakerHistory.pendingStatus': { en: 'Pending', zu: 'Kulindile' },
   'caretakerHistory.startWork': { en: 'Start Work', zu: 'Qala Umsebenzi' },
   'caretakerHistory.complete': { en: 'Complete', zu: 'Qedela' },
   'caretakerHistory.reopen': { en: 'Re-open', zu: 'Vula Kabusha' },
