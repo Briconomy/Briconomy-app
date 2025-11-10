@@ -31,6 +31,19 @@ function ManagerPropertiesPage() {
 
   const { lowBandwidthMode } = useLowBandwidthMode();
 
+  const fallbackCoordinatesByName: Record<string, [number, number]> = {
+    'blue hills apartments': [18.4241, -33.9249],
+    'green valley complex': [31.0218, -29.8587],
+    'sunset towers': [25.6022, -33.9608]
+  };
+
+  const fallbackCoordinatesByCity: Array<{ matcher: RegExp; coordinates: [number, number] }> = [
+    { matcher: /cape town/i, coordinates: [18.4241, -33.9249] },
+    { matcher: /durban/i, coordinates: [31.0218, -29.8587] },
+    { matcher: /(gqeberha|port elizabeth)/i, coordinates: [25.6022, -33.9608] },
+    { matcher: /johannesburg/i, coordinates: [28.0473, -26.2041] }
+  ];
+
   const parseCoordinate = (value: unknown): number | null => {
     if (typeof value === 'number' && Number.isFinite(value)) {
       return value;
@@ -72,12 +85,29 @@ function ManagerPropertiesPage() {
     ];
     const latitude = latCandidates.map(parseCoordinate).find((candidate) => candidate !== null) ?? null;
     const longitude = lngCandidates.map(parseCoordinate).find((candidate) => candidate !== null) ?? null;
-    if (latitude === null || longitude === null) {
-      return null;
+    if (latitude !== null && longitude !== null) {
+      // #COMPLETION_DRIVE: Assuming property coordinate arrays store [longitude, latitude] ordering when provided via coordinates tuple
+      // #SUGGEST_VERIFY: Confirm backend coordinate payload matches the expected [lng, lat] order to avoid inverted map placement
+      return [longitude, latitude];
     }
-    // #COMPLETION_DRIVE: Assuming property coordinate arrays store [longitude, latitude] ordering when provided via coordinates tuple
-    // #SUGGEST_VERIFY: Confirm backend coordinate payload matches the expected [lng, lat] order to avoid inverted map placement
-    return [longitude, latitude];
+
+    const normalizedName = property.name?.toLowerCase().trim() ?? '';
+    if (normalizedName && fallbackCoordinatesByName[normalizedName]) {
+      // #COMPLETION_DRIVE: Using static fallback coordinates keyed by property name when precise coordinates are missing
+      // #SUGGEST_VERIFY: Update property records with true latitude/longitude to improve accuracy
+      return fallbackCoordinatesByName[normalizedName];
+    }
+
+    if (typeof property.address === 'string') {
+      const matchedCity = fallbackCoordinatesByCity.find((entry) => entry.matcher.test(property.address as string));
+      if (matchedCity) {
+        // #COMPLETION_DRIVE: Falling back to city-level coordinates if only city information is available
+        // #SUGGEST_VERIFY: Enhance seed data to include exact coordinates per property address
+        return matchedCity.coordinates;
+      }
+    }
+
+    return null;
   };
 
   const navItems = [
