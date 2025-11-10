@@ -1,6 +1,7 @@
-import { useState, useEffect, SyntheticEvent } from 'react';
+import { useState, useEffect, SyntheticEvent, useMemo } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
+import PropertyMap, { type PropertyLocation } from '../components/PropertyMap.tsx';
 import { propertiesApi, unitsApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode, useImageOptimization } from '../utils/bandwidth.ts';
 import { useProspectiveTenant } from '../contexts/ProspectiveTenantContext.tsx';
@@ -41,6 +42,8 @@ function ProspectiveTenantPropertiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [priceRange, setPriceRange] = useState<PriceRange>({ min: '', max: '' });
+  const [userLocation, setUserLocation] = useState<PropertyLocation | null>(null);
+  const [userLocationStatus, setUserLocationStatus] = useState<'pending' | 'ready' | 'denied' | 'error' | 'unsupported'>('pending');
 
   const { lowBandwidthMode } = useLowBandwidthMode();
   const { optimizeImage } = useImageOptimization();
@@ -49,11 +52,113 @@ function ProspectiveTenantPropertiesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const fallbackCoordinatesByName: Record<string, [number, number]> = {
+    'blue hills apartments': [18.4241, -33.9249],
+    'green valley complex': [31.0218, -29.8587],
+    'sunset towers': [25.6022, -33.9608]
+  };
+
+  const fallbackCoordinatesByCity: Array<{ matcher: RegExp; coordinates: [number, number] }> = [
+    { matcher: /cape town/i, coordinates: [18.4241, -33.9249] },
+    { matcher: /durban/i, coordinates: [31.0218, -29.8587] },
+    { matcher: /(gqeberha|port elizabeth)/i, coordinates: [25.6022, -33.9608] },
+    { matcher: /johannesburg/i, coordinates: [28.0473, -26.2041] }
+  ];
+
   const navItems = [
     { path: '/', label: t('nav.home'), icon: 'properties', active: false },
     { path: '/browse-properties', label: t('nav.properties'), icon: 'properties', active: true },
     { path: '/login', label: t('auth.login'), icon: 'profile', active: false }
   ];
+
+  const parseCoordinate = (value: unknown): number | null => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+    return null;
+  };
+
+  const extractCoordinates = (property: ProspectiveProperty): [number, number] | null => {
+    const record = property as Record<string, unknown>;
+    const locationValue = record.location as unknown;
+    const locationObject = typeof locationValue === 'object' && locationValue !== null ? locationValue as Record<string, unknown> : null;
+    const coordinatesValue = record.coordinates as unknown;
+    const tuple = Array.isArray(coordinatesValue) && coordinatesValue.length === 2 ? coordinatesValue : null;
+    const latCandidates = [
+      record.latitude,
+      record.lat,
+      record.locationLatitude,
+      record.locationLat,
+      locationObject?.latitude,
+      locationObject?.lat,
+      locationObject?.y,
+      tuple ? tuple[1] : null
+    ];
+    const lngCandidates = [
+      record.longitude,
+      record.lng,
+      record.locationLongitude,
+      record.locationLng,
+      locationObject?.longitude,
+      locationObject?.lng,
+      locationObject?.x,
+      tuple ? tuple[0] : null
+    ];
+    const latitude = latCandidates.map(parseCoordinate).find((candidate) => candidate !== null) ?? null;
+    const longitude = lngCandidates.map(parseCoordinate).find((candidate) => candidate !== null) ?? null;
+    if (latitude !== null && longitude !== null) {
+      return [longitude, latitude];
+    }
+
+    const normalizedName = property.name?.toLowerCase().trim() ?? '';
+    if (normalizedName && fallbackCoordinatesByName[normalizedName]) {
+      return fallbackCoordinatesByName[normalizedName];
+    }
+
+    if (typeof property.address === 'string') {
+      const matchedCity = fallbackCoordinatesByCity.find((entry) => entry.matcher.test(property.address as string));
+      if (matchedCity) {
+        return matchedCity.coordinates;
+      }
+    }
+
+    return null;
+  };
+
+  const deriveLocationText = (property: ProspectiveProperty): string => {
+    const record = property as Record<string, unknown>;
+    const locationValue = record.location as unknown;
+    const locationObject = typeof locationValue === 'object' && locationValue !== null ? locationValue as Record<string, unknown> : null;
+    const parts = [
+      typeof property.address === 'string' ? property.address.trim() : '',
+      typeof record.city === 'string' ? (record.city as string).trim() : '',
+      typeof record.town === 'string' ? (record.town as string).trim() : '',
+      typeof record.suburb === 'string' ? (record.suburb as string).trim() : '',
+      typeof locationObject?.city === 'string' ? (locationObject.city as string).trim() : '',
+      typeof locationObject?.province === 'string' ? (locationObject.province as string).trim() : '',
+      typeof locationObject?.state === 'string' ? (locationObject.state as string).trim() : '',
+      typeof locationObject?.country === 'string' ? (locationObject.country as string).trim() : ''
+    ]
+      .filter(Boolean)
+      .reduce<string[]>((acc, entry) => {
+        if (!acc.includes(entry)) {
+          acc.push(entry);
+        }
+        return acc;
+      }, []);
+
+    if (parts.length) {
+      return parts.join(', ');
+    }
+
+    return '';
+  };
 
   useEffect(() => {
     fetchProperties();
@@ -62,6 +167,49 @@ function ProspectiveTenantPropertiesPage() {
   useEffect(() => {
     filterProperties();
   }, [properties, searchTerm, selectedType, priceRange]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setUserLocationStatus('unsupported');
+      return;
+    }
+
+    let watchId: number | null = null;
+
+    const handleSuccess = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const parsedLat = Number(latitude);
+      const parsedLng = Number(longitude);
+      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
+        setUserLocation({
+          id: 'current-user-location',
+          name: 'Current Location',
+          coordinates: [parsedLng, parsedLat]
+        });
+        setUserLocationStatus('ready');
+      }
+    };
+
+    const handleError = (errorEvent: GeolocationPositionError) => {
+      if (errorEvent.code === errorEvent.PERMISSION_DENIED) {
+        setUserLocationStatus('denied');
+      } else {
+        setUserLocationStatus('error');
+      }
+    };
+
+    watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+      enableHighAccuracy: true,
+      maximumAge: 30000,
+      timeout: 20000
+    });
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
 
   // Update search preferences in session when they change
   useEffect(() => {
@@ -198,6 +346,41 @@ function ProspectiveTenantPropertiesPage() {
     return Math.round(baseRent * (1 + occupancyMultiplier * 0.5));
   };
 
+  const propertyLocations = useMemo(() => {
+    return filteredProperties.reduce<PropertyLocation[]>((acc, property) => {
+      const coordinates = extractCoordinates(property);
+      const hasAddress = typeof property.address === 'string' && property.address.trim().length > 0;
+      const fallbackLocation = deriveLocationText(property);
+      const lookupText = hasAddress ? property.address : fallbackLocation || property.name;
+      if (!coordinates && (!lookupText || !lookupText.trim())) {
+        return acc;
+      }
+      acc.push({
+        id: property.id,
+        name: property.name,
+        address: hasAddress ? property.address : fallbackLocation || undefined,
+        coordinates: coordinates ?? undefined
+      });
+      return acc;
+    }, []);
+  }, [filteredProperties]);
+
+  const userLocationMessage = (() => {
+    if (userLocationStatus === 'ready') {
+      return '';
+    }
+    if (userLocationStatus === 'pending') {
+      return 'Locating you...';
+    }
+    if (userLocationStatus === 'denied') {
+      return 'Location access is required to display your current position.';
+    }
+    if (userLocationStatus === 'unsupported') {
+      return 'This device does not support location services.';
+    }
+    return 'Unable to determine your location at the moment.';
+  })();
+
   const getPropertyAvailability = (property: ProspectiveProperty) => {
     const availableUnits = Math.max(property.totalUnits - property.occupiedUnits, 0);
     const totalUnits = property.totalUnits > 0 ? property.totalUnits : 1;
@@ -309,6 +492,30 @@ function ProspectiveTenantPropertiesPage() {
           </div>
         </div>
 
+        <div className="section-card" style={{ marginBottom: '24px', padding: '16px' }}>
+          <div className="section-title" style={{ marginBottom: '12px' }}>Your Current Location</div>
+          {userLocationStatus === 'ready' && userLocation ? (
+            <PropertyMap locations={[userLocation]} />
+          ) : (
+            <div
+              style={{
+                height: '220px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(22, 47, 27, 0.08), rgba(22, 47, 27, 0.02))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                fontWeight: 600,
+                color: '#153826',
+                textAlign: 'center'
+              }}
+            >
+              {userLocationMessage}
+            </div>
+          )}
+        </div>
+
         <div className="search-filter-section">
           <div className="search-bar">
             <input
@@ -364,6 +571,13 @@ function ProspectiveTenantPropertiesPage() {
             <span className="low-bandwidth-indicator">{t('prospect.low_bandwidth')}</span>
           )}
         </div>
+
+        {propertyLocations.length > 0 && (
+          <div className="section-card" style={{ marginBottom: '24px', padding: '16px' }}>
+            <div className="section-title" style={{ marginBottom: '12px' }}>Property Locations</div>
+            <PropertyMap locations={propertyLocations} />
+          </div>
+        )}
 
         <div className="property-grid">
           {filteredProperties.map((property) => {
