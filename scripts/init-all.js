@@ -674,9 +674,188 @@ async function initializeDatabase() {
     console.log(`  Created ${terminations.insertedCount} lease terminations\n`);
 
     // ==========================================
-    // STEP 7: Create Payments & Invoices
+    // STEP 7: Create Maintenance Requests
     // ==========================================
-    console.log("STEP 7: Creating payments and invoices...");
+    console.log("STEP 7: Creating maintenance requests...");
+    
+    // #COMPLETION_DRIVE: Assuming caretaker dashboards rely on maintenance_requests with assignedTo referencing caretaker user IDs
+    // #SUGGEST_VERIFY: Open the caretaker tasks page after seeding to confirm the new records populate counts
+    const maintenanceRequests = await db.collection("maintenance_requests").insertMany([
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e811"),
+        title: 'Emergency leak repair - Unit 2A',
+        description: 'Tenant reported a burst supply line under the kitchen sink with active leaking.',
+        tenantId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+        unitId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+        priority: 'high',
+        status: 'completed',
+        reportedBy: 'Emma Thompson',
+        reportedContact: '+27821234568',
+        assignedTo: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        assignedAt: new Date('2024-11-02T18:20:00Z'),
+        scheduledAt: new Date('2024-11-02T18:45:00Z'),
+        dueDate: new Date('2024-11-03T12:00:00Z'),
+        createdAt: new Date('2024-11-02T18:05:00Z'),
+        updatedAt: new Date('2024-11-03T08:05:00Z'),
+        completedAt: new Date('2024-11-03T08:00:00Z'),
+        resolutionDetails: 'Replaced damaged flex hose, tightened fittings, and confirmed no further leaks.',
+        photos: ['kitchen-leak-before.jpg'],
+        repairPhotos: ['kitchen-leak-after.jpg'],
+        comments: [
+          {
+            author: 'Emma Thompson',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a6"),
+            text: 'Water pooling under the sink and dripping into cupboard.',
+            timestamp: new Date('2024-11-02T18:10:00Z')
+          },
+          {
+            author: 'David Mokoena',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+            text: 'Shut off supply, replaced hose, and dried cabinet.',
+            timestamp: new Date('2024-11-03T07:50:00Z')
+          }
+        ],
+        costEstimate: 1200,
+        actualCost: 950,
+        location: 'Blue Hills Apartments',
+        unitNumber: '2A'
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e812"),
+        title: 'HVAC system reset - Unit 3C',
+        description: 'Tenant reported inconsistent cooling and noisy vents.',
+        tenantId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+        unitId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6c3"),
+        priority: 'medium',
+        status: 'in_progress',
+        reportedBy: 'James Smith',
+        reportedContact: '+27823456790',
+        assignedTo: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        assignedAt: new Date('2024-11-06T07:30:00Z'),
+        scheduledAt: new Date('2024-11-06T08:00:00Z'),
+        dueDate: new Date('2024-11-08T16:00:00Z'),
+        createdAt: new Date('2024-11-05T16:45:00Z'),
+        updatedAt: new Date('2024-11-06T09:15:00Z'),
+        photos: ['hvac-vent-noise.mp4'],
+        comments: [
+          {
+            author: 'James Smith',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a7"),
+            text: 'Unit rattles loudly overnight and stops cooling mid-morning.',
+            timestamp: new Date('2024-11-05T16:50:00Z')
+          },
+          {
+            author: 'David Mokoena',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+            text: 'Cleaned filters, monitoring compressor cycling.',
+            timestamp: new Date('2024-11-06T09:10:00Z')
+          }
+        ],
+        costEstimate: 800,
+        actualCost: null,
+        location: 'Blue Hills Apartments',
+        unitNumber: '3C'
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e813"),
+        title: 'Lobby lighting inspection',
+        description: 'Quarterly safety walkthrough to replace dimmed bulbs and test emergency lighting.',
+        tenantId: null,
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+        unitId: null,
+        priority: 'low',
+        status: 'pending',
+        reportedBy: 'Property Manager',
+        reportedContact: '+27823456789',
+        assignedTo: null,
+        scheduledAt: new Date('2024-11-12T07:00:00Z'),
+        dueDate: new Date('2024-11-12T16:00:00Z'),
+        createdAt: new Date('2024-11-08T10:00:00Z'),
+        updatedAt: new Date('2024-11-08T10:00:00Z'),
+        comments: [
+          {
+            author: 'Michael Chen',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a2"),
+            text: 'Please log bulb replacements individually for budget tracking.',
+            timestamp: new Date('2024-11-08T10:05:00Z')
+          }
+        ],
+        costEstimate: 500,
+        actualCost: null,
+        location: 'Blue Hills Apartments'
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e814"),
+        title: 'Pool pump maintenance',
+        description: 'Annual pump service and chemical balance testing.',
+        tenantId: null,
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+        unitId: null,
+        priority: 'medium',
+        status: 'completed',
+        reportedBy: 'Patricia Williams',
+        reportedContact: '+27825678901',
+        assignedTo: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        assignedAt: new Date('2024-10-28T06:30:00Z'),
+        scheduledAt: new Date('2024-10-28T07:00:00Z'),
+        dueDate: new Date('2024-10-29T18:00:00Z'),
+        createdAt: new Date('2024-10-27T14:20:00Z'),
+        updatedAt: new Date('2024-10-29T16:30:00Z'),
+        completedAt: new Date('2024-10-29T16:15:00Z'),
+        resolutionDetails: 'Backwashed filter, replaced worn seals, balanced pH to 7.4.',
+        photos: ['pool-maintenance-before.jpg'],
+        repairPhotos: ['pool-maintenance-after.jpg'],
+        comments: [
+          {
+            author: 'Patricia Williams',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a3"),
+            text: 'Schedule before weekend residents arrive.',
+            timestamp: new Date('2024-10-27T14:25:00Z')
+          }
+        ],
+        costEstimate: 1500,
+        actualCost: 1400,
+        location: 'Green Valley Complex'
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e815"),
+        title: 'Garage door recalibration - Unit B2',
+        description: 'Tenant reports automatic door sticking halfway when closing.',
+        tenantId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+        unitId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6c6"),
+        priority: 'high',
+        status: 'pending',
+        reportedBy: 'Robert Brown',
+        reportedContact: '+27827890124',
+        assignedTo: null,
+        scheduledAt: new Date('2024-11-14T09:30:00Z'),
+        dueDate: new Date('2024-11-14T15:00:00Z'),
+        createdAt: new Date('2024-11-09T08:40:00Z'),
+        updatedAt: new Date('2024-11-09T08:40:00Z'),
+        photos: ['garage-door-stuck.jpg'],
+        comments: [
+          {
+            author: 'Robert Brown',
+            authorId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a9"),
+            text: 'Door reverses before closing completely, safety sensor flashing.',
+            timestamp: new Date('2024-11-09T08:45:00Z')
+          }
+        ],
+        costEstimate: 1100,
+        actualCost: null,
+        location: 'Green Valley Complex',
+        unitNumber: 'B2'
+      }
+    ]);
+    console.log(`  Created ${maintenanceRequests.insertedCount} maintenance requests\n`);
+
+    // ==========================================
+  // STEP 8: Create Payments & Invoices
+  // ==========================================
+  console.log("STEP 8: Creating payments and invoices...");
     
     // Create ALL invoices (15 total across all tenants)
     const invoices = await db.collection("invoices").insertMany([
@@ -1133,9 +1312,9 @@ async function initializeDatabase() {
     console.log(`  Created ${payments.insertedCount} payments\n`);
 
     // ==========================================
-    // STEP 8: Create other collections
-    // ==========================================
-    console.log("STEP 8: Creating additional collections...");
+  // STEP 9: Create other collections
+  // ==========================================
+  console.log("STEP 9: Creating additional collections...");
     
   // #COMPLETION_DRIVE: Assuming caretaker task documents may include propertyName, checklist, and notes fields for UI metrics
   // #SUGGEST_VERIFY: Fetch /api/tasks?caretakerId=67b2a1e0c9e4b8a3d4f5e6a4 after seeding to confirm payload shape
@@ -1591,23 +1770,24 @@ async function initializeDatabase() {
     console.log(`  Created ${auditLogs.insertedCount} audit logs\n`);
 
     // ==========================================
-    // STEP 9: Create Indexes
-    // ==========================================
-    console.log("STEP 9: Creating indexes...");
+  // STEP 10: Create Indexes
+  // ==========================================
+  console.log("STEP 10: Creating indexes...");
     
     await db.collection("properties").createIndex({ managerId: 1 });
     await db.collection("units").createIndex({ propertyId: 1 });
     await db.collection("leases").createIndex({ tenantId: 1 });
     await db.collection("payments").createIndex({ leaseId: 1 });
     await db.collection("invoices").createIndex({ tenantId: 1 });
+  await db.collection("maintenance_requests").createIndex({ assignedTo: 1, status: 1 });
   await db.collection("caretaker_tasks").createIndex({ caretakerId: 1, status: 1 });
     
     console.log("  Created database indexes\n");
 
     // ==========================================
-    // STEP 10: Setup Pending Users Collection
-    // ==========================================
-    console.log("STEP 10: Setting up pending_users collection...");
+  // STEP 11: Setup Pending Users Collection
+  // ==========================================
+  console.log("STEP 11: Setting up pending_users collection...");
     
     await db.collection("pending_users").createIndex(
       { email: 1 },
@@ -1625,9 +1805,9 @@ async function initializeDatabase() {
     console.log("  Created pending_users indexes\n");
 
     // ==========================================
-    // STEP 11: Create Sample Applications
-    // ==========================================
-    console.log("STEP 11: Creating sample tenant applications...");
+  // STEP 12: Create Sample Applications
+  // ==========================================
+  console.log("STEP 12: Creating sample tenant applications...");
     
     const manager1 = await db.collection("users").findOne({ 
       email: sanitizeInput('manager1@briconomy.co.za') 
