@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import TopNav from "../components/TopNav.tsx";
 import BottomNav from "../components/BottomNav.tsx";
 import StatCard from "../components/StatCard.tsx";
@@ -9,6 +9,7 @@ import OfflineIndicator from '../components/OfflineIndicator.tsx';
 import AnnouncementSystem from '../components/AnnouncementSystem.tsx';
 import LanguageSelector from '../components/LanguageSelector.tsx';
 import Icon from '../components/Icon.tsx';
+import PropertyMap, { type PropertyLocation } from '../components/PropertyMap.tsx';
 import NotificationWidget from '../components/NotificationWidget.tsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.tsx';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -20,6 +21,8 @@ function ManagerDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [userLocation, setUserLocation] = useState<PropertyLocation | null>(null);
+  const [userLocationStatus, setUserLocationStatus] = useState<'pending' | 'ready' | 'denied' | 'error' | 'unsupported'>('pending');
 
   // API calls for real-time data - FILTERED BY MANAGER ID
   const { data: dashboardStats, loading: statsLoading, error: statsError } = useApi(
@@ -51,6 +54,67 @@ function ManagerDashboard() {
 
   const isLoading = authLoading || statsLoading || propertiesLoading || maintenanceLoading;
   const hasError = statsError || propertiesError || maintenanceError;
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setUserLocationStatus('unsupported');
+      return;
+    }
+
+    let watchId: number | null = null;
+
+    const handleSuccess = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const parsedLat = Number(latitude);
+      const parsedLng = Number(longitude);
+      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
+        // #COMPLETION_DRIVE: Assuming manager browsers grant geolocation for precise positioning
+        // #SUGGEST_VERIFY: Accept the location prompt on first load and confirm the map centers correctly
+        setUserLocation({
+          id: 'manager-current-location',
+          name: 'You',
+          coordinates: [parsedLng, parsedLat]
+        });
+        setUserLocationStatus('ready');
+      }
+    };
+
+    const handleError = (errorEvent: GeolocationPositionError) => {
+      if (errorEvent.code === errorEvent.PERMISSION_DENIED) {
+        setUserLocationStatus('denied');
+      } else {
+        setUserLocationStatus('error');
+      }
+    };
+
+    watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+      enableHighAccuracy: true,
+      maximumAge: 30000,
+      timeout: 20000
+    });
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
+
+  const userLocationMessage = (() => {
+    if (userLocationStatus === 'ready') {
+      return '';
+    }
+    if (userLocationStatus === 'pending') {
+      return t('manager.locating_you') || 'Locating you...';
+    }
+    if (userLocationStatus === 'denied') {
+      return t('manager.location_permission_required') || 'Location access is required to display your current position.';
+    }
+    if (userLocationStatus === 'unsupported') {
+      return t('manager.location_not_supported') || 'This device does not support location services.';
+    }
+    return t('manager.location_unavailable') || 'Unable to determine your location at the moment.';
+  })();
 
   if (isLoading) {
     return (
@@ -104,7 +168,29 @@ function ManagerDashboard() {
         </div>
 
         <ChartCard title={t('manager.property_locations')}>
-          <div className="map-placeholder">{t('manager.interactive_map')}</div>
+          {userLocationStatus === 'ready' && userLocation ? (
+            <PropertyMap locations={[userLocation]} />
+          ) : (
+            <div
+              className="map-placeholder"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                gap: '8px',
+                fontWeight: 600,
+                color: '#153826'
+              }}
+            >
+              <span>{userLocationMessage}</span>
+              {userLocationStatus === 'denied' && (
+                <span style={{ fontSize: '12px', fontWeight: 500, color: '#486152' }}>
+                  {t('manager.enable_location_prompt') || 'Enable location in your browser settings to view the map.'}
+                </span>
+              )}
+            </div>
+          )}
         </ChartCard>
 
         <div className="quick-actions">
