@@ -12,6 +12,7 @@
  */
 
 import { MongoClient, ObjectId } from "mongodb";
+import { Buffer } from "node:buffer";
 
 const MONGO_URI = "mongodb://127.0.0.1";
 const DB_NAME = "briconomy";
@@ -59,7 +60,7 @@ async function initializeDatabase() {
       try {
         await db.collection(collectionName).drop();
         console.log(`  Dropped ${collectionName}`);
-      } catch (error) {
+  } catch (_error) {
         // Collection doesn't exist, continue
       }
     }
@@ -1136,8 +1137,111 @@ async function initializeDatabase() {
     // ==========================================
     console.log("STEP 8: Creating additional collections...");
     
-    // Caretaker tasks removed - will be created through the application
-    console.log("  Skipped caretaker tasks (create via application)\n");
+  // #COMPLETION_DRIVE: Assuming caretaker task documents may include propertyName, checklist, and notes fields for UI metrics
+  // #SUGGEST_VERIFY: Fetch /api/tasks?caretakerId=67b2a1e0c9e4b8a3d4f5e6a4 after seeding to confirm payload shape
+  const caretakerTasks = await db.collection("caretaker_tasks").insertMany([
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e801"),
+        caretakerId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        title: 'Weekly property inspection',
+        description: 'Inspected common areas, verified emergency lighting, and logged minor scuff repairs',
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+        propertyName: 'Blue Hills Apartments',
+        unitId: null,
+        unitNumber: null,
+        status: 'completed',
+        priority: 'medium',
+        dueDate: new Date('2024-11-08T09:00:00Z'),
+        completedDate: new Date('2024-11-08T13:30:00Z'),
+        estimatedHours: 4,
+        actualHours: 3.5,
+        checklist: ['Fire extinguisher pressure', 'Emergency exit signage', 'Stairwell lighting'],
+        notes: 'Documented hallway scuffs for next paint touch-up cycle',
+        createdAt: new Date('2024-11-01T08:00:00Z'),
+        updatedAt: new Date('2024-11-08T13:30:00Z')
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e802"),
+        caretakerId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        title: 'Boiler pressure calibration',
+        description: 'Balanced building boiler pressure after resident temperature complaints',
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+        propertyName: 'Blue Hills Apartments',
+        unitId: null,
+        unitNumber: null,
+        status: 'completed',
+        priority: 'high',
+        dueDate: new Date('2024-11-05T10:00:00Z'),
+        completedDate: new Date('2024-11-05T11:45:00Z'),
+        estimatedHours: 2,
+        actualHours: 1.75,
+        checklist: ['Pressure relief valve test', 'Water temperature calibration', 'System bleed'],
+        notes: 'Reset thermostat schedule to reduce overnight cycling',
+        createdAt: new Date('2024-11-03T11:00:00Z'),
+        updatedAt: new Date('2024-11-05T11:45:00Z')
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e803"),
+        caretakerId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        title: 'Emergency leak repair - Unit 2A',
+        description: 'Responded to kitchen supply line leak and coordinated professional plumber follow-up',
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b1"),
+        propertyName: 'Blue Hills Apartments',
+        unitId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6c1"),
+        unitNumber: '2A',
+        status: 'completed',
+        priority: 'high',
+        dueDate: new Date('2024-11-02T21:00:00Z'),
+        completedDate: new Date('2024-11-02T20:15:00Z'),
+        estimatedHours: 3,
+        actualHours: 2.5,
+        photos: ['leak-before.jpg', 'leak-after.jpg'],
+        notes: 'Temporary fix held overnight until licensed plumber replaced valve',
+        createdAt: new Date('2024-11-02T18:10:00Z'),
+        updatedAt: new Date('2024-11-02T20:15:00Z')
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e804"),
+        caretakerId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        title: 'Pool chemical balancing',
+        description: 'Adjusted chlorine and pH levels to comply with municipal standards',
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+        propertyName: 'Green Valley Complex',
+        unitId: null,
+        unitNumber: null,
+        status: 'in_progress',
+        priority: 'medium',
+        dueDate: new Date('2024-11-13T07:00:00Z'),
+        completedDate: null,
+        estimatedHours: 2,
+        actualHours: 1,
+        checklist: ['Chemical test', 'Chlorine adjustment', 'Filter backwash'],
+        notes: 'Awaiting follow-up test after 24-hour circulation',
+        createdAt: new Date('2024-11-12T06:30:00Z'),
+        updatedAt: new Date('2024-11-12T09:45:00Z')
+      },
+      {
+        _id: new ObjectId("67b2a1e0c9e4b8a3d4f5e805"),
+        caretakerId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6a4"),
+        title: 'Irrigation system inspection',
+        description: 'Scheduled inspection of exterior irrigation zones ahead of summer watering schedule',
+        propertyId: new ObjectId("67b2a1e0c9e4b8a3d4f5e6b2"),
+        propertyName: 'Green Valley Complex',
+        unitId: null,
+        unitNumber: null,
+        status: 'pending',
+        priority: 'low',
+        dueDate: new Date('2024-11-18T08:00:00Z'),
+        completedDate: null,
+        estimatedHours: 3,
+        actualHours: null,
+        checklist: ['Zone pressure test', 'Sprinkler head alignment', 'Timer calibration'],
+        notes: 'To be completed after parts delivery for zone 3 valves',
+        createdAt: new Date('2024-11-10T09:00:00Z'),
+        updatedAt: new Date('2024-11-10T09:00:00Z')
+      }
+    ]);
+    console.log(`  Created ${caretakerTasks.insertedCount} caretaker tasks\n`);
 
     // Create ALL 8 settings
     const settings = await db.collection("settings").insertMany([
@@ -1496,6 +1600,7 @@ async function initializeDatabase() {
     await db.collection("leases").createIndex({ tenantId: 1 });
     await db.collection("payments").createIndex({ leaseId: 1 });
     await db.collection("invoices").createIndex({ tenantId: 1 });
+  await db.collection("caretaker_tasks").createIndex({ caretakerId: 1, status: 1 });
     
     console.log("  Created database indexes\n");
 
@@ -1653,7 +1758,7 @@ async function initializeDatabase() {
     console.log(`  Pending Applications: ${await db.collection("pending_users").countDocuments({})}`);
     console.log(`  Documents: ${await db.collection("documents").countDocuments({})} (5 documents)`);
     console.log(`  Settings: ${await db.collection("settings").countDocuments({})} (8 settings)`);
-    console.log(`  Caretaker Tasks: ${await db.collection("caretaker_tasks").countDocuments({})} (none - create via app)`);
+  console.log(`  Caretaker Tasks: ${await db.collection("caretaker_tasks").countDocuments({})} (caretaker1 history seeded)`);
     console.log(`  Reports: ${await db.collection("reports").countDocuments({})} (5 reports)`);
     console.log(`  Audit Logs: ${await db.collection("audit_logs").countDocuments({})} (6 logs)`);
     
