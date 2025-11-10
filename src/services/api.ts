@@ -78,6 +78,7 @@ export const unitsApi = {
     return apiRequest(endpoint);
   },
   getById: (id: string) => apiRequest(`/api/units/${id}`),
+  getAvailable: (propertyId: string) => apiRequest(`/api/units/available/${propertyId}`),
   create: (data: Record<string, unknown>) => apiRequest('/api/units', {
     method: 'POST',
     body: JSON.stringify(data),

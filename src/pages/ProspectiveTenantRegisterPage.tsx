@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopNav from '../components/TopNav.tsx';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator.tsx';
-import { authApi, propertiesApi } from '../services/api.ts';
+import { authApi, propertiesApi, unitsApi } from '../services/api.ts';
 
 function ProspectiveTenantRegisterPage() {
   const navigate = useNavigate();
@@ -49,9 +49,7 @@ function ProspectiveTenantRegisterPage() {
 
   const fetchAvailableUnits = async (propertyId: string) => {
     try {
-      const response = await fetch(`http://localhost:8816/api/units/available/${propertyId}`);
-      if (!response.ok) throw new Error('Failed to fetch units');
-      const units = await response.json();
+      const units = await unitsApi.getAvailable(propertyId);
       setAvailableUnits(units);
     } catch (err) {
       console.error('Error fetching available units:', err);
