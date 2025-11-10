@@ -196,9 +196,11 @@ async function handler(request: Request): Promise<Response> {
 
     // Build env script for client-side access to VITE variables
     const envVars = {
-      VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || ''
+      VITE_GOOGLE_CLIENT_ID: Deno.env.get('VITE_GOOGLE_CLIENT_ID') || '',
+      VITE_MAPBOX_TOKEN: Deno.env.get('VITE_MAPBOX_TOKEN') || Deno.env.get('MAPBOX_TOKEN') || ''
     };
-    const envScript = `const __BRICONOMY_ENV__ = ${JSON.stringify(envVars)};`;
+    const envScript = `const __BRICONOMY_ENV__ = ${JSON.stringify(envVars)};\n` +
+      `globalThis.MAPBOX_TOKEN = __BRICONOMY_ENV__.VITE_MAPBOX_TOKEN;`;
 
     // Inject Google Identity Services script if Google Client ID is available
     const googleClientId = envVars.VITE_GOOGLE_CLIENT_ID;

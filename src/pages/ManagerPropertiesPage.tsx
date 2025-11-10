@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import StatCard from '../components/StatCard.tsx';
 import ManagerPropertyCard from '../components/ManagerPropertyCard.tsx';
+import PropertyMap, { type PropertyLocation } from '../components/PropertyMap.tsx';
 import { propertiesApi, formatCurrency } from '../services/api.ts';
 import { useLowBandwidthMode } from '../utils/bandwidth.ts';
 import { useLanguage } from '../contexts/LanguageContext.tsx';
@@ -29,6 +30,55 @@ function ManagerPropertiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { lowBandwidthMode } = useLowBandwidthMode();
+
+  const parseCoordinate = (value: unknown): number | null => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+    return null;
+  };
+
+  const extractCoordinates = (property: ManagerProperty): [number, number] | null => {
+    const record = property as Record<string, unknown>;
+    const locationValue = record.location as unknown;
+    const locationObject = typeof locationValue === 'object' && locationValue !== null ? locationValue as Record<string, unknown> : null;
+    const coordinatesValue = record.coordinates as unknown;
+    const tuple = Array.isArray(coordinatesValue) && coordinatesValue.length === 2 ? coordinatesValue : null;
+    const latCandidates = [
+      record.latitude,
+      record.lat,
+      record.locationLatitude,
+      record.locationLat,
+      locationObject?.latitude,
+      locationObject?.lat,
+      locationObject?.y,
+      tuple ? tuple[1] : null
+    ];
+    const lngCandidates = [
+      record.longitude,
+      record.lng,
+      record.locationLongitude,
+      record.locationLng,
+      locationObject?.longitude,
+      locationObject?.lng,
+      locationObject?.x,
+      tuple ? tuple[0] : null
+    ];
+    const latitude = latCandidates.map(parseCoordinate).find((candidate) => candidate !== null) ?? null;
+    const longitude = lngCandidates.map(parseCoordinate).find((candidate) => candidate !== null) ?? null;
+    if (latitude === null || longitude === null) {
+      return null;
+    }
+    // #COMPLETION_DRIVE: Assuming property coordinate arrays store [longitude, latitude] ordering when provided via coordinates tuple
+    // #SUGGEST_VERIFY: Confirm backend coordinate payload matches the expected [lng, lat] order to avoid inverted map placement
+    return [longitude, latitude];
+  };
 
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
@@ -117,6 +167,23 @@ function ManagerPropertiesPage() {
     return sum + ((property.occupiedUnits ?? 0) * baseRent);
   }, 0);
 
+  const propertyLocations = useMemo(() => {
+    const locations: PropertyLocation[] = [];
+    filteredProperties.forEach((property) => {
+      const coordinates = extractCoordinates(property);
+      if (!coordinates) {
+        return;
+      }
+      locations.push({
+        id: property.id,
+        name: property.name,
+        coordinates,
+        address: property.address
+      });
+    });
+    return locations;
+  }, [filteredProperties]);
+
   if (loading) {
     return (
       <div className="app-container mobile-only">
@@ -200,6 +267,13 @@ function ManagerPropertiesPage() {
             <span className="low-bandwidth-indicator">{t('manager.low_bandwidth_mode')}</span>
           )}
         </div>
+
+        {propertyLocations.length > 0 && (
+          <div className="section-card" style={{ marginBottom: '24px', padding: '16px' }}>
+            <div className="section-title" style={{ marginBottom: '12px' }}>{t('manager.property_locations')}</div>
+            <PropertyMap locations={propertyLocations} />
+          </div>
+        )}
 
         <div className="manager-property-grid">
           {filteredProperties.map((property) => (

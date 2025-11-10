@@ -4,6 +4,9 @@ echo "Starting Briconomy Property Management System..."
 echo "Mobile-optimized PWA application"
 echo ""
 
+# Inject Mapbox token for frontend map rendering
+export MAPBOX_TOKEN="pk.eyJ1IjoibWF4MHhkYXl2YyIsImEiOiJjbWVncTFkOXMxNmUwMmxzNGVnenRwaHRjIn0.h6CK_o-YpmYsimTqV1S2_Q"
+
 # Kill any existing processes on ports 5173, 8000, and 8816
 echo "Cleaning up existing processes..."
 lsof -ti:5173 | xargs kill -9 2>/dev/null || true
