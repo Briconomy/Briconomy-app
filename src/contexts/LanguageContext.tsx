@@ -1028,6 +1028,9 @@ const translations: Translations = {
   'caretakerSchedule.statusCompleted': { en: 'Completed', zu: 'Kuphethelwe' },
   'caretakerSchedule.statusPending': { en: 'Pending', zu: 'Kulindile' },
   'caretakerSchedule.statusInProgress': { en: 'In Progress', zu: 'Kuyaqhubeka' },
+  // #COMPLETION_DRIVE: Approximating isiZulu translation for "Scheduled" as "Kuhleliwe"
+  // #SUGGEST_VERIFY: Ask native isiZulu reviewer to confirm caretakers schedule terminology
+  'caretakerSchedule.statusScheduled': { en: 'Scheduled', zu: 'Kuhleliwe' },
   'caretakerSchedule.at': { en: 'at', zu: 'ngo' },
   'caretakerSchedule.startWork': { en: 'Start Work', zu: 'Qala Umsebenzi' },
   'caretakerSchedule.complete': { en: 'Complete', zu: 'Qedela' },
