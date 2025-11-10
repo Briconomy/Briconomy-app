@@ -1082,6 +1082,13 @@ const translations: Translations = {
   'caretakerHistory.deleteConfirm': { en: 'Are you sure you want to delete this maintenance request?', zu: 'Uqinisekile ukuthi ufuna ukususa lesi sicelo sokulungisa?' },
   'caretakerHistory.updateFailed': { en: 'Failed to update status. Please try again.', zu: 'Kwehlulekile ukubuyekeza isimo. Sicela uzame futhi.' },
   'caretakerHistory.deleteFailed': { en: 'Failed to delete request. Please try again.', zu: 'Kwehlulekile ukususa isicelo. Sicela uzame futhi.' },
+  'caretakerHistory.completedFilter': { en: 'Completed', zu: 'Kuphethelwe' },
+  'caretakerHistory.inProgressFilter': { en: 'In Progress', zu: 'Kuyaqhubeka' },
+  'caretakerHistory.pendingFilter': { en: 'Pending', zu: 'Kulindile' },
+  'caretakerHistory.createdOn': { en: 'Created On', zu: 'Kudalwe Ngo' },
+  'caretakerHistory.completedCount': { en: 'Completed Count', zu: 'Inani Eliphethelwe' },
+  'caretakerHistory.inProgressCount': { en: 'In Progress Count', zu: 'Inani Eliqhubekayo' },
+  'caretakerHistory.pendingCount': { en: 'Pending Count', zu: 'Inani Elindiwe' },
 
   // Caretaker Profile Page
   'caretakerProfile.title': { en: 'My Profile', zu: 'Iphrofayili Yami' },
