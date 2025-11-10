@@ -28,6 +28,8 @@ function ManagerPropertiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [filteredProperties, setFilteredProperties] = useState<ManagerProperty[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userLocation, setUserLocation] = useState<PropertyLocation | null>(null);
+  const [userLocationStatus, setUserLocationStatus] = useState<'pending' | 'ready' | 'denied' | 'error' | 'unsupported'>('pending');
 
   const { lowBandwidthMode } = useLowBandwidthMode();
 
@@ -110,6 +112,37 @@ function ManagerPropertiesPage() {
     return null;
   };
 
+  const deriveLocationText = (property: ManagerProperty): string => {
+    const record = property as Record<string, unknown>;
+    const locationValue = record.location as unknown;
+    const locationObject = typeof locationValue === 'object' && locationValue !== null ? locationValue as Record<string, unknown> : null;
+    const parts = [
+      typeof property.address === 'string' ? property.address.trim() : '',
+      typeof record.city === 'string' ? (record.city as string).trim() : '',
+      typeof record.town === 'string' ? (record.town as string).trim() : '',
+      typeof record.suburb === 'string' ? (record.suburb as string).trim() : '',
+      typeof locationObject?.city === 'string' ? (locationObject.city as string).trim() : '',
+      typeof locationObject?.province === 'string' ? (locationObject.province as string).trim() : '',
+      typeof locationObject?.state === 'string' ? (locationObject.state as string).trim() : '',
+      typeof locationObject?.country === 'string' ? (locationObject.country as string).trim() : ''
+    ]
+      .filter(Boolean)
+      .reduce<string[]>((acc, entry) => {
+        if (!acc.includes(entry)) {
+          acc.push(entry);
+        }
+        return acc;
+      }, []);
+
+    if (parts.length) {
+      // #COMPLETION_DRIVE: Using available city/province metadata as a fallback geocoding string when street address is absent
+      // #SUGGEST_VERIFY: Populate precise street addresses in property records to improve geocoding accuracy
+      return parts.join(', ');
+    }
+
+    return '';
+  };
+
   const navItems = [
     { path: '/manager', label: t('nav.dashboard'), icon: 'performanceAnalytics' },
     { path: '/manager/properties', label: t('nav.properties'), icon: 'properties', active: true },
@@ -124,6 +157,51 @@ function ManagerPropertiesPage() {
   useEffect(() => {
     filterProperties();
   }, [properties, searchTerm]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setUserLocationStatus('unsupported');
+      return;
+    }
+
+    let watchId: number | null = null;
+
+    const handleSuccess = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const parsedLat = Number(latitude);
+      const parsedLng = Number(longitude);
+      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
+        // #COMPLETION_DRIVE: Assuming browser geolocation provides accurate coordinates for the manager session
+        // #SUGGEST_VERIFY: Accept the location prompt and confirm the map pins the expected position
+        setUserLocation({
+          id: 'current-user-location',
+          name: 'Current Location',
+          coordinates: [parsedLng, parsedLat]
+        });
+        setUserLocationStatus('ready');
+      }
+    };
+
+    const handleError = (errorEvent: GeolocationPositionError) => {
+      if (errorEvent.code === errorEvent.PERMISSION_DENIED) {
+        setUserLocationStatus('denied');
+      } else {
+        setUserLocationStatus('error');
+      }
+    };
+
+    watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+      enableHighAccuracy: true,
+      maximumAge: 30000,
+      timeout: 20000
+    });
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
 
   const fetchProperties = async () => {
     try {
@@ -198,21 +276,39 @@ function ManagerPropertiesPage() {
   }, 0);
 
   const propertyLocations = useMemo(() => {
-    const locations: PropertyLocation[] = [];
-    filteredProperties.forEach((property) => {
+    return filteredProperties.reduce<PropertyLocation[]>((acc, property) => {
       const coordinates = extractCoordinates(property);
-      if (!coordinates) {
-        return;
+      const hasAddress = typeof property.address === 'string' && property.address.trim().length > 0;
+      const fallbackLocation = deriveLocationText(property);
+      const lookupText = hasAddress ? property.address : fallbackLocation || property.name;
+      if (!coordinates && (!lookupText || !lookupText.trim())) {
+        return acc;
       }
-      locations.push({
+      acc.push({
         id: property.id,
         name: property.name,
-        coordinates,
-        address: property.address
+        address: hasAddress ? property.address : fallbackLocation || undefined,
+        coordinates: coordinates ?? undefined
       });
-    });
-    return locations;
+      return acc;
+    }, []);
   }, [filteredProperties]);
+
+  const userLocationMessage = (() => {
+    if (userLocationStatus === 'ready') {
+      return '';
+    }
+    if (userLocationStatus === 'pending') {
+      return 'Locating you...';
+    }
+    if (userLocationStatus === 'denied') {
+      return 'Location access is required to display your current position.';
+    }
+    if (userLocationStatus === 'unsupported') {
+      return 'This device does not support location services.';
+    }
+    return 'Unable to determine your location at the moment.';
+  })();
 
   if (loading) {
     return (
@@ -250,6 +346,30 @@ function ManagerPropertiesPage() {
         <div className="page-header">
           <div className="page-title">{t('property.title')}</div>
           <div className="page-subtitle">{t('manager.manage_portfolio')}</div>
+        </div>
+
+        <div className="section-card" style={{ marginBottom: '24px', padding: '16px' }}>
+          <div className="section-title" style={{ marginBottom: '12px' }}>Your Current Location</div>
+          {userLocationStatus === 'ready' && userLocation ? (
+            <PropertyMap locations={[userLocation]} />
+          ) : (
+            <div
+              style={{
+                height: '220px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(22, 47, 27, 0.08), rgba(22, 47, 27, 0.02))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                fontWeight: 600,
+                color: '#153826',
+                textAlign: 'center'
+              }}
+            >
+              {userLocationMessage}
+            </div>
+          )}
         </div>
 
         <div className="dashboard-grid">

@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 export type PropertyLocation = {
   id: string;
   name: string;
-  coordinates: [number, number];
   address?: string;
+  coordinates?: [number, number];
 };
+
+type ResolvedPropertyLocation = PropertyLocation & { coordinates: [number, number] };
 
 type MapboxMapInstance = {
   remove: () => void;
@@ -49,6 +51,7 @@ type PropertyMapProps = {
 
 const MAPBOX_SDK_URL = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js';
 const MAPBOX_CSS_URL = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css';
+const GEOCODE_ENDPOINT = 'https://api.mapbox.com/geocoding/v5/mapbox.places/';
 const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWF4MHhkYXl2YyIsImEiOiJjbWVncTFkOXMxNmUwMmxzNGVnenRwaHRjIn0.h6CK_o-YpmYsimTqV1S2_Q';
 
 let mapboxLoader: Promise<MapboxGLGlobal | null> | null = null;
@@ -134,9 +137,9 @@ const fallbackNoticeStyle: CSSProperties = {
   fontSize: '14px'
 };
 
-function calculateBounds(locations: PropertyLocation[]): [[number, number], [number, number]] {
-  const lngs = locations.map((location) => location.coordinates[0]);
-  const lats = locations.map((location) => location.coordinates[1]);
+function calculateBoundsFromCoordinates(coordinates: [number, number][]): [[number, number], [number, number]] {
+  const lngs = coordinates.map((entry) => entry[0]);
+  const lats = coordinates.map((entry) => entry[1]);
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
   const minLat = Math.min(...lats);
@@ -148,16 +151,84 @@ function PropertyMap({ locations }: PropertyMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMapInstance | null>(null);
   const markersRef = useRef<MapboxMarkerInstance[]>([]);
+  const geocodeCacheRef = useRef<Map<string, [number, number]>>(new Map());
   const token = useMemo(() => getMapboxToken(), []);
   const serializedLocations = useMemo(() => JSON.stringify(locations.map((item) => ({
     id: item.id,
     name: item.name,
-    coordinates: item.coordinates,
+    coordinates: item.coordinates ?? null,
     address: item.address || ''
   }))), [locations]);
+  const [resolvedLocations, setResolvedLocations] = useState<ResolvedPropertyLocation[]>([]);
+  const serializedResolved = useMemo(() => JSON.stringify(resolvedLocations.map((item) => ({
+    id: item.id,
+    name: item.name,
+    address: item.address || '',
+    coordinates: item.coordinates
+  }))), [resolvedLocations]);
 
   useEffect(() => {
     if (!locations.length) {
+      setResolvedLocations([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveLocations = async () => {
+      const resolved: ResolvedPropertyLocation[] = [];
+
+      for (const location of locations) {
+        if (location.coordinates) {
+          resolved.push({ ...location, coordinates: location.coordinates });
+          continue;
+        }
+
+        if (!token) {
+          continue;
+        }
+
+        const lookup = (location.address || location.name || '').trim();
+        if (!lookup) {
+          continue;
+        }
+
+        let coords = geocodeCacheRef.current.get(lookup) ?? null;
+        if (!coords) {
+          try {
+            const response = await fetch(`${GEOCODE_ENDPOINT}${encodeURIComponent(lookup)}.json?access_token=${token}&limit=1`);
+            if (response.ok) {
+              const data = await response.json() as { features?: Array<{ center?: [number, number] }> };
+              const feature = data.features?.[0];
+              if (feature?.center && feature.center.length >= 2) {
+                coords = [feature.center[0], feature.center[1]] as [number, number];
+                geocodeCacheRef.current.set(lookup, coords);
+              }
+            }
+          } catch (error) {
+            console.error('Mapbox geocoding failed for address:', lookup, error);
+          }
+        }
+
+        if (coords) {
+          resolved.push({ ...location, coordinates: coords });
+        }
+      }
+
+      if (!cancelled) {
+        setResolvedLocations(resolved);
+      }
+    };
+
+    resolveLocations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [serializedLocations, locations, token]);
+
+  useEffect(() => {
+    if (!resolvedLocations.length) {
       return;
     }
 
@@ -181,11 +252,13 @@ function PropertyMap({ locations }: PropertyMapProps) {
           mapbox.accessToken = token;
         }
 
+        const firstLocation = resolvedLocations[0];
+
         if (!mapRef.current) {
           mapRef.current = new mapbox.Map({
             container: containerRef.current,
             style: 'mapbox://styles/mapbox/streets-v11',
-            center: locations[0].coordinates,
+            center: firstLocation.coordinates,
             zoom: 13,
             attributionControl: false
           });
@@ -194,7 +267,7 @@ function PropertyMap({ locations }: PropertyMapProps) {
         markersRef.current.forEach((marker) => marker.remove());
         markersRef.current = [];
 
-        locations.forEach((location) => {
+        resolvedLocations.forEach((location) => {
           const marker = new mapbox.Marker({ color: '#1f7a3a' })
             .setLngLat(location.coordinates);
 
@@ -208,11 +281,11 @@ function PropertyMap({ locations }: PropertyMapProps) {
           markersRef.current.push(marker);
         });
 
-        if (locations.length > 1) {
-          const bounds = calculateBounds(locations);
+        if (resolvedLocations.length > 1) {
+          const bounds = calculateBoundsFromCoordinates(resolvedLocations.map((item) => item.coordinates));
           mapRef.current.fitBounds(bounds, { padding: 48, maxZoom: 15 });
         } else {
-          mapRef.current.setCenter(locations[0].coordinates);
+          mapRef.current.setCenter(firstLocation.coordinates);
           mapRef.current.setZoom(14);
         }
 
@@ -227,7 +300,7 @@ function PropertyMap({ locations }: PropertyMapProps) {
     return () => {
       cancelled = true;
     };
-  }, [serializedLocations, locations, token]);
+  }, [serializedResolved, resolvedLocations, token]);
 
   useEffect(() => {
     return () => {
@@ -241,13 +314,22 @@ function PropertyMap({ locations }: PropertyMapProps) {
   }, []);
 
   const hasToken = Boolean(token);
+  const hasResolvedLocations = resolvedLocations.length > 0;
+  const awaitingGeocode = locations.length > 0 && !hasResolvedLocations && hasToken;
+  const overlayMessage = !hasToken
+    ? 'Map preview unavailable. Provide a Mapbox token to view property locations.'
+    : awaitingGeocode
+      ? 'Locating properties on the map...'
+      : (locations.length > 0 && !hasResolvedLocations)
+        ? 'Unable to plot property locations. Please verify address details.'
+        : null;
 
   return (
     <div style={mapContainerStyle}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      {!hasToken && (
+      {overlayMessage && (
         <div style={fallbackNoticeStyle}>
-          Map preview unavailable. Provide a Mapbox token to view property locations.
+          {overlayMessage}
         </div>
       )}
     </div>
